@@ -27,7 +27,7 @@ enum sample {
 
 	kNumSamples
 };
-string sampleName[kNumSamples+7] = {
+TString sampleName[kNumSamples+7] = {
 	"Sig",
 	"Bkg",
 	"BSI",
@@ -40,7 +40,7 @@ string sampleName[kNumSamples+7] = {
 	"M4LOn4Bkg",
 	"M4LOn4BSI"
 };
-char* sample_suffix[kNumSamples+7]={
+TString sample_suffix[kNumSamples+7]={
 	"Sig",
 	"Bkg",
 	"BSI",
@@ -53,12 +53,12 @@ char* sample_suffix[kNumSamples+7]={
 	"M4LOn4Bkg",
 	"M4LOn4BSI"
 };
-char* sample_suffix_gg2VV[kNumSamples-1]={
+TString sample_suffix_gg2VV[kNumSamples-1]={
 	"H125.6",
 	"Continuum",
 	"ContinuumInterfH125.6"
 };
-char* sample_suffix_MCFM[kNumSamples-1]={
+TString sample_suffix_MCFM[kNumSamples-1]={
 	"SMH-MCFM67",
 	"Contin-MCFM67",
 	"SMHContinInterf-MCFM67",
@@ -113,7 +113,7 @@ float xsec_qqZZ_CERN[2][2] = {
 
 const int kNumBkg=6;
 char hzz4lprefix[]="HZZ4lTree_";
-char* sample_BackgroundFile[kNumBkg]={
+TString sample_BackgroundFile[kNumBkg]={
 	"ZZTo4mu",
 	"ZZTo4e",
 	"ZZTo2e2mu",
@@ -121,11 +121,12 @@ char* sample_BackgroundFile[kNumBkg]={
 	"ZZTo2e2tau",
 	"ZZTo4tau"
 };
-//string user_dir="/scratch0/hep/usarical/WidthSamples/";
-string user_dir="/afs/cern.ch/work/u/usarica/WidthAnalysis/";
-//string user_gg2VV_location="/scratch0/hep/usarical/WidthSamples/gg2VV/";
-string user_gg2VV_location="/afs/cern.ch/work/u/usarica/HZZ4l-125p6-FullAnalysis/";
-char* user_folder[5]={
+//Change to relevant
+TString user_dir="./";
+//string user_dir="/afs/cern.ch/work/u/usarica/WidthAnalysis/";
+TString user_gg2VV_location="/scratch0/hep/ianderso/CJLST/ReprocessedTrees/HZZ4l-125p6-FullAnalysis/";
+//string user_gg2VV_location="/afs/cern.ch/work/u/usarica/HZZ4l-125p6-FullAnalysis/";
+TString user_folder[5]={
 	"4mu",
 	"4e",
 	"2mu2e",

@@ -3,7 +3,7 @@
  */
 
 const int kFitTotalD = 17;
-char* strFitDim[kFitTotalD] = { // Dimension should not exceed kFitTotalD!!!
+const char* strFitDim[kFitTotalD] = { // Dimension should not exceed kFitTotalD!!!
 	"ZZMass",
 	"D_bkg_kin",
 
@@ -27,7 +27,7 @@ char* strFitDim[kFitTotalD] = { // Dimension should not exceed kFitTotalD!!!
 	"D_Gamma_r1",
 	"D_Gamma_gg_r1"
 };
-char* str1DFit_title[kFitTotalD] = { // Dimension should not exceed kFitTotalD!!!
+TString str1DFit_title[kFitTotalD] = { // Dimension should not exceed kFitTotalD!!!
 	"ZZMass",
 	"T_1D_D_bkg_kin",
 
@@ -51,7 +51,7 @@ char* str1DFit_title[kFitTotalD] = { // Dimension should not exceed kFitTotalD!!
 	"T_1D_D_Gamma_r1",
 	"T_1D_D_Gamma_gg_r1"
 };
-char* strFitDim_label[kFitTotalD] = { // Dimension should not exceed kFitTotalD!!!
+TString strFitDim_label[kFitTotalD] = { // Dimension should not exceed kFitTotalD!!!
 	"m_{ZZ}",
 	"D^{kin}_{Bkg}",
 	"D_{#Gamma}",
@@ -74,7 +74,7 @@ char* strFitDim_label[kFitTotalD] = { // Dimension should not exceed kFitTotalD!
 	"D_{#Gamma, 1}",
 	"D_{gg1}"
 };
-char* str1DFit_label[kFitTotalD] = { // Dimension should not exceed kFitTotalD!!!
+TString str1DFit_label[kFitTotalD] = { // Dimension should not exceed kFitTotalD!!!
 	"1D Fit to m_{ZZ}",
 	"1D Fit to D^{kin}_{Bkg}",
 	"1D Fit to D_{#Gamma}",
@@ -98,7 +98,7 @@ char* str1DFit_label[kFitTotalD] = { // Dimension should not exceed kFitTotalD!!
 	"1D Fit to D_{gg1}"
 };
 
-char* str2DFit_title[kFitTotalD-1] = {
+TString str2DFit_title[kFitTotalD-1] = {
 	"T_2D_ZZMass_vs_D_bkg_kin",
 
 	"T_2D_ZZMass_vs_D_Gamma",
@@ -121,7 +121,7 @@ char* str2DFit_title[kFitTotalD-1] = {
 	"T_2D_ZZMass_vs_D_Gamma_r1",
 	"T_2D_ZZMass_vs_D_Gamma_gg_r1"
 };
-char* str2DFit_label[kFitTotalD-1] = {
+TString str2DFit_label[kFitTotalD-1] = {
 	"2D Fit to m_{ZZ} and D^{kin}_{Bkg}",
 	"2D Fit to m_{ZZ} and D_{#Gamma}",
 	"2D Fit to m_{ZZ} and D_{#Gamma, int}",

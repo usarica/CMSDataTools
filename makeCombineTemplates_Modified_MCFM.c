@@ -19,22 +19,23 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 
 //Main Function, runs over all desired iterations
 void makeCombineTemplates_Modified_MCFM(){
-	makeCombineTemplates_Modified_MCFM_one(0,7,6,0,false);
-	makeCombineTemplates_Modified_MCFM_one(1,7,6,0,false);
-	makeCombineTemplates_Modified_MCFM_one(2,7,6,0,false);
-	makeCombineTemplates_Modified_MCFM_one(0,8,6,0,false);
-	makeCombineTemplates_Modified_MCFM_one(1,8,6,0,false);
-	makeCombineTemplates_Modified_MCFM_one(2,8,6,0,false);
-	makeCombineTemplates_Modified_MCFM_one(0,7,6,0,true);
-	makeCombineTemplates_Modified_MCFM_one(1,7,6,0,true);
-	makeCombineTemplates_Modified_MCFM_one(2,7,6,0,true);
-	makeCombineTemplates_Modified_MCFM_one(0,8,6,0,true);
-	makeCombineTemplates_Modified_MCFM_one(1,8,6,0,true);
-	makeCombineTemplates_Modified_MCFM_one(2,8,6,0,true);
+	bool isSmooth=false;
+	int systematics[5]={0,1,-1,2,-2};
+	for(int i=0;i<5;++i){
+		for(int usesmooth=0;usesmooth<2;++usesmooth){
+			if(usesmooth==0) isSmooth=false;
+			if(usesmooth==1) isSmooth=true;
+			for(int CoM=7;CoM<9;++CoM){
+				for(int channel=0;channel<3;++channel){
+					makeCombineTemplates_Modified_MCFM_one(channel,CoM,6,systematics[i],isSmooth);	
+				}	
+			}
+		}
+	}
 }
 
 //Function to build one template
-// folder = 0,1,2 (final state corresponds to 2e2mu,4mu,4e respectively)
+// folder = 0,1,2 (final state corresponds to 4mu,4e,2mu2e respectively)
 // erg_tev = 7,8 (CoM energy)
 // tFitD = [0,16] (choice of Discriminant, see FitDimensionsList.h for list; only tFitd works right now)
 // Systematics = [-2,2] (Flag for systematics. 0=Nominal, +/-1=QCD, +/-2=PDF)
@@ -152,9 +153,11 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 
 		double nMZZ220[3]={0};
 
+		//Template filler
 		for(int t=0;t<kNumTemplates;t++){
 			TChain* tree = new TChain(TREE_NAME);
 
+			//Grab appropriate files for templates
 			if(t==3){
 				for(int b=0;b<kNumBkg;b++){
 					TString cinput = cinput_common_qqZZ;
@@ -201,6 +204,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				cout << cinput_4mu << endl;
 			};
 
+			//Initialize templates
 			char templatename_1D[100];
 			char templatename_2D[100];
 			if(t<2){
@@ -240,6 +244,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				D_temp_2D[t]->GetYaxis()->SetTitle(strFitDim_label[tFitD]);
 			};
 
+			//Prepare trees
 			tree->SetBranchAddress("GenHMass",&GenHMass);
 			tree->SetBranchAddress("ZZMass",&ZZMass);
 			if(t!=4) tree->SetBranchAddress("MC_weight",&MC_weight);
@@ -278,8 +283,8 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			for(int ev=0;ev<nEntries;ev++){
 				tree->GetEntry(ev);
 				double weight = MC_weight;
-//				if (Systematics == -1 && t<3) weight = MC_weight_down;
-//				if (Systematics == 1 && t<3) weight = MC_weight_up;
+				//if (Systematics == -1 && t<3) weight = MC_weight_down;
+				//if (Systematics == 1 && t<3) weight = MC_weight_up;
 				if (t<3) weight *= MC_weight_ggZZLepInt;
 				if (abs(Systematics) != 1 && t<3) weight *= MC_weight_Kfactor;
 				if (Systematics == -1 && t<3) weight *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][0])*MC_weight_Kfactor_Norm_down*tgkf->Eval(125.6);
@@ -349,6 +354,8 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 
 			delete tree;
 		};
+
+		//Makes Bkg, Sig, Int from linear combinations of above templates
 		if (EnergyIndex == 0){ // USE BSI25, NO CONTAMINATION SIGNIFICANT TO CREATE STORAGE TREES
 			if (folder == 2){
 				//MAKE FUNCTION
@@ -377,6 +384,8 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 					D_temp_2D[7]->Add(D_temp_2D[5], 1.0);
 				};
 			};
+
+			//Divides bins by bin width
 			if (folder == 1){
 				for (int binx = 1; binx <= D_temp_1D[1]->GetNbinsX(); binx++){
 					double sig = D_temp_1D[0]->GetBinContent(binx);
@@ -430,7 +439,6 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 
 			};
 		};
-
 		D_temp_1D[2]->Add(D_temp_1D[1],-1.0);
 		D_temp_1D[2]->Add(D_temp_1D[0],-1.0);
 		if(tFitD!=0){
@@ -443,16 +451,17 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			D_temp_2D[7]->Add(D_temp_2D[6],-1.0);
 			D_temp_2D[7]->Add(D_temp_2D[5],-1.0);
 		};
-	/*
-		for(int t=0;t<kNumTemplates;t++){
-			if(t<3) D_temp_1D[t]->Scale(1.0/nTotalSMSig);
-			else D_temp_1D[t]->Scale(1.0/D_temp_1D[t]->Integral());
-			if(tFitD!=0){
-				if(t<3) D_temp_2D[t]->Scale(1.0/nTotalSMSig);
-				else D_temp_2D[t]->Scale(1.0/D_temp_2D[t]->Integral());
+		/*
+			for(int t=0;t<kNumTemplates;t++){
+				if(t<3) D_temp_1D[t]->Scale(1.0/nTotalSMSig);
+				else D_temp_1D[t]->Scale(1.0/D_temp_1D[t]->Integral());
+				if(tFitD!=0){
+					if(t<3) D_temp_2D[t]->Scale(1.0/nTotalSMSig);
+					else D_temp_2D[t]->Scale(1.0/D_temp_2D[t]->Integral());
+				};
 			};
-		};
-	*/
+		*/
+			
 		cout << "Integrals after everything:\n1D\t2D" << endl;
 		for(int t=0;t<kNumTemplates;t++){
 			for(int binx=0;binx<nbinsx;binx++){

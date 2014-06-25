@@ -18,7 +18,7 @@ using namespace std;
 //Initializers
 void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics, bool useResoVBF, bool isSmooth);
 
-//
+//Make Lepton Interference Graph to be used later
 TGraph* make_HZZ_LeptonInterferenceGraph(){
 	string cinput="./data/HZZ_LeptonInterferenceGraph.root";
 	float x[leptonInterf_YR3_Size];
@@ -36,7 +36,19 @@ TGraph* make_HZZ_LeptonInterferenceGraph(){
 
 //Main Function, runs over all desired iterations
 void makeCombineTemplates_Modified_MCFM_GenLevelVBF(){
-	makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(0,8,6,0,true,false);
+	bool isSmooth=false;
+	int systematics[5]={0,1,-1,2,-2};
+	for(int i=0;i<5;++i){
+		for(int usesmooth=0;usesmooth<2;++usesmooth){
+			if(usesmooth==0) isSmooth=false;
+			if(usesmooth==1) isSmooth=true;
+			for(int CoM=7;CoM<9;++CoM){
+				for(int channel=0;channel<3;++channel){
+					makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i],true,isSmooth);	
+				}	
+			}
+		}
+	}
 }
 
 //Function to build one template
@@ -44,7 +56,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF(){
 // erg_tev = 7,8 (CoM energy)
 // tFitD = [0,16] (choice of Discriminant, see FitDimensionsList.h for list; only tFitd works right now)
 // Systematics = [-2,2] (Flag for systematics. 0=Nominal, +/-1=QCD, +/-2=PDF)
-// useResoVBF = 
+// useResoVBF = true/false (flag to use resolution smeared VBF samples, to be removed with fullsim samples)
 // isSmooth = true/false (flag to apply smoothing at this stage, both needed for later stage)
 void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics, bool useResoVBF, bool isSmooth){
 	char TREE_NAME[]="SelectedTree";
@@ -68,14 +80,14 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 	if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF.root";
 
 	TString INPUT_VBFREF_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplatesForCombine_";
-	if(!isSmooth) INPUT_VBFREF_NAME = INPUT_VBFREF_NAME + "Raw_";
-	INPUT_VBFREF_NAME = INPUT_VBFREF_NAME + strFitDim[tFitD] + "_";
-	INPUT_VBFREF_NAME = INPUT_VBFREF_NAME + "Nominal.root";
-//	if (Systematics == 0) INPUT_VBFREF_NAME = INPUT_VBFREF_NAME + "Nominal.root";
-//	if(Systematics==1) INPUT_VBFREF_NAME = INPUT_VBFREF_NAME + "SysUp.root";
-//	if(Systematics==-1) INPUT_VBFREF_NAME = INPUT_VBFREF_NAME + "SysDown.root";
+	if(!isSmooth) INPUT_VBFREF_NAME += "Raw_";
+	INPUT_VBFREF_NAME += TString(strFitDim[tFitD]) + "_";
+	INPUT_VBFREF_NAME += "Nominal.root";
+//	if (Systematics == 0) INPUT_VBFREF_NAME += "Nominal.root";
+//	if(Systematics==1) INPUT_VBFREF_NAME += "SysUp.root";
+//	if(Systematics==-1) INPUT_VBFREF_NAME += "SysDown.root";
 
-	INPUT_NAME_VBF += comstring + "-";
+	INPUT_NAME_VBF += comstring + "TeV-";
 	TString sample_VBF_suffix[4]={
 		"Bkg_VBF_Phantom",
 		"BSI10_VBF_Phantom",
@@ -88,7 +100,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 	if(folder!=2) cinput_common_recover = user_gg2VV_location + erg_dir + "/" + user_folder[2] + "/";
 	TString cinput_common_qqZZ = user_gg2VV_location;
 	TString cinput_common_ZX = user_gg2VV_location;
-	TString cinput_common_VBF = user_dir;
+	TString cinput_common_VBF = user_gg2VV_location;
 
 	int EnergyIndex=1;
 	if(erg_tev==7) EnergyIndex=0;
@@ -144,8 +156,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 	//cout << "Scaled number of peak events is " << nSM_ScaledPeak*luminosity[EnergyIndex] << endl;
 	TGraph* tg_interf = make_HZZ_LeptonInterferenceGraph();
 
-	char cinput_VBF_Sig[1000];
-	sprintf(cinput_VBF_Sig,"%s%i%s","./data/HZZ4l-125_6-",erg_tev,"TeV-Sig_MCFM_PhantomVBF_Comparison.root");
+	TString cinput_VBF_Sig = "./data/HZZ4l-125_6-" + comstring + "TeV-Sig_MCFM_PhantomVBF_Comparison.root";
 	TFile* finput_VBF = new TFile(cinput_VBF_Sig,"read");
 	TSpline3* tsp_VBF_Sig = (TSpline3*) finput_VBF->Get("Spline3");
 
@@ -160,6 +171,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 		TString coutput = coutput_common + OUTPUT_NAME;
 		TFile* foutput = new TFile(coutput,"recreate");
 
+		//Grab VBF Sig templates made in makeCombineTemplates_Modified_MCFM.c
 		TString cinput_VBFRef = coutput_common + INPUT_VBFREF_NAME;
 		TFile* finput_VBFRef = new TFile(cinput_VBFRef,"read");
 		double nVBF_Sig_Reweighted=0;
@@ -212,6 +224,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 
 		double nMZZ220[3]={0};
 
+		//Initialize and grab each of the four Phantom trees (change to FullSim)
 		TChain* tree_VBF[4];
 		TH1F* h1DVBF[4];
 		TH2F* h2DVBF[4];
@@ -227,27 +240,32 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 		for(int tr=0;tr<4;tr++){
 			tree_VBF[tr] = new TChain(TREE_NAME);
 		};
-		TString cinput_VBF_Bkg = cinput_common_VBF + "VBF/" + erg_dir + "/" + user_folder[folder] + "/" + INPUT_NAME_VBF + sample_VBF_suffix[0];
-		TString cinput_VBF_BSI = cinput_common_VBF + "VBF/" + erg_dir + "/" + user_folder[folder] + "/" + INPUT_NAME_VBF + sample_VBF_suffix[3];
-		TString cinput_VBF_BSI10 = cinput_common_VBF + "VBF/" + erg_dir + "/" + user_folder[folder] + "/" + INPUT_NAME_VBF + sample_VBF_suffix[1];
-		TString cinput_VBF_BSI25 = cinput_common_VBF + "VBF/" + erg_dir + "/" + user_folder[folder] + "/" + INPUT_NAME_VBF + sample_VBF_suffix[2];
+		TString cinput_VBF_Bkg = cinput_common_VBF + "../VBF/" + erg_dir + "/" + user_folder[folder] + "/" + INPUT_NAME_VBF + sample_VBF_suffix[0];
+		TString cinput_VBF_BSI = cinput_common_VBF + "../VBF/" + erg_dir + "/" + user_folder[folder] + "/" + INPUT_NAME_VBF + sample_VBF_suffix[3];
+		TString cinput_VBF_BSI10 = cinput_common_VBF + "../VBF/" + erg_dir + "/" + user_folder[folder] + "/" + INPUT_NAME_VBF + sample_VBF_suffix[1];
+		TString cinput_VBF_BSI25 = cinput_common_VBF + "../VBF/" + erg_dir + "/" + user_folder[folder] + "/" + INPUT_NAME_VBF + sample_VBF_suffix[2];
 		if(useResoVBF){
-			cinput_VBF_Bkg = cinput_VBF_Bkg + "_Reprocessed_wResolution.root";
-			cinput_VBF_BSI = cinput_VBF_BSI + "_Reprocessed_wResolution.root";
-			cinput_VBF_BSI10 = cinput_VBF_BSI10 + "_Reprocessed_wResolution.root";
-			cinput_VBF_BSI25 = cinput_VBF_BSI25 + "_Reprocessed_wResolution.root";
+			cinput_VBF_Bkg += "_Reprocessed_wResolution.root";
+			cinput_VBF_BSI += "_Reprocessed_wResolution.root";
+			cinput_VBF_BSI10 += "_Reprocessed_wResolution.root";
+			cinput_VBF_BSI25 += "_Reprocessed_wResolution.root";
 		}
 		else{
-			cinput_VBF_Bkg = cinput_VBF_Bkg + "_Reprocessed.root";
-			cinput_VBF_BSI = cinput_VBF_BSI + "_Reprocessed.root";
-			cinput_VBF_BSI10 = cinput_VBF_BSI10 + "_Reprocessed.root";
-			cinput_VBF_BSI25 = cinput_VBF_BSI25 + "_Reprocessed.root";
+			cinput_VBF_Bkg += "_Reprocessed.root";
+			cinput_VBF_BSI += "_Reprocessed.root";
+			cinput_VBF_BSI10 += "_Reprocessed.root";
+			cinput_VBF_BSI25 += "_Reprocessed.root";
 		};
 		tree_VBF[0]->Add(cinput_VBF_Bkg);
 		tree_VBF[1]->Add(cinput_VBF_BSI10);
 		tree_VBF[2]->Add(cinput_VBF_BSI25);
 		tree_VBF[3]->Add(cinput_VBF_BSI);
 
+		//Fill Template(s) from each Phantom sample with:
+		// gen mZ1/mZ2>120
+		// Reweighting for lepton interference (necessary)
+		// Possible mZZ cuts?
+		//Then write smoothed templates to file 
 		for(int tr=0;tr<4;tr++){
 			tree_VBF[tr]->SetBranchAddress("isSelected",&isSelected);
 			tree_VBF[tr]->SetBranchAddress("GenZZMass", &ZZMass);
@@ -257,9 +275,9 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 			if(tFitD!=0) tree_VBF[tr]->SetBranchAddress(strFitDim[tFitD],&fitYval);
 
 			TString templatename_1D = "htemp1DVBF_";
-			templatename_1D = templatename_1D + sample_VBF_suffix[tr];
+			templatename_1D += sample_VBF_suffix[tr];
 			TString templatename_2D = "htemp2DVBF_";
-			templatename_2D = templatename_2D + sample_VBF_suffix[tr];
+			templatename_2D += sample_VBF_suffix[tr];
 
 			if(tFitD==0){
 				h1DVBF[tr] = new TH1F(templatename_1D,templatename_1D,nbinsx,kDXarray);
@@ -284,6 +302,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 					else weight *= (tg_interf->Eval(ZZMass)) / 4.0;
 				};
 
+				//Still needed?
 				if( (ZZMass>=ZZMass_cut[1] || ZZMass<ZZMass_cut[0]) ) continue;
 
 				if(tFitD==0) h1DVBF[tr]->Fill(ZZMass,weight);
@@ -292,7 +311,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 					h2DVBF[tr]->Fill(ZZMass,fitYval,weight);
 				};
 			};
-//			if(tr==3) cout << "Phantom Expected: " << nVBF_Sig_Simulated << endl;
+			//if(tr==3) cout << "Phantom Expected: " << nVBF_Sig_Simulated << endl;
 
 			ZZMass = 0;
 			Z1Mass = 0;
@@ -314,6 +333,8 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 				foutput->WriteTObject(h2DVBF[tr]);
 			};
 		};
+
+		//Make VBF Bkg/Sig/Int from linear combinations of above templates
 		for(int binx=1;binx<=nbinsx;binx++){
 			double bkg = h1DVBF[0]->GetBinContent(binx);
 			double bsi10 = h1DVBF[1]->GetBinContent(binx);
@@ -353,27 +374,30 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 				};
 			};
 		};
+
 		nVBF_Sig_Simulated = h2DVBF[0]->Integral()*luminosity[EnergyIndex];
 		cout << h2DVBF[0]->Integral()*luminosity[EnergyIndex] << endl;
 		cout << h2DVBF[1]->Integral()*luminosity[EnergyIndex] << endl;
 		cout << h2DVBF[2]->Integral()*luminosity[EnergyIndex] << endl;
 		cout << h2DVBF[3]->Integral()*luminosity[EnergyIndex] << endl;
 
+		//Template and tree filler
 		for(int t=0;t<kNumTemplates;t++){
 			TChain* tree = new TChain(TREE_NAME);
 			TTree* templateTree;
 
+			//Get file names, templates, and appropriate branches
 			if(t==3){
 				for(int b=0;b<kNumBkg;b++){
 					TString cinput = cinput_common_qqZZ;
-					cinput = cinput + erg_dir + "/" + user_folder[folder] + "/" + hzz4lprefix + sample_BackgroundFile[b] + "_Reprocessed.root";
+					cinput += erg_dir + "/" + user_folder[folder] + "/" + hzz4lprefix + sample_BackgroundFile[b] + "_Reprocessed.root";
 					tree->Add(cinput);
 					cout << cinput << endl;
 				};
 			}
 			else if(t==4){
 				TString cinput = cinput_common_ZX;
-				cinput = cinput + erg_dir + "/" + user_folder[folder] + "/HZZ4lTree_DoubleOr_CRZLLTree_Reprocessed.root";
+				cinput += erg_dir + "/" + user_folder[folder] + "/HZZ4lTree_DoubleOr_CRZLLTree_Reprocessed.root";
 				tree->Add(cinput);
 				cout << cinput << endl;
 			}
@@ -388,10 +412,10 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 				TString cinput_4mu = cinput_common + INPUT_NAME + "4mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
 
 				tree->Add(cinput_2e2mu);
+				cout<<cinput_2e2mu<<endl;
 				tree->Add(cinput_4e);
 				tree->Add(cinput_4mu);
 			};
-
 			char templatename_1D[100];
 			char templatename_2D[100];
 			if(t<2){
@@ -423,7 +447,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 				D_temp_1D[t]->GetXaxis()->SetTitle(strFitDim_label[tFitD]);
 
 				TString strTreeName = templatename_1D;
-				strTreeName = strTreeName + "_Tree";
+				strTreeName += "_Tree";
 				templateTree = new TTree(strTreeName,strTreeName);
 			}
 			else{
@@ -435,7 +459,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 				D_temp_2D[t]->GetYaxis()->SetTitle(strFitDim_label[tFitD]);
 
 				TString strTreeName = templatename_2D;
-				strTreeName = strTreeName + "_Tree";
+				strTreeName += "_Tree";
 				templateTree = new TTree(strTreeName,strTreeName);
 
 				if(t==3){
@@ -457,6 +481,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 			templateTree->Branch("ZZMass",&ZZMass);
 			if(tFitD!=0) templateTree->Branch(strFitDim[tFitD],&fitYval);
 
+			//Making templates using appropriate weights
 			double nTotal=0;
 			if(t<5){
 				tree->SetBranchAddress("GenHMass",&GenHMass);
@@ -485,9 +510,8 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 				if(t<3 || t>4) tree->SetBranchAddress("MC_weight_ggZZLepInt",&MC_weight_ggZZLepInt);
 				else MC_weight_ggZZLepInt=1;
 
-				int branch_set = 0;
-				if(tFitD!=0) branch_set = tree->SetBranchAddress(strFitDim[tFitD],&fitYval);
-				if(branch_set!=0){
+				if(tree->GetBranchStatus(strFitDim[tFitD])) tree->SetBranchAddress(strFitDim[tFitD],&fitYval);
+				else if(!tree->GetBranchStatus(strFitDim[tFitD])){
 					cerr << "Could NOT find branch named " << strFitDim[tFitD] << "!!! Setting strFitDim[" << tFitD << "] = 0." << endl;
 					fitYval=0;
 				};
@@ -495,7 +519,6 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 				nEntries = tree->GetEntries();
 				for(int ev=0;ev<nEntries;ev++){
 					tree->GetEntry(ev);
-
 					double weight = MC_weight;
 					if (t<3) weight *= MC_weight_ggZZLepInt;
 					if (abs(Systematics) != 1 && t<3) weight *= MC_weight_Kfactor;
@@ -517,8 +540,9 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 					if(tFitD>0) D_temp_2D[t]->Fill(ZZMass,fitYval,weight);
 				};
 			};
-
 			cout << t << " NTotal: " << nTotal << endl;
+
+			//Reweighting normalization
 			if(t<3){
 				cout << nMZZ220[t]*nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated*luminosity[EnergyIndex] << endl;
 
@@ -604,6 +628,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 			}
 			else overall_scale[t]=1.0;
 
+			//Smooths templates if desired
 			if(t<5){
 				double presmoothInt = D_temp_1D[t]->Integral("width");
 				if(isSmooth) D_temp_1D[t]->Smooth(1,"k3a");
@@ -618,6 +643,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 				};
 			};
 
+			//Makes uncondtionally normalized PDF for backgrounds
 			if(t>=3 && tFitD>0 && t<5){
 				for(int binx=1;binx<=D_temp_2D[t]->GetNbinsX();binx++){
 					double intBinX = D_temp_2D[t]->Integral(binx,binx,1,D_temp_2D[t]->GetNbinsY());
@@ -630,6 +656,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 				};
 			};
 
+			//Stores total weights in tree for JB's smoother
 			double nTotalRecorded=0;
 			if(t<5){
 				nEntries = tree->GetEntries();
@@ -691,6 +718,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 			delete templateTree;
 			delete tree;
 		};
+
 		if(Systematics!=0){
 			foutput->WriteTObject(h1DVBFSigRatio);
 			if(tFitD!=0) foutput->WriteTObject(h2DVBFSigRatio);
@@ -703,6 +731,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 			if(tFitD!=0) delete h2DVBF[tr];
 		};
 
+		//Makes Bkg, Sig, Int from Linear Combinations
 		if (EnergyIndex == 0){ // USE BSI25, NO CONTAMINATION SIGNIFICANT TO CREATE STORAGE TREES
 			if (folder == 2){
 				D_temp_1D[2]->Add(D_temp_1D[1], -1.0);
@@ -755,6 +784,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 			D_temp_2D[2]->Add(D_temp_2D[0],-1.0);
 		};
 
+		//Divides bins by Bin Width
 		cout << "Integrals after everything:\n1D\t2D" << endl;
 		for(int t=0;t<kNumTemplates;t++){
 			for(int binx=0;binx<nbinsx;binx++){

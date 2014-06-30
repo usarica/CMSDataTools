@@ -49,6 +49,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF(){
 			}
 		}
 	}
+	//makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(2,7,6,0,true,false);			
 }
 
 //Function to build one template
@@ -414,7 +415,9 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 				tree->Add(cinput_2e2mu);
 				cout<<cinput_2e2mu<<endl;
 				tree->Add(cinput_4e);
+				cout<<cinput_4e<<endl;
 				tree->Add(cinput_4mu);
+				cout<<cinput_4mu<<endl;				
 			};
 			char templatename_1D[100];
 			char templatename_2D[100];
@@ -536,6 +539,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 					nTotal += weight;
 
 					if(tFitD==0) D_temp_1D[t]->Fill(ZZMass,weight);
+					if(fitYval!=fitYval) cout<<"Broken event! "<<ev<<"/"<<nEntries<<endl;
 					else D_temp_1D[t]->Fill(fitYval,weight);
 					if(tFitD>0) D_temp_2D[t]->Fill(ZZMass,fitYval,weight);
 				};
@@ -685,6 +689,8 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 				if(t==6) treeCode=0;
 				if(t==7) treeCode=1;
 				nEntries = tree_VBF[treeCode]->GetEntries();
+
+				cout<<"TEST FOR VBF "<<endl;
 				for(int ev=0;ev<nEntries;ev++){
 					tree_VBF[treeCode]->GetEntry(ev);
 					if (isSelected != 1) continue;

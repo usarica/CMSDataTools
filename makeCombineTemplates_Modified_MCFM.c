@@ -95,7 +95,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	};
 	//use VBF yields directly
 	double VBF_Sig_Datacard[2][3]={
-		{0.92458836,0.051755897,0.12861921},
+		{0.092458836,0.051755897,0.12861921},
 		{0.46798807,0.24788553,0.61781689}
 	};
 	double overall_VBF_scale=1;

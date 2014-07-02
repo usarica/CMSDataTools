@@ -48,7 +48,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	if(!isSmooth) OUTPUT_NAME += "Raw_";
 	OUTPUT_NAME += TString(strFitDim[tFitD]) + "_";
 	TString erg_dir;
-	erg_dir.Form("LHC_%iTeV",erg_tev);
+	erg_dir.Form("LHC_%iTeV/",erg_tev);
 
 	if(Systematics==0) OUTPUT_NAME += "Nominal.root";
 	if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD.root";
@@ -89,9 +89,16 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	TGraphAsymmErrors* tgkf = (TGraphAsymmErrors*)finput_KDFactor->Get(tgkfname);
 
 	double nSM_ScaledPeak[2][3]={
-		{1.4452079,0.6087736,1.0902689},
-		{6.6562629,2.6944639,5.1963998}
+		{1.0902689,0.6087736,1.4452079},
+		{5.1963998,2.6944639,6.6562629}
 	};
+	//use VBF yields directly
+	double VBF_Sig_Datacard[2][3]={
+		{0.92458836,0.051755897,0.12861921},
+		{0.46798807,0.24788553,0.61781689}
+	};
+	double overall_VBF_scale=1;
+	for (int e = 0; e < 2; e++){for (int ss = 0; ss < 3; ss++){ nSM_ScaledPeak[e][ss] /= luminosity[e]; VBF_Sig_Datacard_Ratio[e][ss] /= luminosity[e]; }}
 
 	TString comstring;
 	comstring.Form("%i",erg_tev);
@@ -99,16 +106,9 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	TFile* finput_VBF = new TFile(cinput_VBF_Sig,"read");
 	TSpline3* tsp_VBF_Sig = (TSpline3*) finput_VBF->Get("Spline3");
 
-	//use VBF yields directly
-	double VBF_Sig_Datacard_Ratio[2][3]={
-		{0.12861921,0.051755897,0.92458836},
-		{0.61781689,0.24788553,0.46798807}
-	};
-	double overall_VBF_scale=1;
-
 	for(int lo=0;lo<1;lo++){
 		TString coutput_common = user_dir + erg_dir;
-		coutput_common = coutput_common + "/Analysis/Templates/Combine/" + user_folder[folder] + "/";
+		coutput_common = coutput_common + user_folder[folder] + "/";
 
 		TString coutput = coutput_common + OUTPUT_NAME;
 		TFile* foutput = new TFile(coutput,"recreate");
@@ -309,7 +309,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			if(t<3) cout << nMZZ220[t]*nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated*luminosity[EnergyIndex] << endl;
 			if(t<3){
 				double myscale = nSM_ScaledPeak[EnergyIndex][folder] / nSig_Simulated;
-				if (Systematics == -1 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][0]);
+				if (Systematics == -1 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][0]); // take out same factors in denominator nSig_Simulated
 				if (Systematics == 1 && t < 3) myscale *= (1.0 + ggZZ_Syst_AbsNormSyst[EnergyIndex][0]);
 				if (Systematics == -2 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][1]);
 				if (Systematics == 2 && t<3) myscale *= (1.0 + ggZZ_Syst_AbsNormSyst[EnergyIndex][1]);
@@ -318,7 +318,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				cout << "Scaling t: " << t << " by " << myscale << endl;
 			};
 			if(t==5){
-				double myscale = VBF_Sig_Datacard_Ratio[EnergyIndex][folder]/nVBF_Sig_Simulated;
+				double myscale = VBF_Sig_Datacard[EnergyIndex][folder]/nVBF_Sig_Simulated;
 				overall_VBF_scale = myscale;
 				D_temp_1D[t]->Scale(myscale);
 				if(tFitD>0) D_temp_2D[t]->Scale(myscale);
@@ -461,7 +461,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				};
 			};
 		*/
-			
+
 		cout << "Integrals after everything:\n1D\t2D" << endl;
 		for(int t=0;t<kNumTemplates;t++){
 			for(int binx=0;binx<nbinsx;binx++){

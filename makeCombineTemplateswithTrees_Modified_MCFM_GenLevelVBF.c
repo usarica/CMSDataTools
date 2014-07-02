@@ -16,7 +16,7 @@
 using namespace std;
 
 //Initializers
-void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics, bool useResoVBF, bool isSmooth);
+void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics, bool useResoVBF, bool isSmooth);
 
 //Make Lepton Interference Graph to be used later
 TGraph* make_HZZ_LeptonInterferenceGraph(){
@@ -35,7 +35,7 @@ TGraph* make_HZZ_LeptonInterferenceGraph(){
 };
 
 //Main Function, runs over all desired iterations
-void makeCombineTemplates_Modified_MCFM_GenLevelVBF(){
+void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF(){
 	bool isSmooth=false;
 	int systematics[5]={0,1,-1,2,-2};
 	for(int i=0;i<5;++i){
@@ -44,7 +44,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF(){
 			if(usesmooth==1) isSmooth=true;
 			for(int CoM=7;CoM<9;++CoM){
 				for(int channel=0;channel<3;++channel){
-					makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i],true,isSmooth);	
+					makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i],true,isSmooth);	
 				}	
 			}
 		}
@@ -59,7 +59,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF(){
 // Systematics = [-2,2] (Flag for systematics. 0=Nominal, +/-1=QCD, +/-2=PDF)
 // useResoVBF = true/false (flag to use resolution smeared VBF samples, to be removed with fullsim samples)
 // isSmooth = true/false (flag to apply smoothing at this stage, both needed for later stage)
-void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics, bool useResoVBF, bool isSmooth){
+void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics, bool useResoVBF, bool isSmooth){
 	char TREE_NAME[]="SelectedTree";
 	TString INPUT_SM_NAME = "HZZ4lTree_powheg15jhuGenV3-0PMH125.6_Reprocessed.root";
 	TString INPUT_NAME = "HZZ4lTree_ggTo";
@@ -72,7 +72,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 	TString comstring;
 	comstring.Form("%i",erg_tev);
 	TString erg_dir;
-	erg_dir.Form("LHC_%iTeV",erg_tev);
+	erg_dir.Form("LHC_%iTeV/",erg_tev);
 
 	if (Systematics == 0) OUTPUT_NAME += "Nominal.root";
 	if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD.root";
@@ -152,6 +152,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 		{1.4452079,0.6087736,1.0902689},
 		{6.6562629,2.6944639,5.1963998}
 	};
+	for (int e = 0; e < 2; e++){for (int ss = 0; ss < 3; ss++){ nSM_ScaledPeak[e][ss] /= luminosity[e];}};
 
 	//cout << "Observed number of peak events is " << nSM_ObservedPeak*luminosity[EnergyIndex] << endl;
 	//cout << "Scaled number of peak events is " << nSM_ScaledPeak*luminosity[EnergyIndex] << endl;
@@ -167,7 +168,7 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 	for(int lo=0;lo<1;lo++){
 		TString user_core = user_dir;
 		TString coutput_common = user_core + erg_dir;
-		coutput_common = coutput_common + "/Analysis/Templates/Combine/" + user_folder[folder] + "/";
+		coutput_common = coutput_common + user_folder[folder] + "/";
 
 		TString coutput = coutput_common + OUTPUT_NAME;
 		TFile* foutput = new TFile(coutput,"recreate");

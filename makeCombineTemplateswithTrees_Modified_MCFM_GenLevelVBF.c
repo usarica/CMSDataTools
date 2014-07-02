@@ -148,7 +148,6 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 	};
 	fsm->Close();
 
-	double luminosity[2] = { 5.051, 19.712 };
 	//ggH yields
 	double nSM_ScaledPeak[2][3]={
 		{1.4452079,0.6087736,1.0902689},

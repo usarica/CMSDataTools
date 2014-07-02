@@ -88,10 +88,20 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	tgkfname = tgkfname + "AllFlavors_UnNormalized";
 	TGraphAsymmErrors* tgkf = (TGraphAsymmErrors*)finput_KDFactor->Get(tgkfname);
 
+	double luminosity[2] = { 5.051, 19.712 };
+	//ggH yields
 	double nSM_ScaledPeak[2][3]={
 		{1.4452079,0.6087736,1.0902689},
 		{6.6562629,2.6944639,5.1963998}
-	};
+	}
+	//use VBF yields directly -- misnomer "Ratio"
+	double VBF_Sig_Datacard_Ratio[2][3]={
+		{0.12861921,0.051755897,0.92458836},
+		{0.61781689,0.24788553,0.46798807}
+	}
+	double overall_VBF_scale=1;
+	for (int e = 0; e < 2; e++){for (int ss = 0; ss < 3; ss++){ nSM_ScaledPeak[e][ss] /= luminosity[e]; VBF_Sig_Datacard_Ratio[e][ss] /= luminosity[e]; }}
+
 
 	TString comstring;
 	comstring.Form("%i",erg_tev);
@@ -99,12 +109,6 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	TFile* finput_VBF = new TFile(cinput_VBF_Sig,"read");
 	TSpline3* tsp_VBF_Sig = (TSpline3*) finput_VBF->Get("Spline3");
 
-	//use VBF yields directly
-	double VBF_Sig_Datacard_Ratio[2][3]={
-		{0.12861921,0.051755897,0.92458836},
-		{0.61781689,0.24788553,0.46798807}
-	};
-	double overall_VBF_scale=1;
 
 	for(int lo=0;lo<1;lo++){
 		TString coutput_common = user_dir + erg_dir;

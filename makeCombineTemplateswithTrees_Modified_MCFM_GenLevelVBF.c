@@ -148,10 +148,13 @@ void makeCombineTemplates_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev,
 	};
 	fsm->Close();
 
+	double luminosity[2] = { 5.051, 19.712 };
+	//ggH yields
 	double nSM_ScaledPeak[2][3]={
 		{1.4452079,0.6087736,1.0902689},
 		{6.6562629,2.6944639,5.1963998}
-	};
+	}
+	for (int e = 0; e < 2; e++){for (int ss = 0; ss < 3; ss++){ nSM_ScaledPeak[e][ss] /= luminosity[e];}}
 
 	//cout << "Observed number of peak events is " << nSM_ObservedPeak*luminosity[EnergyIndex] << endl;
 	//cout << "Scaled number of peak events is " << nSM_ScaledPeak*luminosity[EnergyIndex] << endl;

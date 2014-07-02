@@ -98,7 +98,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 		{0.46798807,0.24788553,0.61781689}
 	};
 	double overall_VBF_scale=1;
-	for (int e = 0; e < 2; e++){for (int ss = 0; ss < 3; ss++){ nSM_ScaledPeak[e][ss] /= luminosity[e]; VBF_Sig_Datacard_Ratio[e][ss] /= luminosity[e]; }}
+	for (int e = 0; e < 2; e++){for (int ss = 0; ss < 3; ss++){ nSM_ScaledPeak[e][ss] /= luminosity[e]; VBF_Sig_Datacard[e][ss] /= luminosity[e]; }}
 
 	TString comstring;
 	comstring.Form("%i",erg_tev);

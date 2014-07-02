@@ -88,6 +88,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	tgkfname = tgkfname + "AllFlavors_UnNormalized";
 	TGraphAsymmErrors* tgkf = (TGraphAsymmErrors*)finput_KDFactor->Get(tgkfname);
 
+	//ggH yields
 	double nSM_ScaledPeak[2][3]={
 		{1.0902689,0.6087736,1.4452079},
 		{5.1963998,2.6944639,6.6562629}

@@ -148,6 +148,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 	};
 	fsm->Close();
 
+	//ggH yields
 	double nSM_ScaledPeak[2][3]={
 		{1.4452079,0.6087736,1.0902689},
 		{6.6562629,2.6944639,5.1963998}

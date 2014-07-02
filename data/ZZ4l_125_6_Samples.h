@@ -122,9 +122,9 @@ TString sample_BackgroundFile[kNumBkg]={
 	"ZZTo4tau"
 };
 //Change to relevant
-TString user_dir="./";
+TString user_dir="./UsingLastProduction/";
 //string user_dir="/afs/cern.ch/work/u/usarica/WidthAnalysis/";
-TString user_gg2VV_location="/scratch0/hep/ianderso/CJLST/ReprocessedTrees/HZZ4l-125p6-FullAnalysis/";
+TString user_gg2VV_location="/scratch0/hep/ianderso/CJLST/ReprocessedTrees/lastProduction/";
 //string user_gg2VV_location="/afs/cern.ch/work/u/usarica/HZZ4l-125p6-FullAnalysis/";
 TString user_folder[5]={
 	"4mu",

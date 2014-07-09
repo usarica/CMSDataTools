@@ -1,70 +1,28 @@
 HiggsWidth_PostICHEP
 ====================
 
-Run
+To produce templates for https://github.com/HZZ4l/CreateWidthDatacards, in your CMSSW release, follow these directions:
 
-1) makeCombineTemplates_Modified_MCFM.c
+_NOTE_: Use **legacy** tag to reproduce templates for width results.
 
-to get VBF templates that are reweighted from ggH. The reweighting functions for 7 and 8 TeV are
+0) Check that data/ZZ4l_125_6_Samples.h is pointing to the correct directories.
 
-	char cinput_VBF_Sig[1000];
-	sprintf(cinput_VBF_Sig,"%s%i%s","./data/HZZ4l-125_6-",erg_tev,"TeV-Sig_MCFM_PhantomVBF_Comparison.root");
+1) root -q -b makeCombineTemplates_Modified_MCFM.c+
 
+This will get the initial D_Gamma_gg_r10 templates. VBF templates are reweighted from ggH. The reweighting functions for 7 and 8 TeV. It will run over all 4l final states (2e2mu, 4e, 4mu), all systematics (Nominal, PDF up/down, QCD up/down), and with or without k3a smoothing.
 
-Changes needed to synchronize:
+2) root -q -b makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF.c+
 
-ggH yield normalizations should change to 105.6 (inclusive) - 140.6:
+Similar to 1, but will add trees with templates. Currently has an option to use resolution smeared samples for VBF, this will be removed once Full-Sim is implemented. These files will take up a fair amount of space.
 
-7 TeV		Yield
-2e2mu		1.4452079
-4e		0.6087736
-4mu		1.0902689
-8 TeV		Scaled
-2e2mu		6.6562629
-4e		2.6944639
-4mu		5.1963998
+3) Check out https://github.com/jbsauvan/TemplateBuilder. _NOTE_: To reproduce legacy width studies, use tag **070314_add-fa3-configs**.
 
-VBF normalization (same m4l range):
+To produce correct JSON files for TemplateBuilder, run
 
-Yield
-1.2861921E-01
-5.1755897E-02
-9.2458836E-02
+	./pushjson.sh <Location of LHC_*TeV directories> <Location of TemplateBuilder/run directory>
 
-6.1781689E-01
-2.4788553E-01
-4.6798807E-01
+Then, compile TemplateBuilder and submit jobs to queue to smooth each template.
 
-Options are
+4) root -q -b makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF.c+ 
 
-(int folder, int erg_tev, int tFitD=0, int Systematics=0, bool isSmooth=false)
-
-folder: 0,1,2 for 2mu2e, 4mu, 4e
-erg_tev: 7 or 8
-tFitD: Only "6" is supported
-isSmooth: Run both to get a smooth ggH reweighted curve (with k3a smoothing; this is only for systematics treatment in the fourth stage)
-
-2) makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF.c
-
-Options are te same except
-
-bool useResoVBF=true
-
-Run with isSmooth==true; the trees produced are naturally without smoothing, but the template builder will receive this file to refer to the trees.
-Run with isSmooth==false; for the last step to provide all possible templates.
-
-the input probably needs to be re-adjusted so that we use full sim samples for VBF
-
-Changes for yield normalization to the peak are still needed
-
-
-
-3) Check out Template Builder and put HiggsWidth into TemplateBuilder/run/. Execute buildTemplate.exe on json files in 7/8TeV folders
-
-4) makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF.c 
-
-Run to get te final templates. TemplateBuilder conserves the sum of weights, so whatever was passed before should be preserved. Noticve, raw and smooth templates from the previous steps are also needed.
-
-
-
-
+This will produce the final templates needed for combine. Normalizations will be output as the templates are made, you can also compare different templates using included comparesmoothedtemplates.C script.

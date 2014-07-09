@@ -29,57 +29,52 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF(){
 	}
 }
 
-//Function to build one template
-// folder = 0,1,2 (final state corresponds to 2e2mu,4mu,4e respectively)
-// erg_tev = 7,8 (CoM energy)
-// tFitD = [0,16] (choice of Discriminant, see FitDimensionsList.h for list; only tFitd works right now)
-// Systematics = [-2,2] (Flag for systematics. 0=Nominal, +/-1=QCD, +/-2=PDF)
-// useResoVBF = true/false (flag to use resolution smeared VBF samples, to be removed with fullsim samples)
 void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics, bool useResoVBF){
-	TString INPUT_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_Raw_";
-	TString INPUT_K3A_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_";
-	TString INPUT_SMOOTH_NAME = "HtoZZ4l_MCFM_125p6_SmoothTemplates_";
-	TString OUTPUT_NAME = "HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine_";
+	char TREE_NAME[]="SelectedTree";
+	string INPUT_NAME = "../HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_Raw_";
+	string INPUT_K3A_NAME = "../HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_";
+	string INPUT_SMOOTH_NAME = "HtoZZ4l_MCFM_125p6_SmoothTemplates_";
+	string OUTPUT_NAME = "HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine_";
 
-	OUTPUT_NAME += "_GenLevelVBF_";
-	if(useResoVBF) OUTPUT_NAME += "wResolution_";
-	OUTPUT_NAME += TString(strFitDim[tFitD]) + "_";
-	TString comstring;
-	comstring.Form("%i",erg_tev);
-	TString erg_dir;
-	erg_dir.Form("LHC_%iTeV",erg_tev);
-	if(Systematics==0) OUTPUT_NAME += "Nominal.root";
-	if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD.root";
-	if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD.root";
-	if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF.root";
-	if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF.root";
+	OUTPUT_NAME = OUTPUT_NAME + "_GenLevelVBF_";
+	if(useResoVBF) OUTPUT_NAME = OUTPUT_NAME + "wResolution_";
+	OUTPUT_NAME = OUTPUT_NAME + strFitDim[tFitD] + "_";
+	char cerg[1000];
+	sprintf(cerg,"%iTeV",erg_tev);
+	char erg_dir[1000];
+	sprintf(erg_dir,"LHC_%iTeV",erg_tev);
+	if(Systematics==0) OUTPUT_NAME = OUTPUT_NAME + "Nominal.root";
+	if (Systematics == 1) OUTPUT_NAME = OUTPUT_NAME + "SysUp_ggQCD.root";
+	if (Systematics == -1) OUTPUT_NAME = OUTPUT_NAME + "SysDown_ggQCD.root";
+	if (Systematics == 2) OUTPUT_NAME = OUTPUT_NAME + "SysUp_ggPDF.root";
+	if (Systematics == -2) OUTPUT_NAME = OUTPUT_NAME + "SysDown_ggPDF.root";
 
-	INPUT_SMOOTH_NAME += "_GenLevelVBF_";
-	if(useResoVBF) INPUT_SMOOTH_NAME += "wResolution_";
-	INPUT_SMOOTH_NAME += TString(strFitDim[tFitD]) + "_";
-	if(Systematics==0) INPUT_SMOOTH_NAME += "Nominal.root";
-	if (Systematics == 1) INPUT_SMOOTH_NAME += "SysUp_ggQCD.root";
-	if (Systematics == -1) INPUT_SMOOTH_NAME += "SysDown_ggQCD.root";
-	if (Systematics == 2) INPUT_SMOOTH_NAME += "SysUp_ggPDF.root";
-	if (Systematics == -2) INPUT_SMOOTH_NAME += "SysDown_ggPDF.root";
+	INPUT_SMOOTH_NAME = INPUT_SMOOTH_NAME + "_GenLevelVBF_";
+	if(useResoVBF) INPUT_SMOOTH_NAME = INPUT_SMOOTH_NAME + "wResolution_";
+	INPUT_SMOOTH_NAME = INPUT_SMOOTH_NAME + strFitDim[tFitD] + "_";
+	if(Systematics==0) INPUT_SMOOTH_NAME = INPUT_SMOOTH_NAME + "Nominal.root";
+	if (Systematics == 1) INPUT_SMOOTH_NAME = INPUT_SMOOTH_NAME + "SysUp_ggQCD.root";
+	if (Systematics == -1) INPUT_SMOOTH_NAME = INPUT_SMOOTH_NAME + "SysDown_ggQCD.root";
+	if (Systematics == 2) INPUT_SMOOTH_NAME = INPUT_SMOOTH_NAME + "SysUp_ggPDF.root";
+	if (Systematics == -2) INPUT_SMOOTH_NAME = INPUT_SMOOTH_NAME + "SysDown_ggPDF.root";
 
-	INPUT_NAME += "_GenLevelVBF_";
-	if(useResoVBF) INPUT_NAME += "wResolution_";
-	INPUT_NAME += TString(strFitDim[tFitD]) + "_";
-	if(Systematics==0) INPUT_NAME += "Nominal.root";
-	if (Systematics == 1) INPUT_NAME += "SysUp_ggQCD.root";
-	if (Systematics == -1) INPUT_NAME += "SysDown_ggQCD.root";
-	if (Systematics == 2) INPUT_NAME += "SysUp_ggPDF.root";
-	if (Systematics == -2) INPUT_NAME += "SysDown_ggPDF.root";
+	INPUT_NAME = INPUT_NAME + "_GenLevelVBF_";
+	if(useResoVBF) INPUT_NAME = INPUT_NAME + "wResolution_";
+	INPUT_NAME = INPUT_NAME + strFitDim[tFitD] + "_";
+	if(Systematics==0) INPUT_NAME = INPUT_NAME + "Nominal.root";
+	if (Systematics == 1) INPUT_NAME = INPUT_NAME + "SysUp_ggQCD.root";
+	if (Systematics == -1) INPUT_NAME = INPUT_NAME + "SysDown_ggQCD.root";
+	if (Systematics == 2) INPUT_NAME = INPUT_NAME + "SysUp_ggPDF.root";
+	if (Systematics == -2) INPUT_NAME = INPUT_NAME + "SysDown_ggPDF.root";
 
-	INPUT_K3A_NAME += "_GenLevelVBF_";
-	if(useResoVBF) INPUT_K3A_NAME += "wResolution_";
-	INPUT_K3A_NAME += TString(strFitDim[tFitD]) + "_";
-	if(Systematics==0) INPUT_K3A_NAME += "Nominal.root";
-	if (Systematics == 1) INPUT_K3A_NAME += "SysUp_ggQCD.root";
-	if (Systematics == -1) INPUT_K3A_NAME += "SysDown_ggQCD.root";
-	if (Systematics == 2) INPUT_K3A_NAME += "SysUp_ggPDF.root";
-	if (Systematics == -2) INPUT_K3A_NAME += "SysDown_ggPDF.root";
+	INPUT_K3A_NAME = INPUT_K3A_NAME + "_GenLevelVBF_";
+	if(useResoVBF) INPUT_K3A_NAME = INPUT_K3A_NAME + "wResolution_";
+	INPUT_K3A_NAME = INPUT_K3A_NAME + strFitDim[tFitD] + "_";
+	if(Systematics==0) INPUT_K3A_NAME = INPUT_K3A_NAME + "Nominal.root";
+	if (Systematics == 1) INPUT_K3A_NAME = INPUT_K3A_NAME + "SysUp_ggQCD.root";
+	if (Systematics == -1) INPUT_K3A_NAME = INPUT_K3A_NAME + "SysDown_ggQCD.root";
+	if (Systematics == 2) INPUT_K3A_NAME = INPUT_K3A_NAME + "SysUp_ggPDF.root";
+	if (Systematics == -2) INPUT_K3A_NAME = INPUT_K3A_NAME + "SysDown_ggPDF.root";
 
 	int EnergyIndex=1;
 	if(erg_tev==7) EnergyIndex=0;
@@ -89,18 +84,20 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 		{0.55,1.78,1.38}
 	};
 
+	float templateWeight=1;
+
 //	for(int lo=0;lo<3;lo++){
 	for(int lo=0;lo<1;lo++){
 		char clowside[1000];
 		sprintf(clowside,"%.0f",lowside[lo]);
 
-		TString user_core = user_dir;
-		TString coutput_common = user_core + erg_dir;
-		coutput_common = coutput_common + "/Analysis/Templates/Combine/" + user_folder[folder] + "/";
-		TString cinput_common = coutput_common;
+		string user_core = user_dir;
+		string coutput_common = user_core + erg_dir;
+		coutput_common = coutput_common + "/" + user_folder[folder] + "/250314/";
+		string cinput_common = coutput_common;
 
-		TString coutput = coutput_common + OUTPUT_NAME;
-		TFile* foutput = new TFile(coutput,"recreate");
+		string coutput = coutput_common + OUTPUT_NAME;
+		TFile* foutput = new TFile(coutput.c_str(),"recreate");
 
 		float ZZMass_cut[2]={lowside[lo],1600};
 		float ZZwidth = 20.0;
@@ -133,13 +130,13 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 		TH2F* hZX_Unconditional_expk3a;
 		TH2F* hqqZZ_Unconditional_expk3a;
 
-		TString cinput = cinput_common + INPUT_NAME;
-		TFile* finput = new TFile(cinput,"read");
-		TString cinput_k3a = cinput_common + INPUT_K3A_NAME;
-		TFile* finput_k3a = new TFile(cinput_k3a,"read");
+		string cinput = cinput_common + INPUT_NAME;
+		TFile* finput = new TFile(cinput.c_str(),"read");
+		string cinput_k3a = cinput_common + INPUT_K3A_NAME;
+		TFile* finput_k3a = new TFile(cinput_k3a.c_str(),"read");
 
-		TString cinput_smooth = cinput_common + INPUT_SMOOTH_NAME;
-		TFile* finput_smooth = new TFile(cinput_smooth,"read");
+		string cinput_smooth = cinput_common + INPUT_SMOOTH_NAME;
+		TFile* finput_smooth = new TFile(cinput_smooth.c_str(),"read");
 
 		for (int t = 0; t < kNumTemplates; t++){
 			char templatename_2D_exp[100];
@@ -177,21 +174,21 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 			D_temp_2D_expk3a[t]->SetOption("colz");
 
 			if (t == 3){
-				TString storeName = templatename_2D;
+				string storeName = templatename_2D;
 				storeName = storeName + "_UnConditional";
-				hqqZZ_Unconditional = new TH2F(storeName, storeName, nbinsx, kDXarray, nbinsy, kDYarray);
-				hqqZZ_Unconditional_exp = (TH2F*)finput->Get(storeName);
-				hqqZZ_Unconditional_expk3a = (TH2F*)finput_k3a->Get(storeName);
+				hqqZZ_Unconditional = new TH2F(storeName.c_str(), storeName.c_str(), nbinsx, kDXarray, nbinsy, kDYarray);
+				hqqZZ_Unconditional_exp = (TH2F*)finput->Get(storeName.c_str());
+				hqqZZ_Unconditional_expk3a = (TH2F*)finput_k3a->Get(storeName.c_str());
 				hqqZZ_Unconditional->SetOption("colz");
 				hqqZZ_Unconditional_exp->SetOption("colz");
 				hqqZZ_Unconditional_expk3a->SetOption("colz");
 			};
 			if (t == 4){
-				TString storeName = templatename_2D_exp;
+				string storeName = templatename_2D_exp;
 				storeName = storeName + "_UnConditional";
-				hZX_Unconditional = new TH2F(storeName, storeName, nbinsx, kDXarray, nbinsy, kDYarray);
-				hZX_Unconditional_exp = (TH2F*)finput->Get(storeName);
-				hZX_Unconditional_expk3a = (TH2F*)finput_k3a->Get(storeName);
+				hZX_Unconditional = new TH2F(storeName.c_str(), storeName.c_str(), nbinsx, kDXarray, nbinsy, kDYarray);
+				hZX_Unconditional_exp = (TH2F*)finput->Get(storeName.c_str());
+				hZX_Unconditional_expk3a = (TH2F*)finput_k3a->Get(storeName.c_str());
 				hZX_Unconditional->SetOption("colz");
 				hZX_Unconditional_exp->SetOption("colz");
 				hZX_Unconditional_expk3a->SetOption("colz");
@@ -209,6 +206,7 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 					if (emptyBins[0]>1) minbinx = emptyBins[0]-1;
 					int maxbinx = emptyBins[1];
 					if (emptyBins[1]<D_temp_2D[t]->GetNbinsX()) maxbinx = emptyBins[1]+1;
+					double nEmptyBins = emptyBins[1] - emptyBins[0] + 1;
 					double nSharedBins = maxbinx - minbinx + 1;
 					cout << "Min max bins: " << minbinx << '\t' << maxbinx << endl;
 
@@ -362,23 +360,23 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 				hZX_Unconditional_expk3a->Scale((hZX_Unconditional->Integral("width"))/(hZX_Unconditional_expk3a->Integral("width")));
 			};
 			if(t==4) D_temp_2D[t]->SetName(D_temp_2D_exp[t]->GetName());
-			TString oldTemplateName = D_temp_2D_exp[t]->GetName();
+			string oldTemplateName = D_temp_2D_exp[t]->GetName();
 			oldTemplateName = oldTemplateName + "_Raw";
-			D_temp_2D_exp[t]->SetName(oldTemplateName);
+			D_temp_2D_exp[t]->SetName(oldTemplateName.c_str());
 			oldTemplateName = D_temp_2D[t]->GetName();
 			oldTemplateName = oldTemplateName + "_k3a";
-			D_temp_2D_expk3a[t]->SetName(oldTemplateName);
+			D_temp_2D_expk3a[t]->SetName(oldTemplateName.c_str());
 
 			if(t==3){
 				oldTemplateName = D_temp_2D[t]->GetName();
 				oldTemplateName = oldTemplateName + "_UnConditional";
-				hqqZZ_Unconditional->SetName(oldTemplateName);
+				hqqZZ_Unconditional->SetName(oldTemplateName.c_str());
 				oldTemplateName = D_temp_2D[t]->GetName();
 				oldTemplateName = oldTemplateName + "_UnConditional_Raw";
-				hqqZZ_Unconditional_exp->SetName(oldTemplateName);
+				hqqZZ_Unconditional_exp->SetName(oldTemplateName.c_str());
 				oldTemplateName = D_temp_2D[t]->GetName();
 				oldTemplateName = oldTemplateName + "_UnConditional_k3a";
-				hqqZZ_Unconditional_expk3a->SetName(oldTemplateName);
+				hqqZZ_Unconditional_expk3a->SetName(oldTemplateName.c_str());
 				foutput->WriteTObject(hqqZZ_Unconditional);
 				foutput->WriteTObject(hqqZZ_Unconditional_exp);
 				foutput->WriteTObject(hqqZZ_Unconditional_expk3a);
@@ -386,13 +384,13 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 			if(t==4){
 				oldTemplateName = D_temp_2D[t]->GetName();
 				oldTemplateName = oldTemplateName + "_UnConditional";
-				hZX_Unconditional->SetName(oldTemplateName);
+				hZX_Unconditional->SetName(oldTemplateName.c_str());
 				oldTemplateName = D_temp_2D[t]->GetName();
 				oldTemplateName = oldTemplateName + "_UnConditional_Raw";
-				hZX_Unconditional_exp->SetName(oldTemplateName);
+				hZX_Unconditional_exp->SetName(oldTemplateName.c_str());
 				oldTemplateName = D_temp_2D[t]->GetName();
 				oldTemplateName = oldTemplateName + "_UnConditional_k3a";
-				hZX_Unconditional_expk3a->SetName(oldTemplateName);
+				hZX_Unconditional_expk3a->SetName(oldTemplateName.c_str());
 				foutput->WriteTObject(hZX_Unconditional);
 				foutput->WriteTObject(hZX_Unconditional_exp);
 				foutput->WriteTObject(hZX_Unconditional_expk3a);
@@ -424,10 +422,10 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 			};
 
 
-			TString canvasname = "Compare_";
+			string canvasname = "Compare_";
 			canvasname = canvasname + D_temp_2D[t]->GetName();
 			canvasname = canvasname + "_ZZMass";
-			TCanvas* cKD = new TCanvas(canvasname);
+			TCanvas* cKD = new TCanvas(canvasname.c_str());
 			cKD->cd();
 			TH1D* hPSmooth = D_temp_2D[t]->ProjectionX();
 			TH1D* hPk3a = D_temp_2D_expk3a[t]->ProjectionX();
@@ -458,7 +456,7 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 				if(t==3) canvasname = canvasname + hqqZZ_Unconditional->GetName();
 				if(t==4) canvasname = canvasname + hZX_Unconditional->GetName();
 				canvasname = canvasname + "_ZZMass";
-				cKD = new TCanvas(canvasname);
+				cKD = new TCanvas(canvasname.c_str());
 				cKD->cd();
 				if(t==3){
 					hPSmooth = hqqZZ_Unconditional->ProjectionX();
@@ -495,7 +493,7 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 			canvasname = "Compare_";
 			canvasname = canvasname + D_temp_2D[t]->GetName();
 			canvasname = canvasname + "_" + strFitDim[tFitD];
-			cKD = new TCanvas(canvasname);
+			cKD = new TCanvas(canvasname.c_str());
 			cKD->cd();
 			hPSmooth = D_temp_2D[t]->ProjectionY();
 			hPk3a = D_temp_2D_expk3a[t]->ProjectionY();
@@ -526,7 +524,7 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 				if(t==3) canvasname = canvasname + hqqZZ_Unconditional->GetName();
 				if(t==4) canvasname = canvasname + hZX_Unconditional->GetName();
 				canvasname = canvasname + "_" + strFitDim[tFitD];
-				cKD = new TCanvas(canvasname);
+				cKD = new TCanvas(canvasname.c_str());
 				cKD->cd();
 				if(t==3){
 					hPSmooth = hqqZZ_Unconditional->ProjectionY();

@@ -42,32 +42,37 @@ void makeCombineTemplates_Modified_MCFM(){
 // isSmooth = true/false (flag to apply smoothing at this stage, both needed for later stage)
 void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, int Systematics, bool isSmooth){
 	char TREE_NAME[]="SelectedTree";
-	TString INPUT_SM_NAME = "HZZ4lTree_powheg15jhuGenV3-0PMH125.6_Reprocessed.root";
-	TString INPUT_NAME = "HZZ4lTree_ggTo";
-	TString OUTPUT_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplatesForCombine_";
-	if(!isSmooth) OUTPUT_NAME += "Raw_";
-	OUTPUT_NAME += TString(strFitDim[tFitD]) + "_";
-	TString erg_dir;
-	erg_dir.Form("LHC_%iTeV/",erg_tev);
-
-	if(Systematics==0) OUTPUT_NAME += "Nominal.root";
-	if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD.root";
-	if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD.root";
-	if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF.root";
-	if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF.root";
-	TString cinput_common = user_gg2VV_location + erg_dir + "/" + user_folder[folder] + "/";
-	TString cinput_common_qqZZ = user_gg2VV_location;
-	TString cinput_common_ZX = user_gg2VV_location;
+	string INPUT_SM_NAME = "HZZ4lTree_powheg15jhuGenV3-0PMH125.6_Reprocessed.root";
+	string INPUT_SM_126_NAME = "HZZ4lTree_powheg15jhuGenV3H126_Reprocessed.root";
+	string INPUT_NAME = "HZZ4lTree_ggTo";
+	string OUTPUT_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplatesForCombine_";
+	if(!isSmooth) OUTPUT_NAME = OUTPUT_NAME + "Raw_";
+	OUTPUT_NAME = OUTPUT_NAME + strFitDim[tFitD] + "_";
+	char cerg[1000];
+	sprintf(cerg,"%iTeV",erg_tev);
+	char erg_dir[1000];
+	sprintf(erg_dir,"LHC_%iTeV",erg_tev);
+	if(Systematics==0) OUTPUT_NAME = OUTPUT_NAME + "Nominal.root";
+	if (Systematics == 1) OUTPUT_NAME = OUTPUT_NAME + "SysUp_ggQCD.root";
+	if (Systematics == -1) OUTPUT_NAME = OUTPUT_NAME + "SysDown_ggQCD.root";
+	if (Systematics == 2) OUTPUT_NAME = OUTPUT_NAME + "SysUp_ggPDF.root";
+	if (Systematics == -2) OUTPUT_NAME = OUTPUT_NAME + "SysDown_ggPDF.root";
+	string cinput_common = user_gg2VV_location + erg_dir + "/" + user_folder[folder] + "/";
+	string cinput_common_recover;
+	if(folder!=2) cinput_common_recover = user_gg2VV_location + erg_dir + "/" + user_folder[2] + "/";
+	string cinput_common_qqZZ = user_gg2VV_location;
+	string cinput_common_ZX = user_gg2VV_location;
 
 	int EnergyIndex=1;
 	if(erg_tev==7) EnergyIndex=0;
 	float lowside[3]={220,230,240};
-	float ZZMass_PeakCut[2]={105.6,140.6}; // Spin 0 analysis
+	float ZZMass_PeakCut[2]={120,130}; // Spin 0 analysis
 	double ggZZ_Syst_AbsNormSyst[2][2] = { // EnergyIndex
 		{ 0.0745, 0.0735 },
 		{ 0.075, 0.072 }
 	}; // QCD, PDF
 
+	int genFinalState;
 	float MC_weight;
 	float MC_weight_down;
 	float MC_weight_up;
@@ -79,40 +84,89 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	float MC_weight_PDF_Norm_up = 1;
 	float GenHMass = 0;
 	float ZZMass=0;
+	float Z1Mass=0;
+	float Z2Mass=0;
 
-	TString cinput_KDFactor = "./data/HZZ4l-KDFactorGraph";
+	string cinput_KDFactor = "./data/HZZ4l-KDFactorGraph";
 	if (EnergyIndex == 0) cinput_KDFactor = cinput_KDFactor + "_7TeV";
 	cinput_KDFactor = cinput_KDFactor + ".root";
-	TFile* finput_KDFactor = new TFile(cinput_KDFactor, "read");
-	TString tgkfname = "KDScale_";
+	TFile* finput_KDFactor = new TFile(cinput_KDFactor.c_str(), "read");
+	string tgkfname = "KDScale_";
 	tgkfname = tgkfname + "AllFlavors_UnNormalized";
-	TGraphAsymmErrors* tgkf = (TGraphAsymmErrors*)finput_KDFactor->Get(tgkfname);
+	TGraphAsymmErrors* tgkf = (TGraphAsymmErrors*)finput_KDFactor->Get(tgkfname.c_str());
 
-	//ggH yields
-	double nSM_ScaledPeak[2][3]={
-		{1.0902689,0.6087736,1.4452079},
-		{5.1963998,2.6944639,6.6562629}
+	string cinput_sm = cinput_common + INPUT_SM_NAME;
+	TFile* fsm = new TFile(cinput_sm.c_str(),"read");
+	TTree* tsm = (TTree*) fsm->Get(TREE_NAME);
+	tsm->SetBranchAddress("ZZMass",&ZZMass);
+	tsm->SetBranchAddress("MC_weight",&MC_weight);
+	double nTotalSM=0;
+	for(int sev=0;sev<tsm->GetEntries();sev++){
+		tsm->GetEntry(sev);
+		if(ZZMass>=ZZMass_PeakCut[0] && ZZMass<ZZMass_PeakCut[1]) nTotalSM += MC_weight;
 	};
-	//use VBF yields directly
-	double VBF_Sig_Datacard[2][3]={
-		{0.092458836,0.051755897,0.12861921},
-		{0.46798807,0.24788553,0.61781689}
+	fsm->Close();
+	cinput_sm = cinput_common + INPUT_SM_126_NAME;
+	TFile* fsm2 = new TFile(cinput_sm.c_str(),"read");
+	TTree* tsm2 = (TTree*) fsm2->Get(TREE_NAME);
+	tsm2->SetBranchAddress("genFinalState",&genFinalState);
+	tsm2->SetBranchAddress("ZZMass",&ZZMass);
+	tsm2->SetBranchAddress("MC_weight",&MC_weight);
+	double nTotalSM126_notTau=0;
+	double nTotalSM126_Tau=0;
+	for(int sev=0;sev<tsm2->GetEntries();sev++){
+		tsm2->GetEntry(sev);
+		if(ZZMass>=ZZMass_PeakCut[0] && ZZMass<ZZMass_PeakCut[1]){
+			if(genFinalState!=4) nTotalSM126_notTau += MC_weight;
+			else nTotalSM126_Tau += MC_weight;
+		};
 	};
-	double overall_VBF_scale=1;
-	for (int e = 0; e < 2; e++){for (int ss = 0; ss < 3; ss++){ nSM_ScaledPeak[e][ss] /= luminosity[e]; VBF_Sig_Datacard[e][ss] /= luminosity[e]; }}
+	fsm2->Close();
+	nTotalSM126_notTau *= (BR_Table[EnergyIndex][1][1]*XSEC_Table[EnergyIndex][1]) / ( BR_Table[EnergyIndex][2][1]*XSEC_Table[EnergyIndex][2] );
+	nTotalSM126_Tau *= ( (BR_Table[EnergyIndex][1][0]-BR_Table[EnergyIndex][1][1])*XSEC_Table[EnergyIndex][1]) / ( (BR_Table[EnergyIndex][2][0]-BR_Table[EnergyIndex][2][1])*XSEC_Table[EnergyIndex][2] );
+	double tauScale = (nTotalSM126_notTau + nTotalSM126_Tau) / nTotalSM126_notTau;
+	cout << "Tau scale is " << tauScale << endl;
+	double InterferenceScale=1;
+	if(folder!=2) InterferenceScale = BR_Table[EnergyIndex][1][3]/(2.0*BR_Table[EnergyIndex][1][2]);
+//	float nSM_ObservedPeak = nSMValues[EnergyIndex][folder];
+	double nSM_ObservedPeak = nTotalSM*tauScale;
+//	nSM_ObservedPeak *= (BR_Table[EnergyIndex][1][0]*XSEC_Table[EnergyIndex][1]) / ( BR_Table[EnergyIndex][2][0]*XSEC_Table[EnergyIndex][2] );
+//	if(folder!=2) nSM_ObservedPeak *= (BR_Table[EnergyIndex][1][2]*XSEC_Table[EnergyIndex][1]) / ( BR_Table[EnergyIndex][2][2]*XSEC_Table[EnergyIndex][2] );
+//	else nSM_ObservedPeak *= (BR_Table[EnergyIndex][1][3]*XSEC_Table[EnergyIndex][1]) / ( BR_Table[EnergyIndex][2][3]*XSEC_Table[EnergyIndex][2] );
+//	float nSM_ScaledPeak = nSM_ObservedPeak*InterferenceScale;
+	double nSM_ScaledPeak = nSM_ObservedPeak;
+	cout << "Observed number of peak events is " << nSM_ObservedPeak*luminosity[EnergyIndex] << endl;
+	cout << "Scaled number of peak events is " << nSM_ScaledPeak*luminosity[EnergyIndex] << endl;
 
-	TString comstring;
-	comstring.Form("%i",erg_tev);
-	TString cinput_VBF_Sig = "./data/HZZ4l-125_6-" + comstring + "TeV-Sig_MCFM_PhantomVBF_Comparison.root";
+	char cinput_VBF_Sig[1000];
+	sprintf(cinput_VBF_Sig,"%s%i%s","./data/HZZ4l-125_6-",erg_tev,"TeV-Sig_MCFM_PhantomVBF_Comparison.root");
 	TFile* finput_VBF = new TFile(cinput_VBF_Sig,"read");
 	TSpline3* tsp_VBF_Sig = (TSpline3*) finput_VBF->Get("Spline3");
+	double VBF_Sig_Datacard_Ratio[2][3]={
+		{
+			0.094235231222,
+			0.094839434433,
+			0.097909748221
+		},
+		{
+			0.0891967993747,
+			0.0907358465455,
+			0.0912144438605
+		}
+	};
+	double overall_VBF_scale=1;
 
+//	for(int lo=0;lo<3;lo++){
 	for(int lo=0;lo<1;lo++){
-		TString coutput_common = user_dir + erg_dir;
-		coutput_common = coutput_common + user_folder[folder] + "/";
+		char clowside[1000];
+		sprintf(clowside,"%.0f",lowside[lo]);
 
-		TString coutput = coutput_common + OUTPUT_NAME;
-		TFile* foutput = new TFile(coutput,"recreate");
+		string user_core = user_dir;
+		string coutput_common = user_core + erg_dir;
+		coutput_common = coutput_common + "/Analysis/Templates/Combine/" + user_folder[folder] + "/" + clowside + "/";
+
+		string coutput = coutput_common + OUTPUT_NAME;
+		TFile* foutput = new TFile(coutput.c_str(),"recreate");
 
 		float ZZMass_cut[2]={lowside[lo],1600};
 		float ZZwidth = 20.0;
@@ -151,26 +205,26 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 		MC_weight_PDF_Norm_up = 1;
 		GenHMass = 0;
 		ZZMass=0;
+		Z1Mass=0;
+		Z2Mass=0;
 
 		double nMZZ220[3]={0};
 
-		//Template filler
 		for(int t=0;t<kNumTemplates;t++){
 			TChain* tree = new TChain(TREE_NAME);
 
-			//Grab appropriate files for templates
 			if(t==3){
 				for(int b=0;b<kNumBkg;b++){
-					TString cinput = cinput_common_qqZZ;
+					string cinput = cinput_common_qqZZ;
 					cinput = cinput + erg_dir + "/" + user_folder[folder] + "/" + hzz4lprefix + sample_BackgroundFile[b] + "_Reprocessed.root";
-					tree->Add(cinput);
+					tree->Add(cinput.c_str());
 					cout << cinput << endl;
 				};
 			}
 			else if(t==4){
-				TString cinput = cinput_common_ZX;
+				string cinput = cinput_common_ZX;
 				cinput = cinput + erg_dir + "/" + user_folder[folder] + "/HZZ4lTree_DoubleOr_CRZLLTree_Reprocessed.root";
-				tree->Add(cinput);
+				tree->Add(cinput.c_str());
 				cout << cinput << endl;
 			}
 			else if(t<3){
@@ -179,33 +233,52 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 					if (folder == 2 && tp == 2) tp = 3;
 					if (folder == 1 && tp == 1) tp = 3;
 				};
-				TString cinput_2e2mu = cinput_common + INPUT_NAME + "2e2mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
-				TString cinput_4e = cinput_common + INPUT_NAME + "4e_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
-				TString cinput_4mu = cinput_common + INPUT_NAME + "4mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
+				string cinput_2e2mu = cinput_common + INPUT_NAME + "2e2mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
+				string cinput_4e = cinput_common + INPUT_NAME + "4e_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
+				string cinput_4mu = cinput_common + INPUT_NAME + "4mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
 
-				tree->Add(cinput_2e2mu);
-				tree->Add(cinput_4e);
-				tree->Add(cinput_4mu);
+				tree->Add(cinput_2e2mu.c_str());
+				tree->Add(cinput_4e.c_str());
+				tree->Add(cinput_4mu.c_str());
 			}
+/*
+			else if(t<2){
+				string cinput_2e2mu = cinput_common + INPUT_NAME + "2e2mu_" + sample_suffix_MCFM[t] + "_Reprocessed.root";
+				string cinput_4e = cinput_common + INPUT_NAME + "4e_" + sample_suffix_MCFM[t] + "_Reprocessed.root";
+				string cinput_4mu = cinput_common + INPUT_NAME + "4mu_" + sample_suffix_MCFM[t] + "_Reprocessed.root";
+
+				tree->Add(cinput_2e2mu.c_str());
+				tree->Add(cinput_4e.c_str());
+				tree->Add(cinput_4mu.c_str());
+			}
+			else if(t==2){
+				string cinput_2e2mu = cinput_common + INPUT_NAME + "2e2mu_" + sample_suffix_MCFM[t+1] + "_Reprocessed.root";
+				string cinput_4e = cinput_common + INPUT_NAME + "4e_" + sample_suffix_MCFM[t+1] + "_Reprocessed.root";
+				string cinput_4mu = cinput_common + INPUT_NAME + "4mu_" + sample_suffix_MCFM[t+1] + "_Reprocessed.root";
+
+				tree->Add(cinput_2e2mu.c_str());
+				tree->Add(cinput_4e.c_str());
+				tree->Add(cinput_4mu.c_str());
+			}
+*/
 			else if(t>4){
 				int tp = t-5;
 				if (EnergyIndex == 0){ // USE BSI25, NO CONTAMINATION SIGNIFICANT TO CREATE STORAGE TREES
 					if (folder == 2 && tp == 2) tp = 3;
 					if (folder == 1 && tp == 1) tp = 3;
 				};
-				TString cinput_2e2mu = cinput_common + INPUT_NAME + "2e2mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
-				TString cinput_4e = cinput_common + INPUT_NAME + "4e_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
-				TString cinput_4mu = cinput_common + INPUT_NAME + "4mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
+				string cinput_2e2mu = cinput_common + INPUT_NAME + "2e2mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
+				string cinput_4e = cinput_common + INPUT_NAME + "4e_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
+				string cinput_4mu = cinput_common + INPUT_NAME + "4mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
 
-				tree->Add(cinput_2e2mu);
+				tree->Add(cinput_2e2mu.c_str());
 				cout << cinput_2e2mu << endl;
-				tree->Add(cinput_4e);
+				tree->Add(cinput_4e.c_str());
 				cout << cinput_4e << endl;
-				tree->Add(cinput_4mu);
+				tree->Add(cinput_4mu.c_str());
 				cout << cinput_4mu << endl;
 			};
 
-			//Initialize templates
 			char templatename_1D[100];
 			char templatename_2D[100];
 			if(t<2){
@@ -245,7 +318,6 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				D_temp_2D[t]->GetYaxis()->SetTitle(strFitDim_label[tFitD]);
 			};
 
-			//Prepare trees
 			tree->SetBranchAddress("GenHMass",&GenHMass);
 			tree->SetBranchAddress("ZZMass",&ZZMass);
 			if(t!=4) tree->SetBranchAddress("MC_weight",&MC_weight);
@@ -271,10 +343,11 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			if(t<3 || t>4) tree->SetBranchAddress("MC_weight_ggZZLepInt",&MC_weight_ggZZLepInt);
 			else MC_weight_ggZZLepInt=1;
 
+			//ONLY CHANGE!!!
 			if(tree->GetBranchStatus(strFitDim[tFitD])) tree->SetBranchAddress(strFitDim[tFitD],&fitYval);
 			else if(!tree->GetBranchStatus(strFitDim[tFitD])){
 				cerr << "Could NOT find branch named " << strFitDim[tFitD] << "!!! Setting strFitDim[" << tFitD << "] = 0." << endl;
-				fitYval=0;
+				/=0;
 			};
 			cout << "Set variables in trees for " << t << endl;
 
@@ -283,9 +356,13 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			if (t == 0) cout << tgkf->Eval(125.6) << endl;
 			for(int ev=0;ev<nEntries;ev++){
 				tree->GetEntry(ev);
+
+				double recoveryScale=1;
+//				if(folder==0 && t==1 && (tree->GetTreeNumber() == 1) ) recoveryScale = 0.58185465;
+//				if(folder==1 && t==1 && (tree->GetTreeNumber() == 1) ) recoveryScale = 0.401331435;
 				double weight = MC_weight;
-				//if (Systematics == -1 && t<3) weight = MC_weight_down;
-				//if (Systematics == 1 && t<3) weight = MC_weight_up;
+//				if (Systematics == -1 && t<3) weight = MC_weight_down;
+//				if (Systematics == 1 && t<3) weight = MC_weight_up;
 				if (t<3) weight *= MC_weight_ggZZLepInt;
 				if (abs(Systematics) != 1 && t<3) weight *= MC_weight_Kfactor;
 				if (Systematics == -1 && t<3) weight *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][0])*MC_weight_Kfactor_Norm_down*tgkf->Eval(125.6);
@@ -307,10 +384,10 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				if(tFitD>0) D_temp_2D[t]->Fill(ZZMass,fitYval,weight);
 			};
 			cout << t << " NTotal: " << nTotal << endl;
-			if(t<3) cout << nMZZ220[t]*nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated*luminosity[EnergyIndex] << endl;
+			if(t<3) cout << nMZZ220[t]*nSM_ScaledPeak/nSig_Simulated*luminosity[EnergyIndex] << endl;
 			if(t<3){
-				double myscale = nSM_ScaledPeak[EnergyIndex][folder] / nSig_Simulated;
-				if (Systematics == -1 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][0]); // take out same factors in denominator nSig_Simulated
+				double myscale = nSM_ScaledPeak / nSig_Simulated;
+				if (Systematics == -1 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][0]);
 				if (Systematics == 1 && t < 3) myscale *= (1.0 + ggZZ_Syst_AbsNormSyst[EnergyIndex][0]);
 				if (Systematics == -2 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][1]);
 				if (Systematics == 2 && t<3) myscale *= (1.0 + ggZZ_Syst_AbsNormSyst[EnergyIndex][1]);
@@ -319,7 +396,8 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				cout << "Scaling t: " << t << " by " << myscale << endl;
 			};
 			if(t==5){
-				double myscale = VBF_Sig_Datacard[EnergyIndex][folder]/nVBF_Sig_Simulated;
+				double myscale = VBF_Sig_Datacard_Ratio[EnergyIndex][folder];
+				myscale *= nSM_ScaledPeak/nVBF_Sig_Simulated;
 				overall_VBF_scale = myscale;
 				D_temp_1D[t]->Scale(myscale);
 				if(tFitD>0) D_temp_2D[t]->Scale(myscale);
@@ -355,11 +433,8 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 
 			delete tree;
 		};
-
-		//Makes Bkg, Sig, Int from linear combinations of above templates
 		if (EnergyIndex == 0){ // USE BSI25, NO CONTAMINATION SIGNIFICANT TO CREATE STORAGE TREES
 			if (folder == 2){
-				//MAKE FUNCTION
 				D_temp_1D[2]->Add(D_temp_1D[1], -1.0);
 				D_temp_1D[2]->Add(D_temp_1D[0], -25.0);
 				D_temp_1D[2]->Scale(0.2);
@@ -385,8 +460,6 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 					D_temp_2D[7]->Add(D_temp_2D[5], 1.0);
 				};
 			};
-
-			//Divides bins by bin width
 			if (folder == 1){
 				for (int binx = 1; binx <= D_temp_1D[1]->GetNbinsX(); binx++){
 					double sig = D_temp_1D[0]->GetBinContent(binx);
@@ -440,6 +513,8 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 
 			};
 		};
+
+		double nTotalSMSig = D_temp_1D[2]->Integral();
 		D_temp_1D[2]->Add(D_temp_1D[1],-1.0);
 		D_temp_1D[2]->Add(D_temp_1D[0],-1.0);
 		if(tFitD!=0){
@@ -452,97 +527,6 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			D_temp_2D[7]->Add(D_temp_2D[6],-1.0);
 			D_temp_2D[7]->Add(D_temp_2D[5],-1.0);
 		};
-		/*
-			for(int t=0;t<kNumTemplates;t++){
-				if(t<3) D_temp_1D[t]->Scale(1.0/nTotalSMSig);
-				else D_temp_1D[t]->Scale(1.0/D_temp_1D[t]->Integral());
-				if(tFitD!=0){
-					if(t<3) D_temp_2D[t]->Scale(1.0/nTotalSMSig);
-					else D_temp_2D[t]->Scale(1.0/D_temp_2D[t]->Integral());
-				};
-			};
-		*/
-
-		cout << "Integrals after everything:\n1D\t2D" << endl;
+	/*
 		for(int t=0;t<kNumTemplates;t++){
-			for(int binx=0;binx<nbinsx;binx++){
-				double binwidthx;
-				if(tFitD==0) binwidthx = kDXarray[binx+1] - kDXarray[binx];
-				else binwidthx = kDYarray[binx+1] - kDYarray[binx];
-				double bincontent = D_temp_1D[t]->GetBinContent(binx+1);
-				if(t!=3 && t!=4) bincontent /= binwidthx;
-				D_temp_1D[t]->SetBinContent(binx+1,bincontent);
-
-				binwidthx = kDXarray[binx+1] - kDXarray[binx];
-
-				if(tFitD!=0){
-					for(int biny=0;biny<nbinsy;biny++){
-						double binwidthy = kDYarray[biny+1] - kDYarray[biny];
-						double binwidth = binwidthx*binwidthy;
-						bincontent = D_temp_2D[t]->GetBinContent(binx+1,biny+1);
-						if(t!=3 && t!=4) bincontent /= binwidth;
-						D_temp_2D[t]->SetBinContent(binx+1,biny+1,bincontent);
-					};
-				};
-			};
-			if(t==4 && Systematics!=0){
-				double intTZX_1D = D_temp_1D[t]->Integral();
-				double intTZZQQB_1D = D_temp_1D[3]->Integral();
-				for(int binx=1;binx<=D_temp_1D[t]->GetNbinsX();binx++){
-					double bincontent = D_temp_1D[t]->GetBinContent(binx);
-					double bincontent_alt = D_temp_1D[3]->GetBinContent(binx);
-					bincontent_alt *= intTZX_1D/intTZZQQB_1D;
-					double difference = bincontent_alt - bincontent;
-
-					if(Systematics>0) bincontent += difference;
-					else bincontent -= difference;
-					if(bincontent < 0) bincontent = 0;
-					D_temp_1D[t]->SetBinContent(binx,bincontent);
-				};
-				D_temp_1D[t]->Scale(intTZX_1D/D_temp_1D[t]->Integral());
-
-				for(int binx=1;binx<=D_temp_2D[t]->GetNbinsX();binx++){
-					for(int biny=1;biny<=D_temp_2D[t]->GetNbinsY();biny++){
-						double bincontent = D_temp_2D[t]->GetBinContent(binx,biny);
-						double bincontent_alt = D_temp_2D[3]->GetBinContent(binx,biny);
-						double difference = bincontent_alt - bincontent;
-
-						if(Systematics>0) bincontent += difference;
-						else bincontent -= difference;
-						if(bincontent < 0) bincontent = 0;
-						D_temp_2D[t]->SetBinContent(binx,biny,bincontent);
-					};
-					double intBinX = D_temp_2D[t]->Integral(binx,binx,1,D_temp_2D[t]->GetNbinsY());
-					for(int biny=1;biny<=D_temp_2D[t]->GetNbinsY();biny++){
-						double bincontent = D_temp_2D[t]->GetBinContent(binx,biny);
-
-						if(intBinX!=0) D_temp_2D[t]->SetBinContent(binx,biny,bincontent/intBinX);
-					};
-				};
-				if(Systematics<0){
-					double presmoothInt = D_temp_1D[t]->Integral();
-					if(isSmooth) D_temp_1D[t]->Smooth(1,"k3a");
-					double postsmoothInt = D_temp_1D[t]->Integral();
-					D_temp_1D[t]->Scale(presmoothInt/postsmoothInt);
-				};
-			};
-			foutput->WriteTObject(D_temp_1D[t]);
-			if(tFitD!=0) foutput->WriteTObject(D_temp_2D[t]);
-
-			if(t!=3 && t!=4){
-				cout << D_temp_1D[t]->Integral("width")*luminosity[EnergyIndex] << '\t';
-				if(tFitD!=0) cout << D_temp_2D[t]->Integral("width")*luminosity[EnergyIndex] << endl;
-				else cout << endl;
-			}
-			else{
-				cout << D_temp_1D[t]->Integral(1,nbinsx) << '\t';
-				if(tFitD!=0) cout << D_temp_2D[t]->Integral(1,nbinsx,1,nbinsy) << endl;
-				else cout << endl;
-			};
-		};
-		foutput->Close();
-	};
-	delete tgkf;
-	finput_KDFactor->Close();
-	finput_VBF->Close();
-};
+			if(t<3) D_temp_1D[t]->Sc

@@ -529,4 +529,94 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 		};
 	/*
 		for(int t=0;t<kNumTemplates;t++){
-			if(t<3) D_temp_1D[t]->Sc
+			if(t<3) D_temp_1D[t]->Scale(1.0/nTotalSMSig);
+			else D_temp_1D[t]->Scale(1.0/D_temp_1D[t]->Integral());
+			if(tFitD!=0){
+				if(t<3) D_temp_2D[t]->Scale(1.0/nTotalSMSig);
+				else D_temp_2D[t]->Scale(1.0/D_temp_2D[t]->Integral());
+			};
+		};
+	*/
+		cout << "Integrals after everything:\n1D\t2D" << endl;
+		for(int t=0;t<kNumTemplates;t++){
+			for(int binx=0;binx<nbinsx;binx++){
+				double binwidthx;
+				if(tFitD==0) binwidthx = kDXarray[binx+1] - kDXarray[binx];
+				else binwidthx = kDYarray[binx+1] - kDYarray[binx];
+				double bincontent = D_temp_1D[t]->GetBinContent(binx+1);
+				if(t!=3 && t!=4) bincontent /= binwidthx;
+				D_temp_1D[t]->SetBinContent(binx+1,bincontent);
+
+				binwidthx = kDXarray[binx+1] - kDXarray[binx];
+
+				if(tFitD!=0){
+					for(int biny=0;biny<nbinsy;biny++){
+						double binwidthy = kDYarray[biny+1] - kDYarray[biny];
+						double binwidth = binwidthx*binwidthy;
+						bincontent = D_temp_2D[t]->GetBinContent(binx+1,biny+1);
+						if(t!=3 && t!=4) bincontent /= binwidth;
+						D_temp_2D[t]->SetBinContent(binx+1,biny+1,bincontent);
+					};
+				};
+			};
+			if(t==4 && Systematics!=0){
+				double intTZX_1D = D_temp_1D[t]->Integral();
+				double intTZZQQB_1D = D_temp_1D[3]->Integral();
+				for(int binx=1;binx<=D_temp_1D[t]->GetNbinsX();binx++){
+					double bincontent = D_temp_1D[t]->GetBinContent(binx);
+					double bincontent_alt = D_temp_1D[3]->GetBinContent(binx);
+					bincontent_alt *= intTZX_1D/intTZZQQB_1D;
+					double difference = bincontent_alt - bincontent;
+
+					if(Systematics>0) bincontent += difference;
+					else bincontent -= difference;
+					if(bincontent < 0) bincontent = 0;
+					D_temp_1D[t]->SetBinContent(binx,bincontent);
+				};
+				D_temp_1D[t]->Scale(intTZX_1D/D_temp_1D[t]->Integral());
+
+				for(int binx=1;binx<=D_temp_2D[t]->GetNbinsX();binx++){
+					for(int biny=1;biny<=D_temp_2D[t]->GetNbinsY();biny++){
+						double bincontent = D_temp_2D[t]->GetBinContent(binx,biny);
+						double bincontent_alt = D_temp_2D[3]->GetBinContent(binx,biny);
+						double difference = bincontent_alt - bincontent;
+
+						if(Systematics>0) bincontent += difference;
+						else bincontent -= difference;
+						if(bincontent < 0) bincontent = 0;
+						D_temp_2D[t]->SetBinContent(binx,biny,bincontent);
+					};
+					double intBinX = D_temp_2D[t]->Integral(binx,binx,1,D_temp_2D[t]->GetNbinsY());
+					for(int biny=1;biny<=D_temp_2D[t]->GetNbinsY();biny++){
+						double bincontent = D_temp_2D[t]->GetBinContent(binx,biny);
+
+						if(intBinX!=0) D_temp_2D[t]->SetBinContent(binx,biny,bincontent/intBinX);
+					};
+				};
+				if(Systematics<0){
+					double presmoothInt = D_temp_1D[t]->Integral();
+					if(isSmooth) D_temp_1D[t]->Smooth(1,"k3a");
+					double postsmoothInt = D_temp_1D[t]->Integral();
+					D_temp_1D[t]->Scale(presmoothInt/postsmoothInt);
+				};
+			};
+			foutput->WriteTObject(D_temp_1D[t]);
+			if(tFitD!=0) foutput->WriteTObject(D_temp_2D[t]);
+
+			if(t!=3 || t!=4){
+				cout << D_temp_1D[t]->Integral("width")*luminosity[EnergyIndex] << '\t';
+				if(tFitD!=0) cout << D_temp_2D[t]->Integral("width")*luminosity[EnergyIndex] << endl;
+				else cout << endl;
+			}
+			else{
+				cout << D_temp_1D[t]->Integral(1,nbinsx) << '\t';
+				if(tFitD!=0) cout << D_temp_2D[t]->Integral(1,nbinsx,1,nbinsy) << endl;
+				else cout << endl;
+			};
+		};
+		foutput->Close();
+	};
+	delete tgkf;
+	finput_KDFactor->Close();
+	finput_VBF->Close();
+};

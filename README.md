@@ -3,7 +3,7 @@ HiggsWidth_PostICHEP
 
 To produce templates for https://github.com/HZZ4l/CreateWidthDatacards, in your CMSSW release, follow these directions:
 
-_NOTE_: Use **legacy** tag to reproduce templates for width results.
+_NOTE_: Use **legacywithfixes** tag to reproduce templates for width results.
 
 0) Check that data/ZZ4l_125_6_Samples.h is pointing to the correct directories.
 
@@ -19,7 +19,7 @@ Similar to 1, but will add trees with templates. Currently has an option to use 
 
 To produce correct JSON files for TemplateBuilder, run
 
-	./pushjson.sh <Location of LHC_*TeV directories> <Location of TemplateBuilder/run directory>
+	./pushjson.sh <Location of LHC_*TeV directories that contain templates with trees> <Location of TemplateBuilder/run directory>
 
 Then, compile TemplateBuilder and submit jobs to queue to smooth each template.
 

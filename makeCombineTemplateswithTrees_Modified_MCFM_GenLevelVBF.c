@@ -162,9 +162,17 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 	double tauScale = (nTotalSM126_notTau + nTotalSM126_Tau) / nTotalSM126_notTau;
 	cout << "Tau scale is " << tauScale << endl;
 	double nSM_ObservedPeak = nTotalSM*tauScale;
-	double nSM_ScaledPeak = nSM_ObservedPeak;
+	//double nSM_ScaledPeak = nSM_ObservedPeak;
 	cout << "Observed number of peak events is " << nSM_ObservedPeak*luminosity[EnergyIndex] << endl;
-	cout << "Scaled number of peak events is " << nSM_ScaledPeak*luminosity[EnergyIndex] << endl;
+	//cout << "Scaled number of peak events is " << nSM_ScaledPeak*luminosity[EnergyIndex] << endl;
+
+ 	double nSM_ScaledPeak[2][3]={
+ 		{1.0902689,0.6087736,1.4452079},
+ 		{5.1963998,2.6944639,6.6562629}
+	};
+
+	for (int e = 0; e < 2; e++){for (int ss = 0; ss < 3; ss++){ nSM_ScaledPeak[e][ss] /= luminosity[e];}};
+
 	TGraph* tg_interf = make_HZZ_LeptonInterferenceGraph();
 
 	TString cinput_VBF_Sig = "./data/HZZ4l-125_6-" + comstring + "TeV-Sig_MCFM_PhantomVBF_Comparison.root";
@@ -252,7 +260,6 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 		for(int tr=0;tr<4;tr++){
 			tree_VBF[tr] = new TChain(TREE_NAME);
 		};
-		//CHANGE - made to point to correct directory
 		TString cinput_VBF_Bkg = cinput_common_VBF + "../VBF/" + erg_dir + "/" + user_folder[folder] + "/" + INPUT_NAME_VBF + sample_VBF_suffix[0];
 		TString cinput_VBF_BSI = cinput_common_VBF + "../VBF/" + erg_dir + "/" + user_folder[folder] + "/" + INPUT_NAME_VBF + sample_VBF_suffix[3];
 		TString cinput_VBF_BSI10 = cinput_common_VBF + "../VBF/" + erg_dir + "/" + user_folder[folder] + "/" + INPUT_NAME_VBF + sample_VBF_suffix[1];
@@ -561,9 +568,9 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 
 			//Reweighting normalization
 			if(t<3){
-				cout << nMZZ220[t]*nSM_ScaledPeak/nSig_Simulated*luminosity[EnergyIndex] << endl;
+				cout << nMZZ220[t]*nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated*luminosity[EnergyIndex] << endl;
 
-				double myscale = nSM_ScaledPeak / nSig_Simulated;
+				double myscale = nSM_ScaledPeak[EnergyIndex][folder] / nSig_Simulated;
 				if (Systematics == -1 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][0]);
 				if (Systematics == 1 && t < 3) myscale *= (1.0 + ggZZ_Syst_AbsNormSyst[EnergyIndex][0]);
 				if (Systematics == -2 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][1]);

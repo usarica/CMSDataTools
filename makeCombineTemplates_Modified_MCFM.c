@@ -64,7 +64,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	int EnergyIndex=1;
 	if(erg_tev==7) EnergyIndex=0;
 	float lowside[3]={220,230,240};
-	float ZZMass_PeakCut[2]={120,130}; // Spin 0 analysis
+	float ZZMass_PeakCut[2]={105.6,140.6}; // Spin 0 analysis
 	double ggZZ_Syst_AbsNormSyst[2][2] = { // EnergyIndex
 		{ 0.0745, 0.0735 },
 		{ 0.075, 0.072 }
@@ -123,16 +123,21 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	double tauScale = (nTotalSM126_notTau + nTotalSM126_Tau) / nTotalSM126_notTau;
 	cout << "Tau scale is " << tauScale << endl;
 	double nSM_ObservedPeak = nTotalSM*tauScale;
-	double nSM_ScaledPeak = nSM_ObservedPeak;
+	//double nSM_ScaledPeak = nSM_ObservedPeak;
 	cout << "Observed number of peak events is " << nSM_ObservedPeak*luminosity[EnergyIndex] << endl;
-	cout << "Scaled number of peak events is " << nSM_ScaledPeak*luminosity[EnergyIndex] << endl;
+	//cout << "Scaled number of peak events is " << nSM_ScaledPeak*luminosity[EnergyIndex] << endl;
+
+ 	double nSM_ScaledPeak[2][3]={
+ 		{1.0902689,0.6087736,1.4452079},
+ 		{5.1963998,2.6944639,6.6562629}
+	};
 
 	TString comstring;
 	comstring.Form("%i",erg_tev);
 	TString cinput_VBF_Sig = "./data/HZZ4l-125_6-" + comstring + "TeV-Sig_MCFM_PhantomVBF_Comparison.root";
 	TFile* finput_VBF = new TFile(cinput_VBF_Sig,"read");
 	TSpline3* tsp_VBF_Sig = (TSpline3*) finput_VBF->Get("Spline3");
-	double VBF_Sig_Datacard_Ratio[2][3]={
+	/*double VBF_Sig_Datacard_Ratio[2][3]={
 		{
 			0.094235231222,
 			0.094839434433,
@@ -143,8 +148,15 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			0.0907358465455,
 			0.0912144438605
 		}
-	};
+	};*/
 	double overall_VBF_scale=1;
+
+	//use VBF yields directly
+	double VBF_Sig_Datacard[2][3]={
+		{0.092458836,0.051755897,0.12861921},
+		{0.46798807,0.24788553,0.61781689}
+	};
+	for (int e = 0; e < 2; e++){for (int ss = 0; ss < 3; ss++){ nSM_ScaledPeak[e][ss] /= luminosity[e]; VBF_Sig_Datacard[e][ss] /= luminosity[e]; }}
 
 	for(int lo=0;lo<1;lo++){
 		TString coutput_common = user_dir + erg_dir;
@@ -347,9 +359,9 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				if(tFitD>0) D_temp_2D[t]->Fill(ZZMass,fitYval,weight);
 			};
 			cout << t << " NTotal: " << nTotal << endl;
-			if(t<3) cout << nMZZ220[t]*nSM_ScaledPeak/nSig_Simulated*luminosity[EnergyIndex] << endl;
+			if(t<3) cout << nMZZ220[t]*nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated*luminosity[EnergyIndex] << endl;
 			if(t<3){
-				double myscale = nSM_ScaledPeak / nSig_Simulated;
+				double myscale = nSM_ScaledPeak[EnergyIndex][folder] / nSig_Simulated;
 				if (Systematics == -1 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][0]);
 				if (Systematics == 1 && t < 3) myscale *= (1.0 + ggZZ_Syst_AbsNormSyst[EnergyIndex][0]);
 				if (Systematics == -2 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][1]);
@@ -359,8 +371,8 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				cout << "Scaling t: " << t << " by " << myscale << endl;
 			};
 			if(t==5){
-				double myscale = VBF_Sig_Datacard_Ratio[EnergyIndex][folder];
-				myscale *= nSM_ScaledPeak/nVBF_Sig_Simulated;
+				double myscale = VBF_Sig_Datacard[EnergyIndex][folder];
+				myscale *= nSM_ScaledPeak[EnergyIndex][folder]/nVBF_Sig_Simulated;
 				overall_VBF_scale = myscale;
 				D_temp_1D[t]->Scale(myscale);
 				if(tFitD>0) D_temp_2D[t]->Scale(myscale);

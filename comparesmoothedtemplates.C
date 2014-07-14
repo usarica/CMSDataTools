@@ -19,7 +19,7 @@
 
 using namespace std;
 
-TString writeloc = "Plots/Ratios/";
+TString writeloc = "Plots/Ratios_LastProduction_wChanges/";
 TString templatenames[10]={"T_2D_1","T_2D_2","T_2D_4","T_2D_qqZZ_UnConditional","T_2D_qqZZ","T_2D_ZX_UnConditional","T_2D_ZX","T_2D_VBF_1","T_2D_VBF_2","T_2D_VBF_4"};
 TString filenames[5]={
 	"HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine__GenLevelVBF_wResolution_D_Gamma_gg_r10_SysUp_ggQCD.root",
@@ -53,7 +53,7 @@ void comparesmoothedtemplates(){
 }
 
 void compareonesmoothedtemplate(int CoM, int channel, int numfile, int numtemplate){
-	TString newfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_OLD/UsingLastProduction/";
+	TString newfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/UsingLastProduction_wChanges/";
 	TString oldfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/FromUlascan_020414/";
 	if(CoM==7){
 		newfileloc+="LHC_7TeV/";
@@ -62,9 +62,9 @@ void compareonesmoothedtemplate(int CoM, int channel, int numfile, int numtempla
 		newfileloc+="LHC_8TeV/";
 		oldfileloc+="8TeV/";
 	}
-	if(channel==0){ newfileloc+="2mu2e/250314/"; oldfileloc+="2mu2e/";}
-	if(channel==1){ newfileloc+="4e/250314/"; oldfileloc+="4e/";}
-	if(channel==2){ newfileloc+="4mu/250314/"; oldfileloc+="4mu/";}
+	if(channel==0){ newfileloc+="2mu2e/"; oldfileloc+="2mu2e/";}
+	if(channel==1){ newfileloc+="4e/"; oldfileloc+="4e/";}
+	if(channel==2){ newfileloc+="4mu/"; oldfileloc+="4mu/";}
 
 	TFile* newfile = new TFile(newfileloc + filenames[numfile],"read");
 	TFile* oldfile = new TFile(oldfileloc + filenames[numfile],"read");
@@ -117,7 +117,7 @@ void comparenormalizations(){
 }
 
 void compareonenormalization(int CoM, int channel, int numfile, int numtemplate){
-	TString newfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/UsingLastProduction/";
+	TString newfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/UsingLastProduction_wChanges/";
 	TString oldfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/FromUlascan_020414/";
 	if(CoM==7){
 		newfileloc+="LHC_7TeV/";

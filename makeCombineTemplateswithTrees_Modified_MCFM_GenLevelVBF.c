@@ -37,8 +37,9 @@ TGraph* make_HZZ_LeptonInterferenceGraph(){
 //Main Function, runs over all desired iterations
 void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF(){
 	bool isSmooth=false;
-	int systematics[5]={0,1,-1,2,-2};
-	for(int i=0;i<5;++i){
+	const int kNumSyst=5;
+	int systematics[kNumSyst]={0,1,-1,2,-2};
+	for(int i=0;i<kNumSyst;++i){
 		for(int usesmooth=0;usesmooth<2;++usesmooth){
 			if(usesmooth==0) isSmooth=false;
 			if(usesmooth==1) isSmooth=true;
@@ -99,7 +100,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 	int EnergyIndex=1;
 	if(erg_tev==7) EnergyIndex=0;
 	float lowside[3]={220,230,240};
-	float ZZMass_PeakCut[2]={120,130}; // Spin 0 analysis
+	float ZZMass_PeakCut[2]={105.6,140.6}; // Spin 0 analysis
 	double ggZZ_Syst_AbsNormSyst[2][2] = { // EnergyIndex
 		{ 0.0745, 0.0735 },
 		{ 0.075, 0.072 }

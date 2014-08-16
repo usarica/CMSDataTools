@@ -21,8 +21,9 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 //Main Function, runs over all desired iterations
 void makeCombineTemplates_Modified_MCFM(){
 	bool isSmooth=false;
-	int systematics[5]={0,1,-1,2,-2};
-	for(int i=0;i<5;++i){
+	const int kNumSyst=5;
+	int systematics[kNumSyst]={0,1,-1,2,-2};
+	for(int i=0;i<kNumSyst;++i){
 		for(int usesmooth=0;usesmooth<2;++usesmooth){
 			if(usesmooth==0) isSmooth=false;
 			if(usesmooth==1) isSmooth=true;
@@ -371,8 +372,8 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				cout << "Scaling t: " << t << " by " << myscale << endl;
 			};
 			if(t==5){
-				double myscale = VBF_Sig_Datacard[EnergyIndex][folder];
-				myscale *= nSM_ScaledPeak[EnergyIndex][folder]/nVBF_Sig_Simulated;
+				double myscale = VBF_Sig_Datacard[EnergyIndex][folder]/nVBF_Sig_Simulated;
+				myscale *= nSM_ScaledPeak[EnergyIndex][folder] / nSig_Simulated;
 				overall_VBF_scale = myscale;
 				D_temp_1D[t]->Scale(myscale);
 				if(tFitD>0) D_temp_2D[t]->Scale(myscale);

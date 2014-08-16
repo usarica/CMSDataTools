@@ -19,8 +19,9 @@ using namespace std;
 void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics, bool useResoVBF);
 
 void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF(){
-	int systematics[5]={0,1,-1,2,-2};
-	for(int i=0;i<5;++i){
+	const int kNumSyst=5;
+	int systematics[kNumSyst]={0,1,-1,2,-2};
+	for(int i=0;i<kNumSyst;++i){
 		for(int CoM=7;CoM<9;++CoM){
 			for(int channel=0;channel<3;++channel){
 				makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i],true);	

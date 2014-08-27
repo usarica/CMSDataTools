@@ -15,7 +15,7 @@
 			"weight":"templateWeight",
 			"conserveSumOfWeights":true,
 			"selection":"ZZMass>=220 && ZZMass<=1600",
-			"assertion":"D_Gamma_gg_r10 >= 0. &&  D_Gamma_gg_r10 <= 1.",
+			"assertion":"1",
 			"binning":{
 				"type":"fixed",
 				"bins":[69,220.,1600.,30,0.,1.]
@@ -35,7 +35,7 @@
 			"weight":"templateWeight",
 			"conserveSumOfWeights":true,
 			"selection":"ZZMass>=220 && ZZMass<=1600",
-			"assertion":"D_Gamma_gg_r10 >= 0. &&  D_Gamma_gg_r10 <= 1.",
+			"assertion":"1",
 			"binning":{
 				"type":"fixed",
 				"bins":[69,220.,1600.,30,0.,1.]
@@ -55,7 +55,7 @@
 			"weight":"templateWeight",
 			"conserveSumOfWeights":true,
 			"selection":"ZZMass>=220 && ZZMass<=1600",
-			"assertion":"D_Gamma_gg_r10 >= 0. &&  D_Gamma_gg_r10 <= 1.",
+			"assertion":"1",
 			"binning":{
 				"type":"fixed",
 				"bins":[69,220.,1600.,30,0.,1.]
@@ -76,7 +76,7 @@
 			"weight":"templateWeight",
 			"conserveSumOfWeights":true,
 			"selection":"ZZMass>=220 && ZZMass<=1600",
-			"assertion":"D_Gamma_gg_r10 >= 0. &&  D_Gamma_gg_r10 <= 1.",
+			"assertion":"1",
 			"binning":{
 				"type":"fixed",
 				"bins":[69,220.,1600.,30,0.,1.]
@@ -97,7 +97,7 @@
 			"weight":"templateWeight",
 			"conserveSumOfWeights":true,
 			"selection":"ZZMass>=220 && ZZMass<=1600",
-			"assertion":"D_Gamma_gg_r10 >= 0. &&  D_Gamma_gg_r10 <= 1.",
+			"assertion":"1",
 			"binning":{
 				"type":"fixed",
 				"bins":[69,220.,1600.,30,0.,1.]
@@ -126,7 +126,7 @@
 			"weight":"templateWeight",
 			"conserveSumOfWeights":true,
 			"selection":"ZZMass>=220 && ZZMass<=1600",
-			"assertion":"D_Gamma_gg_r10 >= 0. &&  D_Gamma_gg_r10 <= 1.",
+			"assertion":"1",
 			"binning":{
 				"type":"fixed",
 				"bins":[69,220.,1600.,30,0.,1.]
@@ -155,7 +155,7 @@
 			"weight":"templateWeight",
 			"conserveSumOfWeights":true,
 			"selection":"ZZMass>=220 && ZZMass<=1600",
-			"assertion":"D_Gamma_gg_r10 >= 0. &&  D_Gamma_gg_r10 <= 1.",
+			"assertion":"1",
 			"binning":{
 				"type":"fixed",
 				"bins":[69,220.,1600.,30,0.,1.]
@@ -175,7 +175,7 @@
 			"weight":"templateWeight",
 			"conserveSumOfWeights":true,
 			"selection":"ZZMass>=220 && ZZMass<=1600",
-			"assertion":"D_Gamma_gg_r10 >= 0. &&  D_Gamma_gg_r10 <= 1.",
+			"assertion":"1",
 			"binning":{
 				"type":"fixed",
 				"bins":[69,220.,1600.,30,0.,1.]
@@ -195,7 +195,7 @@
 			"weight":"templateWeight",
 			"conserveSumOfWeights":true,
 			"selection":"ZZMass>=220 && ZZMass<=1600",
-			"assertion":"D_Gamma_gg_r10 >= 0. &&  D_Gamma_gg_r10 <= 1.",
+			"assertion":"1",
 			"binning":{
 				"type":"fixed",
 				"bins":[69,220.,1600.,30,0.,1.]

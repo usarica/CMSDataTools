@@ -23,7 +23,7 @@ To produce correct JSON files for TemplateBuilder, run
 
 Then, compile TemplateBuilder and submit jobs to queue to smooth each template.
 
-_NOTE_: As of Aug 27, 2014, not all channels will work because of one of two bugs. 7TeV 4e has an apparent syntax error in the json files (unknown reason). 8TeV 2e2mu/4mu have an assertion error (should be simple fix).
+_NOTE_: As of Aug 27, 2014, not all channels will work because of a bug. 7TeV 4e has an apparent syntax error in the json files (unknown reason).
 
 4) root -q -b makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF.c+ 
 

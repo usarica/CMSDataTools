@@ -2,7 +2,7 @@
 
 if [ $# == 0 ]
 	then
-	echo "Usage: ./pushjson.sh <Directory of LHC_*TeV templates> <TemplateBuilder/run location>"
+	echo "Usage: ./pushjson.sh <Location of LHC_*TeV directories that contain templates with trees> <TemplateBuilder/run location>"
 	exit
 elif [ $# == 1 ] 
     then 

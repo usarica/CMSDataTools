@@ -64,6 +64,12 @@ TString sample_suffix_MCFM[kNumSamples-1]={
 	"SMHContinInterf-MCFM67",
 	"BSMHContinInterf-MCFM67"
 };
+TString sample_suffix_Phantom[kNumSamples-1]={
+	"SMHContinInterf_H125.6",
+	"Contin",
+	"BSM10HContinInterf_H125.6",
+	"BSM25HContinInterf_H125.6"
+};
 
 const float gi_phi2_phi4[kNumSamples][9]={ // g1-4; phia2,3; fa2, 3; fepspr
 	{	1.0,	0,	0,	0,		0,	0,	0,	0,	0},
@@ -122,9 +128,9 @@ TString sample_BackgroundFile[kNumBkg]={
 	"ZZTo4tau"
 };
 //Change to relevant
-TString user_dir="./UsingLastProduction_wChanges/";
-TString user_gg2VV_location="/scratch0/hep/ianderso/CJLST/ReprocessedTrees/lastProduction/";
-TString user_TemplateswithTrees_dir="/scratch0/hep/ianderso/TemplatesForCombine/UsingLastProduction_wChanges/";
+TString user_dir="./200814/";
+TString user_gg2VV_location="/scratch0/hep/ianderso/CJLST/ReprocessedTrees/HZZ4l-125p6-FullAnalysis/";
+TString user_TemplateswithTrees_dir="/scratch0/hep/ianderso/TemplatesForCombine/200814/";
 TString user_folder[5]={
 	"4mu",
 	"4e",

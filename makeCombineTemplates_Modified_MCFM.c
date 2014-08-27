@@ -338,7 +338,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			};
 			if(t==5){
 				double myscale = VBF_Sig_Datacard[EnergyIndex][folder]/nVBF_Sig_Simulated;
-				myscale *= nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated;
+				myscale *= nSM_ScaledPeak[EnergyIndex][folder] / nSig_Simulated;
 				overall_VBF_scale = myscale;
 				D_temp_1D[t]->Scale(myscale);
 				if(tFitD>0) D_temp_2D[t]->Scale(myscale);

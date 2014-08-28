@@ -23,8 +23,6 @@ To produce correct JSON files for TemplateBuilder, run
 
 Then, compile TemplateBuilder and submit jobs to queue to smooth each template.
 
-_NOTE_: As of Aug 27, 2014, not all channels will work because of a bug. 7TeV 4e has an apparent syntax error in the json files (unknown reason).
-
 4) root -q -b makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF.c+ 
 
 This will produce the final templates needed for combine. Normalizations will be output as the templates are made, you can also compare different templates using included comparesmoothedtemplates.C script.

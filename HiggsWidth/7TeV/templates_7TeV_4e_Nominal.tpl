@@ -182,7 +182,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				//{"type":"smooth", "kernel":"adaptive", "entriesperbin":100}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":100}
 			]
 		},
 		// T_VBF_4

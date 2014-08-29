@@ -312,25 +312,25 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 		//	 For 8TeV 2e2mu, BSI, Bkg, and BSI10 are used
 		TH1F* BSI10=(TH1F*) h1DVBF[0]->Clone(); 
 		TH2F* BSI10_2D;
-		if (folder==0) h1DVBF[0]=oneDlinearcombination(h1DVBF[0],kBSI10Hist,h1DVBF[1],kBkgHist,h1DVBF[2],kBSI25Hist,kSigHist);
-		else if (folder==2 && EnergyIndex==1) h1DVBF[0]=oneDlinearcombination(h1DVBF[3],kBSIHist,h1DVBF[1],kBkgHist,h1DVBF[0],kBSI10Hist,kSigHist);
-		else h1DVBF[0]=oneDlinearcombination(h1DVBF[3],kBSIHist,h1DVBF[1],kBkgHist,h1DVBF[2],kBSI25Hist,kSigHist);
+		if (folder==2 && EnergyIndex==1) h1DVBF[0]=oneDlinearcombination(h1DVBF[3],kBSIHist,h1DVBF[1],kBkgHist,h1DVBF[0],kBSI10Hist,kSigHist);
+		else h1DVBF[0]=oneDlinearcombination(h1DVBF[0],kBSI10Hist,h1DVBF[1],kBkgHist,h1DVBF[2],kBSI25Hist,kSigHist);
+		h1DVBF[0]->SetName("htemp1DVBF_" + sample_VBF_suffix[0]);
 		if(tFitD!=0){
 			BSI10_2D=(TH2F*) h2DVBF[0]->Clone();
-			if (folder==0) h2DVBF[0]=twoDlinearcombination(h2DVBF[0],kBSI10Hist,h2DVBF[1],kBkgHist,h2DVBF[2],kBSI25Hist,kSigHist);
-			else if (folder==2 && EnergyIndex==1) h2DVBF[0]=twoDlinearcombination(h2DVBF[3],kBSIHist,h2DVBF[1],kBkgHist,h2DVBF[0],kBSI10Hist,kSigHist);
-			else h2DVBF[0]=twoDlinearcombination(h2DVBF[3],kBSIHist,h2DVBF[1],kBkgHist,h2DVBF[2],kBSI25Hist,kSigHist);
+			if (folder==2 && EnergyIndex==1) h2DVBF[0]=twoDlinearcombination(h2DVBF[3],kBSIHist,h2DVBF[1],kBkgHist,h2DVBF[0],kBSI10Hist,kSigHist);
+			else h2DVBF[0]=twoDlinearcombination(h2DVBF[0],kBSI10Hist,h2DVBF[1],kBkgHist,h2DVBF[2],kBSI25Hist,kSigHist);
+			h2DVBF[0]->SetName("htemp2DVBF_" + sample_VBF_suffix[0]);
 		}
 		//2: VBF Int made using BSI, Bkg, and BSI25 samples
 		//	 For 4mu samples, Bkg, BSI10, and BSI25 are used
 		//	 For 8TeV 2e2mu, BSI, Bkg, and BSI10 are used
-		if(folder==0) h1DVBF[2]=oneDlinearcombination(BSI10,kBSI10Hist,h1DVBF[1],kBkgHist,h1DVBF[2],kBSI25Hist,kIntHist);
-		else if(folder==2 && EnergyIndex==1) h1DVBF[2]=oneDlinearcombination(h1DVBF[3],kBSIHist,h1DVBF[1],kBkgHist,BSI10,kBSI10Hist,kIntHist);
-		else h1DVBF[2]=oneDlinearcombination(h1DVBF[3],kBSIHist,h1DVBF[1],kBkgHist,h1DVBF[2],kBSI25Hist,kIntHist);
+		if(folder==2 && EnergyIndex==1) h1DVBF[2]=oneDlinearcombination(h1DVBF[3],kBSIHist,h1DVBF[1],kBkgHist,BSI10,kBSI10Hist,kIntHist);
+		else h1DVBF[2]=oneDlinearcombination(BSI10,kBSI10Hist,h1DVBF[1],kBkgHist,h1DVBF[2],kBSI25Hist,kIntHist);
+		h1DVBF[2]->SetName("htemp1DVBF_" + sample_VBF_suffix[2]);
 		if(tFitD!=0){
-			if(folder==0) h2DVBF[2]=twoDlinearcombination(BSI10_2D,kBSI10Hist,h2DVBF[1],kBkgHist,h2DVBF[2],kBSI25Hist,kIntHist);
-			else if(folder==2 && EnergyIndex==1) h2DVBF[2]=twoDlinearcombination(h2DVBF[3],kBSIHist,h2DVBF[1],kBkgHist,BSI10_2D,kBSI10Hist,kIntHist);
-			else h2DVBF[2]=twoDlinearcombination(h2DVBF[3],kBSIHist,h2DVBF[1],kBkgHist,h2DVBF[2],kBSI25Hist,kIntHist);
+			if(folder==2 && EnergyIndex==1) h2DVBF[2]=twoDlinearcombination(h2DVBF[3],kBSIHist,h2DVBF[1],kBkgHist,BSI10_2D,kBSI10Hist,kIntHist);
+			else h2DVBF[2]=twoDlinearcombination(BSI10_2D,kBSI10Hist,h2DVBF[1],kBkgHist,h2DVBF[2],kBSI25Hist,kIntHist);
+			h2DVBF[2]->SetName("htemp2DVBF_" + sample_VBF_suffix[2]);
 		}	
 
 		nVBF_Sig_Simulated = h2DVBF[0]->Integral()*luminosity[EnergyIndex];

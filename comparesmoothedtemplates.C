@@ -19,21 +19,35 @@
 
 using namespace std;
 
-TString writeloc = "Plots/Ratios_180814/";
+TString writeloc = "Plots/Ratios_290814/";
 TString templatenames[10]={"T_2D_1","T_2D_2","T_2D_4","T_2D_qqZZ_UnConditional","T_2D_qqZZ","T_2D_ZX_UnConditional","T_2D_ZX","T_2D_VBF_1","T_2D_VBF_2","T_2D_VBF_4"};
-TString filenames[5]={
+TString filenames_old[5]={
 	"HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine__GenLevelVBF_wResolution_D_Gamma_gg_r10_SysUp_ggQCD.root",
 	"HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine__GenLevelVBF_wResolution_D_Gamma_gg_r10_SysUp_ggPDF.root",
 	"HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine__GenLevelVBF_wResolution_D_Gamma_gg_r10_SysDown_ggQCD.root",
 	"HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine__GenLevelVBF_wResolution_D_Gamma_gg_r10_SysDown_ggPDF.root",
 	"HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine__GenLevelVBF_wResolution_D_Gamma_gg_r10_Nominal.root"
 };
-TString treefilenames[5]={
+TString treefilenames_old[5]={
 	"HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine__GenLevelVBF_wResolution_D_Gamma_gg_r10_Nominal.root",
 	"HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine__GenLevelVBF_wResolution_D_Gamma_gg_r10_SysDown_ggPDF.root",
 	"HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine__GenLevelVBF_wResolution_D_Gamma_gg_r10_SysDown_ggQCD.root",
 	"HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine__GenLevelVBF_wResolution_D_Gamma_gg_r10_SysUp_ggPDF.root",
 	"HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine__GenLevelVBF_wResolution_D_Gamma_gg_r10_SysUp_ggQCD.root"
+};
+TString filenames_new[5]={
+	"HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine__GenLevelVBF_D_Gamma_gg_r10_SysUp_ggQCD.root",
+	"HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine__GenLevelVBF_D_Gamma_gg_r10_SysUp_ggPDF.root",
+	"HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine__GenLevelVBF_D_Gamma_gg_r10_SysDown_ggQCD.root",
+	"HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine__GenLevelVBF_D_Gamma_gg_r10_SysDown_ggPDF.root",
+	"HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine__GenLevelVBF_D_Gamma_gg_r10_Nominal.root"
+};
+TString treefilenames_new[5]={
+	"HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine__GenLevelVBF_D_Gamma_gg_r10_Nominal.root",
+	"HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine__GenLevelVBF_D_Gamma_gg_r10_SysDown_ggPDF.root",
+	"HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine__GenLevelVBF_D_Gamma_gg_r10_SysDown_ggQCD.root",
+	"HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine__GenLevelVBF_D_Gamma_gg_r10_SysUp_ggPDF.root",
+	"HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine__GenLevelVBF_D_Gamma_gg_r10_SysUp_ggQCD.root"
 };
 
 void compareonesmoothedtemplate(int CoM, int channel, int numfile, int numtemplate);
@@ -53,7 +67,7 @@ void comparesmoothedtemplates(){
 }
 
 void compareonesmoothedtemplate(int CoM, int channel, int numfile, int numtemplate){
-	TString newfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/180814/";
+	TString newfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/290814/";
 	TString oldfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/FromUlascan_020414/";
 	if(CoM==7){
 		newfileloc+="LHC_7TeV/";
@@ -66,8 +80,8 @@ void compareonesmoothedtemplate(int CoM, int channel, int numfile, int numtempla
 	if(channel==1){ newfileloc+="4e/"; oldfileloc+="4e/";}
 	if(channel==2){ newfileloc+="4mu/"; oldfileloc+="4mu/";}
 
-	TFile* newfile = new TFile(newfileloc + filenames[numfile],"read");
-	TFile* oldfile = new TFile(oldfileloc + filenames[numfile],"read");
+	TFile* newfile = new TFile(newfileloc + filenames_new[numfile],"read");
+	TFile* oldfile = new TFile(oldfileloc + filenames_old[numfile],"read");
 
 	TH2F* newtemp = (TH2F*) newfile->Get(templatenames[numtemplate]);
 	TH2F* oldtemp = (TH2F*) oldfile->Get(templatenames[numtemplate]);
@@ -117,7 +131,7 @@ void comparenormalizations(){
 }
 
 void compareonenormalization(int CoM, int channel, int numfile, int numtemplate){
-	TString newfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/UsingLastProduction_wChanges/";
+	TString newfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/200814/";
 	TString oldfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/FromUlascan_020414/";
 	if(CoM==7){
 		newfileloc+="LHC_7TeV/";
@@ -133,8 +147,8 @@ void compareonenormalization(int CoM, int channel, int numfile, int numtemplate)
 	TString onetreename = templatenames[numtemplate] + "_Tree";
 	TChain* newfile = new TChain(onetreename);
 	TChain* oldfile = new TChain(onetreename);
-	newfile->Add(newfileloc+treefilenames[numfile]);
-	oldfile->Add(oldfileloc+treefilenames[numfile]);
+	newfile->Add(newfileloc+treefilenames_new[numfile]);
+	oldfile->Add(oldfileloc+treefilenames_old[numfile]);
 
 	float wt;
 	float totold=0.;

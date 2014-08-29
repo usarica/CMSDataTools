@@ -206,8 +206,10 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			}
 			else if(t>4){
 				int tp = t-5;
+				//t=5: BSI10, t=6: Bkg, t=7: BSI25 to get larger signal/interference contributions in off-shell region
+				//8T 2e2mu do not have BSI25 yet
 				if(tp==2 && folder!=2 && EnergyIndex!=1) tp=3;
-				if(folder==0 && tp==0) tp=2;
+				if(tp==0) tp=2;
 				cout<<user_folder[folder]<<" "<<t<<" "<<tp<<endl;
 				TString cinput_2e2mu = cinput_common + "HZZ4lTree_ZZTo2e2muJJ_" + sample_suffix_Phantom[tp] + "_Reprocessed.root";
 				TString cinput_4e = cinput_common + "HZZ4lTree_ZZTo4eJJ_" + sample_suffix_Phantom[tp] + "_Reprocessed.root";
@@ -248,8 +250,6 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				sprintf(templatename_1D,"T_1D_VBF_%i",4);
 				sprintf(templatename_2D,"T_2D_VBF_%i",4);
 			};
-			//cout<<templatename_1D<<endl;
-			//cout<<templatename_2D<<endl;
 			if(tFitD==0){
 				D_temp_1D[t] = new TH1F(templatename_1D,templatename_1D,nbinsx,kDXarray);
 				D_temp_1D[t]->GetXaxis()->SetTitle(strFitDim_label[tFitD]);
@@ -338,7 +338,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			};
 			if(t==5){
 				double myscale = VBF_Sig_Datacard[EnergyIndex][folder]/nVBF_Sig_Simulated;
-				myscale *= nSM_ScaledPeak[EnergyIndex][folder] / nSig_Simulated;
+				myscale *= nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated;
 				overall_VBF_scale = myscale;
 				D_temp_1D[t]->Scale(myscale);
 				if(tFitD>0) D_temp_2D[t]->Scale(myscale);
@@ -382,33 +382,27 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 		//2: ggF Int made using Sig, Bkg, and BSI samples 
 		D_temp_1D[2]=oneDlinearcombination(D_temp_1D[0],kSigHist,D_temp_1D[1],kBkgHist,D_temp_1D[2],kBSI25Hist,kIntHist);
 		if(tFitD!=0) D_temp_2D[2]=twoDlinearcombination(D_temp_2D[0],kSigHist,D_temp_2D[1],kBkgHist,D_temp_2D[2],kBSI25Hist,kIntHist);
-		//5: VBF Sig made using BSI, Bkg, and BSI25 samples
-		//	 For 4mu samples, Bkg, BSI10, and BSI25 are used
+		//5: VBF Sig made using BSI10, Bkg, and BSI25 samples
 		//	 For 8TeV 2e2mu, BSI, Bkg, and BSI10 are used
-		TH1F* BSI=(TH1F*) D_temp_1D[5]->Clone();
-		TH2F* BSI_2D;
-		if (folder==0) D_temp_1D[5]=oneDlinearcombination(D_temp_1D[5],kBSI10Hist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI25Hist,kSigHist);
-		else if (folder==2 && EnergyIndex==1) D_temp_1D[5]=oneDlinearcombination(D_temp_1D[5],kBSIHist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI10Hist,kSigHist);
-		else D_temp_1D[5]=oneDlinearcombination(D_temp_1D[5],kBSIHist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI25Hist,kSigHist);
+		TH1F* BSI10=(TH1F*) D_temp_1D[5]->Clone();
+		TH2F* BSI10_2D;
+		if (folder==2 && EnergyIndex==1) D_temp_1D[5]=oneDlinearcombination(D_temp_1D[5],kBSIHist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI10Hist,kSigHist);
+		else D_temp_1D[5]=oneDlinearcombination(D_temp_1D[5],kBSI10Hist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI25Hist,kSigHist);
 		D_temp_1D[5]->SetName("T_1D_VBF_1");
 		if(tFitD!=0){
-			BSI_2D=(TH2F*) D_temp_2D[5]->Clone();
-			if (folder==0) D_temp_2D[5]=twoDlinearcombination(D_temp_2D[5],kBSI10Hist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI25Hist,kSigHist);
-			else if (folder==2 && EnergyIndex==1) D_temp_2D[5]=twoDlinearcombination(D_temp_2D[5],kBSIHist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI10Hist,kSigHist);
-			else D_temp_2D[5]=twoDlinearcombination(D_temp_2D[5],kBSIHist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI25Hist,kSigHist);
+			BSI10_2D=(TH2F*) D_temp_2D[5]->Clone();
+			if (folder==2 && EnergyIndex==1) D_temp_2D[5]=twoDlinearcombination(D_temp_2D[5],kBSIHist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI10Hist,kSigHist);
+			else D_temp_2D[5]=twoDlinearcombination(D_temp_2D[5],kBSI10Hist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI25Hist,kSigHist);
 			D_temp_2D[5]->SetName("T_2D_VBF_1");
 		}
-		//7: VBF Int made using BSI, Bkg, and BSI25 samples
-		//	 For 4mu samples, Bkg, BSI10, and BSI25 are used
+		//7: VBF Int made using BSI10, Bkg, and BSI25 samples
 		//	 For 8TeV 2e2mu, BSI, Bkg, and BSI10 are used
-		if(folder==0) D_temp_1D[7]=oneDlinearcombination(BSI,kBSI10Hist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI25Hist,kIntHist);
-		else if(folder==2 && EnergyIndex==1) D_temp_1D[7]=oneDlinearcombination(BSI,kBSIHist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI10Hist,kIntHist);
-		else D_temp_1D[7]=oneDlinearcombination(BSI,kBSIHist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI25Hist,kIntHist);
+		if(folder==2 && EnergyIndex==1) D_temp_1D[7]=oneDlinearcombination(BSI10,kBSIHist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI10Hist,kIntHist);
+		else D_temp_1D[7]=oneDlinearcombination(BSI10,kBSI10Hist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI25Hist,kIntHist);
 		D_temp_1D[7]->SetName("T_1D_VBF_4");
 		if(tFitD!=0){
-			if(folder==0) D_temp_2D[7]=twoDlinearcombination(BSI_2D,kBSI10Hist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI25Hist,kIntHist);
-			else if(folder==2 && EnergyIndex==1) D_temp_2D[7]=twoDlinearcombination(BSI_2D,kBSIHist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI10Hist,kIntHist);
-			else D_temp_2D[7]=twoDlinearcombination(BSI_2D,kBSIHist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI25Hist,kIntHist);
+			if(folder==2 && EnergyIndex==1) D_temp_2D[7]=twoDlinearcombination(BSI10_2D,kBSIHist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI10Hist,kIntHist);
+			else D_temp_2D[7]=twoDlinearcombination(BSI10_2D,kBSI10Hist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI25Hist,kIntHist);
 			D_temp_2D[7]->SetName("T_2D_VBF_4");
 		}
 

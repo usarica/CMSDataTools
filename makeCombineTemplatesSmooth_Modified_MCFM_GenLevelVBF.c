@@ -275,10 +275,12 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 		TH2F* BSI25_2D=(TH2F*) D_temp_2D[5]->Clone(); //NOTE: This is BSI for 8TeV 2e2mu
 		if (folder==2 && EnergyIndex==1) D_temp_2D[5]=twoDlinearcombination(D_temp_2D[5],kBSIHist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI10Hist,kSigHist);
 		else D_temp_2D[5]=twoDlinearcombination(D_temp_2D[7],kBSI10Hist,D_temp_2D[6],kBkgHist,D_temp_2D[5],kBSI25Hist,kSigHist);
+		D_temp_2D[5]->SetName("T_2D_VBF_1");
 		//7: VBF Int made using Bkg, BSI10, and BSI25 are used
 		//	 For 8TeV 2e2mu, BSI, Bkg, and BSI10 are used
 		if(folder==2 && EnergyIndex==1) D_temp_2D[7]=twoDlinearcombination(BSI25_2D,kBSIHist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI10Hist,kIntHist);
 		else D_temp_2D[7]=twoDlinearcombination(D_temp_2D[7],kBSI10Hist,D_temp_2D[6],kBkgHist,BSI25_2D,kBSI25Hist,kIntHist);
+		D_temp_2D[7]->SetName("T_2D_VBF_4");
 
 
 		for(int binx=1;binx<=nbinsx;binx++){

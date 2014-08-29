@@ -128,9 +128,9 @@ TString sample_BackgroundFile[kNumBkg]={
 	"ZZTo4tau"
 };
 //Change to relevant
-TString user_dir="./200814/";
+TString user_dir="./290814/";
 TString user_gg2VV_location="/scratch0/hep/ianderso/CJLST/ReprocessedTrees/HZZ4l-125p6-FullAnalysis/";
-TString user_TemplateswithTrees_dir="/scratch0/hep/ianderso/TemplatesForCombine/200814/";
+TString user_TemplateswithTrees_dir="/scratch0/hep/ianderso/TemplatesForCombine/290814/";
 TString user_folder[5]={
 	"4mu",
 	"4e",

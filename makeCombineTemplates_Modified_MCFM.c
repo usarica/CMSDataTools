@@ -191,8 +191,10 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				tree->Add(cinput);
 				cout << cinput << endl;
 			}
-			else if(t<3){
-				int tp = t;
+			else{
+				int tp;
+				if(t<3) tp = t;
+				if(t>4) tp = t-5;
 				TString cinput_2e2mu = cinput_common + INPUT_NAME + "2e2mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
 				TString cinput_4e = cinput_common + INPUT_NAME + "4e_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
 				TString cinput_4mu = cinput_common + INPUT_NAME + "4mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
@@ -204,19 +206,6 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				cout<<cinput_4e<<endl;
 				cout<<cinput_4mu<<endl;
 			}
-			else if(t>4){
-				int tp = t-5;
-				TString cinput_2e2mu = cinput_common + INPUT_NAME + "2e2mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
-				TString cinput_4e = cinput_common + INPUT_NAME + "4e_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
-				TString cinput_4mu = cinput_common + INPUT_NAME + "4mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
-
-				tree->Add(cinput_2e2mu);
-				tree->Add(cinput_4e);
-				tree->Add(cinput_4mu);
-				cout<<cinput_2e2mu<<endl;
-				cout<<cinput_4e<<endl;
-				cout<<cinput_4mu<<endl;
-			};
 
 			//Initialize templates
 			char templatename_1D[100];
@@ -333,7 +322,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			};
 			if(t==5){
 				double myscale = VBF_Sig_Datacard[EnergyIndex][folder]/nVBF_Sig_Simulated;
-//				myscale *= nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated;
+				//myscale *= nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated;
 				overall_VBF_scale = myscale;
 				D_temp_1D[t]->Scale(myscale);
 				if(tFitD>0) D_temp_2D[t]->Scale(myscale);

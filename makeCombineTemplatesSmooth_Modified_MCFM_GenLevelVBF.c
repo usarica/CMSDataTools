@@ -279,7 +279,7 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 		//	 For 8 TeV samples, BSI, Bkg, and BSI10 are used
 		if (EnergyIndex == 0){
 			if(tFitD!=0){
-				twoDlinearcombination(D_temp_2D[7],kBSI10Hist,D_temp_2D[6],kBkgHist,D_temp_2D[3],kBSI25Hist,D_temp_2D[5],kSigHist,D_temp_2D[7],kIntHist);
+				twoDlinearcombination(D_temp_2D[7],kBSI10Hist,D_temp_2D[6],kBkgHist,D_temp_2D[5],kBSI25Hist,D_temp_2D[5],kSigHist,D_temp_2D[7],kIntHist);
 			}
 		}
 		else if (EnergyIndex == 1){
@@ -545,7 +545,7 @@ double doLinearCombination(double first, double c_first, double second, double c
 
 	double sig = (aa[0] * bb[2] - aa[2] * bb[0] + (aa[2] - bb[2])*bkg) / (aa[1] * bb[2] - aa[2] * bb[1]);
 	double interf = (aa[0] * bb[1] - aa[1] * bb[0] + (aa[1] - bb[1])*bkg) / (aa[2] * bb[1] - aa[1] * bb[2]);
-	if (sig < 0){ sig = 0; interf = 0; };
+	if (sig <= 0){ sig = 1.0e-20; interf = 0; };
 
 	if (outputtype == kIntHist) return interf;
 	else if(outputtype==kSigHist) return sig;
@@ -585,7 +585,7 @@ void twoDlinearcombination(TH2F* first, int firsttype, TH2F* second, int secondt
 			}
 		}		
 		if(inputtype==kBSI25Hist && firsttype==kBSI10Hist && secondtype==kBkgHist){
-			double scaleval = 1./(-50. + 25.*sqrt(10.));
+			//double scaleval = 1./(-50. + 25.*sqrt(10.));
 			for (int binx = 1; binx <= output->GetNbinsX(); binx++){
 				for (int biny = 1; biny <= output->GetNbinsY(); biny++){
 					double bsi10 = first->GetBinContent(binx,biny);
@@ -602,7 +602,7 @@ void twoDlinearcombination(TH2F* first, int firsttype, TH2F* second, int secondt
 			}
 		}
 		if(inputtype==kBSI10Hist && firsttype==kBSIHist && secondtype==kBkgHist){
-			double scaleval = 1./(10 - sqrt(10));
+			//double scaleval = 1./(10 - sqrt(10));
 			for (int binx = 1; binx <= output->GetNbinsX(); binx++){
 				for (int biny = 1; biny <= output->GetNbinsY(); biny++){
 					double bsi = first->GetBinContent(binx,biny);

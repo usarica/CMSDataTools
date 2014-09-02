@@ -143,7 +143,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 	tgkfname = tgkfname + "AllFlavors_UnNormalized";
 	TGraphAsymmErrors* tgkf = (TGraphAsymmErrors*)finput_KDFactor->Get(tgkfname);
 
-	double overall_VBF_scale=1;
+	//double overall_VBF_scale=1;
 	double nVBFPeak[4] = { 0 };
 	for (int e = 0; e < 2; e++){for (int ss = 0; ss < 3; ss++){ nSM_ScaledPeak[e][ss] /= luminosity[e]; VBF_Sig_Datacard[e][ss] /= luminosity[e]; }}
 
@@ -202,6 +202,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 		TH1F* D_temp_1D[kNumTemplates];
 		TH2F* D_temp_2D[kNumTemplates];
 		double overall_scale[kNumTemplates]={1};
+		TString templatenames[kNumTemplates]={"ggF Sig","gg Bkg","ggF Int","qqZZ","Z+X","VBF Sig","VBF Bkg","VBF Int"};
 
 		int nEntries;
 		double nSig_Simulated=0;
@@ -284,11 +285,6 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 
 				double weight = MC_weight;
 				if(ev==0) cout << "Weight: " << weight << endl;
-/*				if (EnergyIndex == 1){
-					if (folder == 2) weight /= 2.0;
-					else weight *= (tg_interf->Eval(ZZMass)) / 4.0;
-				}
-*/
 				if (ZZMass < ZZMass_PeakCut[1] && ZZMass >= ZZMass_PeakCut[0]){
 					nVBFPeak[tr] += weight;
 				}
@@ -337,18 +333,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 			nVBFPeak[0]=nVBFsigtemp;
 			nVBFPeak[2]=nVBFinterftemp;
 		}
-/*		else if (folder == 2 && EnergyIndex == 1){
-			oneDlinearcombination(h1DVBF[0],kBSIHist,h1DVBF[1],kBkgHist,h1DVBF[2],kBSI10Hist,h1DVBF[0],kSigHist,h1DVBF[2],kIntHist);
-			if(tFitD!=0){
-				twoDlinearcombination(h2DVBF[0],kBSIHist,h2DVBF[1],kBkgHist,h2DVBF[2],kBSI10Hist,h2DVBF[0],kSigHist,h2DVBF[2],kIntHist);
-			}
-			double nVBFsigtemp = doPeakCombination(nVBFPeak[0],1,nVBFPeak[2],10,nVBFPeak[1],kSigHist);
-			double nVBFinterftemp = doPeakCombination(nVBFPeak[0],1,nVBFPeak[2],10,nVBFPeak[1],kIntHist);
-			for(int tr=0;tr<4;tr++) cout << "nVBFPeak[" << tr << "]: " << nVBFPeak[tr] << endl;
-			nVBFPeak[0]=nVBFsigtemp;
-			nVBFPeak[2]=nVBFinterftemp;
-		}
-*/		else if (EnergyIndex == 1){
+		else if (EnergyIndex == 1){
 			oneDlinearcombination(h1DVBF[0],kBSIHist,h1DVBF[1],kBkgHist,h1DVBF[2],kBSI10Hist,h1DVBF[0],kSigHist,h1DVBF[2],kIntHist);
 			if(tFitD!=0){
 				twoDlinearcombination(h2DVBF[0],kBSIHist,h2DVBF[1],kBkgHist,h2DVBF[2],kBSI10Hist,h2DVBF[0],kSigHist,h2DVBF[2],kIntHist);
@@ -360,7 +345,6 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 			nVBFPeak[2]=nVBFinterftemp;
 		}
 
-//		double vbfscale = 1;
 		double vbfscale = VBF_Sig_Datacard[EnergyIndex][folder] / nVBFPeak[0];
 		for (int tr = 0; tr < 4; tr++){
 			h1DVBF[tr]->Scale(vbfscale);
@@ -551,22 +535,20 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 				overall_scale[t] = myscale;
 				D_temp_1D[t]->Scale(myscale);
 				if (tFitD>0) D_temp_2D[t]->Scale(myscale);
-				cout << "Scaling t: " << t << " by " << myscale << endl;
+				cout << "Scaling " << templatenames[t] << " by " << myscale << endl;
 			}
 			else if(t>=5){
 				double myscale = (nVBF_Sig_Reweighted/nVBF_Sig_Simulated);
 
 				cout << "Expected nVBF offshell from reweighting: " << nVBF_Sig_Reweighted << endl;
 				cout << "Observed nVBF offshell from peak normalization: " << nVBF_Sig_Simulated << endl;
-				cout << "VBF re-wgted/full sim. at t: " << t << " by " << myscale << endl;
+				cout << "VBF re-wgted/full sim. " << templatenames[t] << " by " << myscale << endl;
 				overall_scale[t] = vbfscale;
 
 				double integral1D=0;
 				double integral2D=0;
 				for(int binx=1;binx<=nbinsx;binx++){
 					double bincontent = h1DVBF[t-5]->GetBinContent(binx);
-//					bincontent *= myscale;
-
 					if(Systematics!=0){
 						double scalingRatio = 1;
 						if(t==5){
@@ -588,8 +570,6 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 					if(tFitD>0){
 						for(int biny=1;biny<=nbinsy;biny++){
 							bincontent = h2DVBF[t-5]->GetBinContent(binx,biny);
-//							bincontent *= myscale;
-
 							if(Systematics!=0){
 								double scalingRatio = 1;
 								if(t==5){
@@ -690,11 +670,6 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 					if (ZZMass >= ZZMass_cut[1] || ZZMass<ZZMass_cut[0]) continue;
 
 					double weight = MC_weight;
-/*					if (EnergyIndex == 1){
-						if (folder == 2) weight /= 2.0;
-						else weight *= (tg_interf->Eval(ZZMass)) / 4.0;
-					}
-*/
 					weight *= overall_scale[t];
 
 					if(Systematics!=0){
@@ -998,7 +973,7 @@ void twoDlinearcombination(TH2F* first, int firsttype, TH2F* second, int secondt
 			}
 		}		
 		if(inputtype==kBSI25Hist && firsttype==kBSI10Hist && secondtype==kBkgHist){
-			double scaleval = 1./(-50. + 25.*sqrt(10.));
+			//double scaleval = 1./(-50. + 25.*sqrt(10.));
 			for (int binx = 1; binx <= output->GetNbinsX(); binx++){
 				for (int biny = 1; biny <= output->GetNbinsY(); biny++){
 					double bsi10 = first->GetBinContent(binx,biny);
@@ -1015,7 +990,7 @@ void twoDlinearcombination(TH2F* first, int firsttype, TH2F* second, int secondt
 			}
 		}
 		if(inputtype==kBSI10Hist && firsttype==kBSIHist && secondtype==kBkgHist){
-			double scaleval = 1./(10 - sqrt(10));
+			//double scaleval = 1./(10 - sqrt(10));
 			for (int binx = 1; binx <= output->GetNbinsX(); binx++){
 				for (int biny = 1; biny <= output->GetNbinsY(); biny++){
 					double bsi = first->GetBinContent(binx,biny);
@@ -1077,7 +1052,7 @@ void threeDlinearcombination(TH3F* first, int firsttype, TH3F* second, int secon
 			}
 		}		
 		if(inputtype==kBSI25Hist && firsttype==kBSI10Hist && secondtype==kBkgHist){
-			double scaleval = 1./(-50. + 25.*sqrt(10.));
+			//double scaleval = 1./(-50. + 25.*sqrt(10.));
 			for (int binx = 1; binx <= output->GetNbinsX(); binx++){
 				for (int biny = 1; biny <= output->GetNbinsY(); biny++){
 					for (int binz = 1; binz <= output->GetNbinsZ(); binz++){
@@ -1096,7 +1071,7 @@ void threeDlinearcombination(TH3F* first, int firsttype, TH3F* second, int secon
 			}
 		}
 		if(inputtype==kBSI10Hist && firsttype==kBSIHist && secondtype==kBkgHist){
-			double scaleval = 1./(10 - sqrt(10));
+			//double scaleval = 1./(10 - sqrt(10));
 			for (int binx = 1; binx <= output->GetNbinsX(); binx++){
 				for (int biny = 1; biny <= output->GetNbinsY(); biny++){
 					for (int binz = 1; binz <= output->GetNbinsZ(); binz++){

@@ -19,7 +19,7 @@
 
 using namespace std;
 
-TString writeloc = "Plots/Ratios_290814/";
+TString writeloc = "Plots/Ratios_020914/";
 TString templatenames[10]={"T_2D_1","T_2D_2","T_2D_4","T_2D_qqZZ_UnConditional","T_2D_qqZZ","T_2D_ZX_UnConditional","T_2D_ZX","T_2D_VBF_1","T_2D_VBF_2","T_2D_VBF_4"};
 TString filenames_old[5]={
 	"HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine__GenLevelVBF_wResolution_D_Gamma_gg_r10_SysUp_ggQCD.root",
@@ -67,7 +67,7 @@ void comparesmoothedtemplates(){
 }
 
 void compareonesmoothedtemplate(int CoM, int channel, int numfile, int numtemplate){
-	TString newfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/290814/";
+	TString newfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/020914/";
 	TString oldfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/FromUlascan_020414/";
 	if(CoM==7){
 		newfileloc+="LHC_7TeV/";
@@ -131,7 +131,7 @@ void comparenormalizations(){
 }
 
 void compareonenormalization(int CoM, int channel, int numfile, int numtemplate){
-	TString newfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/200814/";
+	TString newfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/020914/";
 	TString oldfileloc="/home/ianderso/Work/HighMass/AnomalousCouplings/HiggsWidth_PostICHEP/FromUlascan_020414/";
 	if(CoM==7){
 		newfileloc+="LHC_7TeV/";

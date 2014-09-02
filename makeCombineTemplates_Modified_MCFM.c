@@ -206,14 +206,9 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			}
 			else if(t>4){
 				int tp = t-5;
-				//t=5: BSI10, t=6: Bkg, t=7: BSI25 to get larger signal/interference contributions in off-shell region
-				//8T 2e2mu do not have BSI25 yet
-				if(tp==2 && folder!=2 && EnergyIndex!=1) tp=3;
-				if(tp==0) tp=2;
-				cout<<user_folder[folder]<<" "<<t<<" "<<tp<<endl;
-				TString cinput_2e2mu = cinput_common + "HZZ4lTree_ZZTo2e2muJJ_" + sample_suffix_Phantom[tp] + "_Reprocessed.root";
-				TString cinput_4e = cinput_common + "HZZ4lTree_ZZTo4eJJ_" + sample_suffix_Phantom[tp] + "_Reprocessed.root";
-				TString cinput_4mu = cinput_common + "HZZ4lTree_ZZTo4muJJ_" + sample_suffix_Phantom[tp] + "_Reprocessed.root";
+				TString cinput_2e2mu = cinput_common + INPUT_NAME + "2e2mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
+				TString cinput_4e = cinput_common + INPUT_NAME + "4e_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
+				TString cinput_4mu = cinput_common + INPUT_NAME + "4mu_" + sample_suffix_MCFM[tp] + "_Reprocessed.root";
 
 				tree->Add(cinput_2e2mu);
 				tree->Add(cinput_4e);
@@ -338,7 +333,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			};
 			if(t==5){
 				double myscale = VBF_Sig_Datacard[EnergyIndex][folder]/nVBF_Sig_Simulated;
-				myscale *= nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated;
+//				myscale *= nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated;
 				overall_VBF_scale = myscale;
 				D_temp_1D[t]->Scale(myscale);
 				if(tFitD>0) D_temp_2D[t]->Scale(myscale);
@@ -380,31 +375,10 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 
 		//When pure samples aren't available, they are made via linear combinations of other samples.
 		//2: ggF Int made using Sig, Bkg, and BSI samples 
-		D_temp_1D[2]=oneDlinearcombination(D_temp_1D[0],kSigHist,D_temp_1D[1],kBkgHist,D_temp_1D[2],kBSI25Hist,kIntHist);
-		if(tFitD!=0) D_temp_2D[2]=twoDlinearcombination(D_temp_2D[0],kSigHist,D_temp_2D[1],kBkgHist,D_temp_2D[2],kBSI25Hist,kIntHist);
-		//5: VBF Sig made using BSI10, Bkg, and BSI25 samples
-		//	 For 8TeV 2e2mu, BSI, Bkg, and BSI10 are used
-		TH1F* BSI10=(TH1F*) D_temp_1D[5]->Clone();
-		TH2F* BSI10_2D;
-		if (folder==2 && EnergyIndex==1) D_temp_1D[5]=oneDlinearcombination(D_temp_1D[5],kBSIHist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI10Hist,kSigHist);
-		else D_temp_1D[5]=oneDlinearcombination(D_temp_1D[5],kBSI10Hist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI25Hist,kSigHist);
-		D_temp_1D[5]->SetName("T_1D_VBF_1");
-		if(tFitD!=0){
-			BSI10_2D=(TH2F*) D_temp_2D[5]->Clone();
-			if (folder==2 && EnergyIndex==1) D_temp_2D[5]=twoDlinearcombination(D_temp_2D[5],kBSIHist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI10Hist,kSigHist);
-			else D_temp_2D[5]=twoDlinearcombination(D_temp_2D[5],kBSI10Hist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI25Hist,kSigHist);
-			D_temp_2D[5]->SetName("T_2D_VBF_1");
-		}
-		//7: VBF Int made using BSI10, Bkg, and BSI25 samples
-		//	 For 8TeV 2e2mu, BSI, Bkg, and BSI10 are used
-		if(folder==2 && EnergyIndex==1) D_temp_1D[7]=oneDlinearcombination(BSI10,kBSIHist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI10Hist,kIntHist);
-		else D_temp_1D[7]=oneDlinearcombination(BSI10,kBSI10Hist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSI25Hist,kIntHist);
-		D_temp_1D[7]->SetName("T_1D_VBF_4");
-		if(tFitD!=0){
-			if(folder==2 && EnergyIndex==1) D_temp_2D[7]=twoDlinearcombination(BSI10_2D,kBSIHist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI10Hist,kIntHist);
-			else D_temp_2D[7]=twoDlinearcombination(BSI10_2D,kBSI10Hist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI25Hist,kIntHist);
-			D_temp_2D[7]->SetName("T_2D_VBF_4");
-		}
+		D_temp_1D[2]=oneDlinearcombination(D_temp_1D[0],kSigHist,D_temp_1D[1],kBkgHist,D_temp_1D[2],kBSIHist,kIntHist);
+		if(tFitD!=0) D_temp_2D[2]=twoDlinearcombination(D_temp_2D[0],kSigHist,D_temp_2D[1],kBkgHist,D_temp_2D[2],kBSIHist,kIntHist);
+		D_temp_1D[7]=oneDlinearcombination(D_temp_1D[5],kSigHist,D_temp_1D[6],kBkgHist,D_temp_1D[7],kBSIHist,kIntHist);
+		if(tFitD!=0) D_temp_2D[7]=twoDlinearcombination(D_temp_2D[5],kSigHist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSIHist,kIntHist);
 
 		cout << "Integrals after everything:\n1D\t2D" << endl;
 		for(int t=0;t<kNumTemplates;t++){
@@ -494,6 +468,10 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 TH1F* oneDlinearcombination(TH1F* first, int firsttype, TH1F* second, int secondtype, TH1F* input, int inputtype, int outputtype){
 	TH1F* output = (TH1F*) input->Clone();
 	if(outputtype==kIntHist){
+		if(inputtype==kBSIHist && firsttype==kSigHist && secondtype==kBkgHist){
+			output->Add(first, -1.0);
+			output->Add(second, -1.0);
+		}
 		if(inputtype==kBSI25Hist && firsttype==kSigHist && secondtype==kBkgHist){
 			output->Add(first, -25.0);
 			output->Add(second, -1.0);
@@ -563,6 +541,10 @@ TH1F* oneDlinearcombination(TH1F* first, int firsttype, TH1F* second, int second
 TH2F* twoDlinearcombination(TH2F* first, int firsttype, TH2F* second, int secondtype, TH2F* input, int inputtype, int outputtype){
 	TH2F* output = (TH2F*) input->Clone();
 	if(outputtype==kIntHist){
+		if(inputtype==kBSIHist && firsttype==kSigHist && secondtype==kBkgHist){
+			output->Add(first, -1.0);
+			output->Add(second, -1.0);
+		}
 		if(inputtype==kBSI25Hist && firsttype==kSigHist && secondtype==kBkgHist){
 			output->Add(first, -25.0);
 			output->Add(second, -1.0);

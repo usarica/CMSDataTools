@@ -127,10 +127,14 @@ TString sample_BackgroundFile[kNumBkg]={
 	"ZZTo2e2tau",
 	"ZZTo4tau"
 };
-//Change to relevant
+//Directories
+
 TString user_dir="./290814/";
+//TString user_dir="/afs/cern.ch/work/u/usarica/WidthAnalysis/PostICHEP/";
 TString user_gg2VV_location="/scratch0/hep/ianderso/CJLST/ReprocessedTrees/HZZ4l-125p6-FullAnalysis/";
+//TString user_gg2VV_location="/afs/cern.ch/work/u/usarica/HZZ4l-125p6-FullAnalysis/";
 TString user_TemplateswithTrees_dir="/scratch0/hep/ianderso/TemplatesForCombine/290814/";
+//TString user_TemplateswithTrees_dir="/afs/cern.ch/work/u/usarica/WidthAnalysis/PostICHEP/";
 TString user_folder[5]={
 	"4mu",
 	"4e",

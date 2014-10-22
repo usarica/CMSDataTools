@@ -11,9 +11,13 @@ _NOTE_: Use **legacywithfixes** tag to reproduce templates for width results.
 
 This will get the initial D_Gamma_gg_r10 templates. VBF templates are reweighted from ggH. The reweighting functions for 7 and 8 TeV. It will run over all 4l final states (2e2mu, 4e, 4mu), all systematics (Nominal, PDF up/down, QCD up/down), and with or without k3a smoothing.
 
-2) root -q -b makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF.c+
+2)
 
-Similar to 1, but will add trees with templates. The legacy version has an option to use resolution smeared samples for VBF, this was made obsolete with full-sim Phantom samples. These files will take up a fair amount of space.
+a) root -q -b makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF.c+
+b) root -q -b makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_djet.c+
+root -q -b makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_nondjet.c+
+
+Similar to 1, but will add trees with templates. The legacy version has an option to use resolution smeared samples for VBF, this was made obsolete with full-sim Phantom samples. These files will take up a fair amount of space. Option a will produce templates without any Djet splitting. Option b will produce templates with Djet splitting. _NOTE_: All other code will produce all three as is, these take a considerable amount of time to run so this permits running in parallel.
 
 3) Check out https://github.com/jbsauvan/TemplateBuilder. _NOTE_: To reproduce legacy width studies, use tag **070314_add-fa3-configs**.
 

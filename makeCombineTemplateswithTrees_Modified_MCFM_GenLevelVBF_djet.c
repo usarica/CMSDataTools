@@ -45,7 +45,7 @@ TGraph* make_HZZ_LeptonInterferenceGraph(){
 };
 
 //Main Function, runs over all desired iterations
-void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF(){
+void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_djet(){
 	bool isSmooth=false;
 	const int kNumSyst=5;
 	int systematics[kNumSyst]={0,1,-1,2,-2};
@@ -57,7 +57,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF(){
 				for(int channel=0;channel<3;++channel){
 					//if(useDjettagging){for(int Djettag=-1;Djettag<2;++Djettag) makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i],isSmooth,Djettag);}
 					//else makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i],isSmooth,0);	
-					makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i],isSmooth,0);	
+					makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i],isSmooth,1);	
 				}	
 			}
 		}

@@ -11,14 +11,16 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TH3F.h"
+#include "TF1.h"
 #include "./data/ZZ4l_125_6_Samples.h"
 #include "./data/FitDimensionsList.h"
 
 using namespace std;
 
 //Initializers
+bool useDjettagging=true;
 enum histtypes{kSigHist,kBkgHist,kIntHist,kBSIHist,kBSI10Hist,kBSI25Hist};
-void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, int Systematics, bool isSmooth);
+void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, int Systematics, bool isSmooth, int Djettag);
 TH1F* oneDlinearcombination(TH1F* first, int firsttype, TH1F* second, int secondtype, TH1F* input, int inputtype, int outputtype);
 TH2F* twoDlinearcombination(TH2F* first, int firsttype, TH2F* second, int secondtype, TH2F* input, int inputtype, int outputtype);
 void progressbar(int val, int tot);
@@ -35,7 +37,10 @@ void makeCombineTemplates_Modified_MCFM(){
 			if(usesmooth==1) isSmooth=true;
 			for(int CoM=7;CoM<9;++CoM){
 				for(int channel=0;channel<3;++channel){
-					makeCombineTemplates_Modified_MCFM_one(channel,CoM,6,systematics[i],isSmooth);	
+					if(useDjettagging){
+						for(int Djettag=-1;Djettag<2;++Djettag) makeCombineTemplates_Modified_MCFM_one(channel,CoM,6,systematics[i],isSmooth,Djettag);
+					}
+					else makeCombineTemplates_Modified_MCFM_one(channel,CoM,6,systematics[i],isSmooth,0);	
 				}	
 			}
 		}
@@ -48,7 +53,8 @@ void makeCombineTemplates_Modified_MCFM(){
 // tFitD = [0,16] (choice of Discriminant, see FitDimensionsList.h for list; only tFitd works right now)
 // Systematics = [-2,2] (Flag for systematics. 0=Nominal, +/-1=QCD, +/-2=PDF)
 // isSmooth = true/false (flag to apply smoothing at this stage, both needed for later stage)
-void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, int Systematics, bool isSmooth){
+// Djettag = -1,0,1 (events fail Djet > 0.5 tag, events are not tagged, events pass Djet > 0.5 tag respectively)
+void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, int Systematics, bool isSmooth, int Djettag){
 	char TREE_NAME[]="SelectedTree";
 	TString INPUT_NAME = "HZZ4lTree_ggTo";
 	TString OUTPUT_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplatesForCombine_";
@@ -57,11 +63,29 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	TString erg_dir;
 	erg_dir.Form("LHC_%iTeV/",erg_tev);
 
-	if(Systematics==0) OUTPUT_NAME += "Nominal.root";
-	if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD.root";
-	if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD.root";
-	if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF.root";
-	if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF.root";
+	if(Djettag==0){
+		if(Systematics==0) OUTPUT_NAME += "Nominal.root";
+		if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD.root";
+		if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD.root";
+		if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF.root";
+		if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF.root";
+	}
+	if(Djettag==-1){
+		if(Systematics==0) OUTPUT_NAME += "Nominal_nonDjet.root";
+		if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD_nonDjet.root";
+		if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD_nonDjet.root";
+		if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF_nonDjet.root";
+		if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF_nonDjet.root";
+	}
+	if(Djettag==1){
+		if(Systematics==0) OUTPUT_NAME += "Nominal_Djet.root";
+		if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD_Djet.root";
+		if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD_Djet.root";
+		if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF_Djet.root";
+		if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF_Djet.root";
+	}
+	TString systname[5]={"SysDown_ggPDF","SysDown_ggQCD","Nominal","SysUp_ggQCD","SysUp_ggPDF"};
+	TString djetname[3]={"Djet < 0.5","Nominal","Djet>=0.5"};
 	TString cinput_common = user_gg2VV_location + erg_dir + "/" + user_folder[folder] + "/";
 	TString cinput_common_qqZZ = user_gg2VV_location;
 	TString cinput_common_ZX = user_gg2VV_location;
@@ -86,15 +110,19 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	float MC_weight_PDF_Norm_up = 1;
 	float GenHMass = 0;
 	float ZZMass=0;
+	float Djet=0;
 
 	TString cinput_KDFactor = "./data/HZZ4l-KDFactorGraph";
 	if (EnergyIndex == 0) cinput_KDFactor = cinput_KDFactor + "_7TeV";
 	cinput_KDFactor = cinput_KDFactor + ".root";
 	TFile* finput_KDFactor = new TFile(cinput_KDFactor, "read");
-	TString tgkfname = "KDScale_";
-	tgkfname = tgkfname + "AllFlavors_UnNormalized";
+	TString tgkfname = "KDScale_AllFlavors_UnNormalized";
 	TGraphAsymmErrors* tgkf = (TGraphAsymmErrors*)finput_KDFactor->Get(tgkfname);
 
+	TString Djetcutfilename = "./data/HZZ4l-DjetCutShapes"; 
+	if (EnergyIndex == 0) Djetcutfilename += "_7TeV";
+	Djetcutfilename+=".root";
+	TFile* Djetcutfile = new TFile(Djetcutfilename,"read");
 
  	double nSM_ScaledPeak[2][3]={
  		{1.0902689,0.6087736,1.4452079},
@@ -126,6 +154,8 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 		cout<<"==============================="<<endl;
 		cout<<"CoM Energy: "<<erg_tev<<" TeV"<<endl;
 		cout<<"Decay Channel: "<<user_folder[folder]<<endl;
+		cout<<"Systematic: "<<systname[Systematics+2]<<endl;
+		cout<<"Djet cut: "<<djetname[Djettag+1]<<endl;
 		cout<<endl;
 
 		TString coutput = coutput_common + OUTPUT_NAME;
@@ -272,6 +302,8 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			};
 			if(t<3 || t>4) tree->SetBranchAddress("MC_weight_ggZZLepInt",&MC_weight_ggZZLepInt);
 			else MC_weight_ggZZLepInt=1;
+			if(t>4) tree->SetBranchAddress("Djet_VAJHU",&Djet);
+			else Djet=0.;
 
 			if(tree->GetBranchStatus(strFitDim[tFitD])) tree->SetBranchAddress(strFitDim[tFitD],&fitYval);
 			else if(!tree->GetBranchStatus(strFitDim[tFitD])){
@@ -281,8 +313,22 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			cout << "Set variables in trees for " << templatenames[t] << endl;
 
 			float nTotal=0;
+			TF1* Djetcutshape=0;
 			int nEntries = tree->GetEntries();
 			if (t == 0) cout << tgkf->Eval(125.6) << endl;
+			if(Djettag!=0){
+				TString cutname;
+				//IF USING MCFM FOR DJET CUT SHAPE
+				/*if(t==0) cutname="MCFMSig_Djetcutshape";
+				if(t==1) cutname="MCFMBkg_Djetcutshape";
+				if(t==2) cutname="MCFMBSI_Djetcutshape";*/
+				//IF USING MINLO FOR DJET CUT SHAPE
+				if(t==0 || t==1 || t==2) cutname="MINLO_Djetcutshape";
+				if(t==5) cutname="PhantomSig_Djetcutshape";
+				if(t==6) cutname="PhantomBkg_Djetcutshape";
+				if(t==7) cutname="PhantomBSI_Djetcutshape";				
+				Djetcutshape = (TF1*) Djetcutfile->Get(cutname);
+			}
 			for(int ev=0;ev<nEntries;ev++){
 				tree->GetEntry(ev);
 			    progressbar(ev,tree->GetEntries());
@@ -301,12 +347,23 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 
 				if( (ZZMass>=ZZMass_cut[1] || ZZMass<ZZMass_cut[0]) ) continue;
 
+				//Code to add Djet reweighting for ggF (also reweighting for VBF using ggF samples)
+				if(t<3 || t>4){
+					if(Djettag==-1){
+						weight *= 1-Djetcutshape->Eval(ZZMass);
+					}
+					if(Djettag==1){
+						weight *= Djetcutshape->Eval(ZZMass);
+					}
+				}
+
 				nTotal += weight;
 
 				if(tFitD==0) D_temp_1D[t]->Fill(ZZMass,weight);
 				else D_temp_1D[t]->Fill(fitYval,weight);
 				if(tFitD>0) D_temp_2D[t]->Fill(ZZMass,fitYval,weight);
 			};
+			delete Djetcutshape;
 			cout<<endl;
 			cout << templatenames[t] << " NTotal: " << nTotal << endl;
 			if(t<3) cout << nMZZ220[t]*nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated*luminosity[EnergyIndex] << endl;

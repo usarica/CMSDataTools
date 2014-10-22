@@ -17,8 +17,9 @@
 using namespace std;
 
 //Initializers
+bool useDjettagging=true;
 enum histtypes{kSigHist,kBkgHist,kIntHist,kBSIHist,kBSI10Hist,kBSI25Hist};
-void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics);
+void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics,int Djettag);
 double doLinearCombination(double first, double c_first, double second, double c_second, double bkg, int outputtype);
 void twoDlinearcombination(TH2F* first, int firsttype, TH2F* second, int secondtype, TH2F* input, int inputtype, TH2F* finaloutput, int outputtype, TH2F* finaloutput2=0, int output2type=-99);
 
@@ -29,7 +30,8 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF(){
 	for(int i=0;i<kNumSyst;++i){
 		for(int CoM=7;CoM<9;++CoM){
 			for(int channel=0;channel<3;++channel){
-				makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i]);	
+				if(useDjettagging){for(int Djettag=-1;Djettag<2;++Djettag) makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i],Djettag); }
+				else makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i],1);	
 			}	
 		}
 	}
@@ -40,7 +42,8 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF(){
 // erg_tev = 7,8 (CoM energy)
 // tFitD = [0,16] (choice of Discriminant, see FitDimensionsList.h for list; only tFitd works right now)
 // Systematics = [-2,2] (Flag for systematics. 0=Nominal, +/-1=QCD, +/-2=PDF)
-void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics){
+void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics, int Djettag){
+	cout<<"SCALE "<<user_folder[folder]<<" "<<erg_tev<<" "<<Systematics<<" "<<Djettag<<endl;
 	TString INPUT_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_Raw__GenLevelVBF_";
 	TString INPUT_K3A_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine__GenLevelVBF_";
 	TString INPUT_SMOOTH_NAME = "HtoZZ4l_MCFM_125p6_SmoothTemplates__GenLevelVBF_";
@@ -51,32 +54,94 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 	comstring.Form("%i",erg_tev);
 	TString erg_dir;
 	erg_dir.Form("LHC_%iTeV/",erg_tev);
-	if(Systematics==0) OUTPUT_NAME += "Nominal.root";
-	if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD.root";
-	if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD.root";
-	if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF.root";
-	if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF.root";
+	if(Djettag==0){
+		if(Systematics==0) OUTPUT_NAME += "Nominal.root";
+		if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD.root";
+		if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD.root";
+		if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF.root";
+		if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF.root";
 
-	INPUT_SMOOTH_NAME += TString(strFitDim[tFitD]) + "_";
-	if(Systematics==0) INPUT_SMOOTH_NAME += "Nominal.root";
-	if (Systematics == 1) INPUT_SMOOTH_NAME += "SysUp_ggQCD.root";
-	if (Systematics == -1) INPUT_SMOOTH_NAME += "SysDown_ggQCD.root";
-	if (Systematics == 2) INPUT_SMOOTH_NAME += "SysUp_ggPDF.root";
-	if (Systematics == -2) INPUT_SMOOTH_NAME += "SysDown_ggPDF.root";
+		INPUT_SMOOTH_NAME += TString(strFitDim[tFitD]) + "_";
+		if(Systematics==0) INPUT_SMOOTH_NAME += "Nominal.root";
+		if (Systematics == 1) INPUT_SMOOTH_NAME += "SysUp_ggQCD.root";
+		if (Systematics == -1) INPUT_SMOOTH_NAME += "SysDown_ggQCD.root";
+		if (Systematics == 2) INPUT_SMOOTH_NAME += "SysUp_ggPDF.root";
+		if (Systematics == -2) INPUT_SMOOTH_NAME += "SysDown_ggPDF.root";
 
-	INPUT_NAME += TString(strFitDim[tFitD]) + "_";
-	if(Systematics==0) INPUT_NAME += "Nominal.root";
-	if (Systematics == 1) INPUT_NAME += "SysUp_ggQCD.root";
-	if (Systematics == -1) INPUT_NAME += "SysDown_ggQCD.root";
-	if (Systematics == 2) INPUT_NAME += "SysUp_ggPDF.root";
-	if (Systematics == -2) INPUT_NAME += "SysDown_ggPDF.root";
+		INPUT_NAME += TString(strFitDim[tFitD]) + "_";
+		if(Systematics==0) INPUT_NAME += "Nominal.root";
+		if (Systematics == 1) INPUT_NAME += "SysUp_ggQCD.root";
+		if (Systematics == -1) INPUT_NAME += "SysDown_ggQCD.root";
+		if (Systematics == 2) INPUT_NAME += "SysUp_ggPDF.root";
+		if (Systematics == -2) INPUT_NAME += "SysDown_ggPDF.root";
 
-	INPUT_K3A_NAME += TString(strFitDim[tFitD]) + "_";
-	if(Systematics==0) INPUT_K3A_NAME += "Nominal.root";
-	if (Systematics == 1) INPUT_K3A_NAME += "SysUp_ggQCD.root";
-	if (Systematics == -1) INPUT_K3A_NAME += "SysDown_ggQCD.root";
-	if (Systematics == 2) INPUT_K3A_NAME += "SysUp_ggPDF.root";
-	if (Systematics == -2) INPUT_K3A_NAME += "SysDown_ggPDF.root";
+		INPUT_K3A_NAME += TString(strFitDim[tFitD]) + "_";
+		if(Systematics==0) INPUT_K3A_NAME += "Nominal.root";
+		if (Systematics == 1) INPUT_K3A_NAME += "SysUp_ggQCD.root";
+		if (Systematics == -1) INPUT_K3A_NAME += "SysDown_ggQCD.root";
+		if (Systematics == 2) INPUT_K3A_NAME += "SysUp_ggPDF.root";
+		if (Systematics == -2) INPUT_K3A_NAME += "SysDown_ggPDF.root";
+	}
+	if(Djettag==-1){
+		if(Systematics==0) OUTPUT_NAME += "Nominal_nonDjet.root";
+		if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD_nonDjet.root";
+		if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD_nonDjet.root";
+		if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF_nonDjet.root";
+		if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF_nonDjet.root";
+
+		INPUT_SMOOTH_NAME += TString(strFitDim[tFitD]) + "_";
+		if(Systematics==0) INPUT_SMOOTH_NAME += "Nominal_nonDjet.root";
+		if (Systematics == 1) INPUT_SMOOTH_NAME += "SysUp_ggQCD_nonDjet.root";
+		if (Systematics == -1) INPUT_SMOOTH_NAME += "SysDown_ggQCD_nonDjet.root";
+		if (Systematics == 2) INPUT_SMOOTH_NAME += "SysUp_ggPDF_nonDjet.root";
+		if (Systematics == -2) INPUT_SMOOTH_NAME += "SysDown_ggPDF_nonDjet.root";
+
+		INPUT_NAME += TString(strFitDim[tFitD]) + "_";
+		if(Systematics==0) INPUT_NAME += "Nominal_nonDjet.root";
+		if (Systematics == 1) INPUT_NAME += "SysUp_ggQCD_nonDjet.root";
+		if (Systematics == -1) INPUT_NAME += "SysDown_ggQCD_nonDjet.root";
+		if (Systematics == 2) INPUT_NAME += "SysUp_ggPDF_nonDjet.root";
+		if (Systematics == -2) INPUT_NAME += "SysDown_ggPDF_nonDjet.root";
+
+		INPUT_K3A_NAME += TString(strFitDim[tFitD]) + "_";
+		if(Systematics==0) INPUT_K3A_NAME += "Nominal_nonDjet.root";
+		if (Systematics == 1) INPUT_K3A_NAME += "SysUp_ggQCD_nonDjet.root";
+		if (Systematics == -1) INPUT_K3A_NAME += "SysDown_ggQCD_nonDjet.root";
+		if (Systematics == 2) INPUT_K3A_NAME += "SysUp_ggPDF_nonDjet.root";
+		if (Systematics == -2) INPUT_K3A_NAME += "SysDown_ggPDF_nonDjet.root";
+	}
+	if(Djettag==1){
+		if(Systematics==0) OUTPUT_NAME += "Nominal_Djet.root";
+		if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD_Djet.root";
+		if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD_Djet.root";
+		if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF_Djet.root";
+		if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF_Djet.root";
+
+		INPUT_SMOOTH_NAME += TString(strFitDim[tFitD]) + "_";
+		if(Systematics==0) INPUT_SMOOTH_NAME += "Nominal_Djet.root";
+		if (Systematics == 1) INPUT_SMOOTH_NAME += "SysUp_ggQCD_Djet.root";
+		if (Systematics == -1) INPUT_SMOOTH_NAME += "SysDown_ggQCD_Djet.root";
+		if (Systematics == 2) INPUT_SMOOTH_NAME += "SysUp_ggPDF_Djet.root";
+		if (Systematics == -2) INPUT_SMOOTH_NAME += "SysDown_ggPDF_Djet.root";
+
+		INPUT_NAME += TString(strFitDim[tFitD]) + "_";
+		if(Systematics==0) INPUT_NAME += "Nominal_Djet.root";
+		if (Systematics == 1) INPUT_NAME += "SysUp_ggQCD_Djet.root";
+		if (Systematics == -1) INPUT_NAME += "SysDown_ggQCD_Djet.root";
+		if (Systematics == 2) INPUT_NAME += "SysUp_ggPDF_Djet.root";
+		if (Systematics == -2) INPUT_NAME += "SysDown_ggPDF_Djet.root";
+
+		INPUT_K3A_NAME += TString(strFitDim[tFitD]) + "_";
+		if(Systematics==0) INPUT_K3A_NAME += "Nominal_Djet.root";
+		if (Systematics == 1) INPUT_K3A_NAME += "SysUp_ggQCD_Djet.root";
+		if (Systematics == -1) INPUT_K3A_NAME += "SysDown_ggQCD_Djet.root";
+		if (Systematics == 2) INPUT_K3A_NAME += "SysUp_ggPDF_Djet.root";
+		if (Systematics == -2) INPUT_K3A_NAME += "SysDown_ggPDF_Djet.root";
+	}
+	cout<<"Input Smooth: "<<INPUT_SMOOTH_NAME<<endl;
+	cout<<"Input: "<<INPUT_NAME<<endl;
+	cout<<"Input k3a: "<<INPUT_K3A_NAME<<endl;
+	cout<<"Output: "<<OUTPUT_NAME<<endl;
 
 	int EnergyIndex=1;
 	if(erg_tev==7) EnergyIndex=0;
@@ -237,6 +302,7 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 			};
 		};
 
+
 		for (int t = 0; t<kNumTemplates; t++){
 			expectedNormalizations[0][t] = D_temp_2D[t]->Integral("width")*luminosity[EnergyIndex];
 			expectedNormalizations[1][t] = D_temp_2D_exp[t]->Integral("width")*luminosity[EnergyIndex];
@@ -254,6 +320,7 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 				if(t==7) overall_scale[t] = (10.0*expectedNormalizations[2][5] + sqrt(10.0)*expectedNormalizations[2][7] + expectedNormalizations[2][6])/expectedNormalizations[0][t];
 			}
 			cout << expectedNormalizations[0][t]*overall_scale[t] << '\t' << expectedNormalizations[0][t] << '\t' << expectedNormalizations[1][t] << endl;
+			if(t==5) cout<<"RIGHT FUCKING HERE: "<<user_folder[folder]<<" "<<erg_tev<<" "<<Systematics<<" "<<Djettag<<" "<<D_temp_2D_expk3a[5]->Integral("width")<<endl;
 			if(t<3 || t>4){
 				D_temp_2D[t]->Scale(overall_scale[t]);
 				cout << "SCALE FOR " << D_temp_2D[t]->GetName() << " : " << overall_scale[t] << endl;
@@ -268,6 +335,8 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 				};
 			};
 		};
+
+
 
 
 

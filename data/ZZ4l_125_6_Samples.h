@@ -154,5 +154,5 @@ TString strAnomalousType[kCouplings] = {
 };
 int const nAnomalousCouplingTemplates[kCouplings][2] = { // 0: ggHVV, 1: VVHVV
 	[1,1],
-	[2,4]
+	[3,5]
 };

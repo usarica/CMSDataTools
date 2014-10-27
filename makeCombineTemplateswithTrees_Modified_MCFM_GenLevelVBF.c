@@ -19,6 +19,7 @@
 using namespace std;
 
 //Initializers
+int useAnomalousCouplings=kAddfLQ;
 bool useDjettagging=true;
 enum histtypes{kSigHist,kBkgHist,kIntHist,kBSIHist,kBSI10Hist,kBSI25Hist};
 void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics, bool isSmooth, int Djettag);
@@ -75,6 +76,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 	char TREE_NAME[]="SelectedTree";
 	TString INPUT_NAME = "HZZ4lTree_ggTo";
 	TString OUTPUT_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_";
+	if(useAnomalousCouplings>0) OUTPUT_NAME += strAnomalousType[useAnomalousCouplings] + "_";
 	if(!isSmooth) OUTPUT_NAME += "Raw_";
 	OUTPUT_NAME += "_GenLevelVBF_" + TString(strFitDim[tFitD]) + "_";
 	TString comstring;
@@ -106,6 +108,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 	TString djetname[3]={"Djet < 0.5","Nominal","Djet>=0.5"};
 
 	TString INPUT_VBFREF_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplatesForCombine_";
+	if(useAnomalousCouplings>0) INPUT_VBFREF_NAME += strAnomalousType[useAnomalousCouplings] + "_";
 	if(!isSmooth) INPUT_VBFREF_NAME += "Raw_";
 	INPUT_VBFREF_NAME += TString(strFitDim[tFitD]) + "_";
 	if(Djettag==0) INPUT_VBFREF_NAME += "Nominal.root";
@@ -129,6 +132,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 	int EnergyIndex=1;
 	if(erg_tev==7) EnergyIndex=0;
 	float lowside[3]={220,230,240};
+	double mPOLE = 125.6;
 	float ZZMass_PeakCut[2]={105.6,140.6}; // Spin 0 analysis
 	//use ggH yields directly
  	double nSM_ScaledPeak[2][3]={
@@ -231,10 +235,25 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 		}
 
 		const int kNumTemplates=8;
-		TH1F* D_temp_1D[kNumTemplates];
-		TH2F* D_temp_2D[kNumTemplates];
+		TH1F** D_temp_1D[kNumTemplates];
+		TH2F** D_temp_2D[kNumTemplates];
 		double overall_scale[kNumTemplates]={1};
 		TString templatenames[kNumTemplates]={"ggF Sig","gg Bkg","ggF Int","qqZZ","Z+X","VBF Sig","VBF Bkg","VBF Int"};
+		// Build template structure, including anomalous couplings
+		for (int t = 0; t < kNumTemplates; t++){
+			if (t <= 2){ // gg(H)VV
+				D_temp_1D[t] = new TH1F*[(nAnomalousCouplingTemplates[useAnomalousCouplings][0])];
+				D_temp_2D[t] = new TH2F*[(nAnomalousCouplingTemplates[useAnomalousCouplings][0])];
+			}
+			else if (t >= 5 && t <= 7){ // VV(H)VV
+				D_temp_1D[t] = new TH1F*[(nAnomalousCouplingTemplates[useAnomalousCouplings][1])];
+				D_temp_2D[t] = new TH2F*[(nAnomalousCouplingTemplates[useAnomalousCouplings][1])];
+			}
+			else{ // Anything else
+				D_temp_1D[t] = new TH1F*[1];
+				D_temp_2D[t] = new TH2F*[1];
+			}
+		}
 
 		int nEntries;
 		double nSig_Simulated=0;
@@ -257,8 +276,14 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 
 		//Initialize and grab each of the four Phantom trees (change to FullSim)
 		TChain* tree_VBF[4];
-		TH1F* h1DVBF[4];
-		TH2F* h2DVBF[4];
+		TH1F** h1DVBF[4];
+		TH2F** h2DVBF[4];
+		// Build template structure, including anomalous couplings
+		for (int t = 0; t < 4; t++){ // Notice this is purely VBF
+			h1DVBF[t] = new TH1F*[(nAnomalousCouplingTemplates[useAnomalousCouplings][1])];
+			h2DVBF[t] = new TH2F*[(nAnomalousCouplingTemplates[useAnomalousCouplings][1])];
+		}
+
 		TH1F* h1DVBFSigRatio;
 		TH2F* h2DVBFSigRatio;
 		if(tFitD==0){
@@ -294,22 +319,38 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 		// Possible mZZ cuts?
 		//Then write smoothed templates to file 
 		for(int tr=0;tr<4;tr++){
+			int nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][1];
+
+			tree_VBF[tr]->SetBranchAddress("GenHMass", &GenHMass);
 			tree_VBF[tr]->SetBranchAddress("ZZMass", &ZZMass);
 			tree_VBF[tr]->SetBranchAddress("MC_weight", &MC_weight);
 			tree_VBF[tr]->SetBranchAddress("Djet_VAJHU",&Djet);
 			if(tFitD!=0) tree_VBF[tr]->SetBranchAddress(strFitDim[tFitD],&fitYval);
 
-			TString templatename_1D = "htemp1DVBF_";
-			templatename_1D += sample_VBF_suffix[tr];
-			TString templatename_2D = "htemp2DVBF_";
-			templatename_2D += sample_VBF_suffix[tr];
+			TString templatename_1D_core;
+			TString templatename_2D_core;
+			TString templatename_1D;
+			TString templatename_2D;
 
-			if(tFitD==0){
-				h1DVBF[tr] = new TH1F(templatename_1D,templatename_1D,nbinsx,kDXarray);
-			}
-			else{
-				h1DVBF[tr] = new TH1F(templatename_1D,templatename_1D,nbinsy,kDYarray);
-				h2DVBF[tr] = new TH2F(templatename_2D,templatename_2D,nbinsx,kDXarray,nbinsy,kDYarray);
+			templatename_1D_core = "htemp1DVBF_";
+			templatename_1D_core += sample_VBF_suffix[tr];
+			templatename_2D_core = "htemp2DVBF_";
+			templatename_2D_core += sample_VBF_suffix[tr];
+
+			for (int al = 0; al<nAnomalousLoops; al++){
+				templatename_1D = templatename_1D_core;
+				templatename_2D = templatename_2D_core;
+				if (useAnomalousCouplings == kAddfLQ && al>0){
+					templatename_1D.Append(Form("_mZZ2_%i", al));
+					templatename_2D.Append(Form("_mZZ2_%i", al));
+				}
+				if (tFitD == 0){
+					h1DVBF[tr][al] = new TH1F(templatename_1D, templatename_1D, nbinsx, kDXarray);
+				}
+				else{
+					h1DVBF[tr][al] = new TH1F(templatename_1D, templatename_1D, nbinsy, kDYarray);
+					h2DVBF[tr][al] = new TH2F(templatename_2D, templatename_2D, nbinsx, kDXarray, nbinsy, kDYarray);
+				}
 			}
 
 			int nVBFEntries = tree_VBF[tr]->GetEntries();
@@ -327,10 +368,17 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 				if(Djettag==-1 && Djet>=0.5) continue;
 				if(Djettag==1 && Djet<0.5) continue;
 
-				if(tFitD==0) h1DVBF[tr]->Fill(ZZMass,weight);
-				else{
-					h1DVBF[tr]->Fill(fitYval,weight);
-					h2DVBF[tr]->Fill(ZZMass,fitYval,weight);
+				// Anomalous couplings loop
+				for (int al = 0; al<nAnomalousLoops; al++){
+					double fillWeight = weight;
+					if (useAnomalousCouplings == kAddfLQ && al>0){
+						fillWeight *= pow(GenHMass / mPOLE, 2 * al);
+					}
+					if (tFitD == 0) h1DVBF[tr][al]->Fill(ZZMass, fillWeight);
+					else{
+						h1DVBF[tr][al]->Fill(fitYval, fillWeight);
+						h2DVBF[tr][al]->Fill(ZZMass, fitYval, fillWeight);
+					}
 				}
 			}
 			cout<<endl;
@@ -339,18 +387,20 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 			MC_weight = 1;
 			fitYval=0;
 
-			double presmoothInt = h1DVBF[tr]->Integral();
-			if(isSmooth) h1DVBF[tr]->Smooth(1,"k3a");
-			double postsmoothInt = h1DVBF[tr]->Integral();
-			h1DVBF[tr]->Scale(presmoothInt/postsmoothInt);
+			for (int al = 0; al < nAnomalousLoops; al++){
+				double presmoothInt = h1DVBF[tr][al]->Integral();
+				if (isSmooth) h1DVBF[tr][al]->Smooth(1, "k3a");
+				double postsmoothInt = h1DVBF[tr][al]->Integral();
+				h1DVBF[tr][al]->Scale(presmoothInt / postsmoothInt);
 
-			foutput->WriteTObject(h1DVBF[tr]);
-			if(tFitD!=0){
-				presmoothInt = h2DVBF[tr]->Integral();
-				if(isSmooth) h2DVBF[tr]->Smooth(1,"k3a");
-				postsmoothInt = h2DVBF[tr]->Integral();
-				h2DVBF[tr]->Scale(presmoothInt/postsmoothInt);
-				foutput->WriteTObject(h2DVBF[tr]);
+				foutput->WriteTObject(h1DVBF[tr][al]);
+				if (tFitD != 0){
+					presmoothInt = h2DVBF[tr][al]->Integral();
+					if (isSmooth) h2DVBF[tr][al]->Smooth(1, "k3a");
+					postsmoothInt = h2DVBF[tr][al]->Integral();
+					h2DVBF[tr][al]->Scale(presmoothInt / postsmoothInt);
+					foutput->WriteTObject(h2DVBF[tr][al]);
+				}
 			}
 		}
 
@@ -360,20 +410,26 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 		//	 For 7 TeV samples, BSI25, Bkg, and BSI10 are used
 		//	 For 8 TeV samples, BSI, Bkg, and BSI10 are used
 		if (EnergyIndex == 0){
-			oneDlinearcombination(h1DVBF[2],kBSI10Hist,h1DVBF[1],kBkgHist,h1DVBF[3],kBSI25Hist,h1DVBF[0],kSigHist,h1DVBF[2],kIntHist);
-			if(tFitD!=0){
-				twoDlinearcombination(h2DVBF[2],kBSI10Hist,h2DVBF[1],kBkgHist,h2DVBF[3],kBSI25Hist,h2DVBF[0],kSigHist,h2DVBF[2],kIntHist);
+			int nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][1];
+			for (int al = 0; al < nAnomalousLoops; al++){
+				oneDlinearcombination(h1DVBF[2][al], kBSI10Hist, h1DVBF[1][al], kBkgHist, h1DVBF[3][al], kBSI25Hist, h1DVBF[0][al], kSigHist, h1DVBF[2][al], kIntHist);
+				if (tFitD != 0){
+					twoDlinearcombination(h2DVBF[2][al], kBSI10Hist, h2DVBF[1][al], kBkgHist, h2DVBF[3][al], kBSI25Hist, h2DVBF[0][al], kSigHist, h2DVBF[2][al], kIntHist);
+				}
 			}
-			double nVBFsigtemp = doPeakCombination(nVBFPeak[2],10,nVBFPeak[3],25,nVBFPeak[1],kSigHist);
+			double nVBFsigtemp = doPeakCombination(nVBFPeak[2], 10, nVBFPeak[3], 25, nVBFPeak[1], kSigHist);
 			double nVBFinterftemp = doPeakCombination(nVBFPeak[2],10,nVBFPeak[3],25,nVBFPeak[1],kIntHist);
 			for(int tr=0;tr<4;tr++) cout << "nVBFPeak[" << tr << "]: " << nVBFPeak[tr] << endl;
 			nVBFPeak[0]=nVBFsigtemp;
 			nVBFPeak[2]=nVBFinterftemp;
 		}
 		else if (EnergyIndex == 1){
-			oneDlinearcombination(h1DVBF[0],kBSIHist,h1DVBF[1],kBkgHist,h1DVBF[2],kBSI10Hist,h1DVBF[0],kSigHist,h1DVBF[2],kIntHist);
-			if(tFitD!=0){
-				twoDlinearcombination(h2DVBF[0],kBSIHist,h2DVBF[1],kBkgHist,h2DVBF[2],kBSI10Hist,h2DVBF[0],kSigHist,h2DVBF[2],kIntHist);
+			int nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][1];
+			for (int al = 0; al < nAnomalousLoops; al++){
+				oneDlinearcombination(h1DVBF[0][al], kBSIHist, h1DVBF[1][al], kBkgHist, h1DVBF[2][al], kBSI10Hist, h1DVBF[0][al], kSigHist, h1DVBF[2][al], kIntHist);
+				if (tFitD != 0){
+					twoDlinearcombination(h2DVBF[0][al], kBSIHist, h2DVBF[1][al], kBkgHist, h2DVBF[2][al], kBSI10Hist, h2DVBF[0][al], kSigHist, h2DVBF[2][al], kIntHist);
+				}
 			}
 			double nVBFsigtemp = doPeakCombination(nVBFPeak[2],10,nVBFPeak[0],1,nVBFPeak[1],kSigHist);
 			double nVBFinterftemp = doPeakCombination(nVBFPeak[2],10,nVBFPeak[0],1,nVBFPeak[1],kIntHist);
@@ -384,24 +440,28 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 
 		double vbfscale = VBF_Sig_Datacard[EnergyIndex][folder] / nVBFPeak[0];
 		for (int tr = 0; tr < 4; tr++){
-			h1DVBF[tr]->Scale(vbfscale);
-			if (tFitD != 0) h2DVBF[tr]->Scale(vbfscale);
-			if(tr==0) cout << "VBF Signal scale for syst=0: " << vbfscale << endl;
+			for (int al = 0; al < nAnomalousCouplingTemplates[useAnomalousCouplings][1]; al++){
+				h1DVBF[tr][al]->Scale(vbfscale);
+				if (tFitD != 0) h2DVBF[tr][al]->Scale(vbfscale);
+				if (tr == 0 && al == 0) cout << "VBF Signal scale for syst=0: " << vbfscale << endl;
+			}
 		}
-
 		if (tFitD != 0){
-			nVBF_Sig_Simulated = h2DVBF[0]->Integral()*luminosity[EnergyIndex];
-			cout << h2DVBF[0]->Integral()*luminosity[EnergyIndex] << endl;
-			cout << h2DVBF[1]->Integral()*luminosity[EnergyIndex] << endl;
-			cout << h2DVBF[2]->Integral()*luminosity[EnergyIndex] << endl;
-			cout << h2DVBF[3]->Integral()*luminosity[EnergyIndex] << endl;
+			nVBF_Sig_Simulated = h2DVBF[0][0]->Integral(1,h2DVBF[0][0]->GetNbinsX(),0,h2DVBF[0][0]->GetNbinsY()+1)*luminosity[EnergyIndex];
+			cout << h2DVBF[0][0]->Integral()*luminosity[EnergyIndex] << endl;
+			cout << h2DVBF[1][0]->Integral()*luminosity[EnergyIndex] << endl;
+			cout << h2DVBF[2][0]->Integral()*luminosity[EnergyIndex] << endl;
+			cout << h2DVBF[3][0]->Integral()*luminosity[EnergyIndex] << endl;
 		}
 
 		//Template and tree filler
 		for(int t=0;t<kNumTemplates;t++){
-			TChain* tree = new TChain(TREE_NAME);
-			TTree* templateTree;
+			int nAnomalousLoops = 1;
+			if(t<=2) nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][0];
+			else if(t>=5 && t<=7) nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][1];
 
+			TChain* tree = new TChain(TREE_NAME);
+			TTree** templateTree = new TTree*[nAnomalousLoops];
 
 			TF1* Djetcutshape=0;
 			if(Djettag!=0){
@@ -443,70 +503,83 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 				cout<<cinput_4mu<<endl;
 			}
 
-			char templatename_1D[100];
-			char templatename_2D[100];
+			//Initialize templates
+			TString templatename_1D_core;
+			TString templatename_2D_core;
+			TString templatename_1D;
+			TString templatename_2D;
 			if(t<2){
-				sprintf(templatename_1D,"T_1D_%i",t+1);
-				sprintf(templatename_2D,"T_2D_%i",t+1);
+				templatename_1D_core = Form("T_1D_%i",t+1);
+				templatename_2D_core = Form("T_2D_%i",t+1);
 			}
 			else if(t==2){
-				sprintf(templatename_1D,"T_1D_%i",4);
-				sprintf(templatename_2D,"T_2D_%i",4);
+				templatename_1D_core = Form("T_1D_%i",4);
+				templatename_2D_core = Form("T_2D_%i",4);
 			}
 			else if(t==3){
-				sprintf(templatename_1D,"T_1D_%s","qqZZ");
-				sprintf(templatename_2D,"T_2D_%s","qqZZ");
+				templatename_1D_core = Form("T_1D_%s","qqZZ");
+				templatename_2D_core = Form("T_2D_%s","qqZZ");
 			}
 			else if(t==4){
-				sprintf(templatename_1D,"T_1D_%s","ZX");
-				sprintf(templatename_2D,"T_2D_%s","ZX");
+				templatename_1D_core = Form("T_1D_%s","ZX");
+				templatename_2D_core = Form("T_2D_%s","ZX");
 			}
 			else if(t==5 || t==6){
-				sprintf(templatename_1D,"T_1D_VBF_%i",t-4);
-				sprintf(templatename_2D,"T_2D_VBF_%i",t-4);
+				templatename_1D_core = Form("T_1D_VBF_%i",t-4);
+				templatename_2D_core = Form("T_2D_VBF_%i",t-4);
 			}
 			else if(t==7){
-				sprintf(templatename_1D,"T_1D_VBF_%i",4);
-				sprintf(templatename_2D,"T_2D_VBF_%i",4);
+				templatename_1D_core = Form("T_1D_VBF_%i",4);
+				templatename_2D_core = Form("T_2D_VBF_%i",4);
 			}
-			if(tFitD==0){
-				D_temp_1D[t] = new TH1F(templatename_1D,templatename_1D,nbinsx,kDXarray);
-				D_temp_1D[t]->GetXaxis()->SetTitle(strFitDim_label[tFitD]);
 
-				TString strTreeName = templatename_1D;
-				strTreeName += "_Tree";
-				templateTree = new TTree(strTreeName,strTreeName);
+			for (int al = 0; al<nAnomalousLoops; al++){
+				templatename_1D = templatename_1D_core;
+				templatename_2D = templatename_2D_core;
+				if (useAnomalousCouplings == kAddfLQ && al>0){
+					templatename_1D.Append(Form("_mZZ2_%i", al));
+					templatename_2D.Append(Form("_mZZ2_%i", al));
+				}
+				if (tFitD == 0){
+					D_temp_1D[t][al] = new TH1F(templatename_1D, templatename_1D, nbinsx, kDXarray);
+					D_temp_1D[t][al]->GetXaxis()->SetTitle(strFitDim_label[tFitD]);
+					TString strTreeName = templatename_1D;
+					strTreeName += "_Tree";
+					templateTree[al] = new TTree(strTreeName,strTreeName);
+				}
+				else{
+					D_temp_1D[t][al] = new TH1F(templatename_1D, templatename_1D, nbinsy, kDYarray);
+					D_temp_1D[t][al]->GetXaxis()->SetTitle(strFitDim_label[tFitD]);
+
+					D_temp_2D[t][al] = new TH2F(templatename_2D, templatename_2D, nbinsx, kDXarray, nbinsy, kDYarray);
+					D_temp_2D[t][al]->GetXaxis()->SetTitle(strFitDim_label[0]);
+					D_temp_2D[t][al]->GetYaxis()->SetTitle(strFitDim_label[tFitD]);
+
+					TString strTreeName = templatename_2D;
+					strTreeName += "_Tree";
+					templateTree[al] = new TTree(strTreeName,strTreeName);
+				}
+				templateTree[al]->Branch("templateWeight",&templateWeight);
+				templateTree[al]->Branch("ZZMass",&ZZMass);
+				if(tFitD!=0) templateTree[al]->Branch(strFitDim[tFitD],&fitYval);
 			}
-			else{
-				D_temp_1D[t] = new TH1F(templatename_1D,templatename_1D,nbinsy,kDYarray);
-				D_temp_1D[t]->GetXaxis()->SetTitle(strFitDim_label[tFitD]);
 
-				D_temp_2D[t] = new TH2F(templatename_2D,templatename_2D,nbinsx,kDXarray,nbinsy,kDYarray);
-				D_temp_2D[t]->GetXaxis()->SetTitle(strFitDim_label[0]);
-				D_temp_2D[t]->GetYaxis()->SetTitle(strFitDim_label[tFitD]);
-
-				TString strTreeName = templatename_2D;
-				strTreeName += "_Tree";
-				templateTree = new TTree(strTreeName,strTreeName);
-
+			if(tFitD!=0){
 				if(t==3){
-					TString storeName = templatename_2D;
+					TString storeName = templatename_2D_core;
 					storeName = storeName + "_UnConditional";
 					hStore_qqZZ_Unconditional = new TH2F(storeName,storeName,nbinsx,kDXarray,nbinsy,kDYarray);
 					hStore_qqZZ_Unconditional->GetXaxis()->SetTitle(strFitDim_label[0]);
 					hStore_qqZZ_Unconditional->GetYaxis()->SetTitle(strFitDim_label[tFitD]);
 				}
 				if(t==4){
-					TString storeName = templatename_2D;
+					TString storeName = templatename_2D_core;
 					storeName = storeName + "_UnConditional";
 					hStore_ZX_Unconditional = new TH2F(storeName,storeName,nbinsx,kDXarray,nbinsy,kDYarray);
 					hStore_ZX_Unconditional->GetXaxis()->SetTitle(strFitDim_label[0]);
 					hStore_ZX_Unconditional->GetYaxis()->SetTitle(strFitDim_label[tFitD]);
 				}
 			}
-			templateTree->Branch("templateWeight",&templateWeight);
-			templateTree->Branch("ZZMass",&ZZMass);
-			if(tFitD!=0) templateTree->Branch(strFitDim[tFitD],&fitYval);
 
 			//Making templates using appropriate weights
 			double nTotal=0;
@@ -580,9 +653,16 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 
 					nTotal += weight;
 
-					if(tFitD==0) D_temp_1D[t]->Fill(ZZMass,weight);
-					else D_temp_1D[t]->Fill(fitYval,weight);
-					if(tFitD>0) D_temp_2D[t]->Fill(ZZMass,fitYval,weight);
+					// Anomalous couplings loop
+					for (int al = 0; al<nAnomalousLoops; al++){
+						double fillWeight = weight;
+						if (useAnomalousCouplings == kAddfLQ && al>0){
+							fillWeight *= pow(GenHMass / mPOLE, 2 * al);
+						}
+						if (tFitD == 0) D_temp_1D[t][al]->Fill(ZZMass, fillWeight);
+						else D_temp_1D[t][al]->Fill(fitYval, fillWeight);
+						if (tFitD > 0) D_temp_2D[t][al]->Fill(ZZMass, fitYval, fillWeight);
+					}
 				}
 				cout<<endl;
 			}
@@ -598,108 +678,119 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 				if (Systematics == -2 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][1]);
 				if (Systematics == 2 && t<3) myscale *= (1.0 + ggZZ_Syst_AbsNormSyst[EnergyIndex][1]);
 				overall_scale[t] = myscale;
-				D_temp_1D[t]->Scale(myscale);
-				if (tFitD>0) D_temp_2D[t]->Scale(myscale);
-				cout << "Scaling " << templatenames[t] << " by " << myscale << endl;
+				for (int al = 0; al<nAnomalousLoops; al++){
+					D_temp_1D[t][al]->Scale(myscale);
+					if (tFitD>0) D_temp_2D[t][al]->Scale(myscale);
+					cout << "Scaling " << templatenames[t] << "(coupling:" << al << ") by " << myscale << endl;
+				}
 			}
 			else if(t>=5){
 				double myscale = (nVBF_Sig_Reweighted/nVBF_Sig_Simulated);
 
-				cout << "Expected nVBF offshell from reweighting: " << nVBF_Sig_Reweighted << endl;
-				cout << "Observed nVBF offshell from peak normalization: " << nVBF_Sig_Simulated << endl;
+				cout << "Expected signal VBF offshell from reweighting: " << nVBF_Sig_Reweighted << endl;
+				cout << "Observed signal VBF offshell from peak normalization: " << nVBF_Sig_Simulated << endl;
 				cout << "VBF re-wgted/full sim. " << templatenames[t] << " by " << myscale << endl;
 				overall_scale[t] = vbfscale;
 
 				double integral1D=0;
 				double integral2D=0;
-				for(int binx=1;binx<=nbinsx;binx++){
-					double bincontent = h1DVBF[t-5]->GetBinContent(binx);
-					if(Systematics!=0){
-						double scalingRatio = 1;
-						if(t==5){
-							double othercontent = hVBFRef_1D->Integral(binx,binx,"width");
-							if(Systematics>0 && bincontent!=0) scalingRatio = othercontent/bincontent;
-							else if(Systematics<0 && othercontent!=0) scalingRatio = bincontent/othercontent;
-							else scalingRatio = 1;
-							if(scalingRatio<0) scalingRatio=0;
-							if(scalingRatio>4) scalingRatio=4;
-							h1DVBFSigRatio->SetBinContent(binx,scalingRatio);
-						}
-						else scalingRatio = h1DVBFSigRatio->GetBinContent(binx);
-						bincontent *= scalingRatio;
-						integral1D += bincontent;
-					}
-
-					D_temp_1D[t]->SetBinContent(binx,bincontent);
-
-					if(tFitD>0){
-						for(int biny=1;biny<=nbinsy;biny++){
-							bincontent = h2DVBF[t-5]->GetBinContent(binx,biny);
-							if(Systematics!=0){
-								double scalingRatio = 1;
-								if(t==5){
-									double othercontent = hVBFRef->Integral(binx,binx,biny,biny,"width");
-									if(Systematics>0 && bincontent!=0) scalingRatio = othercontent/bincontent;
-									else if(Systematics<0 && othercontent!=0) scalingRatio = bincontent/othercontent;
-									else scalingRatio = 1;
-									if(scalingRatio<0) scalingRatio=0;
-									if(scalingRatio>4) scalingRatio=4;
-									h2DVBFSigRatio->SetBinContent(binx,biny,scalingRatio);
-								}
-								else scalingRatio = h2DVBFSigRatio->GetBinContent(binx,biny);
-								bincontent *= scalingRatio;
-								integral2D += bincontent;
+				for (int al = 0; al<nAnomalousLoops; al++){
+					for (int binx = 0; binx <= h1DVBF[t - 5][al]->GetNbinsX()+1; binx++){ // Include under/overflow bins
+						double bincontent = h1DVBF[t - 5][al]->GetBinContent(binx);
+						double bincontent_SM = h1DVBF[t - 5][0]->GetBinContent(binx);
+						if (Systematics != 0){
+							double scalingRatio = 1;
+							if (t == 5 && al == 0){
+								double othercontent = hVBFRef_1D->Integral(binx, binx, "width");
+								if (Systematics>0 && bincontent_SM != 0) scalingRatio = othercontent / bincontent_SM;
+								else if (Systematics < 0 && othercontent != 0) scalingRatio = bincontent_SM / othercontent;
+								else scalingRatio = 1;
+								if (scalingRatio<0) scalingRatio = 0;
+								if (scalingRatio>4) scalingRatio = 4;
+								h1DVBFSigRatio->SetBinContent(binx, scalingRatio);
 							}
+							else scalingRatio = h1DVBFSigRatio->GetBinContent(binx);
+							bincontent *= scalingRatio;
+							if (al == 0) integral1D += bincontent;
+						}
 
-							D_temp_2D[t]->SetBinContent(binx,biny,bincontent);
+						D_temp_1D[t][al]->SetBinContent(binx, bincontent);
+					}
+					if (tFitD > 0){
+						for (int binx = 0; binx <= h2DVBF[t - 5][al]->GetNbinsX()+1; binx++){
+							for (int biny = 0; biny <= h2DVBF[t - 5][al]->GetNbinsY()+1; biny++){
+								double bincontent = h2DVBF[t - 5][al]->GetBinContent(binx, biny);
+								double bincontent_SM = h2DVBF[t - 5][0]->GetBinContent(binx, biny);
+								if (Systematics != 0){
+									double scalingRatio = 1;
+									if (t == 5 && al == 0){
+										double othercontent = hVBFRef->Integral(binx, binx, biny, biny, "width");
+										if (Systematics > 0 && bincontent_SM != 0) scalingRatio = othercontent / bincontent_SM;
+										else if (Systematics < 0 && othercontent != 0) scalingRatio = bincontent_SM / othercontent;
+										else scalingRatio = 1;
+										if (scalingRatio<0) scalingRatio = 0;
+										if (scalingRatio>4) scalingRatio = 4;
+										h2DVBFSigRatio->SetBinContent(binx, biny, scalingRatio);
+									}
+									else scalingRatio = h2DVBFSigRatio->GetBinContent(binx, biny);
+									bincontent *= scalingRatio;
+									if (al == 0) integral2D += bincontent;
+								}
+
+								D_temp_2D[t][al]->SetBinContent(binx, biny, bincontent);
+							}
 						}
 					}
 				}
-				if(Systematics!=0 && t==5){
+				if(Systematics!=0){
 					if(Systematics>0) myscale = (nVBF_Sig_Reweighted/(integral1D*luminosity[EnergyIndex]));
 					else  myscale = ((nVBF_Sig_Simulated/myscale)/(integral1D*luminosity[EnergyIndex]));
 					cout << "VBF SYSTEMATIC 1D SCALE IS " << myscale << endl;
-					D_temp_1D[t]->Scale(myscale);
-					h1DVBFSigRatio->Scale(myscale);
+					for (int al = 0; al<nAnomalousLoops; al++) D_temp_1D[t][al]->Scale(myscale);
+					if(t==5) h1DVBFSigRatio->Scale(myscale);
 					if(tFitD>0){
 						if(Systematics>0) myscale = (nVBF_Sig_Reweighted/(integral2D*luminosity[EnergyIndex]));
 						else  myscale = ((nVBF_Sig_Simulated/myscale)/(integral2D*luminosity[EnergyIndex]));
 						cout << "VBF SYSTEMATIC 2D SCALE IS " << myscale << endl;
-						D_temp_2D[t]->Scale(myscale);
-						h2DVBFSigRatio->Scale(myscale);
+						for (int al = 0; al<nAnomalousLoops; al++) D_temp_2D[t][al]->Scale(myscale);
+						if(t==5) h2DVBFSigRatio->Scale(myscale);
 					}
 				}
 			}
 			else overall_scale[t]=1.0;
 
 			//Smooths templates if desired
-			double presmoothInt = D_temp_1D[t]->Integral("width");
-			if(isSmooth) D_temp_1D[t]->Smooth(1,"k3a");
-			double postsmoothInt = D_temp_1D[t]->Integral("width");
-			D_temp_1D[t]->Scale(presmoothInt/postsmoothInt);
-			if(tFitD>0){
-				presmoothInt = D_temp_2D[t]->Integral("width");
-				if(isSmooth) D_temp_2D[t]->Smooth(1,"k3a");
-				postsmoothInt = D_temp_2D[t]->Integral("width");
-				D_temp_2D[t]->Scale(presmoothInt/postsmoothInt);
-				if(isSmooth) cout << "SMOOTHING SCALE: " << presmoothInt/postsmoothInt << endl;
+			for (int al = 0; al<nAnomalousLoops; al++){
+				double presmoothInt = D_temp_1D[t][al]->Integral("width");
+				if (isSmooth) D_temp_1D[t][al]->Smooth(1, "k3a");
+				double postsmoothInt = D_temp_1D[t][al]->Integral("width");
+				D_temp_1D[t][al]->Scale(presmoothInt / postsmoothInt);
+				if (tFitD>0){
+					presmoothInt = D_temp_2D[t][al]->Integral("width");
+					if (isSmooth) D_temp_2D[t][al]->Smooth(1, "k3a");
+					postsmoothInt = D_temp_2D[t][al]->Integral("width");
+					D_temp_2D[t][al]->Scale(presmoothInt / postsmoothInt);
+					if (isSmooth) cout << "SMOOTHING SCALE: " << presmoothInt / postsmoothInt << endl;
+				}
 			}
 
-			//Makes uncondtionally normalized PDF for backgrounds
+			//Makes unconditionally normalized PDF for backgrounds
 			if(t>=3 && tFitD>0 && t<5){
-				for(int binx=1;binx<=D_temp_2D[t]->GetNbinsX();binx++){
-					double intBinX = D_temp_2D[t]->Integral(binx,binx,1,D_temp_2D[t]->GetNbinsY());
-					for(int biny=1;biny<=D_temp_2D[t]->GetNbinsY();biny++){
-						double bincontent = D_temp_2D[t]->GetBinContent(binx,biny);
+				for(int binx=0;binx<=D_temp_2D[t][0]->GetNbinsX()+1;binx++){
+					double intBinX = D_temp_2D[t][0]->Integral(binx,binx,0,D_temp_2D[t][0]->GetNbinsY()+1);
+					for(int biny=0;biny<=D_temp_2D[t][0]->GetNbinsY()+1;biny++){
+						double bincontent = D_temp_2D[t][0]->GetBinContent(binx,biny);
 						if(t==3) hStore_qqZZ_Unconditional->SetBinContent(binx,biny,bincontent);
 						if(t==4) hStore_ZX_Unconditional->SetBinContent(binx,biny,bincontent);
-						if(intBinX!=0) D_temp_2D[t]->SetBinContent(binx,biny,bincontent/intBinX);
+						if(intBinX!=0) D_temp_2D[t][0]->SetBinContent(binx,biny,bincontent/intBinX);
 					}
 				}
 			}
 
 			//Stores total weights in tree for JB's smoother
-			double nTotalRecorded=0;
+			double* nTotalRecorded = new double[nAnomalousLoops];
+			for(int al=0;al<nAnomalousLoops;al++) nTotalRecorded[al]=0;
+
 			if(t<5){
 				nEntries = tree->GetEntries();
 				for(int ev=0;ev<nEntries;ev++){
@@ -725,10 +816,15 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 						}
 					}
 
-					templateWeight = weight * overall_scale[t];
-
-					templateTree->Fill();
-					nTotalRecorded += templateWeight;
+					// Anomalous couplings loop
+					for (int al = 0; al<nAnomalousLoops; al++){
+						templateWeight = weight * overall_scale[t];
+						if (useAnomalousCouplings == kAddfLQ && al>0){
+							templateWeight *= pow(GenHMass / mPOLE, 2 * al);
+						}
+						templateTree[al]->Fill();
+						nTotalRecorded[al] += templateWeight;
+					}
 				}
 			}
 			else{
@@ -758,18 +854,27 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 						weight *= sysVBFScale;
 					}
 
-					templateWeight = weight;
-
-					templateTree->Fill();
-					nTotalRecorded += templateWeight;
+					// Anomalous couplings loop
+					for (int al = 0; al<nAnomalousLoops; al++){
+						templateWeight = weight * overall_scale[t];
+						if (useAnomalousCouplings == kAddfLQ && al>0){
+							templateWeight *= pow(GenHMass / mPOLE, 2 * al);
+						}
+						templateTree[al]->Fill();
+						nTotalRecorded[al] += templateWeight;
+					}
 				}
 			}
 
-			if(t!=3) cout << "RECORDED YIELD IN " << templateTree->GetName() << ": " << nTotalRecorded*luminosity[EnergyIndex] << endl;
-			else cout << "RECORDED YIELD IN " << templateTree->GetName() << ": " << nTotalRecorded << endl;
-			foutput->WriteTObject(templateTree);
+			for (int al = 0; al < nAnomalousLoops; al++){
+				if (t != 3) cout << "RECORDED YIELD IN " << templateTree[al]->GetName() << ": " << nTotalRecorded[al]*luminosity[EnergyIndex] << endl;
+				else cout << "RECORDED YIELD IN " << templateTree[al]->GetName() << ": " << nTotalRecorded[al] << endl;
+				foutput->WriteTObject(templateTree[al]);
+				delete templateTree[al];
+			}
+			delete[] nTotalRecorded;
+			delete[] templateTree;
 			delete Djetcutshape;
-			delete templateTree;
 			delete tree;
 		}
 		if(Systematics!=0){
@@ -780,44 +885,56 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 		delete h1DVBFSigRatio;
 		for(int tr=0;tr<4;tr++){
 			delete tree_VBF[tr];
-			delete h1DVBF[tr];
-			if(tFitD!=0) delete h2DVBF[tr];
+			for (int al = 0; al < nAnomalousCouplingTemplates[useAnomalousCouplings][1]; al++){
+				delete h1DVBF[tr][al];
+				if (tFitD != 0) delete h2DVBF[tr][al];
+			}
+			delete[] h1DVBF[tr];
+			if (tFitD != 0) delete[] h2DVBF[tr];
 		}
 
-		D_temp_1D[2]->Add(D_temp_1D[1],-1.0);
-		D_temp_1D[2]->Add(D_temp_1D[0],-1.0);
-		if(tFitD!=0){
-			D_temp_2D[2]->Add(D_temp_2D[1],-1.0);
-			D_temp_2D[2]->Add(D_temp_2D[0],-1.0);
+		for (int al = 0; al < nAnomalousCouplingTemplates[useAnomalousCouplings][0]; al++){
+			D_temp_1D[2][al]->Add(D_temp_1D[1][al], -1.0);
+			D_temp_1D[2][al]->Add(D_temp_1D[0][al], -1.0);
+			if (tFitD != 0){
+				D_temp_2D[2][al]->Add(D_temp_2D[1][al], -1.0);
+				D_temp_2D[2][al]->Add(D_temp_2D[0][al], -1.0);
+			}
 		}
 		cout << "Integrals after everything:\n1D\t2D" << endl;
 
-		//Divides bins by Bin Width
+		//Divides bins by Bin Width and ZX mirroring
 		for(int t=0;t<kNumTemplates;t++){
-			for(int binx=0;binx<nbinsx;binx++){
-				double binwidthx;
-				if(tFitD==0) binwidthx = kDXarray[binx+1] - kDXarray[binx];
-				else binwidthx = kDYarray[binx+1] - kDYarray[binx];
-				double bincontent = D_temp_1D[t]->GetBinContent(binx+1);
-				if(t!=3 && t!=4) bincontent /= binwidthx;
-				D_temp_1D[t]->SetBinContent(binx+1,bincontent);
+			int nAnomalousLoops = 1;
+			if(t<=2) nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][0];
+			else if(t>=5 && t<=7) nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][1];
 
-				binwidthx = kDXarray[binx+1] - kDXarray[binx];
-
-				if(tFitD!=0){
-					for(int biny=0;biny<nbinsy;biny++){
-						double binwidthy = kDYarray[biny+1] - kDYarray[biny];
-						double binwidth = binwidthx*binwidthy;
-						bincontent = D_temp_2D[t]->GetBinContent(binx+1,biny+1);
-						if(t!=3 && t!=4) bincontent /= binwidth;
-						D_temp_2D[t]->SetBinContent(binx+1,biny+1,bincontent);
+			for (int al = 0; al < nAnomalousLoops; al++){
+				for (int binx = 0; binx < D_temp_1D[t][al]->GetNbinsX(); binx++){
+					double binwidthx;
+					if (tFitD == 0) binwidthx = kDXarray[binx + 1] - kDXarray[binx];
+					else binwidthx = kDYarray[binx + 1] - kDYarray[binx];
+					double bincontent = D_temp_1D[t][al]->GetBinContent(binx + 1);
+					if (t != 3 && t != 4) bincontent /= binwidthx;
+					D_temp_1D[t][al]->SetBinContent(binx + 1, bincontent);
+				}
+				if (tFitD != 0){
+					for (int binx = 0; binx < D_temp_2D[t][al]->GetNbinsX(); binx++){
+						double binwidthx = kDXarray[binx + 1] - kDXarray[binx];
+						for (int biny = 0; biny < D_temp_2D[t][al]->GetNbinsY(); biny++){
+							double binwidthy = kDYarray[biny + 1] - kDYarray[biny];
+							double binwidth = binwidthx*binwidthy;
+							double bincontent = D_temp_2D[t][al]->GetBinContent(binx + 1, biny + 1);
+							if (t != 3 && t != 4) bincontent /= binwidth;
+							D_temp_2D[t][al]->SetBinContent(binx + 1, biny + 1, bincontent);
+						}
 					}
 				}
 			}
 			if(tFitD!=0 && t==3){
-				for(int binx=0;binx<nbinsx;binx++){
+				for(int binx=0;binx<hStore_qqZZ_Unconditional->GetNbinsX();binx++){
 					double binwidthx = kDXarray[binx+1] - kDXarray[binx];
-					for(int biny=0;biny<nbinsy;biny++){
+					for(int biny=0;biny<hStore_qqZZ_Unconditional->GetNbinsY();biny++){
 						double binwidthy = kDYarray[biny+1] - kDYarray[biny];
 						double binwidth = binwidthx*binwidthy;
 						double bincontent = hStore_qqZZ_Unconditional->GetBinContent(binx+1,biny+1);
@@ -827,9 +944,9 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 				}
 			}
 			if(tFitD!=0 && t==4){
-				for(int binx=0;binx<nbinsx;binx++){
+				for(int binx=0;binx<hStore_ZX_Unconditional->GetNbinsX();binx++){
 					double binwidthx = kDXarray[binx+1] - kDXarray[binx];
-					for(int biny=0;biny<nbinsy;biny++){
+					for(int biny=0;biny<hStore_ZX_Unconditional->GetNbinsY();biny++){
 						double binwidthy = kDYarray[biny+1] - kDYarray[biny];
 						double binwidth = binwidthx*binwidthy;
 						double bincontent = hStore_ZX_Unconditional->GetBinContent(binx+1,biny+1);
@@ -839,40 +956,40 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 				}
 			}
 			if(t==4 && Systematics!=0){
-				double intTZX_1D = D_temp_1D[t]->Integral();
-				double intTZZQQB_1D = D_temp_1D[3]->Integral();
-				for(int binx=1;binx<=D_temp_1D[t]->GetNbinsX();binx++){
-					double bincontent = D_temp_1D[t]->GetBinContent(binx);
-					double bincontent_alt = D_temp_1D[3]->GetBinContent(binx);
+				double intTZX_1D = D_temp_1D[t][0]->Integral(0,D_temp_1D[t][0]->GetNbinsX()+1);
+				double intTZZQQB_1D = D_temp_1D[3][0]->Integral(0,D_temp_1D[3][0]->GetNbinsX()+1);
+				for(int binx=0;binx<=D_temp_1D[t][0]->GetNbinsX()+1;binx++){
+					double bincontent = D_temp_1D[t][0]->GetBinContent(binx);
+					double bincontent_alt = D_temp_1D[3][0]->GetBinContent(binx);
 					bincontent_alt *= intTZX_1D/intTZZQQB_1D;
 					double difference = bincontent_alt - bincontent;
 
 					if(Systematics>0) bincontent += difference;
 					else bincontent -= difference;
 					if(bincontent < 0) bincontent = 0;
-					D_temp_1D[t]->SetBinContent(binx,bincontent);
+					D_temp_1D[t][0]->SetBinContent(binx,bincontent);
 				}
-				D_temp_1D[t]->Scale(intTZX_1D/D_temp_1D[t]->Integral());
+				D_temp_1D[t][0]->Scale( intTZX_1D / D_temp_1D[t][0]->Integral(0,D_temp_1D[t][0]->GetNbinsX()+1) );
 
-				for(int binx=1;binx<=D_temp_2D[t]->GetNbinsX();binx++){
-					double* storeOriginal = new double[D_temp_2D[t]->GetNbinsY()];
-					for(int biny=1;biny<=D_temp_2D[t]->GetNbinsY();biny++){
-						double bincontent = D_temp_2D[t]->GetBinContent(binx,biny);
-						double bincontent_alt = D_temp_2D[3]->GetBinContent(binx,biny);
+				for(int binx=0;binx<=D_temp_2D[t][0]->GetNbinsX()+1;binx++){
+					double* storeOriginal = new double[D_temp_2D[t][0]->GetNbinsY()+2];
+					for(int biny=0;biny<=D_temp_2D[t][0]->GetNbinsY()+1;biny++){
+						double bincontent = D_temp_2D[t][0]->GetBinContent(binx,biny);
+						double bincontent_alt = D_temp_2D[3][0]->GetBinContent(binx,biny);
 						double difference = bincontent_alt - bincontent;
 						storeOriginal[biny-1] = bincontent;
 
 						if(Systematics>0) bincontent += difference;
 						else bincontent -= difference;
 						if(bincontent < 0) bincontent = 0;
-						D_temp_2D[t]->SetBinContent(binx,biny,bincontent);
+						D_temp_2D[t][0]->SetBinContent(binx,biny,bincontent);
 					}
-					double intBinX = D_temp_2D[t]->Integral(binx,binx,1,D_temp_2D[t]->GetNbinsY());
-					for(int biny=1;biny<=D_temp_2D[t]->GetNbinsY();biny++){
-						double bincontent = D_temp_2D[t]->GetBinContent(binx,biny);
+					double intBinX = D_temp_2D[t][0]->Integral(binx,binx,0,D_temp_2D[t][0]->GetNbinsY()+1);
+					for(int biny=0;biny<=D_temp_2D[t][0]->GetNbinsY()+1;biny++){
+						double bincontent = D_temp_2D[t][0]->GetBinContent(binx,biny);
 
 						if(intBinX!=0){
-							D_temp_2D[t]->SetBinContent(binx,biny,bincontent/intBinX);
+							D_temp_2D[t][0]->SetBinContent(binx,biny,bincontent/intBinX);
 							double sysRatio = 0;
 							if(storeOriginal[biny-1]!=0) sysRatio = (bincontent/intBinX)/(storeOriginal[biny-1]);
 							double unconditionalbincontent = hStore_ZX_Unconditional->GetBinContent(binx,biny);
@@ -885,35 +1002,53 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 					delete[] storeOriginal;
 				}
 				if(Systematics<0){
-					double presmoothInt = D_temp_1D[t]->Integral();
-					if(isSmooth) D_temp_1D[t]->Smooth(1,"k3a");
-					double postsmoothInt = D_temp_1D[t]->Integral();
-					D_temp_1D[t]->Scale(presmoothInt/postsmoothInt);
+					double presmoothInt = D_temp_1D[t][0]->Integral();
+					if(isSmooth) D_temp_1D[t][0]->Smooth(1,"k3a");
+					double postsmoothInt = D_temp_1D[t][0]->Integral();
+					D_temp_1D[t][0]->Scale(presmoothInt/postsmoothInt);
 				}
 			}
-			foutput->WriteTObject(D_temp_1D[t]);
-			if(tFitD!=0) foutput->WriteTObject(D_temp_2D[t]);
+			for (int al = 0; al < nAnomalousLoops; al++){
+				foutput->WriteTObject(D_temp_1D[t][al]);
+				if (tFitD != 0) foutput->WriteTObject(D_temp_2D[t][al]);
+			}
 			if(tFitD!=0 && t==3) foutput->WriteTObject(hStore_qqZZ_Unconditional);
 			if(tFitD!=0 && t==4) foutput->WriteTObject(hStore_ZX_Unconditional);
 
-			if(t!=3 && t!=4){
-				cout << D_temp_1D[t]->Integral("width")*luminosity[EnergyIndex] << '\t';
-				if(tFitD!=0) cout << D_temp_2D[t]->Integral("width")*luminosity[EnergyIndex] << endl;
-				else cout << endl;
-			}
-			else{
-				cout << D_temp_1D[t]->Integral(1,nbinsx) << '\t';
-				if(tFitD!=0) cout << D_temp_2D[t]->Integral(1,nbinsx,1,nbinsy) << endl;
-				else cout << endl;
+
+			for (int al = 0; al < nAnomalousLoops; al++){
+				cout << "Template " << t << " (anom. coupl.: " << al << ") integrals: ";
+				if (t != 3 && t != 4){
+					cout << D_temp_1D[t][al]->Integral("width")*luminosity[EnergyIndex] << '\t';
+					if (tFitD != 0) cout << D_temp_2D[t][al]->Integral("width")*luminosity[EnergyIndex] << endl;
+					else cout << endl;
+				}
+				else{
+					cout << D_temp_1D[t][al]->Integral() << '\t';
+					if (tFitD != 0) cout << D_temp_2D[t][al]->Integral() << endl;
+					else cout << endl;
+				}
 			}
 		}
 		if(tFitD!=0){
 			cout << "Unconditional Integrals are: " << endl;
 			cout << hStore_qqZZ_Unconditional->Integral("width")*luminosity[EnergyIndex] << endl;
 			cout << hStore_ZX_Unconditional->Integral("width")*luminosity[EnergyIndex] << endl;
-		};
+		}
+
 		delete hStore_qqZZ_Unconditional;
 		delete hStore_ZX_Unconditional;
+		for (int t = 0; t < kNumTemplates; t++){
+			int nAnomalousLoops = 1;
+			if (t <= 2) nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][0];
+			else if (t >= 5 && t <= 7) nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][1];
+			for (int al = 0; al < nAnomalousLoops; al++){
+				delete D_temp_1D[t][al];
+				if (tFitD != 0) delete D_temp_2D[t][al];
+			}
+			delete[] D_temp_1D[t];
+			if (tFitD != 0) delete[] D_temp_2D[t];
+		}
 
 		finput_VBFRef->Close();
 		foutput->Close();

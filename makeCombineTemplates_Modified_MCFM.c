@@ -488,15 +488,14 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 					double bincontent = D_temp_1D[t][al]->GetBinContent(binx + 1);
 					if (t != 3 && t != 4) bincontent /= binwidthx;
 					D_temp_1D[t][al]->SetBinContent(binx + 1, bincontent);
-
-					binwidthx = kDXarray[binx + 1] - kDXarray[binx];
 				}
 				if (tFitD != 0){
 					for (int binx = 0; binx < D_temp_2D[t][al]->GetNbinsX(); binx++){
+						double binwidthx = kDXarray[binx + 1] - kDXarray[binx];
 						for (int biny = 0; biny < D_temp_2D[t][al]->GetNbinsY(); biny++){
 							double binwidthy = kDYarray[biny + 1] - kDYarray[biny];
 							double binwidth = binwidthx*binwidthy;
-							bincontent = D_temp_2D[t][al]->GetBinContent(binx + 1, biny + 1);
+							double bincontent = D_temp_2D[t][al]->GetBinContent(binx + 1, biny + 1);
 							if (t != 3 && t != 4) bincontent /= binwidth;
 							D_temp_2D[t][al]->SetBinContent(binx + 1, biny + 1, bincontent);
 						}

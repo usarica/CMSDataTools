@@ -142,3 +142,17 @@ TString user_folder[5]={
 	"CR",
 	"data"
 };
+
+enum{
+	kSMOnly,
+	kAddfLQ,
+	kCouplings
+};
+TString strAnomalousType[kCouplings] = {
+	"SMVtxOnly",
+	"fLQAdded"
+};
+int const nAnomalousCouplingTemplates[kCouplings][2] = { // 0: ggHVV, 1: VVHVV
+	[1,1],
+	[2,4]
+};

@@ -392,12 +392,13 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 
 				// Anomalous couplings loop
 				for (int al = 0; al<nAnomalousLoops; al++){
+					double fillWeight = weight;
 					if (useAnomalousCouplings == kAddfLQ && al>0){
-						weight *= pow(GenHMass / mPOLE, 2 * al);
+						fillWeight *= pow(GenHMass / mPOLE, 2 * al);
 					}
-					if (tFitD == 0) D_temp_1D[t][al]->Fill(ZZMass, weight);
-					else D_temp_1D[t][al]->Fill(fitYval, weight);
-					if (tFitD > 0) D_temp_2D[t][al]->Fill(ZZMass, fitYval, weight);
+					if (tFitD == 0) D_temp_1D[t][al]->Fill(ZZMass, fillWeight);
+					else D_temp_1D[t][al]->Fill(fitYval, fillWeight);
+					if (tFitD > 0) D_temp_2D[t][al]->Fill(ZZMass, fitYval, fillWeight);
 				}
 			}
 			delete Djetcutshape;

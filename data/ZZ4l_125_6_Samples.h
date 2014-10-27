@@ -129,11 +129,11 @@ TString sample_BackgroundFile[kNumBkg]={
 };
 //Directories
 
-TString user_dir="./161014/";
+TString user_dir="./271014/";
 //TString user_dir="/afs/cern.ch/work/u/usarica/WidthAnalysis/PostICHEP/";
 TString user_gg2VV_location="/scratch0/hep/ianderso/CJLST/ReprocessedTrees/HZZ4l-125p6-FullAnalysis/";
 //TString user_gg2VV_location="/afs/cern.ch/work/u/usarica/HZZ4l-125p6-FullAnalysis/";
-TString user_TemplateswithTrees_dir="/scratch0/hep/ianderso/TemplatesForCombine/161014/";
+TString user_TemplateswithTrees_dir="/scratch0/hep/ianderso/TemplatesForCombine/271014/";
 //TString user_TemplateswithTrees_dir="/afs/cern.ch/work/u/usarica/WidthAnalysis/PostICHEP/";
 TString user_folder[5]={
 	"4mu",
@@ -153,6 +153,6 @@ TString strAnomalousType[kCouplings] = {
 	"fLQAdded"
 };
 int const nAnomalousCouplingTemplates[kCouplings][2] = { // 0: ggHVV, 1: VVHVV
-	[1,1],
-	[3,5]
+	{1,1},
+	{3,5}
 };

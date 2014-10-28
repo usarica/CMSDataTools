@@ -183,6 +183,12 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 		TH2F** D_temp_2D_expk3a[kNumTemplates];
 		TH2F** D_temp_2D_exp[kNumTemplates];
 		TH2F** D_temp_2D[kNumTemplates];
+		TH2F* hZX_Unconditional;
+		TH2F* hqqZZ_Unconditional;
+		TH2F* hZX_Unconditional_exp;
+		TH2F* hqqZZ_Unconditional_exp;
+		TH2F* hZX_Unconditional_expk3a;
+		TH2F* hqqZZ_Unconditional_expk3a;
 		for (int t = 0; t < kNumTemplates; t++){
 			if (t <= 2){ // gg(H)VV
 				D_temp_2D[t] = new TH2F*[(nAnomalousCouplingTemplates[useAnomalousCouplings][0])];
@@ -221,12 +227,6 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 				}
 			}
 		}
-		TH2F* hZX_Unconditional;
-		TH2F* hqqZZ_Unconditional;
-		TH2F* hZX_Unconditional_exp;
-		TH2F* hqqZZ_Unconditional_exp;
-		TH2F* hZX_Unconditional_expk3a;
-		TH2F* hqqZZ_Unconditional_expk3a;
 
 		TString cinput = cinput_common + INPUT_NAME;
 		TFile* finput = new TFile(cinput,"read");
@@ -410,12 +410,12 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 		//	 For 8 TeV samples, BSI, Bkg, and BSI10 are used
 		if (EnergyIndex == 0){
 			if(tFitD!=0){
-				for (int al = 0; al < nAnomalousCouplingTemplates[useAnomalousCouplings][1]; al++) twoDlinearcombination(D_temp_2D[7],kBSI10Hist,D_temp_2D[6],kBkgHist,D_temp_2D[5],kBSI25Hist,D_temp_2D[5],kSigHist,D_temp_2D[7],kIntHist);
+				for (int al = 0; al < nAnomalousCouplingTemplates[useAnomalousCouplings][1]; al++) twoDlinearcombination(D_temp_2D[7][al],kBSI10Hist,D_temp_2D[6][al],kBkgHist,D_temp_2D[5][al],kBSI25Hist,D_temp_2D[5][al],kSigHist,D_temp_2D[7][al],kIntHist);
 			}
 		}
 		else if (EnergyIndex == 1){
 			if(tFitD!=0){
-				for (int al = 0; al < nAnomalousCouplingTemplates[useAnomalousCouplings][1]; al++) twoDlinearcombination(D_temp_2D[5],kBSIHist,D_temp_2D[6],kBkgHist,D_temp_2D[7],kBSI10Hist,D_temp_2D[5],kSigHist,D_temp_2D[7],kIntHist);
+				for (int al = 0; al < nAnomalousCouplingTemplates[useAnomalousCouplings][1]; al++) twoDlinearcombination(D_temp_2D[5][al],kBSIHist,D_temp_2D[6][al],kBkgHist,D_temp_2D[7][al],kBSI10Hist,D_temp_2D[5][al],kSigHist,D_temp_2D[7][al],kIntHist);
 			}
 		}
 
@@ -454,11 +454,11 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 							D_temp_2D[t][0]->SetBinContent(binx,biny,bincontent/intBinX);
 							double sysRatio = 1.0e-20;
 							if(storeOriginal[biny]!=0) sysRatio = (bincontent/intBinX)/(storeOriginal[biny]);
-							double unconditionalbincontent = hStore_ZX_Unconditional->GetBinContent(binx,biny);
-							hStore_ZX_Unconditional->SetBinContent(binx,biny,unconditionalbincontent*sysRatio);
+							double unconditionalbincontent = hZX_Unconditional->GetBinContent(binx,biny);
+							hZX_Unconditional->SetBinContent(binx,biny,unconditionalbincontent*sysRatio);
 						}
 						else{
-							hStore_ZX_Unconditional->SetBinContent(binx,biny,1.0e-20);
+							hZX_Unconditional->SetBinContent(binx,biny,1.0e-20);
 						}
 					}
 					delete[] storeOriginal;
@@ -469,9 +469,10 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 				hZX_Unconditional_expk3a->Scale((hZX_Unconditional->Integral("width"))/(hZX_Unconditional_expk3a->Integral("width")));
 			}
 
+			TString oldTemplateName;
 			for (int al = 0; al < nAnomalousLoops; al++){
 				if (t == 4) D_temp_2D[t][al]->SetName(D_temp_2D_exp[t][al]->GetName());
-				TString oldTemplateName = D_temp_2D_exp[t][al]->GetName();
+				oldTemplateName = D_temp_2D_exp[t][al]->GetName();
 				oldTemplateName = oldTemplateName + "_Raw";
 				D_temp_2D_exp[t][al]->SetName(oldTemplateName);
 				oldTemplateName = D_temp_2D[t][al]->GetName();
@@ -508,10 +509,35 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 				foutput->WriteTObject(hZX_Unconditional_expk3a);
 			}
 
+			bool* isPhysical = new bool[nAnomalousLoops];
+
 			for (int al = 0; al < nAnomalousLoops; al++){
+				isPhysical[al]=true;
+				if (useAnomalousCouplings == kAddfLQ && al>0){ // Absorb coefficients due to powers of (mZZ/mH)**2 in fLQ
+					double interfScale=1;
+
+					if( (t==0||t==7) && al==1) interfScale = -2; // ggH signal or VBF interference, power 1
+					else if( t==2 && al==1) interfScale = -1; // ggH interference, power 1
+					else if( t==5 && (al==1 || al==3)) interfScale = -4; // VBF signal, power 1 or 3
+					else if( t==5 && al==2) interfScale = 6; // VBF signal, power 2
+
+					D_temp_2D[t][al]->Scale(interfScale);
+					D_temp_2D_exp[t][al]->Scale(interfScale);
+					D_temp_2D_expk3a[t][al]->Scale(interfScale);
+
+					if(
+						(t==2 && al>1) || // ggH interference does not contain terms higher than (mZZ/mH)**2
+						(t==7 && al>2) || // VBF interference does not contain terms higher than pow( (mZZ/mH)**2 , 2 )
+						((t==1||t==6) && al>0) // Bkg does not contain any (mZZ/mH)**2 terms
+						) isPhysical[al]=false;
+				}
+
+				if(!isPhysical[al]) continue;
+
 				foutput->WriteTObject(D_temp_2D[t][al]);
 				foutput->WriteTObject(D_temp_2D_exp[t][al]);
 				foutput->WriteTObject(D_temp_2D_expk3a[t][al]);
+
 				if (t != 3 && t != 4){
 					cout << "Template " << t << " (anom. coupl. " << al << "): ";
 					cout << D_temp_2D[t][al]->Integral("width")*luminosity[EnergyIndex] << '\t';
@@ -545,6 +571,8 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 			TH1D* hPraw;
 
 			for (int al = 0; al < nAnomalousLoops; al++){
+				if(!isPhysical[al]) continue;
+
 				canvasname = "Compare_";
 				canvasname = canvasname + D_temp_2D[t][al]->GetName();
 				canvasname = canvasname + "_ZZMass";
@@ -603,6 +631,8 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 				delete hPk3a;
 				cKD->Close();
 			}
+
+			delete[] isPhysical;
 
 			if(t==3 || t==4){
 				canvasname = "Compare_";

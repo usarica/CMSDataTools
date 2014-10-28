@@ -363,6 +363,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			for(int ev=0;ev<nEntries;ev++){
 				tree->GetEntry(ev);
 			    progressbar(ev,tree->GetEntries());
+				if(fitYval!=fitYval) continue;
 				double weight = MC_weight;
 				if (t<3) weight *= MC_weight_ggZZLepInt;
 				if (abs(Systematics) != 1 && t<3) weight *= MC_weight_Kfactor;
@@ -576,7 +577,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	delete tgkf;
 	finput_KDFactor->Close();
 	finput_VBF->Close();
-};
+}
 
 TH1F* oneDlinearcombination(TH1F* first, int firsttype, TH1F* second, int secondtype, TH1F* input, int inputtype, int outputtype){
 	TH1F* output = (TH1F*) input->Clone();

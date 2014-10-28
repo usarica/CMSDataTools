@@ -357,6 +357,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 			for(int ev=0;ev<nVBFEntries;ev++){
 			    progressbar(ev,tree_VBF[tr]->GetEntries());
 				tree_VBF[tr]->GetEntry(ev);
+				if(fitYval!=fitYval) continue;
 
 				double weight = MC_weight;
 				if(ev==0) cout << "Weight: " << weight << endl;
@@ -623,6 +624,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 				for(int ev=0;ev<nEntries;ev++){
 				    progressbar(ev,tree->GetEntries());
 					tree->GetEntry(ev);
+					if(fitYval!=fitYval) continue;
 					double weight = MC_weight;
 					if (t<3) weight *= MC_weight_ggZZLepInt;
 					if (abs(Systematics) != 1 && t<3) weight *= MC_weight_Kfactor;
@@ -795,7 +797,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 				nEntries = tree->GetEntries();
 				for(int ev=0;ev<nEntries;ev++){
 					tree->GetEntry(ev);
-
+					if(fitYval!=fitYval) continue;
 					if( (ZZMass>=ZZMass_cut[1] || ZZMass<ZZMass_cut[0]) ) continue;
 
 					double weight = MC_weight;
@@ -838,6 +840,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 				nEntries = tree_VBF[treeCode]->GetEntries();
 				for(int ev=0;ev<nEntries;ev++){
 					tree_VBF[treeCode]->GetEntry(ev);
+					if(fitYval!=fitYval) continue;
 					if (ZZMass >= ZZMass_cut[1] || ZZMass<ZZMass_cut[0]) continue;
 
 					//Djet cut for VBF
@@ -942,6 +945,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 						hStore_qqZZ_Unconditional->SetBinContent(binx+1,biny+1,bincontent);
 					}
 				}
+//				cout << "qqZZ unconditional template recording is complete" << endl;
 			}
 			if(tFitD!=0 && t==4){
 				for(int binx=0;binx<hStore_ZX_Unconditional->GetNbinsX();binx++){
@@ -954,6 +958,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 						hStore_ZX_Unconditional->SetBinContent(binx+1,biny+1,bincontent);
 					}
 				}
+//				cout << "ZX unconditional template recording is complete" << endl;
 			}
 			if(t==4 && Systematics!=0){
 				double intTZX_1D = D_temp_1D[t][0]->Integral(0,D_temp_1D[t][0]->GetNbinsX()+1);
@@ -970,6 +975,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 					D_temp_1D[t][0]->SetBinContent(binx,bincontent);
 				}
 				D_temp_1D[t][0]->Scale( intTZX_1D / D_temp_1D[t][0]->Integral(0,D_temp_1D[t][0]->GetNbinsX()+1) );
+//				cout << "ZX conditional template scaling is complete" << endl;
 
 				for(int binx=0;binx<=D_temp_2D[t][0]->GetNbinsX()+1;binx++){
 					double* storeOriginal = new double[D_temp_2D[t][0]->GetNbinsY()+2];
@@ -977,7 +983,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 						double bincontent = D_temp_2D[t][0]->GetBinContent(binx,biny);
 						double bincontent_alt = D_temp_2D[3][0]->GetBinContent(binx,biny);
 						double difference = bincontent_alt - bincontent;
-						storeOriginal[biny-1] = bincontent;
+						storeOriginal[biny] = bincontent;
 
 						if(Systematics>0) bincontent += difference;
 						else bincontent -= difference;
@@ -991,7 +997,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 						if(intBinX!=0){
 							D_temp_2D[t][0]->SetBinContent(binx,biny,bincontent/intBinX);
 							double sysRatio = 0;
-							if(storeOriginal[biny-1]!=0) sysRatio = (bincontent/intBinX)/(storeOriginal[biny-1]);
+							if(storeOriginal[biny]!=0) sysRatio = (bincontent/intBinX)/(storeOriginal[biny]);
 							double unconditionalbincontent = hStore_ZX_Unconditional->GetBinContent(binx,biny);
 							hStore_ZX_Unconditional->SetBinContent(binx,biny,unconditionalbincontent*sysRatio);
 						}
@@ -1001,12 +1007,15 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 					}
 					delete[] storeOriginal;
 				}
+//				cout << "ZX unconditional template mirroring is complete" << endl;
+
 				if(Systematics<0){
 					double presmoothInt = D_temp_1D[t][0]->Integral();
 					if(isSmooth) D_temp_1D[t][0]->Smooth(1,"k3a");
 					double postsmoothInt = D_temp_1D[t][0]->Integral();
 					D_temp_1D[t][0]->Scale(presmoothInt/postsmoothInt);
 				}
+//				cout << "ZX conditional template smoothing is complete" << endl;
 			}
 			for (int al = 0; al < nAnomalousLoops; al++){
 				foutput->WriteTObject(D_temp_1D[t][al]);
@@ -1014,7 +1023,6 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 			}
 			if(tFitD!=0 && t==3) foutput->WriteTObject(hStore_qqZZ_Unconditional);
 			if(tFitD!=0 && t==4) foutput->WriteTObject(hStore_ZX_Unconditional);
-
 
 			for (int al = 0; al < nAnomalousLoops; al++){
 				cout << "Template " << t << " (anom. coupl.: " << al << ") integrals: ";

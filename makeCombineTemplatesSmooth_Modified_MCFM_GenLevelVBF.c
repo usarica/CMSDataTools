@@ -45,15 +45,20 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF(){
 // Systematics = [-2,2] (Flag for systematics. 0=Nominal, +/-1=QCD, +/-2=PDF)
 void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics, int Djettag){
 	cout<<"SCALE "<<user_folder[folder]<<" "<<erg_tev<<" "<<Systematics<<" "<<Djettag<<endl;
-	TString INPUT_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_Raw__GenLevelVBF_";
-	TString INPUT_K3A_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine__GenLevelVBF_";
-	TString INPUT_SMOOTH_NAME = "HtoZZ4l_MCFM_125p6_SmoothTemplates__GenLevelVBF_";
-	TString OUTPUT_NAME = "HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine__GenLevelVBF_";
+	TString INPUT_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_";
+	TString INPUT_K3A_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_";
+	TString INPUT_SMOOTH_NAME = "HtoZZ4l_MCFM_125p6_SmoothTemplates_";
+	TString OUTPUT_NAME = "HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine_";
 	if (useAnomalousCouplings > 0){
-		INPUT_NAME += strAnomalousType[useAnomalousCouplings] + "_";
-		INPUT_K3A_NAME += strAnomalousType[useAnomalousCouplings] + "_";
-		INPUT_SMOOTH_NAME += strAnomalousType[useAnomalousCouplings] + "_";
-		OUTPUT_NAME += strAnomalousType[useAnomalousCouplings] + "_";
+		INPUT_NAME += strAnomalousType[useAnomalousCouplings] + "_Raw__GenLevelVBF_";
+		INPUT_K3A_NAME += strAnomalousType[useAnomalousCouplings] + "__GenLevelVBF_";
+		INPUT_SMOOTH_NAME += strAnomalousType[useAnomalousCouplings] + "__GenLevelVBF_";
+		OUTPUT_NAME += strAnomalousType[useAnomalousCouplings] + "__GenLevelVBF_";
+	}else{
+		INPUT_NAME += "_Raw__GenLevelVBF_";
+		INPUT_K3A_NAME += "__GenLevelVBF_";
+		INPUT_SMOOTH_NAME += "__GenLevelVBF_";
+		OUTPUT_NAME += "__GenLevelVBF_";		
 	}
 	INPUT_NAME += TString(strFitDim[tFitD]) + "_";
 	INPUT_K3A_NAME += TString(strFitDim[tFitD]) + "_";

@@ -885,7 +885,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 						}
 						templateTree[al]->Fill();
 						nTotalRecorded[al] += templateWeight;
-            if(al==0) debug->Fill(ZZMass,fitYval,templateWeight);
+            if(al==0 && enableDebugging) debug->Fill(ZZMass,fitYval,templateWeight);
 					}
 				}
         if (enableDebugging){

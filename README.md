@@ -13,9 +13,8 @@ This will get the initial D_Gamma_gg_r10 templates. VBF templates are reweighted
 
 2)
 
-a) root -q -b makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF.c+
-b) root -q -b makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_djet.c+
-root -q -b makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_nondjet.c+
+a) root -q -b -l "makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF.c++(0)"
+b) root -q -b -l "makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF.c++(-1)";root -q -b -l "makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF.c++(1)"
 
 Similar to 1, but will add trees with templates. The legacy version has an option to use resolution smeared samples for VBF, this was made obsolete with full-sim Phantom samples. These files will take up a fair amount of space. Option a will produce templates without any Djet splitting. Option b will produce templates with Djet splitting. _NOTE_: All other code will produce all three as is, these take a considerable amount of time to run so this permits running in parallel.
 

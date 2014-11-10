@@ -32,7 +32,7 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF(){
 		for(int CoM=7;CoM<9;++CoM){
 			for(int channel=0;channel<3;++channel){
 				if(useDjettagging){for(int Djettag=-1;Djettag<2;++Djettag) makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i],Djettag); }
-				else makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i],1);	
+				else makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(channel,CoM,6,systematics[i],0);	
 			}	
 		}
 	}

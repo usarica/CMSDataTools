@@ -23,6 +23,8 @@ enum histtypes{kSigHist,kBkgHist,kIntHist,kBSIHist,kBSI10Hist,kBSI25Hist};
 void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int erg_tev, int tFitD, int Systematics,int Djettag);
 double doLinearCombination(double first, double c_first, double second, double c_second, double bkg, int outputtype);
 void twoDlinearcombination(TH2F* first, int firsttype, TH2F* second, int secondtype, TH2F* input, int inputtype, TH2F* finaloutput, int outputtype, TH2F* finaloutput2=0, int output2type=-99);
+void floorSignalTemplates(TH2F* hsig, TH2F* hbkg, TH2F* hinterf);
+void floorBkgTemplate(TH2F* hbkg);
 
 //Main Function, runs over all desired iterations
 void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF(){
@@ -431,48 +433,73 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 			}
 		}
 
-		cout << "Integrals after everything:\nSmooth\tk3a\tRaw" << endl;
-		for(int t=0;t<kNumTemplates;t++){
+		for (int t = 4; t < 5; t++){ // Special treatment for ZX
 			int nAnomalousLoops = 1;
-			if (t <= 2) nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][0];
-			else if (t >= 5 && t <= 7) nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][1];
-
-			if(Systematics!=0 && t==4){
-				for(int binx=0;binx<=D_temp_2D[t][0]->GetNbinsX()+1;binx++){
-					double* storeOriginal = new double[D_temp_2D[t][0]->GetNbinsY()+2];
-					for(int biny=0;biny<=D_temp_2D[t][0]->GetNbinsY()+1;biny++){
-						double bincontent = D_temp_2D[t][0]->GetBinContent(binx,biny);
-						double bincontent_alt = D_temp_2D[3][0]->GetBinContent(binx,biny);
+			if (Systematics != 0){
+				for (int binx = 0; binx <= D_temp_2D[t][0]->GetNbinsX() + 1; binx++){
+					double* storeOriginal = new double[D_temp_2D[t][0]->GetNbinsY() + 2];
+					for (int biny = 0; biny <= D_temp_2D[t][0]->GetNbinsY() + 1; biny++){
+						double bincontent = D_temp_2D[t][0]->GetBinContent(binx, biny);
+						double bincontent_alt = D_temp_2D[3][0]->GetBinContent(binx, biny);
 						double difference = bincontent_alt - bincontent;
 						storeOriginal[biny] = bincontent;
 
-						if(Systematics>0) bincontent += difference;
+						if (Systematics > 0) bincontent += difference;
 						else bincontent -= difference;
-						if(bincontent < 0) bincontent = 0;
-						D_temp_2D[t][0]->SetBinContent(binx,biny,bincontent);
+						if (bincontent < 0) bincontent = 0;
+						D_temp_2D[t][0]->SetBinContent(binx, biny, bincontent);
 					}
-					double intBinX = D_temp_2D[t][0]->Integral(binx,binx,0,D_temp_2D[t][0]->GetNbinsY()+1);
-					for(int biny=0;biny<=D_temp_2D[t][0]->GetNbinsY()+1;biny++){
-						double bincontent = D_temp_2D[t][0]->GetBinContent(binx,biny);
+					double intBinX = D_temp_2D[t][0]->Integral(binx, binx, 0, D_temp_2D[t][0]->GetNbinsY() + 1);
+					for (int biny = 0; biny <= D_temp_2D[t][0]->GetNbinsY() + 1; biny++){
+						double bincontent = D_temp_2D[t][0]->GetBinContent(binx, biny);
 
-						if(intBinX!=0){
-							D_temp_2D[t][0]->SetBinContent(binx,biny,bincontent/intBinX);
+						if (intBinX != 0){
+							D_temp_2D[t][0]->SetBinContent(binx, biny, bincontent / intBinX);
 							double sysRatio = 1.0e-20;
-							if(storeOriginal[biny]!=0) sysRatio = (bincontent/intBinX)/(storeOriginal[biny]);
-							double unconditionalbincontent = hZX_Unconditional->GetBinContent(binx,biny);
-							hZX_Unconditional->SetBinContent(binx,biny,unconditionalbincontent*sysRatio);
+							if (storeOriginal[biny] != 0) sysRatio = (bincontent / intBinX) / (storeOriginal[biny]);
+							double unconditionalbincontent = hZX_Unconditional->GetBinContent(binx, biny);
+							hZX_Unconditional->SetBinContent(binx, biny, unconditionalbincontent*sysRatio);
 						}
 						else{
-							hZX_Unconditional->SetBinContent(binx,biny,1.0e-20);
+							hZX_Unconditional->SetBinContent(binx, biny, 1.0e-20);
 						}
 					}
 					delete[] storeOriginal;
 				}
 			}
-			if(t==4){
-				hZX_Unconditional_exp->Scale((hZX_Unconditional->Integral("width"))/(hZX_Unconditional_expk3a->Integral("width")));
-				hZX_Unconditional_expk3a->Scale((hZX_Unconditional->Integral("width"))/(hZX_Unconditional_expk3a->Integral("width")));
-			}
+			hZX_Unconditional_exp->Scale((hZX_Unconditional->Integral("width")) / (hZX_Unconditional_expk3a->Integral("width")));
+			hZX_Unconditional_expk3a->Scale((hZX_Unconditional->Integral("width")) / (hZX_Unconditional_expk3a->Integral("width")));
+		}
+
+// Floor all templates since there is no class implementation for the PDF
+		for (int al = 0; al < nAnomalousCouplingTemplates[useAnomalousCouplings][0]; al++){
+			floorSignalTemplates(D_temp_2D[0][al], D_temp_2D[1][al], D_temp_2D[2][al]);
+			floorSignalTemplates(D_temp_2D_exp[0][al], D_temp_2D_exp[1][al], D_temp_2D_exp[2][al]);
+			floorSignalTemplates(D_temp_2D_expk3a[0][al], D_temp_2D_expk3a[1][al], D_temp_2D_expk3a[2][al]);
+		}
+		for (int al = 0; al < nAnomalousCouplingTemplates[useAnomalousCouplings][1]; al++){
+			floorSignalTemplates(D_temp_2D[5][al], D_temp_2D[6][al], D_temp_2D[7][al]);
+			floorSignalTemplates(D_temp_2D_exp[5][al], D_temp_2D_exp[6][al], D_temp_2D_exp[7][al]);
+			floorSignalTemplates(D_temp_2D_expk3a[5][al], D_temp_2D_expk3a[6][al], D_temp_2D_expk3a[7][al]);
+		}
+		for (int t=3;t<5;t++){
+			floorBkgTemplate(D_temp_2D[t][0]);
+			floorBkgTemplate(D_temp_2D_exp[t][0]);
+			floorBkgTemplate(D_temp_2D_expk3a[t][0]);
+		}
+		floorBkgTemplate(hqqZZ_Unconditional);
+		floorBkgTemplate(hqqZZ_Unconditional_exp);
+		floorBkgTemplate(hqqZZ_Unconditional_expk3a);
+		floorBkgTemplate(hZX_Unconditional);
+		floorBkgTemplate(hZX_Unconditional_exp);
+		floorBkgTemplate(hZX_Unconditional_expk3a);
+
+
+		cout << "Integrals after everything:\nSmooth\tk3a\tRaw" << endl;
+		for(int t=0;t<kNumTemplates;t++){
+			int nAnomalousLoops = 1;
+			if (t <= 2) nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][0];
+			else if (t >= 5 && t <= 7) nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][1];
 
 			TString oldTemplateName;
 			for (int al = 0; al < nAnomalousLoops; al++){
@@ -752,7 +779,6 @@ double doLinearCombination(double first, double c_first, double second, double c
 	else return 0;
 }
 
-
 void twoDlinearcombination(TH2F* first, int firsttype, TH2F* second, int secondtype, TH2F* input, int inputtype, TH2F* finaloutput, int outputtype, TH2F* finaloutput2, int output2type){
 	TH2F* output = (TH2F*) input->Clone();
 	TH2F* output2 = (TH2F*) output->Clone();
@@ -828,4 +854,44 @@ void twoDlinearcombination(TH2F* first, int firsttype, TH2F* second, int secondt
 	else{cout<<"Option not yet supported. Exiting..."<<endl; assert(0);};
 	delete output;
 	delete output2;
+}
+
+void floorSignalTemplates(TH2F* hsig, TH2F* hbkg, TH2F* hinterf){
+	const int nbinsx = hsig->GetNbinsX();
+	const int nbinsy = hsig->GetNbinsY();
+	const double sign_interf = TMath::Sign(hinterf->Integral());
+
+	for (int binx = 1; binx <= nbinsx; binx++){
+		for (int biny = 1; biny <= nbinsy; biny++){
+			double sig = hsig->GetBinContent(binx,biny);
+			double bkg = hbkg->GetBinContent(binx,biny);
+			double interf = hinterf->GetBinContent(binx,biny);
+
+			double sig_new=sig;
+			double bkg_new=bkg;
+			double interf_new=interf;
+
+			if(sig<=0) sig_new=1.0e-10;
+			if(bkg<=0) bkg_new=1.0e-10;
+			if(sig<=0 || bkg<=0 || fabs(interf)<1.0e-10) interf_new = sign_interf*1.0e-10;
+
+			hsig->SetBinContent(binx,biny,sig_new);
+			hbkg->SetBinContent(binx,biny,bkg_new);
+			hinterf->SetBinContent(binx,biny,interf_new);
+		}
+	}
+}
+
+void floorBkgTemplate(TH2F* hbkg){
+	const int nbinsx = hbkg->GetNbinsX();
+	const int nbinsy = hbkg->GetNbinsY();
+
+	for (int binx = 1; binx <= nbinsx; binx++){
+		for (int biny = 1; biny <= nbinsy; biny++){
+			double bkg = hbkg->GetBinContent(binx,biny);
+			double bkg_new=bkg;
+			if(bkg<=0) bkg_new=1.0e-10;
+			hbkg->SetBinContent(binx,biny,bkg_new);
+		}
+	}
 }

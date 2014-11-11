@@ -11,6 +11,7 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TH3F.h"
+#include "TMath.h"
 #include "./data/ZZ4l_125_6_Samples.h"
 #include "./data/FitDimensionsList.h"
 
@@ -434,7 +435,6 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 		}
 
 		for (int t = 4; t < 5; t++){ // Special treatment for ZX
-			int nAnomalousLoops = 1;
 			if (Systematics != 0){
 				for (int binx = 0; binx <= D_temp_2D[t][0]->GetNbinsX() + 1; binx++){
 					double* storeOriginal = new double[D_temp_2D[t][0]->GetNbinsY() + 2];
@@ -859,7 +859,7 @@ void twoDlinearcombination(TH2F* first, int firsttype, TH2F* second, int secondt
 void floorSignalTemplates(TH2F* hsig, TH2F* hbkg, TH2F* hinterf){
 	const int nbinsx = hsig->GetNbinsX();
 	const int nbinsy = hsig->GetNbinsY();
-	const double sign_interf = TMath::Sign(hinterf->Integral());
+	const double sign_interf = TMath::Sign(1.,hinterf->Integral());
 
 	for (int binx = 1; binx <= nbinsx; binx++){
 		for (int biny = 1; biny <= nbinsy; biny++){

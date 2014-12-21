@@ -874,7 +874,7 @@ void floorSignalTemplates(TH2F* hsig, TH2F* hbkg, TH2F* hinterf){
 			if(sig<=0) sig_new=1.0e-10;
 			if(bkg<=0) bkg_new=1.0e-10;
 			if(sig<=0 || bkg<=0 || fabs(interf)<1.0e-10) interf_new = sign_interf*1.0e-10;
-			if(pow(interf_new,2)>=(4*sig_new*bkg_new)) interf_new *= sqrt(4*sig_new*bkg_new/pow(interf_new,2))*0.9
+			if(pow(interf_new,2)>=(4*sig_new*bkg_new)) interf_new *= sqrt(4*sig_new*bkg_new/pow(interf_new,2))*0.9;
 
 			hsig->SetBinContent(binx,biny,sig_new);
 			hbkg->SetBinContent(binx,biny,bkg_new);

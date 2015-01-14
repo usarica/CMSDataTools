@@ -117,10 +117,10 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 	if (Djettag == 1) INPUT_VBFREF_NAME += "Nominal_Djet.root";
 
 	TString sample_VBF_suffix[4] = {
-		"Bkg_VBF_Phantom",
+    "BSI_VBF_Phantom",
+    "Bkg_VBF_Phantom",
 		"BSI10_VBF_Phantom",
-		"BSI25_VBF_Phantom",
-		"BSI_VBF_Phantom"
+		"BSI25_VBF_Phantom"
 	};
 
 	TString cinput_common = user_gg2VV_location + erg_dir + "/" + user_folder[folder] + "/";
@@ -135,31 +135,16 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 	float lowside[3] = { 220, 230, 240 };
 	double mPOLE = 125.6;
 	float ZZMass_PeakCut[2] = { 105.6, 140.6 }; // Spin 0 analysis
-	//use ggH yields directly
-	double nSM_ScaledPeak[2][3] = {
-		{ 1.0902689, 0.6087736, 1.4452079 },
-		{ 5.1963998, 2.6944639, 6.6562629 }
-	};
-	//use VBF yields directly
-	double VBF_Sig_Datacard[2][3] = {
-		{ 0.092458836, 0.051755897, 0.12861921 },
-		{ 0.46798807, 0.24788553, 0.61781689 }
-	};
-	// disregard VH, ttH, bbH etc. at peak for the sake of offshell
-	// Systematics
-	double ggZZ_Syst_AbsNormSyst[2][2] = { // EnergyIndex { QCD, PDF }
-		{ 0.0745, 0.0735 },
-		{ 0.075, 0.072 }
-	};
 
 	float templateWeight = 1;
-	float MC_weight;
-	float MC_weight_down;
+  float MC_weight;
+  float MC_weight_down;
 	float MC_weight_up;
 	float MC_weight_Kfactor = 1;
 	float MC_weight_ggZZLepInt = 1;
 	float GenHMass = 0;
-	float MC_weight_Kfactor_Norm_down = 1;
+  float GenDiJetMass;
+  float MC_weight_Kfactor_Norm_down = 1;
 	float MC_weight_Kfactor_Norm_up = 1;
 	float MC_weight_PDF_Norm_down = 1;
 	float MC_weight_PDF_Norm_up = 1;
@@ -177,6 +162,12 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 	if (EnergyIndex == 0) Djetcutfilename += "_7TeV";
 	Djetcutfilename += ".root";
 	TFile* Djetcutfile = new TFile(Djetcutfilename, "read");
+
+  TString INPUT_VBFVHSCALE_NAME = "HtoZZ4l_Phantom_125p6_VHDistributions.root";
+  TString cinput_vbfvhscale = user_TemplateswithTrees_dir + "../VHContributions/" + erg_dir;
+  cinput_vbfvhscale+=INPUT_VBFVHSCALE_NAME;
+  TFile finput_vbfvhscale = new TFile(cinput_vbfvhscale, "read");
+  TH1F* h_VBFVH_Scale = (TH1F*)finput_vbfvhscale->Get("Phantom_VBFVH_ScalingRatio");
 
 	//double overall_VBF_scale=1;
 	double nVBFPeak[4] = { 0 };
@@ -259,7 +250,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 		int nEntries;
 		double nSig_Simulated = 0;
 		double nVBF_Sig_Simulated = 0;
-		float fitYval;
+		float fitYval = 0;
 		MC_weight = 1;
 		MC_weight_down = 1;
 		MC_weight_up = 1;
@@ -270,6 +261,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 		MC_weight_PDF_Norm_up = 1;
 		MC_weight_ggZZLepInt = 1;
 		GenHMass = 0;
+    GenDiJetMass = 0;
 		ZZMass = 0;
 		float Djet = 0.;
 
@@ -322,8 +314,9 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 		for (int tr = 0; tr < 4; tr++){
 			int nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][1];
 
-			tree_VBF[tr]->SetBranchAddress("GenHMass", &GenHMass);
-			tree_VBF[tr]->SetBranchAddress("ZZMass", &ZZMass);
+      tree_VBF[tr]->SetBranchAddress("GenDiJetMass", &GenDiJetMass);
+      tree_VBF[tr]->SetBranchAddress("GenHMass", &GenHMass);
+      tree_VBF[tr]->SetBranchAddress("ZZMass", &ZZMass);
 			tree_VBF[tr]->SetBranchAddress("MC_weight", &MC_weight);
 			tree_VBF[tr]->SetBranchAddress("Djet_VAJHU", &Djet);
 			if (tFitD != 0) tree_VBF[tr]->SetBranchAddress(strFitDim[tFitD], &fitYval);
@@ -359,8 +352,16 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 				progressbar(ev, tree_VBF[tr]->GetEntries());
 				tree_VBF[tr]->GetEntry(ev);
 				if (fitYval != fitYval) continue;
+        // Protect against any KD exceeding boundaries
+        if (tFitD!=0 && fitYval>=kDYarray[nbinsy-1]) fitYval = kDYarray[nbinsy-1] - (kDYarray[nbinsy-1]-kDYarray[nbinsy-2])*0.1*ev/nVBFEntries;
+        if (tFitD!=0 && fitYval<kDYarray[0]) fitYval = kDYarray[0] + (kDYarray[1]-kDYarray[0])*0.1*ev/nVBFEntries;
+        if (tFitD!=0 && (fitYval>=kDYarray[nbinsy-1] || fitYval<kDYarray[0])) cout << "Fix has been numerically unsuccessful for " << tree_VBF[tr]->GetName() << endl;
 
 				double weight = MC_weight;
+        int VBF_VH_rewgt_bin = h_VBFVH_Scale->GetXaxis()->FindBin(GenDiJetMass);
+        if (VBF_VH_rewgt_bin>h_VBFVH_Scale->GetNbinsX()) VBF_VH_rewgt_bin = h_VBFVH_Scale->GetNbinsX();
+        weight *= h_VBFVH_Scale->GetBinContent(VBF_VH_rewgt_bin); // VBF-VH scale for Phantom
+
 				if (ev == 0) cout << "Weight: " << weight << endl;
 				if (ZZMass < ZZMass_PeakCut[1] && ZZMass >= ZZMass_PeakCut[0]){
 					nVBFPeak[tr] += weight;
@@ -440,8 +441,9 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 			nVBFPeak[2] = nVBFinterftemp;
 		}
 
-		double vbfscale = VBF_Sig_Datacard[EnergyIndex][folder] / nVBFPeak[0];
-		for (int tr = 0; tr < 4; tr++){
+//    double vbfscale = VBF_Sig_Datacard[EnergyIndex][folder] / (nVBFPeak[0]*luminosity[EnergyIndex]);
+    double vbfscale = 1;
+    for (int tr = 0; tr < 4; tr++){
 			for (int al = 0; al < nAnomalousCouplingTemplates[useAnomalousCouplings][1]; al++){
 				h1DVBF[tr][al]->Scale(vbfscale);
 				if (tFitD != 0) h2DVBF[tr][al]->Scale(vbfscale);
@@ -631,6 +633,11 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 					progressbar(ev, tree->GetEntries());
 					tree->GetEntry(ev);
 					if (fitYval != fitYval) continue;
+          // Protect against any KD exceeding boundaries
+          if (tFitD!=0 && fitYval>=kDYarray[nbinsy-1]) fitYval = kDYarray[nbinsy-1] - (kDYarray[nbinsy-1]-kDYarray[nbinsy-2])*0.1*ev/nEntries;
+          if (tFitD!=0 && fitYval<kDYarray[0]) fitYval = kDYarray[0] + (kDYarray[1]-kDYarray[0])*0.1*ev/nEntries;
+          if (tFitD!=0 && (fitYval>=kDYarray[nbinsy-1] || fitYval<kDYarray[0])) cout << "Fix has been numerically unsuccessful for " << tree->GetName() << endl;
+
 					double weight = MC_weight;
 					if (t < 3) weight *= MC_weight_ggZZLepInt;
 					if (abs(Systematics) != 1 && t < 3) weight *= MC_weight_Kfactor;
@@ -678,9 +685,10 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 
 			//Reweighting normalization
 			if (t < 3){
-				cout << nMZZ220[t] * nSM_ScaledPeak[EnergyIndex][folder] / nSig_Simulated*luminosity[EnergyIndex] << endl;
+//        cout << nMZZ220[t] * nSM_ScaledPeak[EnergyIndex][folder] / nSig_Simulated*luminosity[EnergyIndex] << endl;
+        cout << nMZZ220[t] * nSM_ScaledPeak[EnergyIndex][folder] / nSig_Simulated << endl;
 
-				double myscale = nSM_ScaledPeak[EnergyIndex][folder] / nSig_Simulated;
+        double myscale = nSM_ScaledPeak[EnergyIndex][folder] / (nSig_Simulated*luminosity[EnergyIndex]);
 				if (Systematics == -1 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][0]);
 				if (Systematics == 1 && t < 3) myscale *= (1.0 + ggZZ_Syst_AbsNormSyst[EnergyIndex][0]);
 				if (Systematics == -2 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][1]);
@@ -814,6 +822,11 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 				for (int ev = 0; ev < nEntries; ev++){
 					tree->GetEntry(ev);
 					if (fitYval != fitYval) continue;
+          // Protect against any KD exceeding boundaries
+          if (tFitD!=0 && fitYval>=kDYarray[nbinsy-1]) fitYval = kDYarray[nbinsy-1] - (kDYarray[nbinsy-1]-kDYarray[nbinsy-2])*0.1*ev/nEntries;
+          if (tFitD!=0 && fitYval<kDYarray[0]) fitYval = kDYarray[0] + (kDYarray[1]-kDYarray[0])*0.1*ev/nEntries;
+          if (tFitD!=0 && (fitYval>=kDYarray[nbinsy-1] || fitYval<kDYarray[0])) cout << "Fix has been numerically unsuccessful for " << tree->GetName() << endl;
+
 					if ((ZZMass >= ZZMass_cut[1] || ZZMass < ZZMass_cut[0])) continue;
 
 					double weight = MC_weight;
@@ -863,6 +876,11 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 				for (int ev = 0; ev < nEntries; ev++){
 					tree_VBF[treeCode]->GetEntry(ev);
 					if (fitYval != fitYval) continue;
+          // Protect against any KD exceeding boundaries
+          if (tFitD!=0 && fitYval>=kDYarray[nbinsy-1]) fitYval = kDYarray[nbinsy-1] - (kDYarray[nbinsy-1]-kDYarray[nbinsy-2])*0.1*ev/nEntries;
+          if (tFitD!=0 && fitYval<kDYarray[0]) fitYval = kDYarray[0] + (kDYarray[1]-kDYarray[0])*0.1*ev/nEntries;
+          if (tFitD!=0 && (fitYval>=kDYarray[nbinsy-1] || fitYval<kDYarray[0])) cout << "Fix has been numerically unsuccessful for " << tree_VBF[treeCode]->GetName() << endl;
+
 					if (ZZMass >= ZZMass_cut[1] || ZZMass < ZZMass_cut[0]) continue;
 
 					//Djet cut for VBF
@@ -870,6 +888,9 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 					if (Djettag == 1 && Djet < 0.5) continue;
 
 					double weight = MC_weight;
+          int VBF_VH_rewgt_bin = h_VBFVH_Scale->GetXaxis()->FindBin(GenDiJetMass);
+          if (VBF_VH_rewgt_bin>h_VBFVH_Scale->GetNbinsX()) VBF_VH_rewgt_bin = h_VBFVH_Scale->GetNbinsX();
+          weight *= h_VBFVH_Scale->GetBinContent(VBF_VH_rewgt_bin); // VBF-VH scale for Phantom
 
 					if (Systematics != 0){
 						double sysVBFScale = 1;
@@ -906,7 +927,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 			}
 			delete[] nTotalRecorded;
 			delete[] templateTree;
-			delete Djetcutshape;
+      if (Djetcutshape!=0) delete Djetcutshape;
 			delete tree;
 		}
 		if (Systematics != 0){
@@ -1092,7 +1113,11 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 	}
 	delete tgkf;
 	finput_KDFactor->Close();
+  delete tsp_VBF_Sig;
 	finput_VBF->Close();
+  Djetcutfile->Close();
+  delete h_VBFVH_Scale;
+  finput_vbfvhscale->Close();
 	delete tg_interf;
 }
 

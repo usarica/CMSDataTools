@@ -127,10 +127,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	TFile* Djetcutfile = new TFile(Djetcutfilename,"read");
 
 	double mPOLE = 125.6;
- 	double nSM_ScaledPeak[2][3]={
- 		{1.0902689,0.6087736,1.4452079},
- 		{5.1963998,2.6944639,6.6562629}
-	};
+  double overall_VBF_scale=1;
 
 	TString comstring;
 	comstring.Form("%i",erg_tev);
@@ -138,14 +135,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	TFile* finput_VBF = new TFile(cinput_VBF_Sig,"read");
 	TSpline3* tsp_VBF_Sig = (TSpline3*) finput_VBF->Get("Spline3");
 
-	double overall_VBF_scale=1;
-
-	//use VBF yields directly
-	double VBF_Sig_Datacard[2][3]={
-		{0.092458836,0.051755897,0.12861921},
-		{0.46798807,0.24788553,0.61781689}
-	};
-	for (int e = 0; e < 2; e++){for (int ss = 0; ss < 3; ss++){ nSM_ScaledPeak[e][ss] /= luminosity[e]; VBF_Sig_Datacard[e][ss] /= luminosity[e]; }}
+//	for (int e = 0; e < 2; e++){for (int ss = 0; ss < 3; ss++){ nSM_ScaledPeak[e][ss] /= luminosity[e]; VBF_Sig_Datacard[e][ss] /= luminosity[e]; }}
 
 	for(int lo=0;lo<1;lo++){
 		TString coutput_common = user_dir + erg_dir;
@@ -362,9 +352,14 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			}
 			for(int ev=0;ev<nEntries;ev++){
 				tree->GetEntry(ev);
-			    progressbar(ev,tree->GetEntries());
+			  progressbar(ev,tree->GetEntries());
 				if(fitYval!=fitYval) continue;
-				double weight = MC_weight;
+        // Protect against any KD exceeding boundaries
+        if (tFitD!=0 && fitYval>=kDYarray[nbinsy-1]) fitYval = kDYarray[nbinsy-1] - (kDYarray[nbinsy-1]-kDYarray[nbinsy-2])*0.1*ev/nEntries;
+        if (tFitD!=0 && fitYval<kDYarray[0]) fitYval = kDYarray[0] + (kDYarray[1]-kDYarray[0])*0.1*ev/nEntries;
+        if (tFitD!=0 && (fitYval>=kDYarray[nbinsy-1] || fitYval<kDYarray[0])) cout << "Fix has been numerically unsuccessful for " << tree->GetName() << endl;
+        
+        double weight = MC_weight;
 				if (t<3) weight *= MC_weight_ggZZLepInt;
 				if (abs(Systematics) != 1 && t<3) weight *= MC_weight_Kfactor;
 				if (Systematics == -1 && t<3) weight *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][0])*MC_weight_Kfactor_Norm_down*tgkf->Eval(125.6);
@@ -402,12 +397,13 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 					if (tFitD > 0) D_temp_2D[t][al]->Fill(ZZMass, fitYval, fillWeight);
 				}
 			}
-			delete Djetcutshape;
+      if (Djetcutshape!=0) delete Djetcutshape;
 			cout<<endl;
 			cout << templatenames[t] << " NTotal: " << nTotal << endl;
-			if(t<3) cout << nMZZ220[t]*nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated*luminosity[EnergyIndex] << endl;
-			if(t<3){
-				double myscale = nSM_ScaledPeak[EnergyIndex][folder] / nSig_Simulated;
+//      if (t<3) cout << nMZZ220[t]*nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated*luminosity[EnergyIndex] << endl;
+      if (t<3) cout << nMZZ220[t]*nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated << endl;
+      if (t<3){
+        double myscale = nSM_ScaledPeak[EnergyIndex][folder] / (nSig_Simulated*luminosity[EnergyIndex]);
 				if (Systematics == -1 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][0]);
 				if (Systematics == 1 && t < 3) myscale *= (1.0 + ggZZ_Syst_AbsNormSyst[EnergyIndex][0]);
 				if (Systematics == -2 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][1]);
@@ -419,7 +415,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				}
 			}
 			if(t==5){
-				double myscale = VBF_Sig_Datacard[EnergyIndex][folder]/nVBF_Sig_Simulated;
+        double myscale = VBF_Sig_Datacard[EnergyIndex][folder]/(nVBF_Sig_Simulated*luminosity[EnergyIndex]);
 				//myscale *= nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated;
 				overall_VBF_scale = myscale;
 				for (int al = 0; al<nAnomalousLoops; al++){
@@ -574,6 +570,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 		foutput->Close();
 	}
 	cout<<endl;
+  Djetcutfile->Close();
 	delete tgkf;
 	finput_KDFactor->Close();
 	finput_VBF->Close();

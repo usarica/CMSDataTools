@@ -115,6 +115,38 @@ float xsec_qqZZ_CERN[2][2] = {
 	{0.06609,0.152},
 	{0.07691,0.1767}
 }; // 4e or 4mu
+float MG_W_Phantom[2]={ 80.40, 2.042774 };
+float MG_Z_Phantom[2]={ 91.187, 2.5007 };
+
+//use VBF, VH yields directly
+double VBF_Sig_Datacard[2][3] ={
+  { 0.092458836, 0.051755897, 0.12861921 },
+  { 0.46798807, 0.24788553, 0.61781689 }
+};
+double WH_Sig_Datacard[2][3] ={
+  { 0.032020833, 0.018214085, 0.048193985 },
+  { 0.143887487, 0.07605782, 0.208553654 }
+};
+double ZH_Sig_Datacard[2][3] ={
+  { 0.024986956, 0.013932042, 0.037813666 },
+  { 0.114986662, 0.058084659, 0.162819182 }
+};
+//use ggH yields directly
+double nSM_ScaledPeak[2][3] ={
+  { 1.0902689, 0.6087736, 1.4452079 },
+  { 5.1963998, 2.6944639, 6.6562629 }
+};
+// disregard VH, ttH, bbH etc. at peak for the sake of offshell
+// Systematics
+double ggZZ_Syst_AbsNormSyst[2][2] ={ // EnergyIndex { QCD, PDF }
+  { 0.0745, 0.0735 },
+  { 0.075, 0.072 }
+};
+// ZX offshell yields
+double ZX_yield[2][3]={
+  { 0.1078, 0.2213, 0.3345 },
+  { 0.55, 1.78, 1.38 }
+};
 
 
 const int kNumBkg=6;
@@ -133,8 +165,11 @@ TString user_dir="./101114/";
 //TString user_dir="/afs/cern.ch/work/u/usarica/WidthAnalysis/PostICHEP/";
 TString user_gg2VV_location="/scratch0/hep/ianderso/CJLST/ReprocessedTrees/HZZ4l-125p6-FullAnalysis/";
 //TString user_gg2VV_location="/afs/cern.ch/work/u/usarica/HZZ4l-125p6-FullAnalysis/";
-TString user_TemplateswithTrees_dir="/scratch0/hep/ianderso/TemplatesForCombine/101114/";
+
+//TString user_TemplateswithTrees_dir="/scratch0/hep/ianderso/TemplatesForCombine/101114/";
 //TString user_TemplateswithTrees_dir="/afs/cern.ch/work/u/usarica/WidthAnalysis/PostICHEP/";
+TString user_TemplateswithTrees_dir="/scratch0/hep/usarical/HiggsLifetime/WidthAnalysis/PostICHEP/";
+
 TString user_folder[5]={
 	"4mu",
 	"4e",

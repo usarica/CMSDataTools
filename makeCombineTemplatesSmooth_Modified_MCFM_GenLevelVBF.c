@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <string>
 #include "TChain.h"
@@ -154,10 +155,6 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 	int EnergyIndex=1;
 	if(erg_tev==7) EnergyIndex=0;
 	float lowside[3]={220,230,240};
-	double ZX_yield[2][3]={
-		{ 0.1078, 0.2213, 0.3345 },
-		{ 0.55, 1.78, 1.38}
-	};
 
 	for(int lo=0;lo<1;lo++){
 		TString coutput_common = user_dir + erg_dir;
@@ -394,7 +391,7 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 					D_temp_2D[t][al]->Scale(overall_scale[t][al]);
 					cout << "SCALE FOR " << D_temp_2D[t][al]->GetName() << " : " << overall_scale[t][al] << endl;
 				}
-				else{
+				else{ // Conditionalize qqZZ and Z+X
 					for (int binx = 0; binx <= D_temp_2D[t][al]->GetNbinsX()+1; binx++){
 						double intBinX = D_temp_2D[t][al]->Integral(binx, binx, 0, D_temp_2D[t][al]->GetNbinsY()+1);
 						for (int biny = 0; biny <= D_temp_2D[t][al]->GetNbinsY()+1; biny++){

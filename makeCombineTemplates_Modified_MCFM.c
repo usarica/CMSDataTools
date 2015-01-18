@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <cmath>
 #include <string>
@@ -66,27 +67,30 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	erg_dir.Form("LHC_%iTeV/",erg_tev);
 
 	if (Djettag == 0){
-		if (Systematics == 0) OUTPUT_NAME += "Nominal.root";
-		if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD.root";
-		if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD.root";
-		if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF.root";
-		if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF.root";
+		if (Systematics == 0) OUTPUT_NAME += "Nominal";
+		if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD";
+		if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD";
+		if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF";
+		if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF";
 	}
 	if (Djettag == -1){
-		if (Systematics == 0) OUTPUT_NAME += "Nominal_nonDjet.root";
-		if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD_nonDjet.root";
-		if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD_nonDjet.root";
-		if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF_nonDjet.root";
-		if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF_nonDjet.root";
+		if (Systematics == 0) OUTPUT_NAME += "Nominal_nonDjet";
+		if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD_nonDjet";
+		if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD_nonDjet";
+		if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF_nonDjet";
+		if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF_nonDjet";
 	}
 	if (Djettag == 1){
-		if (Systematics == 0) OUTPUT_NAME += "Nominal_Djet.root";
-		if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD_Djet.root";
-		if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD_Djet.root";
-		if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF_Djet.root";
-		if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF_Djet.root";
+		if (Systematics == 0) OUTPUT_NAME += "Nominal_Djet";
+		if (Systematics == 1) OUTPUT_NAME += "SysUp_ggQCD_Djet";
+		if (Systematics == -1) OUTPUT_NAME += "SysDown_ggQCD_Djet";
+		if (Systematics == 2) OUTPUT_NAME += "SysUp_ggPDF_Djet";
+		if (Systematics == -2) OUTPUT_NAME += "SysDown_ggPDF_Djet";
 	}
-	TString systname[5]={"SysDown_ggPDF","SysDown_ggQCD","Nominal","SysUp_ggQCD","SysUp_ggPDF"};
+  TString OUTPUT_LOG_NAME = OUTPUT_NAME;
+  OUTPUT_NAME += ".root";
+  OUTPUT_LOG_NAME += ".log";
+  TString systname[5]={ "SysDown_ggPDF", "SysDown_ggQCD", "Nominal", "SysUp_ggQCD", "SysUp_ggPDF" };
 	TString djetname[3]={"Djet < 0.5","Nominal","Djet>=0.5"};
 	TString cinput_common = user_gg2VV_location + erg_dir + "/" + user_folder[folder] + "/";
 	TString cinput_common_qqZZ = user_gg2VV_location;
@@ -96,10 +100,6 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 	if(erg_tev==7) EnergyIndex=0;
 	float lowside[3]={220,230,240};
 	float ZZMass_PeakCut[2]={105.6,140.6}; // Spin 0 analysis
-	double ggZZ_Syst_AbsNormSyst[2][2] = { // EnergyIndex
-		{ 0.0745, 0.0735 },
-		{ 0.075, 0.072 }
-	}; // QCD, PDF
 
 	float MC_weight;
 	float MC_weight_down;
@@ -143,16 +143,29 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 		coutput_common += user_folder[folder] + "/";
 		gSystem->Exec("mkdir -p " + coutput_common);
 
+    TString coutput = coutput_common + OUTPUT_NAME;
+    TString coutput_log = coutput_common + OUTPUT_LOG_NAME;
+    ofstream tout(coutput_log.Data(), ios::out);
+    cout << "Opened file " << coutput_log << endl;
+    TFile* foutput = new TFile(coutput, "recreate");
 
-		cout<<"==============================="<<endl;
-		cout<<"CoM Energy: "<<erg_tev<<" TeV"<<endl;
-		cout<<"Decay Channel: "<<user_folder[folder]<<endl;
-		cout<<"Systematic: "<<systname[Systematics+2]<<endl;
-		cout<<"Djet cut: "<<djetname[Djettag+1]<<endl;
-		cout<<endl;
-
-		TString coutput = coutput_common + OUTPUT_NAME;
-		TFile* foutput = new TFile(coutput,"recreate");
+    cout<<endl;
+    cout<<"==============================="<<endl;
+    cout<<"CoM Energy: "<<erg_tev<<" TeV"<<endl;
+    cout<<"Decay Channel: "<<user_folder[folder]<<endl;
+    cout<<"Systematic: "<<systname[Systematics+2]<<endl;
+    cout<<"Djet cut: "<<djetname[Djettag+1]<<endl;
+    if (isSmooth) cout<<"Smooth version"<<endl;
+    cout<<"==============================="<<endl;
+    cout<<endl;
+    tout<<"==============================="<<endl;
+    tout<<"CoM Energy: "<<erg_tev<<" TeV"<<endl;
+    tout<<"Decay Channel: "<<user_folder[folder]<<endl;
+    tout<<"Systematic: "<<systname[Systematics+2]<<endl;
+    tout<<"Djet cut: "<<djetname[Djettag+1]<<endl;
+    if (isSmooth) tout<<"Smooth version"<<endl;
+    tout<<"==============================="<<endl;
+    tout<<endl;
 
 		float ZZMass_cut[2]={lowside[lo],1600};
 		float ZZwidth = 20.0;
@@ -352,12 +365,16 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			}
 			for(int ev=0;ev<nEntries;ev++){
 				tree->GetEntry(ev);
-			  progressbar(ev,tree->GetEntries());
+//			  progressbar(ev,tree->GetEntries());
 				if(fitYval!=fitYval) continue;
         // Protect against any KD exceeding boundaries
-        if (tFitD!=0 && fitYval>=kDYarray[nbinsy-1]) fitYval = kDYarray[nbinsy-1] - (kDYarray[nbinsy-1]-kDYarray[nbinsy-2])*0.1*ev/nEntries;
+        if (tFitD!=0 && fitYval>=kDYarray[nbinsy]){
+          cout << "Found fitYval == " << fitYval;
+          fitYval = kDYarray[nbinsy] - (kDYarray[nbinsy]-kDYarray[nbinsy-1])*0.1*(ev+1.)/(nEntries+1.);
+          cout << ". Fixed to " << fitYval << endl;
+        }
         if (tFitD!=0 && fitYval<kDYarray[0]) fitYval = kDYarray[0] + (kDYarray[1]-kDYarray[0])*0.1*ev/nEntries;
-        if (tFitD!=0 && (fitYval>=kDYarray[nbinsy-1] || fitYval<kDYarray[0])) cout << "Fix has been numerically unsuccessful for " << tree->GetName() << endl;
+        if (tFitD!=0 && (fitYval>=kDYarray[nbinsy] || fitYval<kDYarray[0])) cout << "Fix has been numerically unsuccessful for " << tree->GetName() << endl;
         
         double weight = MC_weight;
 				if (t<3) weight *= MC_weight_ggZZLepInt;
@@ -399,9 +416,16 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			}
       if (Djetcutshape!=0) delete Djetcutshape;
 			cout<<endl;
-			cout << templatenames[t] << " NTotal: " << nTotal << endl;
-//      if (t<3) cout << nMZZ220[t]*nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated*luminosity[EnergyIndex] << endl;
-      if (t<3) cout << nMZZ220[t]*nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated << endl;
+      if (t!=4){
+        cout << templatenames[t] << " Total Simulated: " << nTotal*luminosity[EnergyIndex] << endl;
+        tout << templatenames[t] << " Total Simulated: " << nTotal*luminosity[EnergyIndex] << endl;
+      }
+      else{
+        cout << templatenames[t] << " Total Simulated: " << nTotal << endl;
+        tout << templatenames[t] << " Total Simulated: " << nTotal << endl;
+      }
+//    if (t<3) cout << nMZZ220[t]*nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated*luminosity[EnergyIndex] << endl;
+//    if (t<3) cout << nMZZ220[t]*nSM_ScaledPeak[EnergyIndex][folder]/nSig_Simulated << endl;
       if (t<3){
         double myscale = nSM_ScaledPeak[EnergyIndex][folder] / (nSig_Simulated*luminosity[EnergyIndex]);
 				if (Systematics == -1 && t < 3) myscale *= (1.0 - ggZZ_Syst_AbsNormSyst[EnergyIndex][0]);
@@ -411,8 +435,9 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				for (int al = 0; al<nAnomalousLoops; al++){
 					D_temp_1D[t][al]->Scale(myscale);
 					if (tFitD>0) D_temp_2D[t][al]->Scale(myscale);
-					cout << "Scaling " << templatenames[t] << "(coupling:" << al << ") by " << myscale << endl;
-				}
+          cout << "Scaling " << templatenames[t] << " (coupling:" << al << ") by " << myscale << endl;
+          tout << "Scaling " << templatenames[t] << " (coupling:" << al << ") by " << myscale << endl;
+        }
 			}
 			if(t==5){
         double myscale = VBF_Sig_Datacard[EnergyIndex][folder]/(nVBF_Sig_Simulated*luminosity[EnergyIndex]);
@@ -421,16 +446,18 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				for (int al = 0; al<nAnomalousLoops; al++){
 					D_temp_1D[t][al]->Scale(myscale);
 					if (tFitD>0) D_temp_2D[t][al]->Scale(myscale);
-					cout << "Scaling " << templatenames[t] << "(coupling:" << al << ") by " << myscale << endl;
-				}
+          cout << "Scaling " << templatenames[t] << " (coupling:" << al << ") by " << myscale << endl;
+          tout << "Scaling " << templatenames[t] << " (coupling:" << al << ") by " << myscale << endl;
+        }
 			}
 			if(t>5){
 				double myscale = overall_VBF_scale;
 				for (int al = 0; al<nAnomalousLoops; al++){
 					D_temp_1D[t][al]->Scale(myscale);
 					if (tFitD>0) D_temp_2D[t][al]->Scale(myscale);
-					cout << "Scaling " << templatenames[t] << "(coupling:" << al << ") by " << myscale << endl;
-				}
+          cout << "Scaling " << templatenames[t] << " (coupling:" << al << ") by " << myscale << endl;
+          tout << "Scaling " << templatenames[t] << " (coupling:" << al << ") by " << myscale << endl;
+        }
 			}
 			for (int al = 0; al<nAnomalousLoops; al++){
 				double presmoothInt = D_temp_1D[t][al]->Integral("width");
@@ -471,26 +498,29 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			D_temp_1D[7][al] = oneDlinearcombination(D_temp_1D[5][al], kSigHist, D_temp_1D[6][al], kBkgHist, D_temp_1D[7][al], kBSIHist, kIntHist);
 			if (tFitD != 0) D_temp_2D[7][al] = twoDlinearcombination(D_temp_2D[5][al], kSigHist, D_temp_2D[6][al], kBkgHist, D_temp_2D[7][al], kBSIHist, kIntHist);
 		}
-		cout << "Integrals after everything:\n1D\t2D" << endl;
-		for(int t=0;t<kNumTemplates;t++){
+    cout << "Integrals after everything:\nTemplate\t1D\t2D" << endl;
+    tout << "Integrals after everything:\nTemplate\t1D\t2D" << endl;
+    for (int t=0; t<kNumTemplates; t++){
 			int nAnomalousLoops = 1;
 			if(t<=2) nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][0];
 			else if(t>=5 && t<=7) nAnomalousLoops = nAnomalousCouplingTemplates[useAnomalousCouplings][1];
 
 			for (int al = 0; al < nAnomalousLoops; al++){
 				for (int binx = 0; binx < D_temp_1D[t][al]->GetNbinsX(); binx++){
-					double binwidthx;
-					if (tFitD == 0) binwidthx = kDXarray[binx + 1] - kDXarray[binx];
-					else binwidthx = kDYarray[binx + 1] - kDYarray[binx];
+          double binwidthx = D_temp_1D[t][al]->GetXaxis()->GetBinWidth(binx+1);
+//					if (tFitD == 0) binwidthx = kDXarray[binx + 1] - kDXarray[binx];
+//					else binwidthx = kDYarray[binx + 1] - kDYarray[binx];
 					double bincontent = D_temp_1D[t][al]->GetBinContent(binx + 1);
 					if (t != 3 && t != 4) bincontent /= binwidthx;
 					D_temp_1D[t][al]->SetBinContent(binx + 1, bincontent);
 				}
 				if (tFitD != 0){
 					for (int binx = 0; binx < D_temp_2D[t][al]->GetNbinsX(); binx++){
-						double binwidthx = kDXarray[binx + 1] - kDXarray[binx];
+            double binwidthx = D_temp_2D[t][al]->GetXaxis()->GetBinWidth(binx+1);
+//						double binwidthx = kDXarray[binx + 1] - kDXarray[binx];
 						for (int biny = 0; biny < D_temp_2D[t][al]->GetNbinsY(); biny++){
-							double binwidthy = kDYarray[biny + 1] - kDYarray[biny];
+              double binwidthy = D_temp_2D[t][al]->GetYaxis()->GetBinWidth(biny+1);
+//              double binwidthy = kDYarray[biny + 1] - kDYarray[biny];
 							double binwidth = binwidthx*binwidthy;
 							double bincontent = D_temp_2D[t][al]->GetBinContent(binx + 1, biny + 1);
 							if (t != 3 && t != 4) bincontent /= binwidth;
@@ -514,11 +544,14 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 					}
 					D_temp_1D[t][al]->Scale(intTZX_1D / D_temp_1D[t][al]->Integral());
 
-					for (int binx = 1; binx <= D_temp_2D[t][al]->GetNbinsX(); binx++){
+          intTZX_1D = D_temp_2D[t][al]->Integral();
+          intTZZQQB_1D = D_temp_2D[3][al]->Integral();
+          for (int binx = 1; binx <= D_temp_2D[t][al]->GetNbinsX(); binx++){
 						for (int biny = 1; biny <= D_temp_2D[t][al]->GetNbinsY(); biny++){
 							double bincontent = D_temp_2D[t][al]->GetBinContent(binx, biny);
 							double bincontent_alt = D_temp_2D[3][al]->GetBinContent(binx, biny);
-							double difference = bincontent_alt - bincontent;
+              bincontent_alt *= intTZX_1D / intTZZQQB_1D;
+              double difference = bincontent_alt - bincontent;
 
 							if (Systematics > 0) bincontent += difference;
 							else bincontent -= difference;
@@ -542,16 +575,24 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 				foutput->WriteTObject(D_temp_1D[t][al]);
 				if (tFitD != 0) foutput->WriteTObject(D_temp_2D[t][al]);
 
-				if (t != 3 && t != 4){
-					cout << D_temp_1D[t][al]->Integral("width")*luminosity[EnergyIndex] << '\t';
-					if (tFitD != 0) cout << D_temp_2D[t][al]->Integral("width")*luminosity[EnergyIndex] << endl;
-					else cout << endl;
-				}
+        cout << templatenames[t] << " (anom. coupl.: " << al << ") integrals:\t";
+        tout << templatenames[t] << " (anom. coupl.: " << al << ") integrals:\t";
+        if (t != 3 && t != 4){
+          cout << D_temp_1D[t][al]->Integral("width")*luminosity[EnergyIndex] << '\t';
+          if (tFitD != 0) cout << D_temp_2D[t][al]->Integral("width")*luminosity[EnergyIndex] << endl;
+          else cout << endl;
+          tout << D_temp_1D[t][al]->Integral("width")*luminosity[EnergyIndex] << '\t';
+          if (tFitD != 0) tout << D_temp_2D[t][al]->Integral("width")*luminosity[EnergyIndex] << endl;
+          else tout << endl;
+        }
 				else{
-					cout << D_temp_1D[t][al]->Integral(1, nbinsx) << '\t';
+					cout << D_temp_1D[t][al]->Integral() << '\t';
 					if (tFitD != 0) cout << D_temp_2D[t][al]->Integral(1, nbinsx, 1, nbinsy) << endl;
 					else cout << endl;
-				}
+          tout << D_temp_1D[t][al]->Integral() << '\t';
+          if (tFitD != 0) tout << D_temp_2D[t][al]->Integral(1, nbinsx, 1, nbinsy) << endl;
+          else tout << endl;
+        }
 			}
 		}
 
@@ -568,6 +609,7 @@ void makeCombineTemplates_Modified_MCFM_one(int folder, int erg_tev, int tFitD, 
 			if (tFitD != 0) delete[] D_temp_2D[t];
 		}
 		foutput->Close();
+    tout.close();
 	}
 	cout<<endl;
   Djetcutfile->Close();

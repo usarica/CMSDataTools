@@ -144,8 +144,8 @@ double ggZZ_Syst_AbsNormSyst[2][2] ={ // EnergyIndex { QCD, PDF }
 };
 // ZX offshell yields
 double ZX_yield[2][3]={
-  { 0.1078, 0.2213, 0.3345 },
-  { 0.55, 1.78, 1.38 }
+  { 0.1000, 0.4000, 0.34 },
+  { 0.5500, 1.7800, 1.38 }
 };
 
 
@@ -161,11 +161,11 @@ TString sample_BackgroundFile[kNumBkg]={
 };
 //Directories
 
-TString user_dir="./101114/";
-//TString user_dir="/afs/cern.ch/work/u/usarica/WidthAnalysis/PostICHEP/";
 TString user_gg2VV_location="/scratch0/hep/ianderso/CJLST/ReprocessedTrees/HZZ4l-125p6-FullAnalysis/";
 //TString user_gg2VV_location="/afs/cern.ch/work/u/usarica/HZZ4l-125p6-FullAnalysis/";
 
+TString user_dir="/scratch0/hep/usarical/HiggsLifetime/WidthAnalysis/PostICHEP/";
+//TString user_dir="/afs/cern.ch/work/u/usarica/WidthAnalysis/PostICHEP/";
 //TString user_TemplateswithTrees_dir="/scratch0/hep/ianderso/TemplatesForCombine/101114/";
 //TString user_TemplateswithTrees_dir="/afs/cern.ch/work/u/usarica/WidthAnalysis/PostICHEP/";
 TString user_TemplateswithTrees_dir="/scratch0/hep/usarical/HiggsLifetime/WidthAnalysis/PostICHEP/";

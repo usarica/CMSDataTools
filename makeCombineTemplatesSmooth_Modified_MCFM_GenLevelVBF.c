@@ -53,18 +53,18 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 	TString INPUT_K3A_NAME = "HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_";
 	TString INPUT_SMOOTH_NAME = "HtoZZ4l_MCFM_125p6_SmoothTemplates_";
 	TString OUTPUT_NAME = "HtoZZ4l_MCFM_125p6_ModifiedSmoothTemplatesForCombine_";
-	if (useAnomalousCouplings > 0){
-		INPUT_NAME += strAnomalousType[useAnomalousCouplings] + "_Raw__GenLevelVBF_";
-		INPUT_K3A_NAME += strAnomalousType[useAnomalousCouplings] + "__GenLevelVBF_";
-		INPUT_SMOOTH_NAME += strAnomalousType[useAnomalousCouplings] + "__GenLevelVBF_";
-		OUTPUT_NAME += strAnomalousType[useAnomalousCouplings] + "__GenLevelVBF_";
-	}else{
-		INPUT_NAME += "_Raw__GenLevelVBF_";
-		INPUT_K3A_NAME += "__GenLevelVBF_";
-		INPUT_SMOOTH_NAME += "__GenLevelVBF_";
-		OUTPUT_NAME += "__GenLevelVBF_";		
-	}
-	INPUT_NAME += TString(strFitDim[tFitD]) + "_";
+  if (useAnomalousCouplings > 0){
+    INPUT_NAME += strAnomalousType[useAnomalousCouplings];
+    INPUT_K3A_NAME += strAnomalousType[useAnomalousCouplings];
+    INPUT_SMOOTH_NAME += strAnomalousType[useAnomalousCouplings];
+    OUTPUT_NAME += strAnomalousType[useAnomalousCouplings];
+  }
+  INPUT_NAME += "_Raw__GenLevelVBF_";
+	INPUT_K3A_NAME += "__GenLevelVBF_";
+	INPUT_SMOOTH_NAME += "__GenLevelVBF_";
+	OUTPUT_NAME += "__GenLevelVBF_";		
+
+  INPUT_NAME += TString(strFitDim[tFitD]) + "_";
 	INPUT_K3A_NAME += TString(strFitDim[tFitD]) + "_";
 	INPUT_SMOOTH_NAME += TString(strFitDim[tFitD]) + "_";
 	OUTPUT_NAME += TString(strFitDim[tFitD]) + "_";
@@ -317,9 +317,9 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 					else if (intBinX < 5.0e-7) emptyBins[0] = binx;
 				}
 				if (emptyBins[1] < emptyBins[0]) emptyBins[1] = emptyBins[0];
-				cout << "Empty bins: " << emptyBins[0] << '\t' << emptyBins[1] << endl;
 				if (emptyBins[0] != 0 && emptyBins[1] != 0){
-					int minbinx = emptyBins[0];
+          cout << "Empty bins: " << emptyBins[0] << '\t' << emptyBins[1] << endl;
+          int minbinx = emptyBins[0];
 					if (emptyBins[0]>1) minbinx = emptyBins[0]-1;
 					int maxbinx = emptyBins[1];
 					if (emptyBins[1]<D_temp_2D[t][0]->GetNbinsX()) maxbinx = emptyBins[1]+1;
@@ -388,7 +388,7 @@ void makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF_one(int folder, int er
 					 << ", unscaled rate: " << expectedNormalizations[0][t][al]
 					 << ", un-smoothened rate: " << expectedNormalizations[1][t][al] << endl;
 				if (t<3 || t>4){
-					D_temp_2D[t][al]->Scale(overall_scale[t][al]);
+//					D_temp_2D[t][al]->Scale(overall_scale[t][al]);
 					cout << "SCALE FOR " << D_temp_2D[t][al]->GetName() << " : " << overall_scale[t][al] << endl;
 				}
 				else{ // Conditionalize qqZZ and Z+X

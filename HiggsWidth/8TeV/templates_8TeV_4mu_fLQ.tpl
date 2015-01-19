@@ -225,11 +225,10 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200},
-				{"type":"reweight", "axes":[1],
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":3},
+				{"type":"reweight", "axes":[0],
 				       	"rebinning":[
-						[220,240,280,320,360,400,460,520,580,680,820,1000,1280,1600],
-						[]
+						[220,280,360,400,460,520,1140,1400,1600]
 						]
 				},
 				{"type":"floor"}
@@ -239,9 +238,12 @@
 		{
 			"name":"T_2D_ZX_merged",
 			"files":[
-				"./4mu/HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_fLQAdded__GenLevelVBF_D_Gamma_gg_r10_<SYST><JET>.root",
-				"./4mu/HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_fLQAdded__GenLevelVBF_D_Gamma_gg_r10_<SYST><JET>.root",
-				"./4mu/HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_fLQAdded__GenLevelVBF_D_Gamma_gg_r10_<SYST><JET>.root"
+				"../LHC_8TeV/4mu/HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_fLQAdded__GenLevelVBF_D_Gamma_gg_r10_Nominal.root",
+				"../LHC_8TeV/4e/HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_fLQAdded__GenLevelVBF_D_Gamma_gg_r10_Nominal.root",
+				"../LHC_8TeV/2mu2e/HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_fLQAdded__GenLevelVBF_D_Gamma_gg_r10_Nominal.root",
+				"../LHC_7TeV/4mu/HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_fLQAdded__GenLevelVBF_D_Gamma_gg_r10_Nominal.root",
+				"../LHC_7TeV/4e/HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_fLQAdded__GenLevelVBF_D_Gamma_gg_r10_Nominal.root",
+				"../LHC_7TeV/2mu2e/HtoZZ4l_MCFM_125p6_ModifiedTemplateswithTreesForCombine_fLQAdded__GenLevelVBF_D_Gamma_gg_r10_Nominal.root"
 				],
 			"tree":"T_2D_ZX_Tree",
 			"variables":["ZZMass","D_Gamma_gg_r10"],
@@ -254,16 +256,8 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200},
-				{"type":"reweight", "axes":[0,1],
-				       	"rebinning":[
-						[220,240,280,320,360,400,460,520,580,680,820,1000,1280,1600],
-						[]
-						]
-				},
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":20},
 				{"type":"floor"}
-				
-
 			]
 		},
 		// T_VBF_1 
@@ -283,7 +277,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_1_mZZ2_1 
@@ -303,7 +297,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_1_mZZ2_2 
@@ -323,7 +317,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_1_mZZ2_3 
@@ -343,7 +337,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_1_mZZ2_4 
@@ -363,7 +357,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_2
@@ -383,7 +377,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_2_mZZ2_1
@@ -403,7 +397,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_2_mZZ2_2
@@ -423,7 +417,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_2_mZZ2_3
@@ -443,7 +437,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_2_mZZ2_4
@@ -463,7 +457,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_4
@@ -483,7 +477,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_4_mZZ2_1
@@ -503,7 +497,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_4_mZZ2_2
@@ -523,7 +517,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_4_mZZ2_3
@@ -543,7 +537,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_4_mZZ2_4
@@ -563,7 +557,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		}
 	]

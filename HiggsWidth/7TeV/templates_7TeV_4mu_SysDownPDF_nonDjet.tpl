@@ -102,11 +102,11 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200},
-				{"type":"reweight", "axes":[1],
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":3},
+				{"type":"reweight", "axes":[0],
 				       	"rebinning":[
-						[220,240,280,320,360,400,460,520,580,680,820,1000,1280,1600],
-						[]
+						[220,240,280,320,380,600,620,640,660,680,700,720,740,760,780,800,820,840,860,880,900,920,940,960,980,1000,1020,1040,1060,1080,1100,1120,1140,1160,1180,1200,1220,1240,1260,1280,1300,1320,1340,1360,1380,1400,1420,1440,1460,1480,1500,1520,1540,1560,1580,1600]
+						
 						]
 				},
 				{"type":"floor"}
@@ -132,11 +132,11 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200},
-				{"type":"reweight", "axes":[0,1],
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":3},
+				{"type":"reweight", "axes":[0],
 				       	"rebinning":[
-						[220,240,280,320,360,400,460,520,580,680,820,1000,1280,1600],
-						[]
+						[220,240,280,320,380,600,620,640,660,680,700,720,740,760,780,800,820,840,860,880,900,920,940,960,980,1000,1020,1040,1060,1080,1100,1120,1140,1160,1180,1200,1220,1240,1260,1280,1300,1320,1340,1360,1380,1400,1420,1440,1460,1480,1500,1520,1540,1560,1580,1600]
+						
 						]
 				},
 				{"type":"floor"}
@@ -161,7 +161,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_2
@@ -181,7 +181,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_4
@@ -201,7 +201,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		}
 	]

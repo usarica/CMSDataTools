@@ -102,10 +102,10 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200},
-				{"type":"reweight", "axes":[1],
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":80},
+				{"type":"reweight", "axes":[0,1],
 				       	"rebinning":[
-						[220,240,280,320,360,400,460,520,580,680,820,1000,1280,1600],
+						[220,280,360,400,460,520,1140,1400,1600],
 						[]
 						]
 				},
@@ -131,10 +131,10 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200},
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":80},
 				{"type":"reweight", "axes":[0,1],
 				       	"rebinning":[
-						[220,240,280,320,360,400,460,520,580,680,820,1000,1280,1600],
+						[220,280,360,400,460,520,1140,1400,1600],
 						[]
 						]
 				},
@@ -159,7 +159,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_2
@@ -179,7 +179,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		},
 		// T_VBF_4
@@ -199,7 +199,7 @@
 				"bins":[69,220.,1600.,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":30}
 			]
 		}
 	]

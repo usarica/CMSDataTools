@@ -16,6 +16,7 @@
 #include "./data/ZZ4l_125_6_Samples.h"
 #include "./data/FitDimensionsList.h"
 #include "./data/HZZ4l_LeptonInterference.h"
+#include "./data/Uncertainty_Tables.h"
 
 using namespace std;
 

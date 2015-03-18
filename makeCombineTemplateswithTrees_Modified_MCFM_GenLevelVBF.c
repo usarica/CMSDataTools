@@ -36,7 +36,50 @@ void wipeOverUnderFlows(TH2F* hwipe);
 void wipeOverUnderFlows(TH3F* hwipe);
 void progressbar(int val, int tot);
 
-//Make Lepton Interference Graph to be used later
+//Make VBF uncertainty
+TGraph* make_VBF_UncertaintyGraph(int EnergyIndex, int tUnc){ // tUnc==1,2: QCD,PDF Up, ==-1-2: QCD,PDF Dn, ==3,-3: Up,Dn in quadrature
+  double x[NMASSES_VBF];
+  double y[NMASSES_VBF];
+
+  TString tgname = "tg_";
+  if (abs(tUnc)==1) tgname.Append("QCD");
+  else if (abs(tUnc)==2) tgname.Append("PDF");
+  else if (abs(tUnc)==3) tgname.Append("All");
+  else return 0;
+  if (tUnc>0) tgname.Append("Up");
+  else tgname.Append("Dn");
+
+  for (int a=0; a<NMASSES_VBF; a++){
+    x[a] = VBF_QCD_PDF[EnergyIndex][a][0];
+
+    if (tUnc==1){
+      y[a] = VBF_QCD_PDF[EnergyIndex][a][1];
+    }
+    else if (tUnc==-1){
+      y[a] = VBF_QCD_PDF[EnergyIndex][a][2];
+    }
+    else if (tUnc==2){
+      y[a] = VBF_QCD_PDF[EnergyIndex][a][3];
+    }
+    else if (tUnc==-2){
+      y[a] = VBF_QCD_PDF[EnergyIndex][a][4];
+    }
+    else if (tUnc==3){
+      y[a] = sqrt(pow(VBF_QCD_PDF[EnergyIndex][a][1], 2) + pow(VBF_QCD_PDF[EnergyIndex][a][3], 2));
+    }
+    else if (tUnc==-3){
+      y[a] = -sqrt(pow(VBF_QCD_PDF[EnergyIndex][a][2], 2) + pow(VBF_QCD_PDF[EnergyIndex][a][4], 2));
+    }
+    y[a] = y[a]*0.01 + 1.;
+  }
+
+  TGraph* tg = new TGraph(NMASSES_VBF, x, y);
+  tg->SetNameTitle(tgname,tgname);
+  return tg;
+};
+
+
+//Make lepton interference graph
 TGraph* make_HZZ_LeptonInterferenceGraph(){
 	float x[leptonInterf_YR3_Size];
 	float y[leptonInterf_YR3_Size];

@@ -1005,14 +1005,15 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
           int VBF_VH_rewgt_bin = h_VBFVH_Scale->GetXaxis()->FindBin(GenDiJetMass);
           if (VBF_VH_rewgt_bin>h_VBFVH_Scale->GetNbinsX()) VBF_VH_rewgt_bin = h_VBFVH_Scale->GetNbinsX();
           weight *= h_VBFVH_Scale->GetBinContent(VBF_VH_rewgt_bin); // VBF-VH scale for Phantom
-
+          if (tg_VBF_unc!=0 && Systematics!=0) weight *= tg_VBF_unc->Eval(GenHMass);
+/*
 					if (Systematics != 0){
 						double sysVBFScale = 1;
 						if (tFitD == 0) sysVBFScale = h1DVBFSigRatio->GetBinContent(h1DVBFSigRatio->FindBin(ZZMass));
 						else sysVBFScale = h2DVBFSigRatio->GetBinContent(h2DVBFSigRatio->FindBin(ZZMass, fitYval));
 						weight *= sysVBFScale;
 					}
-
+*/
 					// Anomalous couplings loop
 					for (int al = 0; al<nAnomalousLoops; al++){
 						templateWeight = weight * overall_scale[t];

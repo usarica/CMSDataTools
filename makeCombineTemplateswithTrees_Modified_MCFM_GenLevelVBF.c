@@ -201,6 +201,10 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 	float MC_weight_PDF_Norm_up = 1;
 	float ZZMass = 0;
 
+  TGraph* tg_VBF_unc=0;
+  if (Systematics>0) tg_VBF_unc = make_VBF_UncertaintyGraph(EnergyIndex, 3); // Retrieve sum in quadrature!
+  else if (Systematics<0) tg_VBF_unc = make_VBF_UncertaintyGraph(EnergyIndex, -3); // Retrieve sum in quadrature!
+
 	TString cinput_KDFactor = "./data/HZZ4l-KDFactorGraph";
 	if (EnergyIndex == 0) cinput_KDFactor = cinput_KDFactor + "_7TeV";
 	cinput_KDFactor = cinput_KDFactor + ".root";
@@ -427,6 +431,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
         int VBF_VH_rewgt_bin = h_VBFVH_Scale->GetXaxis()->FindBin(GenDiJetMass);
         if (VBF_VH_rewgt_bin>h_VBFVH_Scale->GetNbinsX()) VBF_VH_rewgt_bin = h_VBFVH_Scale->GetNbinsX();
         weight *= h_VBFVH_Scale->GetBinContent(VBF_VH_rewgt_bin); // VBF-VH scale for Phantom
+        if (tg_VBF_unc!=0 && Systematics!=0) weight *= tg_VBF_unc->Eval(GenHMass);
 
         if (ev == 0 && enableDebugging) cout << "Weight: " << weight << endl;
 				if (ZZMass < ZZMass_PeakCut[1] && ZZMass >= ZZMass_PeakCut[0]){
@@ -1244,6 +1249,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
     tout.close();
 	}
 	delete tgkf;
+  delete tg_VBF_unc;
 	finput_KDFactor->Close();
   delete tsp_VBF_Sig;
 	finput_VBF->Close();

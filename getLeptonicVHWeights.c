@@ -352,6 +352,7 @@ void produce_MJJdistributions_one(int folder, int erg_tev){
       cout << "Initial yield for " << templatetitles[tr] << ": " << hVBF_offshell_LC[tr]->Integral() << endl;
       cout << "Intermediate yield for " << templatetitles[tr] << " without VBF re-scaling: " << hVBF_offshell_scaled[tr]->Integral() << endl;
       cout << "Final yield for " << templatetitles[tr] << ": " << hVBF_offshell_scaled_wVBF[tr]->Integral() << endl;
+      cout << "Final on-shell yield for " << templatetitles[tr] << ": " << hVBF_onshell_scaled_wVBF[tr]->Integral() << endl;
       cout << endl;
     }
 

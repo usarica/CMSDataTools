@@ -669,7 +669,7 @@ void makeCombineTemplateswithTrees_Modified_MCFM_GenLevelVBF_one(int folder, int
 					MC_weight_PDF_Norm_down = 1;
 					MC_weight_PDF_Norm_up = 1;
 				}
-				if (t<3 || t>4) tree->SetBranchAddress("MC_weight_ggZZLepInt", &MC_weight_ggZZLepInt);
+				if (t<3) tree->SetBranchAddress("MC_weight_ggZZLepInt", &MC_weight_ggZZLepInt);
 				else MC_weight_ggZZLepInt = 1;
 				if (t > 4) tree->SetBranchAddress("Djet_VAJHU", &Djet);
 				else Djet = 0.;

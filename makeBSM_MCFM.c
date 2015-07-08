@@ -35,17 +35,17 @@ void makeBSM_MCFM_single(int folder, int erg_tev);
 
 //Make lepton interference graph
 TGraph* make_HZZ_LeptonInterferenceGraph(){
-	float x[leptonInterf_YR3_Size];
-	float y[leptonInterf_YR3_Size];
-	for(int a=0;a<leptonInterf_YR3_Size;a++){
-		x[a] = leptonInterf_YR3[a][0];
-		y[a] = leptonInterf_YR3[a][1];
-	}
-	TGraph* tg = new TGraph(leptonInterf_YR3_Size,x,y);
-	tg->SetName("tgHZZ_LeptonInterference");
-	tg->SetTitle("H#rightarrowZZ#rightarrow4l Lepton Interference Weight on 4e, 4#mu wrt. 2e2#mu");
+  float x[leptonInterf_YR3_Size];
+  float y[leptonInterf_YR3_Size];
+  for (int a=0; a<leptonInterf_YR3_Size; a++){
+    x[a] = leptonInterf_YR3[a][0];
+    y[a] = leptonInterf_YR3[a][1];
+  }
+  TGraph* tg = new TGraph(leptonInterf_YR3_Size, x, y);
+  tg->SetName("tgHZZ_LeptonInterference");
+  tg->SetTitle("H#rightarrowZZ#rightarrow4l Lepton Interference Weight on 4e, 4#mu wrt. 2e2#mu");
 
-	return tg;
+  return tg;
 }
 
 float findLeptonMass(int id){
@@ -96,8 +96,8 @@ float getJHUGenMELAWeight(Mela& myMela, int lepId[4], float angularOrdered[8], d
 
 
 void makeBSM_MCFM_single(int folder, int erg_tev){
-//  if (erg_tev==7) return;
-//  char TREE_NAME[] = "SelectedTree";
+  //  if (erg_tev==7) return;
+  //  char TREE_NAME[] = "SelectedTree";
   char TREE_NAME[] = "GenTree";
   TString INPUT_NAME = "HZZ4l-125_6-";
   int tFitD = 0;
@@ -187,7 +187,7 @@ void makeBSM_MCFM_single(int folder, int erg_tev){
     foutput->cd();
 
     TChain* tree = new TChain(TREE_NAME);
-    TTree* templateTree = new TTree(TREE_NAME,TREE_NAME);
+    TTree* templateTree = new TTree(TREE_NAME, TREE_NAME);
 
     float wPOLE=4.15e-3;
     if (t==3) wPOLE*=25;
@@ -199,7 +199,7 @@ void makeBSM_MCFM_single(int folder, int erg_tev){
     templateTree->Branch("ZZMass", &ZZMass);
     templateTree->Branch("Z1Mass", &Z1Mass);
     templateTree->Branch("Z2Mass", &Z2Mass);
-//    templateTree->Branch("GenHMass", &GenHMass);
+    //    templateTree->Branch("GenHMass", &GenHMass);
     templateTree->Branch("p0plus_VAJHU", &p0plus_VAJHU);
     templateTree->Branch("p0hplus_VAJHU", &p0hplus_VAJHU);
     templateTree->Branch("p0minus_VAJHU", &p0minus_VAJHU);
@@ -211,8 +211,8 @@ void makeBSM_MCFM_single(int folder, int erg_tev){
     templateTree->Branch("pg1g1prime4_VAJHU", &pg1g1prime4_VAJHU);
 
     //Making templates using appropriate weights
-//    tree->SetBranchAddress("ZZMass", &ZZMass);
-//    tree->SetBranchAddress("MC_weight", &MC_weight);
+    //    tree->SetBranchAddress("ZZMass", &ZZMass);
+    //    tree->SetBranchAddress("MC_weight", &MC_weight);
     tree->SetBranchAddress("GenZZMass", &GenHMass);
     tree->SetBranchAddress("GenLep1Id", &GenLep1Id);
     tree->SetBranchAddress("GenLep2Id", &GenLep2Id);
@@ -256,7 +256,7 @@ void makeBSM_MCFM_single(int folder, int erg_tev){
     if (folder<2) xsec *= 0.25;
     else xsec *= 0.5;
 
-//    for (int ev = 0; ev < 100; ev++){
+    //    for (int ev = 0; ev < 100; ev++){
 
     for (int ev = 0; ev < nEntries; ev++){
       tree->GetEntry(ev);
@@ -523,7 +523,7 @@ void plot_BSM_MCFM(int SignalOnly=0){
     for (int ac=0; ac<9; ac++){
       hfill[t][ac]= new TH1F(Form("hSum_BSI%i_Hypo%i", t, ac), "", nbinsx, xlimits[0], xlimits[1]);
       hfill[t][ac]->SetXTitle("m_{4l} (GeV)");
-      hfill[t][ac]->SetYTitle(Form("Events / %.0f GeV",(xlimits[1]-xlimits[0])/nbinsx));
+      hfill[t][ac]->SetYTitle(Form("Events / %.0f GeV", (xlimits[1]-xlimits[0])/nbinsx));
     }
   }
   double nCounted[2][3][9]={ { { 0 } } };
@@ -630,7 +630,7 @@ void plot_BSM_MCFM(int SignalOnly=0){
           if (t==0 && ev==0) nCountedScaled[EnergyIndex][folder][7] = nCounted[EnergyIndex][folder][7]*scale;
           hfill[t][7]->Fill(ZZMass, pg1g1prime2_VAJHU*scale);
           scale = SMscale;
-//          if (t==0) scale *= (nCounted[0][2][0]+nCounted[1][2][0])/(nCounted[0][2][8]+nCounted[1][2][8]);
+          //          if (t==0) scale *= (nCounted[0][2][0]+nCounted[1][2][0])/(nCounted[0][2][8]+nCounted[1][2][8]);
           if (t==0 && ev==0) nCountedScaled[EnergyIndex][folder][8] = nCounted[EnergyIndex][folder][8]*scale;
           hfill[t][8]->Fill(ZZMass, pg1g1prime4_VAJHU*scale);
         }
@@ -649,7 +649,7 @@ void plot_BSM_MCFM(int SignalOnly=0){
         nTotal[1] += nCountedScaled[EnergyIndex][folder][ac];
       }
     }
-    if(ac!=8) hfill[0][ac]->Scale(nTotal[0]/nTotal[1]);
+    if (ac!=8) hfill[0][ac]->Scale(nTotal[0]/nTotal[1]);
     else hfill[0][ac]->Scale(0.5);
   }
 
@@ -662,7 +662,7 @@ void plot_BSM_MCFM(int SignalOnly=0){
       hfill[t][ac]->SetLineWidth(2);
       if (t==0 && ac>=5){
         hfill[t][ac]->SetLineStyle(7);
-//        hfill[t][ac]->Add(hfill[1][ac]);
+        //        hfill[t][ac]->Add(hfill[1][ac]);
       }
       if (t==1) hfill[t][ac]->SetLineStyle(3);
       if (t==3) hfill[t][ac]->SetLineStyle(9);
@@ -696,26 +696,6 @@ void plot_BSM_MCFM(int SignalOnly=0){
   text = pt->AddText(0.537, 0.45, cErgTev);
   text->SetTextSize(0.0315);
 
-  TString canvasname = "cCanvas_MCFMBSM_GenLevel";
-  if (SignalOnly==1) canvasname.Append("_SignalOnly");
-  TCanvas* cc = new TCanvas(canvasname, "", 8, 30, 800, 800);
-  cc->cd();
-  gStyle->SetOptStat(0);
-  cc->SetFillColor(0);
-  cc->SetBorderMode(0);
-  cc->SetBorderSize(2);
-  cc->SetTickx(1);
-  cc->SetTicky(1);
-  cc->SetLeftMargin(0.17);
-  cc->SetRightMargin(0.05);
-  cc->SetTopMargin(0.07);
-  cc->SetBottomMargin(0.13);
-  cc->SetFrameFillStyle(0);
-  cc->SetFrameBorderMode(0);
-  cc->SetFrameFillStyle(0);
-  cc->SetFrameBorderMode(0);
-  cc->SetLogy();
-
   float lxmin = 0.22;
   float lxwidth = 0.38;
   float lymax = 0.9;
@@ -748,6 +728,45 @@ void plot_BSM_MCFM(int SignalOnly=0){
     lymax = lymax3;
   }
 
+  float pxmin = 0.756;
+  float pymin = 0.76;
+  float pxmax = 0.85;
+  if (SignalOnly==1){
+    pymin -= 0.12;
+  }
+  float pymax = pymin+0.05;
+  TPaveText* ptx = new TPaveText(pxmin, pymin, pxmax, pymax, "brNDC");
+  ptx->SetBorderSize(0);
+  ptx->SetTextFont(42);
+  ptx->SetTextSize(0.04);
+  ptx->SetLineColor(1);
+  ptx->SetLineStyle(1);
+  ptx->SetLineWidth(1);
+  ptx->SetFillColor(0);
+  ptx->SetFillStyle(0);
+  text = ptx->AddText(0.01, 0.01, "gg#rightarrow4l");
+  text->SetTextSize(0.04);
+
+  TString canvasname = "cCanvas_MCFMBSM_GenLevel";
+  if (SignalOnly==1) canvasname.Append("_SignalOnly");
+  TCanvas* cc = new TCanvas(canvasname, "", 8, 30, 800, 800);
+  cc->cd();
+  gStyle->SetOptStat(0);
+  cc->SetFillColor(0);
+  cc->SetBorderMode(0);
+  cc->SetBorderSize(2);
+  cc->SetTickx(1);
+  cc->SetTicky(1);
+  cc->SetLeftMargin(0.17);
+  cc->SetRightMargin(0.05);
+  cc->SetTopMargin(0.07);
+  cc->SetBottomMargin(0.13);
+  cc->SetFrameFillStyle(0);
+  cc->SetFrameBorderMode(0);
+  cc->SetFrameFillStyle(0);
+  cc->SetFrameBorderMode(0);
+  cc->SetLogy();
+
   TLegend* ll;
   TLegend* ll2;
 
@@ -771,7 +790,7 @@ void plot_BSM_MCFM(int SignalOnly=0){
   ll2->SetFillColor(0);
   ll2->SetFillStyle(0);
 
-  TString strACtitle[9]={ "", 
+  TString strACtitle[9]={ "",
     "f_{a2}=1", "f_{a3}=1", "f_{#Lambda1}=1", "f_{#LambdaQ}=1",
     "f_{a2}=0.5, #phi_{#lower[-0.2]{a2}}=#pi", "f_{a3}=0.5", "f_{#Lambda1}=0.5", "f_{#LambdaQ}=0.5"
   };
@@ -789,7 +808,7 @@ void plot_BSM_MCFM(int SignalOnly=0){
   hfill[iDraw][0]->SetLineColor(kBlack);
   if (SignalOnly==0){
     hfill[iDraw][0]->SetFillColor(kAzure-2);
-    hfill[iDraw][0]->SetFillStyle(3001);
+    hfill[iDraw][0]->SetFillStyle(1001);
   }
   hfill[iDraw][0]->Draw("hist");
 
@@ -829,8 +848,8 @@ void plot_BSM_MCFM(int SignalOnly=0){
 
   TLegendEntry* legendtext;
   if (SignalOnly==0){
-    legendtext = ll->AddEntry(hfill[iDraw][0], "Total gg#rightarrow4l", "f");
-    legendtext = ll->AddEntry(hfill[1][0], "gg#rightarrow4l bkg.", "f");
+    legendtext = ll->AddEntry(hfill[iDraw][0], "SM total", "f");
+    legendtext = ll->AddEntry(hfill[1][0], "SM bkg.", "f");
     legendtext->SetFillStyle(1001);
     legendtext->SetFillColor(hfill[1][0]->GetFillColor());
   }
@@ -884,6 +903,7 @@ void plot_BSM_MCFM(int SignalOnly=0){
 
   ll->Draw("same");
   ll2->Draw("same");
+  ptx->Draw();
   pt->Draw();
   cc->RedrawAxis();
   cc->Update();
@@ -909,6 +929,7 @@ void plot_BSM_MCFM(int SignalOnly=0){
   delete ll2;
   delete ll;
   cc->Close();
+  delete ptx;
   delete pt;
   for (int t=0; t<4; t++){
     for (int ac=0; ac<5; ac++){

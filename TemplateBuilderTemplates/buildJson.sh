@@ -33,3 +33,5 @@ SEDCOMMAND="s/<DJET>/"$djet"/g"
 sed -i $SEDCOMMAND $jsonfile
 
 $tplbldr $jsonfile
+
+

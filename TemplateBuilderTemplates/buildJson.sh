@@ -1,6 +1,6 @@
 #!/bin/bash/
 
-dir="/work-zfs/lhc/usarica/CMS-related/Analysis/MassWidth_2016/CMSSW_8_0_12/src/Analysis/ICHEP2016/"
+dir="/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/"
 todaysdate=$1
 energy=$2
 channel=$3
@@ -11,10 +11,11 @@ djet=$6
 #  djet="_"$djet
 #endif
 
-tplbldr="/work-zfs/lhc/usarica/CMS-related/Analysis/MassWidth_2016/CMSSW_8_0_12/src/Analysis/TemplateBuilder/buildTemplate.exe"
+tplbldr="/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_GeneralTemplates/CMSSW_6_1_1/src/TemplateBuilder/buildTemplate.exe"
 tplfile="templates_ggTo4l_V1.tpl"
 jsonfile="templates_ggTo4l_"$energy"TeV_"$channel"_"$syst$djet".json"
 
+echo "Creating "$jsonfile
 cp $tplfile $jsonfile
 
 SEDCOMMAND="s.<DIR>."$dir".g"

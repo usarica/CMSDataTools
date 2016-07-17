@@ -1,91 +1,89 @@
 // Configuration options
 {
-	"inputDirectory":"<DIR>LHC_<ENERGY>TeV/Templates/<TODAYSDATE>/gg/",
-	"outputFile":"<DIR>LHC_<ENERGY>TeV/Templates/<TODAYSDATE>/gg/HtoZZ4l_ggTo<CHANNEL>_ConditionalSmoothTemplatesForCombine_<SYST><DJET>.root",
+	"inputDirectory":"<DIR>LHC_<ENERGY>TeV/Templates/<TODAYSDATE>/",
+	"outputFile":"<DIR>LHC_<ENERGY>TeV/Templates/<TODAYSDATE>/HtoZZ<CHANNEL>_ConditionalSmoothTemplatesForCombine_<SYST><DJET>.root",
 	// template definitions
 	"templates":[
-		// T_1 
+		// T_2D_Sig
 		{
-			"name":"T_2D_1",
+			"name":"T_2D_Sig_Tree",
 			"files":[
-				"./HtoZZ4l_ggTo<CHANNEL>_ConditionalTemplatesForCombine_<SYST><DJET>.root"
+				"./HtoZZ<CHANNEL>_ConditionalTemplatesForCombine_<SYST><DJET>.root"
 				],
-			"tree":"T_2D_1_Tree",
-			"variables":["GenHMass","KD"],
-			"weight":"weight",
+			"tree":"T_2D_Sig",
+			"variables":["ZZMass","KD"],
+			"weight":"weight*reweight",
 			"conserveSumOfWeights":true,
-			"assertion":"1",
+			"selection":"(weight*reweight)>0. && (weight*reweight)<200.",
 			"binning":{
-				"type":"adaptive",
-				"bins":[<XBINNING>,30,0.,1.],
-				"entriesperbin":30
+				"type":"fixed",
+				"bins":[<XBINNING>,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":50, "rescalewidth":0.6},
-				{"type":"reweight", "axes":[0,1]}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":100, "rescalewidth":1.0},
+				{"type":"reweight", "axes":[0]}
 			]
 		},
-		// T_2
+		// T_2D_ggBkg
 		{
-			"name":"T_2D_2",
+			"name":"T_2D_ggBkg_Tree",
 			"files":[
-				"./HtoZZ4l_ggTo<CHANNEL>_ConditionalTemplatesForCombine_<SYST><DJET>.root"
+				"./HtoZZ<CHANNEL>_ConditionalTemplatesForCombine_<SYST><DJET>.root"
 				],
-			"tree":"T_2D_2_Tree",
-			"variables":["GenHMass","KD"],
-			"weight":"weight",
+			"tree":"T_2D_ggBkg",
+			"variables":["ZZMass","KD"],
+			"weight":"weight*reweight",
 			"conserveSumOfWeights":true,
-			"assertion":"1",
+			"selection":"(weight*reweight)>0. && (weight*reweight)<200.",
 			"binning":{
-				"type":"adaptive",
-				"bins":[<XBINNING>,30,0.,1.],
-				"entriesperbin":30
+				"type":"fixed",
+				"bins":[<XBINNING>,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":50, "rescalewidth":0.6},
-				{"type":"reweight", "axes":[0,1]}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":100, "rescalewidth":1.0},
+				{"type":"reweight", "axes":[0]}
 			]
 		},
-		// T_124
+		// T_2D_qqBkg
 		{
-			"name":"T_2D_124",
+			"name":"T_2D_qqBkg_Tree",
 			"files":[
-				"./HtoZZ4l_ggTo<CHANNEL>_ConditionalTemplatesForCombine_<SYST><DJET>.root"
+				"./HtoZZ<CHANNEL>_ConditionalTemplatesForCombine_<SYST><DJET>.root"
 				],
-			"tree":"T_2D_124_Tree",
-			"variables":["GenHMass","KD"],
-			"weight":"weight",
+			"tree":"T_2D_qqBkg",
+			"variables":["ZZMass","KD"],
+			"weight":"weight*reweight",
 			"conserveSumOfWeights":true,
-			"assertion":"1",
+			"selection":"(weight*reweight)>0. && (weight*reweight)<200.",
 			"binning":{
-				"type":"adaptive",
-				"bins":[<XBINNING>,30,0.,1.],
-				"entriesperbin":30
+				"type":"fixed",
+				"bins":[<XBINNING>,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":50, "rescalewidth":0.6},
-				{"type":"reweight", "axes":[0,1]}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":100, "rescalewidth":1.0},
+				{"type":"reweight", "axes":[0]}
 			]
 		},
-		// T_124_perp
+		// T_2D_ZX
 		{
-			"name":"T_2D_124_perp",
+			"name":"T_2D_ZX_Tree",
 			"files":[
-				"./HtoZZ4l_ggTo<CHANNEL>_ConditionalTemplatesForCombine_<SYST><DJET>.root"
+				"./HtoZZ4mu_ConditionalTemplatesForCombine_ZX_<SYST><DJET>.root",
+				"./HtoZZ4e_ConditionalTemplatesForCombine_ZX_<SYST><DJET>.root",
+				"./HtoZZ2e2mu_ConditionalTemplatesForCombine_ZX_<SYST><DJET>.root"
 				],
-			"tree":"T_2D_124_perp_Tree",
-			"variables":["GenHMass","KD"],
+			"tree":"T_2D_ZX",
+			"variables":["ZZMass","KD"],
 			"weight":"weight",
 			"conserveSumOfWeights":true,
 			"assertion":"1",
 			"binning":{
-				"type":"adaptive",
-				"bins":[<XBINNING>,30,0.,1.],
-				"entriesperbin":30
+				"type":"fixed",
+				"bins":[<XBINNING>,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":50, "rescalewidth":0.6},
-				{"type":"reweight", "axes":[0,1]}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":100, "rescalewidth":1.0},
+				{"type":"reweight", "axes":[0]}
 			]
 		}
 

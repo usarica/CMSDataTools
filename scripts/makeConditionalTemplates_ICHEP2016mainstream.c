@@ -36,7 +36,10 @@ vector<pair<TH1F*, TH1F*>> getZXFR_SS();
 TString todaysdate();
 SimpleParticleCollection_t constructFourVectors(short GenLepId[4], float GenLepPtEtaPhi[3][4]);
 void addByLowest(unsigned int ev, float val, std::vector<std::pair<unsigned int, float>>& valArray);
+void addByLowest(float weight, float val, std::vector<std::pair<float, float>>& valArray);
+void addByLowest(float val, std::vector<float>& valArray);
 bool test_bit(int mask, unsigned int iBit);
+float getDbkgkinConstant(float ZZMass);
 
 // Main Function, runs over all desired iterations
 void makeConditionalTemplates_ICHEP2016mainstream(){
@@ -247,14 +250,14 @@ void makeConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev, i
     D_temp_1D_rew[t] = new TH1F(Form("h%s_rew", strTemplates[t].Data()), "", nbinsx, kDXarray);
     N_temp_1D_rew[t] = new TH1F(Form("hn%s_rew", strTemplates[t].Data()), "", nbinsx, kDXarray);
 
-    newtree[t] = new TTree(Form("T_2D_%s", strTemplates[t].Data()), "");
+    newtree[t] = new TTree(Form("T_2D_%s_Tree", strTemplates[t].Data()), "");
     newtree[t]->Branch("ZZMass", &ZZMass);
     //newtree[t]->Branch("GenHMass", &GenHMass);
     newtree[t]->Branch("KD", &varKD);
     newtree[t]->Branch("weight", &weight);
     newtree[t]->Branch("reweight", &reweight);
 
-    D_temp_2D[t] = new TH2F(Form("h%s", strTemplates[t].Data()), "", nbinsx, kDXarray, nbinsy, kDYarray);
+    D_temp_2D[t] = new TH2F(Form("T_2D_%s", strTemplates[t].Data()), "", nbinsx, kDXarray, nbinsy, kDYarray);
     D_temp_2D[t]->Sumw2();
     D_temp_2D[t]->SetOption("colz");
     D_temp_2D[t]->GetYaxis()->SetTitle("D^{kin}_{bkg}");
@@ -315,7 +318,7 @@ void makeConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev, i
         else if (folder==1 && abs(ZZFlav)!=pow(11, 4)) continue;
         else if (folder==2 && abs(ZZFlav)!=pow(13*11, 2)) continue;
 
-        varKD = p0plus_VAJHU/(p0plus_VAJHU + bkg_VAMCFM);
+        varKD = p0plus_VAJHU/(p0plus_VAJHU + bkg_VAMCFM*getDbkgkinConstant(ZZMass));
         if (varKD!=varKD) continue;
 
         // weight is product of everything. Only some are non-1.
@@ -443,13 +446,12 @@ void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev
     kDYarray[bin] = kDY_bounds[0] + binwidth*bin;
   }
 
-
   TString erg_dir = Form("LHC_%iTeV/", erg_tev);
   TString strdate = todaysdate();
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
 
-  TString INPUT_NAME = user_treefile;
+  TString INPUT_NAME = Form("HtoZZ%s_ConditionalTemplatesForCombine_ZX_", user_folder[folder].Data());
   TString OUTPUT_NAME = Form("HtoZZ%s_ConditionalTemplatesForCombine_ZX_", user_folder[folder].Data());
   if (Systematics == 0) OUTPUT_NAME += "Nominal";
   else{ cerr << "Invalid systematics " << Systematics << endl; return; }
@@ -550,12 +552,12 @@ void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev
   TTree* newtree[nTemplates];
   TH2F* D_temp_2D[nTemplates];
   for (unsigned int t=0; t<nTemplates; t++){
-    newtree[t] = new TTree(Form("T_2D_%s", strTemplates[t].Data()), "");
+    newtree[t] = new TTree(Form("T_2D_%s_Tree", strTemplates[t].Data()), "");
     newtree[t]->Branch("ZZMass", &ZZMass);
     newtree[t]->Branch("KD", &varKD);
     newtree[t]->Branch("weight", &weight);
 
-    D_temp_2D[t] = new TH2F(Form("h%s", strTemplates[t].Data()), "", nbinsx, kDXarray, nbinsy, kDYarray);
+    D_temp_2D[t] = new TH2F(Form("T_2D_%s", strTemplates[t].Data()), "", nbinsx, kDXarray, nbinsy, kDYarray);
     D_temp_2D[t]->Sumw2();
     D_temp_2D[t]->SetOption("colz");
     D_temp_2D[t]->GetYaxis()->SetTitle("D^{kin}_{bkg}");
@@ -585,7 +587,7 @@ void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev
         else if (folder==1 && abs(ZZFlav)!=pow(11, 4)) continue;
         else if (folder==2 && abs(ZZFlav)!=pow(13*11, 2)) continue;
 
-        varKD = p0plus_VAJHU/(p0plus_VAJHU + bkg_VAMCFM);
+        varKD = p0plus_VAJHU/(p0plus_VAJHU + bkg_VAMCFM*getDbkgkinConstant(ZZMass));
         if (varKD!=varKD) continue;
 
         // Apply FRs in SS
@@ -694,6 +696,156 @@ void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev
   tout.close();
 }
 
+void collectConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev, int Systematics){
+  const float ZZMass_cut[2]={ 100., 3000. };
+  const float xwidth = 2;
+  const int nbinsx = (ZZMass_cut[1]-ZZMass_cut[0])/xwidth;
+  float kDXarray[nbinsx+1];
+  for (int bin=0; bin<nbinsx+1; bin++) kDXarray[bin] = ZZMass_cut[0] + xwidth*bin;
+  const int nbinsy=30;
+  float kDYarray[nbinsy+1];
+  const float kDY_bounds[2]={ 0, 1 };
+  for (int bin=0; bin<nbinsy+1; bin++){
+    float binwidth = (kDY_bounds[1] - kDY_bounds[0])/nbinsy;
+    kDYarray[bin] = kDY_bounds[0] + binwidth*bin;
+  }
+
+  TString erg_dir = Form("LHC_%iTeV/", erg_tev);
+  TString strdate = todaysdate();
+  if (fixedDate!="") strdate=fixedDate;
+  cout << "Today's date: " << strdate << endl;
+
+  TString coutput_common = user_dir + erg_dir + "Templates/" + strdate + "/";
+  TString cinput_common = coutput_common;
+  gSystem->Exec("mkdir -p " + coutput_common);
+
+  TString strDjet="";
+  TString strSyst;
+  if (Systematics == 0) strSyst = "Nominal";
+  else if (Systematics == 1) strSyst = "SysUp_QCD";
+  else if (Systematics == -1) strSyst = "SysDown_QCD";
+  else if (Systematics == 2) strSyst = "SysUp_PDF";
+  else if (Systematics == -2) strSyst = "SysDown_PDF";
+  else{ cerr << "Invalid systematics " << Systematics << endl; return; }
+  TString strCmd_dir = strdate;
+  TString strCmd_ergtev = Form("%i", erg_tev);
+  TString strCmd_channel = user_folder[folder];
+  TString strCmd_xbinning = Form("%i,%.0f,%.0f", nbinsx, kDXarray[0], kDXarray[nbinsx]);
+  TString strCmd_syst = strSyst;
+  TString strCmd_djet = strDjet;
+  TString strCmd = Form("%s %s %s %s %s %s",
+    strCmd_dir.Data(),
+    strCmd_ergtev.Data(),
+    strCmd_channel.Data(),
+    strCmd_xbinning.Data(),
+    strCmd_syst.Data(),
+    strCmd_djet.Data()
+    );
+  cout << "strCmd = " << strCmd << endl;
+  gSystem->Exec("pushd ../TemplateBuilderTemplates/; source ../TemplateBuilderTemplates/buildJson.sh " + strCmd + "; popd; ");
+
+  TString INPUT_NAME = Form("HtoZZ%s_ConditionalSmoothTemplatesForCombine_", user_folder[folder].Data());
+  TString OUTPUT_NAME = Form("HtoZZ%s_ConditionalSmoothMergedTemplatesForCombine_", user_folder[folder].Data());
+  INPUT_NAME += strSyst;
+  OUTPUT_NAME += strSyst;
+
+  TString OUTPUT_LOG_NAME = OUTPUT_NAME;
+  INPUT_NAME += ".root";
+  OUTPUT_NAME += ".root";
+  OUTPUT_LOG_NAME += ".log";
+
+  TString coutput = coutput_common + OUTPUT_NAME;
+  TString coutput_log = coutput_common + OUTPUT_LOG_NAME;
+  ofstream tout(coutput_log.Data(), ios::out);
+  cout << "Opened file " << coutput_log << endl;
+  TFile* foutput = new TFile(coutput, "recreate");
+
+  cout << "Opened file " << coutput << endl;
+  cout << "===============================" << endl;
+  cout << "CoM Energy: " << erg_tev << " TeV" << endl;
+  cout << "Decay Channel: " << user_folder[folder] << endl;
+  cout << "===============================" << endl;
+  cout << endl;
+  tout << "Opened file " << coutput << endl;
+  tout << "===============================" << endl;
+  tout << "CoM Energy: " << erg_tev << " TeV" << endl;
+  tout << "Decay Channel: " << user_folder[folder] << endl;
+  tout << "===============================" << endl;
+  tout << endl;
+
+  const unsigned int nTemplates = 4;
+  TString strTemplates[nTemplates]={
+    "Sig",
+    "ggBkg",
+    "qqBkg",
+    "ZX"
+  };
+  vector<TH2F*> D_temp_2D;
+
+  TString cinput = cinput_common + INPUT_NAME;
+  cout << "Opening file " << cinput << endl;
+  tout << "Opening file " << cinput << endl;
+  TFile* finput = TFile::Open(cinput, "read");
+
+  foutput->cd();
+  for (unsigned int t=0; t<nTemplates; t++){
+    D_temp_2D.push_back((TH2F*)finput->Get(Form("T_2D_%s", strTemplates[t].Data())));
+    for (int binx=0; binx<=D_temp_2D.at(t)->GetNbinsX()+1; binx++){
+      // Floor
+      for (int biny=0; biny<=D_temp_2D.at(t)->GetNbinsY()+1; biny++){
+        double bincontent = D_temp_2D.at(t)->GetBinContent(binx, biny);
+        if (bincontent<=0.) D_temp_2D.at(t)->SetBinContent(binx, biny, 1e-15);
+      }
+
+      // Conditionalize
+      double integral = D_temp_2D.at(t)->Integral(binx, binx, 0, D_temp_2D.at(t)->GetNbinsY()+1);
+      if (integral==0.) continue; // All bins across y are 0.
+      for (int biny=0; biny<=D_temp_2D.at(t)->GetNbinsY()+1; biny++){
+        D_temp_2D.at(t)->SetBinContent(binx, biny, D_temp_2D.at(t)->GetBinContent(binx, biny)/integral);
+        D_temp_2D.at(t)->SetBinError(binx, biny, 0);
+      }
+
+      D_temp_2D.at(t)->SetOption("colz");
+      D_temp_2D.at(t)->GetYaxis()->SetTitle("D^{kin}_{bkg}");
+      D_temp_2D.at(t)->GetXaxis()->SetTitle("m_{4l} (GeV)");
+    }
+
+    foutput->WriteTObject(D_temp_2D.at(t));
+  }
+  for (unsigned int izx=1; izx<=2; izx++){
+    D_temp_2D.push_back(
+      (TH2F*)D_temp_2D.at(nTemplates-1)->Clone(Form("%s_%s", D_temp_2D.at(nTemplates-1)->GetName(), (izx==1 ? "_ProdUp" : "_ProdDn")))
+      );
+    // Mirroring from qqBkg
+    for (int binx=0; binx<=D_temp_2D.at(nTemplates-1+izx)->GetNbinsX()+1; binx++){
+      for (int biny=0; biny<=D_temp_2D.at(nTemplates-1+izx)->GetNbinsY()+1; biny++){
+        double bincontent = D_temp_2D.at(nTemplates-1)->GetBinContent(binx, biny);
+        double bincontent_qqzz = D_temp_2D.at(nTemplates-2)->GetBinContent(binx, biny);
+        if (izx==0) bincontent = bincontent_qqzz;
+        else bincontent = 2.*bincontent - bincontent_qqzz;
+        if (bincontent<=0.) D_temp_2D.at(nTemplates-1+izx)->SetBinContent(binx, biny, 1e-15);
+        else D_temp_2D.at(nTemplates-1+izx)->SetBinContent(binx, biny, bincontent);
+      }
+
+      // Re-conditionalize
+      double integral = D_temp_2D.at(nTemplates-1+izx)->Integral(binx, binx, 0, D_temp_2D.at(nTemplates-1+izx)->GetNbinsY()+1);
+      if (integral==0.) continue; // All bins across y are 0.
+      for (int biny=0; biny<=D_temp_2D.at(nTemplates-1+izx)->GetNbinsY()+1; biny++){
+        D_temp_2D.at(nTemplates-1+izx)->SetBinContent(binx, biny, D_temp_2D.at(nTemplates-1+izx)->GetBinContent(binx, biny)/integral);
+        D_temp_2D.at(nTemplates-1+izx)->SetBinError(binx, biny, 0);
+      }
+    }
+
+    foutput->WriteTObject(D_temp_2D.at(nTemplates-1+izx));
+  }
+
+  for (unsigned int t=0; t<D_temp_2D.size(); t++) delete D_temp_2D.at(t);
+  finput->Close();
+  foutput->Close();
+  tout.close();
+}
+
+
 void progressbar(int val, int tot){
   int percent=floor(0.01*tot);
   if (percent==0) percent=1;
@@ -739,6 +891,30 @@ void addByLowest(unsigned int ev, float val, std::vector<std::pair<unsigned int,
     }
   }
   if (!inserted) valArray.push_back(std::pair<unsigned int, float>(ev, val));
+}
+
+void addByLowest(float weight, float val, std::vector<std::pair<float, float>>& valArray){
+  bool inserted = false;
+  for (std::vector<std::pair<float, float>>::iterator it = valArray.begin(); it<valArray.end(); it++){
+    if ((*it).second>=val){
+      inserted=true;
+      valArray.insert(it, std::pair<float, float>(weight, val));
+      break;
+    }
+  }
+  if (!inserted) valArray.push_back(std::pair<float, float>(weight, val));
+}
+
+void addByLowest(float val, std::vector<float>& valArray){
+  bool inserted = false;
+  for (std::vector<float>::iterator it = valArray.begin(); it<valArray.end(); it++){
+    if ((*it)>=val){
+      inserted=true;
+      valArray.insert(it, val);
+      break;
+    }
+  }
+  if (!inserted) valArray.push_back(val);
 }
 
 
@@ -899,3 +1075,117 @@ vector<pair<TH1F*, TH1F*>> getZXFR_SS(){
 
 
 bool test_bit(int mask, unsigned int iBit){ return (mask >> iBit) & 1; }
+
+void checkDbkgkin(){
+  TChain* tggH = new TChain("T_2D_Sig");
+  TChain* tqqBkg = new TChain("T_2D_qqBkg");
+  tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
+  tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
+  tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
+  tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
+  tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
+  tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
+
+  float weight, reweight;
+  float ZZMass, KD;
+  tggH->SetBranchAddress("ZZMass", &ZZMass);
+  tggH->SetBranchAddress("KD", &KD);
+  tggH->SetBranchAddress("weight", &weight);
+  tggH->SetBranchAddress("reweight", &reweight);
+  tqqBkg->SetBranchAddress("ZZMass", &ZZMass);
+  tqqBkg->SetBranchAddress("KD", &KD);
+  tqqBkg->SetBranchAddress("weight", &weight);
+  tqqBkg->SetBranchAddress("reweight", &reweight);
+
+  const int nbins = (3000.-70)/5;
+  vector<float> KDarray_ggH[nbins]; // 100-3000 in 5 GeV steps
+  vector<float> KDarray_qqBkg[nbins]; // 100-3000 in 5 GeV steps
+  for (int bin=0; bin<nbins; bin++){
+    KDarray_ggH[bin].clear();
+    KDarray_qqBkg[bin].clear();
+  }
+  cout << "#ggH = " << tggH->GetEntries() << endl;
+  for (int ev=0; ev<tggH->GetEntries(); ev++){
+    tggH->GetEntry(ev);
+    if (ev%10000==0) cout << "Event " << ev << endl;
+    int bin = (ZZMass-70.)/5.;
+    if (bin>=nbins) continue;
+    float KDinv = 1.-KD;
+    addByLowest(KDinv, KDarray_ggH[bin]);
+  }
+  cout << "Done ggH" << endl;
+  cout << "#qqBkg = " << tqqBkg->GetEntries() << endl;
+  for (int ev=0; ev<tqqBkg->GetEntries(); ev++){
+    tqqBkg->GetEntry(ev);
+    if (ev%10000==0) cout << "Event " << ev << endl;
+    int bin = (ZZMass-70.)/5.;
+    if (bin>=nbins) continue;
+    addByLowest(KD, KDarray_qqBkg[bin]);
+  }
+  cout << "Done qqBkg" << endl;
+
+  delete tggH;
+  delete tqqBkg;
+
+  TFile* foutput = new TFile("test.root", "recreate");
+  TH1F* histo = new TH1F("test", "", nbins, 70, 3000);
+
+  for (int bin=0; bin<nbins; bin++){
+    cout << "Checking bin " << bin << endl;
+
+    const float KDinc=0.001;
+    float closestApproach=0;
+    float diffFrac=2;
+
+    cout << "ggH size = " << KDarray_ggH[bin].size() << endl;
+    cout << "qqBkg size = " << KDarray_qqBkg[bin].size() << endl;
+
+    for (float iKD=KDinc; iKD<1.; iKD+=KDinc){
+      float gKD = 1.-iKD;
+      int index_ggH=0;
+      while (index_ggH<(int)KDarray_ggH[bin].size() && KDarray_ggH[bin].at(index_ggH)<gKD) index_ggH++;
+
+      int index_qqBkg=0;
+      while (index_qqBkg<(int)KDarray_qqBkg[bin].size() && KDarray_qqBkg[bin].at(index_qqBkg)<iKD) index_qqBkg++;
+
+      double f_ggH = ((double)index_ggH)/((double)KDarray_ggH[bin].size());
+      double f_qqBkg = ((double)index_qqBkg)/((double)KDarray_qqBkg[bin].size());
+      if (fabs(f_ggH-f_qqBkg)<diffFrac){
+        diffFrac = fabs(f_ggH-f_qqBkg);
+        closestApproach = iKD;
+      }
+    }
+
+    histo->SetBinContent(bin+1, closestApproach);
+  }
+
+  foutput->WriteTObject(histo);
+  foutput->Close();
+}
+
+float getDbkgkinConstant(float ZZMass){
+  float par[11]={
+    -0.565,
+    70.,
+    5.90,
+    -0.235,
+    130.1,
+    13.25,
+    -0.33,
+    191.04,
+    16.05,
+    0.775,
+    187.47
+  };
+  float kappa =
+    par[9]
+    +par[0]*exp(-pow(((ZZMass-par[1])/par[2]), 2))
+    +par[3]*exp(-pow(((ZZMass-par[4])/par[5]), 2))
+    +par[6]*(
+    exp(-pow(((ZZMass-par[7])/par[8]), 2))*(ZZMass<par[7])
+    + exp(-pow(((ZZMass-par[7])/par[10]), 2))*(ZZMass>=par[7])
+    );
+  float constant = kappa/(1.-kappa);
+  return constant;
+}
+

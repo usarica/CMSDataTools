@@ -6,11 +6,11 @@
 	"templates":[
 		// T_2D_Sig
 		{
-			"name":"T_2D_Sig_Tree",
+			"name":"T_2D_Sig",
 			"files":[
 				"./HtoZZ<CHANNEL>_ConditionalTemplatesForCombine_<SYST><DJET>.root"
 				],
-			"tree":"T_2D_Sig",
+			"tree":"T_2D_Sig_Tree",
 			"variables":["ZZMass","KD"],
 			"weight":"weight*reweight",
 			"conserveSumOfWeights":true,
@@ -26,11 +26,11 @@
 		},
 		// T_2D_ggBkg
 		{
-			"name":"T_2D_ggBkg_Tree",
+			"name":"T_2D_ggBkg",
 			"files":[
 				"./HtoZZ<CHANNEL>_ConditionalTemplatesForCombine_<SYST><DJET>.root"
 				],
-			"tree":"T_2D_ggBkg",
+			"tree":"T_2D_ggBkg_Tree",
 			"variables":["ZZMass","KD"],
 			"weight":"weight*reweight",
 			"conserveSumOfWeights":true,
@@ -46,11 +46,11 @@
 		},
 		// T_2D_qqBkg
 		{
-			"name":"T_2D_qqBkg_Tree",
+			"name":"T_2D_qqBkg",
 			"files":[
 				"./HtoZZ<CHANNEL>_ConditionalTemplatesForCombine_<SYST><DJET>.root"
 				],
-			"tree":"T_2D_qqBkg",
+			"tree":"T_2D_qqBkg_Tree",
 			"variables":["ZZMass","KD"],
 			"weight":"weight*reweight",
 			"conserveSumOfWeights":true,
@@ -66,13 +66,13 @@
 		},
 		// T_2D_ZX
 		{
-			"name":"T_2D_ZX_Tree",
+			"name":"T_2D_ZX",
 			"files":[
 				"./HtoZZ4mu_ConditionalTemplatesForCombine_ZX_<SYST><DJET>.root",
 				"./HtoZZ4e_ConditionalTemplatesForCombine_ZX_<SYST><DJET>.root",
 				"./HtoZZ2e2mu_ConditionalTemplatesForCombine_ZX_<SYST><DJET>.root"
 				],
-			"tree":"T_2D_ZX",
+			"tree":"T_2D_ZX_Tree",
 			"variables":["ZZMass","KD"],
 			"weight":"weight",
 			"conserveSumOfWeights":true,

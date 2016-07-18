@@ -39,7 +39,7 @@ void addByLowest(unsigned int ev, float val, std::vector<std::pair<unsigned int,
 void addByLowest(float weight, float val, std::vector<std::pair<float, float>>& valArray);
 void addByLowest(float val, std::vector<float>& valArray);
 bool test_bit(int mask, unsigned int iBit);
-float getDbkgkinConstant(float ZZMass);
+float getDbkgkinConstant(int ZZflav, float ZZMass);
 
 // Main Function, runs over all desired iterations
 void makeConditionalTemplates_ICHEP2016mainstream(){
@@ -318,7 +318,7 @@ void makeConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev, i
         else if (folder==1 && abs(ZZFlav)!=pow(11, 4)) continue;
         else if (folder==2 && abs(ZZFlav)!=pow(13*11, 2)) continue;
 
-        varKD = p0plus_VAJHU/(p0plus_VAJHU + bkg_VAMCFM*getDbkgkinConstant(ZZMass));
+        varKD = p0plus_VAJHU/(p0plus_VAJHU + bkg_VAMCFM*getDbkgkinConstant(ZZFlav, ZZMass));
         if (varKD!=varKD) continue;
 
         // weight is product of everything. Only some are non-1.
@@ -587,7 +587,7 @@ void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev
         else if (folder==1 && abs(ZZFlav)!=pow(11, 4)) continue;
         else if (folder==2 && abs(ZZFlav)!=pow(13*11, 2)) continue;
 
-        varKD = p0plus_VAJHU/(p0plus_VAJHU + bkg_VAMCFM*getDbkgkinConstant(ZZMass));
+        varKD = p0plus_VAJHU/(p0plus_VAJHU + bkg_VAMCFM*getDbkgkinConstant(ZZFlav, ZZMass));
         if (varKD!=varKD) continue;
 
         // Apply FRs in SS
@@ -814,14 +814,14 @@ void collectConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev
   }
   for (unsigned int izx=1; izx<=2; izx++){
     D_temp_2D.push_back(
-      (TH2F*)D_temp_2D.at(nTemplates-1)->Clone(Form("%s_%s", D_temp_2D.at(nTemplates-1)->GetName(), (izx==1 ? "_ProdUp" : "_ProdDn")))
+      (TH2F*)D_temp_2D.at(nTemplates-1)->Clone(Form("%s%s", D_temp_2D.at(nTemplates-1)->GetName(), (izx==1 ? "_ProdUp" : "_ProdDn")))
       );
     // Mirroring from qqBkg
     for (int binx=0; binx<=D_temp_2D.at(nTemplates-1+izx)->GetNbinsX()+1; binx++){
       for (int biny=0; biny<=D_temp_2D.at(nTemplates-1+izx)->GetNbinsY()+1; biny++){
         double bincontent = D_temp_2D.at(nTemplates-1)->GetBinContent(binx, biny);
         double bincontent_qqzz = D_temp_2D.at(nTemplates-2)->GetBinContent(binx, biny);
-        if (izx==0) bincontent = bincontent_qqzz;
+        if (izx==1) bincontent = bincontent_qqzz;
         else bincontent = 2.*bincontent - bincontent_qqzz;
         if (bincontent<=0.) D_temp_2D.at(nTemplates-1+izx)->SetBinContent(binx, biny, 1e-15);
         else D_temp_2D.at(nTemplates-1+izx)->SetBinContent(binx, biny, bincontent);
@@ -1076,15 +1076,30 @@ vector<pair<TH1F*, TH1F*>> getZXFR_SS(){
 
 bool test_bit(int mask, unsigned int iBit){ return (mask >> iBit) & 1; }
 
-void checkDbkgkin(){
-  TChain* tggH = new TChain("T_2D_Sig");
-  TChain* tqqBkg = new TChain("T_2D_qqBkg");
-  tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
-  tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
-  tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
-  tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
-  tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
-  tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
+void checkDbkgkin(int flavor){
+  if (flavor>2) return;
+  TChain* tggH = new TChain("T_2D_Sig_Tree");
+  TChain* tqqBkg = new TChain("T_2D_qqBkg_Tree");
+  if (flavor<=0){
+    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
+    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
+  }
+  if (flavor<0 || flavor==1){
+    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
+    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
+  }
+  if (flavor<0 || flavor==2){
+    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
+    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
+  }
+  int ZZflav=143;
+  if (flavor==0) ZZflav=169;
+  else if (flavor==1) ZZflav=121;
+  else if (flavor==2) ZZflav=143;
+
+  TString coutput = "test";
+  if (flavor>=0) coutput.Append(Form("_%s", user_folder[flavor].Data()));
+  coutput.Append(".root");
 
   float weight, reweight;
   float ZZMass, KD;
@@ -1097,9 +1112,10 @@ void checkDbkgkin(){
   tqqBkg->SetBranchAddress("weight", &weight);
   tqqBkg->SetBranchAddress("reweight", &reweight);
 
+  // 70-3000 in 5 GeV steps
   const int nbins = (3000.-70)/5;
-  vector<float> KDarray_ggH[nbins]; // 100-3000 in 5 GeV steps
-  vector<float> KDarray_qqBkg[nbins]; // 100-3000 in 5 GeV steps
+  vector<float> KDarray_ggH[nbins];
+  vector<float> KDarray_qqBkg[nbins];
   for (int bin=0; bin<nbins; bin++){
     KDarray_ggH[bin].clear();
     KDarray_qqBkg[bin].clear();
@@ -1110,6 +1126,7 @@ void checkDbkgkin(){
     if (ev%10000==0) cout << "Event " << ev << endl;
     int bin = (ZZMass-70.)/5.;
     if (bin>=nbins) continue;
+    if (KD!=0.) KD = 1./((1./KD-1.)/getDbkgkinConstant(ZZflav, ZZMass)+1.);
     float KDinv = 1.-KD;
     addByLowest(KDinv, KDarray_ggH[bin]);
   }
@@ -1120,6 +1137,7 @@ void checkDbkgkin(){
     if (ev%10000==0) cout << "Event " << ev << endl;
     int bin = (ZZMass-70.)/5.;
     if (bin>=nbins) continue;
+    if (KD!=0.) KD = 1./((1./KD-1.)/getDbkgkinConstant(ZZflav, ZZMass)+1.);
     addByLowest(KD, KDarray_qqBkg[bin]);
   }
   cout << "Done qqBkg" << endl;
@@ -1127,7 +1145,7 @@ void checkDbkgkin(){
   delete tggH;
   delete tqqBkg;
 
-  TFile* foutput = new TFile("test.root", "recreate");
+  TFile* foutput = new TFile(coutput, "recreate");
   TH1F* histo = new TH1F("test", "", nbins, 70, 3000);
 
   for (int bin=0; bin<nbins; bin++){
@@ -1163,8 +1181,10 @@ void checkDbkgkin(){
   foutput->Close();
 }
 
-float getDbkgkinConstant(float ZZMass){
-  float par[11]={
+// [0]+[1]*exp(-pow((x-[2])/[3], 2))+[4]*exp(-pow((x-[5])/[6], 2))+[7]*(exp(-pow((x-[8])/[9], 2))*(x<[8])+exp(-pow((x-[8])/[10], 2))*(x>=[8]))+[11]*exp(-pow((x-[12])/[13], 2))
+float getDbkgkinConstant(int ZZflav, float ZZMass){
+  float par[14]={
+    0.775,
     -0.565,
     70.,
     5.90,
@@ -1174,16 +1194,20 @@ float getDbkgkinConstant(float ZZMass){
     -0.33,
     191.04,
     16.05,
-    0.775,
-    187.47
+    187.47,
+    -0.2,
+    1700.,
+    400.
   };
+  if (abs(ZZflav)==121) par[11]=-0.4;
   float kappa =
-    par[9]
-    +par[0]*exp(-pow(((ZZMass-par[1])/par[2]), 2))
-    +par[3]*exp(-pow(((ZZMass-par[4])/par[5]), 2))
-    +par[6]*(
-    exp(-pow(((ZZMass-par[7])/par[8]), 2))*(ZZMass<par[7])
-    + exp(-pow(((ZZMass-par[7])/par[10]), 2))*(ZZMass>=par[7])
+    par[0]
+    +par[1]*exp(-pow(((ZZMass-par[2])/par[3]), 2))
+    +par[4]*exp(-pow(((ZZMass-par[5])/par[6]), 2))
+    +par[7]*(
+    exp(-pow(((ZZMass-par[8])/par[9]), 2))*(ZZMass<par[8])
+    + exp(-pow(((ZZMass-par[8])/par[10]), 2))*(ZZMass>=par[8])
+    +par[11]*exp(-pow(((ZZMass-par[12])/par[13]), 2))
     );
   float constant = kappa/(1.-kappa);
   return constant;

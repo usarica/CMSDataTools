@@ -68,9 +68,9 @@
 		{
 			"name":"T_2D_ZX",
 			"files":[
-				"./HtoZZ4mu_ConditionalTemplatesForCombine_ZX_<SYST><DJET>.root",
-				"./HtoZZ4e_ConditionalTemplatesForCombine_ZX_<SYST><DJET>.root",
-				"./HtoZZ2e2mu_ConditionalTemplatesForCombine_ZX_<SYST><DJET>.root"
+				"./HtoZZ4mu_ConditionalTemplatesForCombine_ZX_Nominal<DJET>.root",
+				"./HtoZZ4e_ConditionalTemplatesForCombine_ZX_Nominal<DJET>.root",
+				"./HtoZZ2e2mu_ConditionalTemplatesForCombine_ZX_Nominal<DJET>.root"
 				],
 			"tree":"T_2D_ZX_Tree",
 			"variables":["ZZMass","KD"],

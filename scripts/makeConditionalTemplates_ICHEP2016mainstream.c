@@ -1081,16 +1081,16 @@ void checkDbkgkin(int flavor){
   TChain* tggH = new TChain("T_2D_Sig_Tree");
   TChain* tqqBkg = new TChain("T_2D_qqBkg_Tree");
   if (flavor<=0){
-    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
-    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
+    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/180716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
+    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/180716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
   }
   if (flavor<0 || flavor==1){
-    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
-    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
+    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/180716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
+    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/180716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
   }
   if (flavor<0 || flavor==2){
-    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
-    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/170716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
+    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/180716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
+    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/180716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
   }
   int ZZflav=143;
   if (flavor==0) ZZflav=169;
@@ -1182,7 +1182,7 @@ void checkDbkgkin(int flavor){
 }
 
 // [0]+[1]*exp(-pow((x-[2])/[3], 2))+[4]*exp(-pow((x-[5])/[6], 2))+[7]*(exp(-pow((x-[8])/[9], 2))*(x<[8])+exp(-pow((x-[8])/[10], 2))*(x>=[8]))+[11]*exp(-pow((x-[12])/[13], 2))
-float getDbkgkinConstant(int ZZflav, float ZZMass){
+float getDbkgkinConstant(int ZZflav, float ZZMass){ // ZZflav==id1*id2*id3*id4
   float par[14]={
     0.775,
     -0.565,
@@ -1195,11 +1195,11 @@ float getDbkgkinConstant(int ZZflav, float ZZMass){
     191.04,
     16.05,
     187.47,
-    -0.2,
+    -0.21,
     1700.,
     400.
   };
-  if (abs(ZZflav)==121) par[11]=-0.4;
+  if (abs(ZZflav)==121*121 || abs(ZZflav)==121*242 || abs(ZZflav)==242*242) par[11]=-0.42; // 4e
   float kappa =
     par[0]
     +par[1]*exp(-pow(((ZZMass-par[2])/par[3]), 2))
@@ -1207,9 +1207,334 @@ float getDbkgkinConstant(int ZZflav, float ZZMass){
     +par[7]*(
     exp(-pow(((ZZMass-par[8])/par[9]), 2))*(ZZMass<par[8])
     + exp(-pow(((ZZMass-par[8])/par[10]), 2))*(ZZMass>=par[8])
-    +par[11]*exp(-pow(((ZZMass-par[12])/par[13]), 2))
-    );
+    )
+    + par[11]*exp(-pow(((ZZMass-par[12])/par[13]), 2));
+
   float constant = kappa/(1.-kappa);
   return constant;
+}
+
+
+void checkDVBF2jets(int erg_tev){
+  const float ZZMass_cut[2]={ 70., 5000. };
+  const float xwidth = 10;
+  const int nbins = (ZZMass_cut[1]-ZZMass_cut[0])/xwidth;
+
+  TString erg_dir = Form("LHC_%iTeV/", erg_tev);
+  TString strdate = todaysdate();
+  if (fixedDate!="") strdate=fixedDate;
+  cout << "Today's date: " << strdate << endl;
+
+  TString INPUT_NAME = user_treefile;
+  TString OUTPUT_NAME = "testVBF2jets.root";
+
+  TString cinput_common = user_gg2VV_location + "/";
+  TString coutput_common = "./";
+
+  float GenHMass, ZZMass, pvbf_VAJHU_highestPTJets, phjj_VAJHU_highestPTJets;
+
+  TString coutput = coutput_common + OUTPUT_NAME;
+  TFile* foutput = new TFile(coutput, "recreate");
+  TH1F* histo = new TH1F("test", "", nbins, ZZMass_cut[0], ZZMass_cut[1]);
+
+  // Get list of samples
+  const unsigned int nProcesses = 2;
+  const TString strProcess[nProcesses][2]={
+    { "Samples_gg_Sig_POWHEG.txt", "gg_Sig" },
+    { "Samples_VBF_Sig_POWHEG.txt", "VBF_Sig" }
+  };
+  vector<pair<string, double>> fileNameList[nProcesses];
+  for (unsigned int is=0; is<nProcesses; is++) fileNameList[is] = getFileList(string(strProcess[is][0].Data()));
+  vector<TFile*> fileList[nProcesses];
+  vector<pair<TTree*, TH1F*>> treeList[nProcesses];
+  for (unsigned int is=0; is<nProcesses; is++){
+    for (unsigned int ifile=0; ifile<fileNameList[is].size(); ifile++){
+      string cinput = fileNameList[is].at(ifile).first;
+      cinput = user_gg2VV_location + cinput + "/" + user_treefile;
+
+      cout << "Opening file " << cinput << " with mass "  << fileNameList[is].at(ifile).second << endl;
+
+      TFile* finput = TFile::Open(cinput.c_str(), "read"); finput->cd();
+      TTree* theTree = (TTree*)finput->Get(user_treename);
+      TH1F* theCounters = (TH1F*)finput->Get(user_countersname);
+
+      fileList[is].push_back(finput);
+      foutput->cd();
+
+      theTree->SetBranchAddress("GenHMass", &GenHMass);
+      theTree->SetBranchAddress("ZZMass", &ZZMass);
+      theTree->SetBranchAddress("pvbf_VAJHU_highestPTJets", &pvbf_VAJHU_highestPTJets);
+      theTree->SetBranchAddress("phjj_VAJHU_highestPTJets", &phjj_VAJHU_highestPTJets);
+
+      treeList[is].push_back(pair<TTree*, TH1F*>(theTree, theCounters));
+    }
+  }
+
+  foutput->cd();
+  vector<float> KDarray_HJJ[nbins];
+  vector<float> KDarray_VBF[nbins];
+  for (int bin=0; bin<nbins; bin++){
+    KDarray_HJJ[bin].clear();
+    KDarray_VBF[bin].clear();
+  }
+  for (unsigned int is=0; is<nProcesses; is++){
+    cout << "Process " << is << " under scrutiny" << endl;
+    for (unsigned int it=0; it<treeList[is].size(); it++){
+      double mass = fileNameList[is].at(it).second;
+      TTree* theTree = treeList[is].at(it).first;
+      int nEntries = theTree->GetEntries();
+
+      cout << "\tSample[" << it << "]=" << fileNameList[is].at(it).first << " under scrutiny. #Events = " << nEntries << endl;
+
+      for (int ev=0; ev<nEntries; ev++){
+        theTree->GetEntry(ev);
+        if (ev%10000==0) cout << "Event " << ev << "..." << endl;
+
+        // Fix for JHUGen v6 vegas bug in low mass samples
+        if (strProcess[is][0].Contains("POWHEG") && mass>0 && mass<300 && GenHMass>mass+5.){
+          //cout << "Process " << is << " sample " << it << " has mH = " << mass << " and mH* = " << GenHMass << ">mH+5 GeV. Ignoring event..." << endl;
+          continue;
+        }
+
+        if (pvbf_VAJHU_highestPTJets<0. || phjj_VAJHU_highestPTJets<0.) continue;
+
+        float varKD = pvbf_VAJHU_highestPTJets/(pvbf_VAJHU_highestPTJets + phjj_VAJHU_highestPTJets);
+        if (varKD!=varKD) continue;
+
+        int bin = (ZZMass-ZZMass_cut[0])/xwidth;
+        if (bin>=nbins) continue;
+
+        if (strProcess[is][1]=="VBF_Sig"){
+          float KDinv = 1.-varKD;
+          addByLowest(KDinv, KDarray_VBF[bin]);
+        }
+        else addByLowest(varKD, KDarray_HJJ[bin]);
+      }
+    }
+  }
+
+  for (int bin=0; bin<nbins; bin++){
+    cout << "Checking bin " << bin << endl;
+
+    const float KDinc=0.001;
+    float closestApproach=0;
+    float diffFrac=2;
+
+    cout << "HJJ size = " << KDarray_HJJ[bin].size() << endl;
+    cout << "VBF size = " << KDarray_VBF[bin].size() << endl;
+
+    for (float iKD=KDinc; iKD<1.; iKD+=KDinc){
+      float gKD = 1.-iKD;
+      int index_VBF=0;
+      while (index_VBF<(int)KDarray_VBF[bin].size() && KDarray_VBF[bin].at(index_VBF)<gKD) index_VBF++;
+
+      int index_HJJ=0;
+      while (index_HJJ<(int)KDarray_HJJ[bin].size() && KDarray_HJJ[bin].at(index_HJJ)<iKD) index_HJJ++;
+
+      double f_HJJ = ((double)index_HJJ)/((double)KDarray_HJJ[bin].size());
+      double f_VBF = ((double)index_VBF)/((double)KDarray_VBF[bin].size());
+      if (fabs(f_HJJ-f_VBF)<diffFrac){
+        diffFrac = fabs(f_HJJ-f_VBF);
+        closestApproach = iKD;
+      }
+    }
+
+    histo->SetBinContent(bin+1, closestApproach);
+  }
+
+  foutput->WriteTObject(histo);
+
+  for (unsigned int is=0; is<nProcesses; is++){
+    for (unsigned int ifile=0; ifile<fileList[is].size(); ifile++){
+      if (fileList[is].at(ifile)!=0 && fileList[is].at(ifile)->IsOpen()) fileList[is].at(ifile)->Close();
+    }
+  }
+
+  foutput->Close();
+}
+
+float getDVBF2jetsConstant(float ZZMass){
+  float par[9]={
+    1.876,
+    -55.488,
+    403.32,
+    0.3906,
+    80.8,
+    27.7,
+    -0.06,
+    54.97,
+    309.96
+  };
+  float kappa = 
+    pow(1.-atan((ZZMass-par[1])/par[2])*2./TMath::Pi(), par[0])
+    + par[3]*exp(-pow((ZZMass-par[4])/par[5], 2))
+    + par[6]*exp(-pow((ZZMass-par[7])/par[8], 2));
+  float constant = kappa/(1.-kappa);
+  return constant;
+}
+
+void checkDVBF1jet(int erg_tev){
+  const float ZZMass_cut[2]={ 70., 5000. };
+  const float xwidth = 10;
+  const int nbins = (ZZMass_cut[1]-ZZMass_cut[0])/xwidth;
+
+  TString erg_dir = Form("LHC_%iTeV/", erg_tev);
+  TString strdate = todaysdate();
+  if (fixedDate!="") strdate=fixedDate;
+  cout << "Today's date: " << strdate << endl;
+
+  TString INPUT_NAME = user_treefile;
+  TString OUTPUT_NAME = "testVBF1jet.root";
+
+  TString cinput_common = user_gg2VV_location + "/";
+  TString coutput_common = "./";
+
+  float GenHMass, ZZMass, pvbf_VAJHU_highestPTJets, phj_VAJHU, pAux_vbf_VAJHU;
+
+  TString coutput = coutput_common + OUTPUT_NAME;
+  TFile* foutput = new TFile(coutput, "recreate");
+  TH1F* histo = new TH1F("test", "", nbins, ZZMass_cut[0], ZZMass_cut[1]);
+
+  // Get list of samples
+  const unsigned int nProcesses = 2;
+  const TString strProcess[nProcesses][2]={
+    { "Samples_gg_Sig_POWHEG.txt", "gg_Sig" },
+    { "Samples_VBF_Sig_POWHEG.txt", "VBF_Sig" }
+  };
+  vector<pair<string, double>> fileNameList[nProcesses];
+  for (unsigned int is=0; is<nProcesses; is++) fileNameList[is] = getFileList(string(strProcess[is][0].Data()));
+  vector<TFile*> fileList[nProcesses];
+  vector<pair<TTree*, TH1F*>> treeList[nProcesses];
+  for (unsigned int is=0; is<nProcesses; is++){
+    for (unsigned int ifile=0; ifile<fileNameList[is].size(); ifile++){
+      string cinput = fileNameList[is].at(ifile).first;
+      cinput = user_gg2VV_location + cinput + "/" + user_treefile;
+
+      cout << "Opening file " << cinput << " with mass "  << fileNameList[is].at(ifile).second << endl;
+
+      TFile* finput = TFile::Open(cinput.c_str(), "read"); finput->cd();
+      TTree* theTree = (TTree*)finput->Get(user_treename);
+      TH1F* theCounters = (TH1F*)finput->Get(user_countersname);
+
+      fileList[is].push_back(finput);
+      foutput->cd();
+
+      theTree->SetBranchAddress("GenHMass", &GenHMass);
+      theTree->SetBranchAddress("ZZMass", &ZZMass);
+      theTree->SetBranchAddress("pvbf_VAJHU_highestPTJets", &pvbf_VAJHU_highestPTJets);
+      theTree->SetBranchAddress("pAux_vbf_VAJHU", &pAux_vbf_VAJHU);
+      theTree->SetBranchAddress("phj_VAJHU", &phj_VAJHU);
+
+      treeList[is].push_back(pair<TTree*, TH1F*>(theTree, theCounters));
+    }
+  }
+
+  foutput->cd();
+  vector<float> KDarray_HJJ[nbins];
+  vector<float> KDarray_VBF[nbins];
+  for (int bin=0; bin<nbins; bin++){
+    KDarray_HJJ[bin].clear();
+    KDarray_VBF[bin].clear();
+  }
+  for (unsigned int is=0; is<nProcesses; is++){
+    cout << "Process " << is << " under scrutiny" << endl;
+    for (unsigned int it=0; it<treeList[is].size(); it++){
+      double mass = fileNameList[is].at(it).second;
+      TTree* theTree = treeList[is].at(it).first;
+      int nEntries = theTree->GetEntries();
+
+      cout << "\tSample[" << it << "]=" << fileNameList[is].at(it).first << " under scrutiny. #Events = " << nEntries << endl;
+
+      for (int ev=0; ev<nEntries; ev++){
+        theTree->GetEntry(ev);
+        if (ev%10000==0) cout << "Event " << ev << "..." << endl;
+
+        // Fix for JHUGen v6 vegas bug in low mass samples
+        if (strProcess[is][0].Contains("POWHEG") && mass>0 && mass<300 && GenHMass>mass+5.){
+          //cout << "Process " << is << " sample " << it << " has mH = " << mass << " and mH* = " << GenHMass << ">mH+5 GeV. Ignoring event..." << endl;
+          continue;
+        }
+        if (pvbf_VAJHU_highestPTJets<0. || phj_VAJHU<0.) continue;
+
+        float varKD = pvbf_VAJHU_highestPTJets*pAux_vbf_VAJHU/(pvbf_VAJHU_highestPTJets*pAux_vbf_VAJHU + phj_VAJHU);
+        if (varKD!=varKD) continue;
+
+        int bin = (ZZMass-ZZMass_cut[0])/xwidth;
+        if (bin>=nbins) continue;
+
+        if (strProcess[is][1]=="VBF_Sig"){
+          float KDinv = 1.-varKD;
+          addByLowest(KDinv, KDarray_VBF[bin]);
+        }
+        else addByLowest(varKD, KDarray_HJJ[bin]);
+      }
+    }
+  }
+
+  for (int bin=0; bin<nbins; bin++){
+    cout << "Checking bin " << bin << endl;
+
+    const float KDinc=0.001;
+    float closestApproach=0;
+    float diffFrac=2;
+
+    cout << "HJJ size = " << KDarray_HJJ[bin].size() << endl;
+    cout << "VBF size = " << KDarray_VBF[bin].size() << endl;
+
+    for (float iKD=KDinc; iKD<1.; iKD+=KDinc){
+      float gKD = 1.-iKD;
+      int index_VBF=0;
+      while (index_VBF<(int)KDarray_VBF[bin].size() && KDarray_VBF[bin].at(index_VBF)<gKD) index_VBF++;
+
+      int index_HJJ=0;
+      while (index_HJJ<(int)KDarray_HJJ[bin].size() && KDarray_HJJ[bin].at(index_HJJ)<iKD) index_HJJ++;
+
+      double f_HJJ = ((double)index_HJJ)/((double)KDarray_HJJ[bin].size());
+      double f_VBF = ((double)index_VBF)/((double)KDarray_VBF[bin].size());
+      if (fabs(f_HJJ-f_VBF)<diffFrac){
+        diffFrac = fabs(f_HJJ-f_VBF);
+        closestApproach = iKD;
+      }
+    }
+
+    histo->SetBinContent(bin+1, closestApproach);
+  }
+
+  foutput->WriteTObject(histo);
+
+  for (unsigned int is=0; is<nProcesses; is++){
+    for (unsigned int ifile=0; ifile<fileList[is].size(); ifile++){
+      if (fileList[is].at(ifile)!=0 && fileList[is].at(ifile)->IsOpen()) fileList[is].at(ifile)->Close();
+    }
+  }
+
+  foutput->Close();
+}
+
+float getDVBF1jetConstant(float ZZMass){
+  float par[8]={
+    0.395,
+    -0.07,
+    85.,
+    30.,
+    -0.691,
+    -5659.47,
+    5734.37,
+    0.75
+  };
+  float kappa =
+    par[0]
+    + par[1]*exp(-pow((ZZMass-par[2])/par[3], 2))
+    + par[4]*pow(log((ZZMass-par[5])/par[6]), par[7])*(ZZMass>=(par[5]+par[6]));
+  float constant = kappa/(1.-kappa);
+  return constant;
+}
+
+float getDbkgConstant(int ZZflav, float ZZMass){
+  float cbkgkin = getDbkgkinConstant(ZZflav, ZZMass);
+  if (abs(ZZflav==121*121) || abs(ZZflav==121*242) || abs(ZZflav==242*242)) return cbkgkin*35.6; // 4e
+  else if (abs(ZZflav==169*169)) return cbkgkin*22.8; // 4mu
+  else if (abs(ZZflav==121*169) || abs(ZZflav==242*169)) return cbkgkin*41.8; // 2e2mu
+  else return 1.;
 }
 

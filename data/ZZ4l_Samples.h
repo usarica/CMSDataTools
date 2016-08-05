@@ -1,14 +1,10 @@
-#include <iostream>
+#ifndef ZZ4L_SAMPLES_H
+#define ZZ4L_SAMPLES_H
+
+
 #include <string>
 #include "TMath.h"
-#include "TH1D.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TFile.h"
-#include "TTree.h"
-#include "TChain.h"
-#include "TDirectory.h"
-#include "TCanvas.h"
+#include "TString.h"
 
 const float PI_VAL = TMath::Pi();
 
@@ -87,7 +83,8 @@ const float luminosity[1]={ 10 };
 const double MCFM_widthrescale = 0.9771908764; // Signal g1=sqrt(MCFM_widthrescale)
 
 //Directories
-const TString user_gg2VV_location="/scratch0/hep/usarical/CJLST/LHC_13TeV/4l/160714/";
+//const TString user_gg2VV_location="/scratch0/hep/usarical/CJLST/LHC_13TeV/4l/160714/";
+const TString user_gg2VV_location="/scratch0/hep/usarical/CJLST/LHC_13TeV/4l/160720/";
 const TString user_dir="/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/";
 const TString user_TemplateswithTrees_dir="/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/Templates/";
 
@@ -107,4 +104,6 @@ const TString user_TLE_treename = "ZZTreetle/candTree";
 
 const TString user_TLE_CRtreename = "CRZLLTreetle/candTree";
 
+
+#endif
 

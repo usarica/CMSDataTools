@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <utility>
+#include "TFile.h"
 #include "TChain.h"
 #include "TString.h"
 #include "TSpline.h"
@@ -14,11 +15,15 @@
 #include "TGraph.h"
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
+#include "TCanvas.h"
+#include "TLegend.h"
+#include "TStyle.h"
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TH3F.h"
 #include "TF1.h"
 #include "../data/ZZ4l_Samples.h"
+#include "../include/external_cConstants.h"
 #include <ZZMatrixElement/MELA/interface/Mela.h>
 
 using namespace std;
@@ -42,18 +47,26 @@ void addByLowest(float weight, float val, std::vector<std::pair<float, float>>& 
 void addByLowest(float val, std::vector<float>& valArray);
 bool test_bit(int mask, unsigned int iBit);
 void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX=0, double omitbelow=0., int nIter_=-1, double threshold_=-1);
-void regularizeHistogram(TH2F* histo);
-void regularizeHistogram(TH3F* histo);
+void regularizeHistogram(TH2F* histo, int nIter_, double threshold_);
+void regularizeHistogram(TH3F* histo, int nIter_, double threshold_);
 void conditionalizeHistogram(TH2F* histo, unsigned int axis=0);
 void conditionalizeHistogram(TH3F* histo, unsigned int axis=0);
 void wipeOverUnderFlows(TH1F* hwipe);
 void wipeOverUnderFlows(TH2F* hwipe);
 void wipeOverUnderFlows(TH3F* hwipe);
-float getDbkgkinConstant(int ZZflav, float ZZMass);
+
 
 // Main Function, runs over all desired iterations
 void makeConditionalTemplates_ICHEP2016mainstream(){
-  for (int CoM=13; CoM<=13; CoM++){ for (int channel=0; channel<3; channel++){ for (int syst=0; syst<=0; syst++) makeConditionalTemplates_ICHEP2016mainstream_one(channel, CoM, syst); } }
+  for (int CoM=13; CoM<=13; CoM++){
+    for (int channel=0; channel<3; channel++){
+      for (int syst=0; syst<=0; syst++){
+        makeConditionalTemplates_ICHEP2016mainstream_one(channel, CoM, syst);
+        makeConditionalTemplates_ICHEP2016mainstream_ZX_one(channel, CoM, syst);
+        collectConditionalTemplates_ICHEP2016mainstream_one(channel, CoM, syst, true);
+      }
+    }
+  }
 }
 
 // Function to build one template
@@ -656,11 +669,11 @@ void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev
   for (unsigned int ifr=0; ifr<hFR_ZX_SS.size(); ifr++){
     cout << "Deleting hFR_ZX_SS[" << ifr << "]" << endl;
     gROOT->cd();
-    //TH1F* hfirst = hFR_ZX_SS.at(ifr).first;
-    //if (hfirst!=0) delete hfirst;
+    TH1F* hfirst = hFR_ZX_SS.at(ifr).first;
+    if (hfirst!=0) delete hfirst;
     cout << "Deleted hFR_ZX_SS[" << ifr << "] first" << endl;
-    //TH1F* hsecond = hFR_ZX_SS.at(ifr).second;
-    //if (hsecond!=0) delete hsecond;
+    TH1F* hsecond = hFR_ZX_SS.at(ifr).second;
+    if (hsecond!=0) delete hsecond;
     cout << "Deleted hFR_ZX_SS[" << ifr << "] second" << endl;
   }
 
@@ -792,10 +805,12 @@ void collectConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev
       }
     }
 
-    if (t==nTemplates-1){
+    if (t>=nTemplates-2){
+      int bin_int_start = D_temp_2D.at(t)->GetXaxis()->FindBin(250.);
+      if (t==nTemplates-2) bin_int_start = D_temp_2D.at(t)->GetXaxis()->FindBin(600.);
       for (int biny=0; biny<=D_temp_2D.at(t)->GetNbinsY()+1; biny++){
-        double integral = D_temp_2D.at(t)->Integral(0, D_temp_2D.at(t)->GetNbinsX()+1, biny, biny);
-        for (int binx=0; binx<=D_temp_2D.at(t)->GetNbinsX()+1; binx++){
+        double integral = D_temp_2D.at(t)->Integral(bin_int_start, D_temp_2D.at(t)->GetNbinsX()+1, biny, biny);
+        for (int binx=bin_int_start; binx<=D_temp_2D.at(t)->GetNbinsX()+1; binx++){
           D_temp_2D.at(t)->SetBinContent(binx, biny, integral);
           D_temp_2D.at(t)->SetBinError(binx, biny, integral);
         }
@@ -805,7 +820,77 @@ void collectConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev
     // Conditionalize
     wipeOverUnderFlows(D_temp_2D.at(t));
     conditionalizeHistogram(D_temp_2D.at(t), 0);
+    //if (t!=nTemplates-1){
+      cout << "Regularizing template " << t << endl;
+      tout << "Regularizing template " << t << endl;
 
+      const int nbinsy = D_temp_2D.at(t)->GetNbinsY();
+      foutput->cd();
+      TDirectory* xcheckdir = foutput->mkdir(Form("xcheck_%s", D_temp_2D.at(t)->GetName()));
+      TCanvas* cSlice[nbinsy];
+      TH1F* hSlice[nbinsy];
+      TH1F* hSlice_new[nbinsy];
+
+      // Plot pre-smoothing slices
+      xcheckdir->cd();
+      for (int ish=0; ish<nbinsy; ish++){
+        hSlice[ish] = new TH1F(Form("h%s_Slice%i", D_temp_2D.at(t)->GetName(), ish), "", nbinsx, kDXarray[0], kDXarray[nbinsx]);
+        for (int binx=1; binx<=D_temp_2D.at(t)->GetNbinsX(); binx++) hSlice[ish]->SetBinContent(binx, D_temp_2D.at(t)->GetBinContent(binx, ish));
+        hSlice[ish]->SetLineColor(kRed);
+        hSlice[ish]->SetLineWidth(2);
+        hSlice[ish]->SetMarkerColor(kRed);
+
+        cSlice[ish] = new TCanvas(Form("c_%s_Slice%i", D_temp_2D.at(t)->GetName(), ish), "", 8, 30, 800, 800);
+        cSlice[ish]->cd();
+        gStyle->SetOptStat(0);
+        cSlice[ish]->SetFillColor(0);
+        cSlice[ish]->SetBorderMode(0);
+        cSlice[ish]->SetBorderSize(2);
+        cSlice[ish]->SetTickx(1);
+        cSlice[ish]->SetTicky(1);
+        cSlice[ish]->SetLeftMargin(0.17);
+        cSlice[ish]->SetRightMargin(0.05);
+        cSlice[ish]->SetTopMargin(0.07);
+        cSlice[ish]->SetBottomMargin(0.13);
+        cSlice[ish]->SetFrameFillStyle(0);
+        cSlice[ish]->SetFrameBorderMode(0);
+        cSlice[ish]->SetFrameFillStyle(0);
+        cSlice[ish]->SetFrameBorderMode(0);
+
+        cSlice[ish]->cd();
+        hSlice[ish]->Draw("hist");
+      }
+
+      foutput->cd();
+      regularizeHistogram(D_temp_2D.at(t), 50, 0.01);
+      conditionalizeHistogram(D_temp_2D.at(t), 0);
+
+      // Plot post-smoothing slices
+      xcheckdir->cd();
+      for (int ish=0; ish<nbinsy; ish++){
+        hSlice_new[ish] = new TH1F(Form("h%s_Slice%i_smoothened", D_temp_2D.at(t)->GetName(), ish), "", nbinsx, kDXarray[0], kDXarray[nbinsx]);
+        for (int binx=1; binx<=D_temp_2D.at(t)->GetNbinsX(); binx++) hSlice_new[ish]->SetBinContent(binx, D_temp_2D.at(t)->GetBinContent(binx, ish));
+        hSlice_new[ish]->SetLineColor(kBlue);
+        hSlice_new[ish]->SetLineWidth(2);
+        hSlice_new[ish]->SetMarkerColor(kBlue);
+
+        cSlice[ish]->cd();
+        hSlice_new[ish]->Draw("histsame");
+        cSlice[ish]->RedrawAxis();
+        cSlice[ish]->Modified();
+        cSlice[ish]->Update();
+        xcheckdir->WriteTObject(cSlice[ish]);
+      }
+
+      for (int ish=0; ish<nbinsy; ish++){
+        cSlice[ish]->Close();
+        delete hSlice_new[ish];
+        delete hSlice[ish];
+      }
+      xcheckdir->Close();
+      foutput->cd();
+
+    //}
     foutput->WriteTObject(D_temp_2D.at(t));
   }
   for (unsigned int izx=1; izx<=2; izx++){
@@ -1030,6 +1115,7 @@ void convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F* histo){
 
 // Pairs are (e-EB, e-EE), (mu-EB, mu-EE)
 vector<pair<TH1F*, TH1F*>> getZXFR_SS(){
+  /*
   TString tgname[2][2]={
     { "CorrFR_TG_Lep3_pT_all_EB_afterMET_wzremoved_ALL_80XB", "CorrFR_TG_Lep3_pT_all_EE_afterMET_wzremoved_ALL_80XB" },
     { "TG_Lep3_pT_all_EB_afterMET_wzremoved_ALL_80XB", "TG_Lep3_pT_all_EE_afterMET_wzremoved_ALL_80XB" }
@@ -1063,6 +1149,23 @@ vector<pair<TH1F*, TH1F*>> getZXFR_SS(){
     result.push_back(pair<TH1F*, TH1F*>(htmp[0], htmp[1]));
   }
   for (int f=0; f<2; f++){ if (finput[f]!=0 && finput[f]->IsOpen()) finput[f]->Close(); }
+  */
+  TString hname[2][2]={
+    { "FR_SS_electron_EB", "FR_SS_electron_EE" },
+    { "FR_SS_muon_EB", "FR_SS_muon_EE" }
+  };
+  TFile* finput;
+  finput = TFile::Open("../data/FakeRate_SS_2016B.root", "read");
+  vector<pair<TH1F*, TH1F*>> result;
+  for (int f=0; f<2; f++){
+    if (!(finput!=0 && finput->IsOpen())){ cerr << "getZXFR_SS: File is not open!" << endl; return result; }
+    else cout << "getZXFR_SS: File opened" << endl;
+    TH1F* htmp[2];
+    gROOT->cd();
+    for (int t=0; t<2; t++) htmp[t] = (TH1F*)finput->Get(hname[f][t]);
+    result.push_back(pair<TH1F*, TH1F*>((TH1F*)htmp[0]->Clone(Form("%s_copy", hname[f][0].Data())), (TH1F*)htmp[1]->Clone(Form("%s_copy", hname[f][1].Data()))));
+  }
+  if (finput!=0 && finput->IsOpen()) finput->Close();
   return result;
 }
 
@@ -1450,86 +1553,6 @@ void checkDVBF1jet(int erg_tev){
   foutput->Close();
 }
 
-float getDVBF2jetsConstant(float ZZMass){
-  float par[9]={
-    1.876,
-    -55.488,
-    403.32,
-    0.3906,
-    80.8,
-    27.7,
-    -0.06,
-    54.97,
-    309.96
-  };
-  float kappa =
-    pow(1.-atan((ZZMass-par[1])/par[2])*2./TMath::Pi(), par[0])
-    + par[3]*exp(-pow((ZZMass-par[4])/par[5], 2))
-    + par[6]*exp(-pow((ZZMass-par[7])/par[8], 2));
-  float constant = kappa/(1.-kappa);
-  return constant;
-}
-
-float getDVBF1jetConstant(float ZZMass){
-  float par[8]={
-    0.395,
-    -0.07,
-    85.,
-    30.,
-    -0.691,
-    -5659.47,
-    5734.37,
-    0.75
-  };
-  float kappa =
-    par[0]
-    + par[1]*exp(-pow((ZZMass-par[2])/par[3], 2))
-    + par[4]*pow(log((ZZMass-par[5])/par[6]), par[7])*(ZZMass>=(par[5]+par[6]));
-  float constant = kappa/(1.-kappa);
-  return constant;
-}
-
-// [0]+[1]*exp(-pow((x-[2])/[3], 2))+[4]*exp(-pow((x-[5])/[6], 2))+[7]*(exp(-pow((x-[8])/[9], 2))*(x<[8])+exp(-pow((x-[8])/[10], 2))*(x>=[8]))+[11]*exp(-pow((x-[12])/[13], 2))
-float getDbkgkinConstant(int ZZflav, float ZZMass){ // ZZflav==id1*id2*id3*id4
-  float par[14]={
-    0.775,
-    -0.565,
-    70.,
-    5.90,
-    -0.235,
-    130.1,
-    13.25,
-    -0.33,
-    191.04,
-    16.05,
-    187.47,
-    -0.21,
-    1700.,
-    400.
-  };
-  if (abs(ZZflav)==121*121 || abs(ZZflav)==121*242 || abs(ZZflav)==242*242) par[11]=-0.42; // 4e
-  float kappa =
-    par[0]
-    +par[1]*exp(-pow(((ZZMass-par[2])/par[3]), 2))
-    +par[4]*exp(-pow(((ZZMass-par[5])/par[6]), 2))
-    +par[7]*(
-    exp(-pow(((ZZMass-par[8])/par[9]), 2))*(ZZMass<par[8])
-    + exp(-pow(((ZZMass-par[8])/par[10]), 2))*(ZZMass>=par[8])
-    )
-    + par[11]*exp(-pow(((ZZMass-par[12])/par[13]), 2));
-
-  float constant = kappa/(1.-kappa);
-  return constant;
-}
-
-float getDbkgConstant(int ZZflav, float ZZMass){
-  float cbkgkin = getDbkgkinConstant(ZZflav, ZZMass);
-  if (abs(ZZflav==121*121) || abs(ZZflav==121*242) || abs(ZZflav==242*242)) return cbkgkin*35.6; // 4e
-  else if (abs(ZZflav==169*169)) return cbkgkin*22.8; // 4mu
-  else if (abs(ZZflav==121*169) || abs(ZZflav==242*169)) return cbkgkin*41.8; // 2e2mu
-  else return 1.;
-}
-
 void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX, double omitbelow, int nIter_, double threshold_){
   unsigned int nbins_slice = tgSlice->GetN();
   double* xy_slice[2]={
@@ -1593,7 +1616,7 @@ void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX, double omitbe
 
       double center = xy_mod[0][binIt-1];
       double val = spline->Eval(center);
-      if (fabs(xy_mod[1][binIt-1]-val)>threshold*val) xy_mod[1][binIt-1]=val;
+      if (fabs(xy_mod[1][binIt-1]-val)>threshold*val && val>0.) xy_mod[1][binIt-1]=val;
 
       delete spline;
       delete interpolator;
@@ -1607,11 +1630,12 @@ void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX, double omitbe
   for (unsigned int ix=0; ix<2; ix++) delete[] xy_mod[ix];
 }
 
-void regularizeHistogram(TH2F* histo){
+void regularizeHistogram(TH2F* histo, int nIter_, double threshold_){
   const int nbinsx = histo->GetNbinsX();
   const int nbinsy = histo->GetNbinsY();
 
   for (int iy=1; iy<=nbinsy; iy++){
+    cout << "regularizeHistogram::Bin " << iy << " being regularized..." << endl;
     double xy[2][nbinsx];
     for (int ix=1; ix<=nbinsx; ix++){
       xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
@@ -1620,19 +1644,20 @@ void regularizeHistogram(TH2F* histo){
 
     TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
     tg->SetName("tg_tmp");
-    regularizeSlice(tg, 0, 0, -1, -1);
+    regularizeSlice(tg, 0, 0, nIter_, threshold_);
     for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, iy, tg->Eval(xy[0][ix-1]));
   }
   conditionalizeHistogram(histo, 0);
 }
 
-void regularizeHistogram(TH3F* histo){
+void regularizeHistogram(TH3F* histo, int nIter_, double threshold_){
   const int nbinsx = histo->GetNbinsX();
   const int nbinsy = histo->GetNbinsY();
   const int nbinsz = histo->GetNbinsZ();
 
   for (int iy=1; iy<=nbinsy; iy++){
     for (int iz=1; iz<=nbinsz; iz++){
+      cout << "regularizeHistogram::Bin " << iy << ", " << iz << " being regularized..." << endl;
       double xy[2][nbinsx];
       for (int ix=1; ix<=nbinsx; ix++){
         xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
@@ -1641,7 +1666,7 @@ void regularizeHistogram(TH3F* histo){
 
       TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
       tg->SetName("tg_tmp");
-      regularizeSlice(tg, 0, 0, -1, -1);
+      regularizeSlice(tg, 0, 0, nIter_, threshold_);
       for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, iy, iz, tg->Eval(xy[0][ix-1]));
     }
   }

@@ -15,12 +15,15 @@
 #include "TH3F.h"
 #include "TF1.h"
 #include "../data/ZZ4l_Samples.h"
+#include "../include/external_cConstants.h"
 #include <ZZMatrixElement/MELA/interface/Mela.h>
 
 using namespace std;
 
 // Constants to affect the template code
-const TString fixedDate="290616";
+const TString fixedDate="";
+const bool doFixedBin=true;
+const float fixedXStepSize=1.;
 
 // Initializers
 void makeConditionalTemplates_ggZZ_one(int channel, int erg_tev, int Systematics);
@@ -42,7 +45,8 @@ void makeConditionalTemplates_ggZZ_one(int folder, int erg_tev, int Systematics)
   float wPOLE=4.07e-3;
   int EnergyIndex=(erg_tev==13 ? 0 : 0);
 
-  const float ZZMass_cut[2]={ 70., 3010. };
+  //const float ZZMass_cut[2]={ 70., 3010. };
+  const float ZZMass_cut[2]={ 100., 3000. };
   const int nbinsy=30;
   float kDYarray[nbinsy+1];
   const float kDY_bounds[2]={ 0, 1 };
@@ -152,8 +156,8 @@ void makeConditionalTemplates_ggZZ_one(int folder, int erg_tev, int Systematics)
     std::vector<std::pair<unsigned int, float>> massArray;
     for (unsigned int igch=0; igch<ngenchannels; igch++){
       TString cinput = cinput_common;
-      if (t<3) cinput = cinput + sample_suffix_MCFM[t] + genchannel[igch] + "/" + INPUT_NAME;
-      else cinput = cinput + sample_suffix_MCFM[2] + genchannel[igch] + "/" + INPUT_NAME;
+      if (t<3) cinput = cinput + sample_prefix_MCFM[t] + genchannel[igch] + sample_suffix_MCFM[t] + "/" + INPUT_NAME;
+      else cinput = cinput + sample_prefix_MCFM[2] + genchannel[igch] + sample_suffix_MCFM[2] + "/" + INPUT_NAME;
       cout << "Opening file " << cinput << endl;
       tout << "Opening file " << cinput << endl;
       fin[igch] = TFile::Open(cinput, "read");
@@ -178,7 +182,7 @@ void makeConditionalTemplates_ggZZ_one(int folder, int erg_tev, int Systematics)
         theTree->SetBranchAddress("Z2Flav", &Z2Flav);
         theTree->SetBranchAddress("overallEventWeight", &MC_weight_norm);
         theTree->SetBranchAddress("xsec", &MC_weight_xsec);
-        theTree->SetBranchAddress("KFactorggZZ", &MC_weight_Kfactor);
+        theTree->SetBranchAddress("KFactor_QCD_ggZZ_Nominal", &MC_weight_Kfactor);
         theTree->SetBranchAddress("p0plus_VAJHU", &p0plus_VAJHU);
         theTree->SetBranchAddress("bkg_VAMCFM", &bkg_VAMCFM);
         tree.push_back(std::pair<TTree*, TH1F*>(theTree, theCounters));
@@ -215,7 +219,7 @@ void makeConditionalTemplates_ggZZ_one(int folder, int erg_tev, int Systematics)
         else if (folder==1 && abs(ZZFlav)!=pow(11, 4)) continue;
         else if (folder==2 && abs(ZZFlav)!=pow(13*11, 2)) continue;
 
-        varKD = p0plus_VAJHU/(p0plus_VAJHU + bkg_VAMCFM/(1./0.45-1.));
+        varKD = p0plus_VAJHU/(p0plus_VAJHU + bkg_VAMCFM*getDbkgkinConstant(ZZFlav, ZZMass));
         if (varKD!=varKD) continue;
 
         MC_weight = MC_weight_norm*MC_weight_xsec*MC_weight_Kfactor*wSumGenWeights;
@@ -290,30 +294,36 @@ void makeConditionalTemplates_ggZZ_one(int folder, int erg_tev, int Systematics)
     int nbinsx=0;
     int divisor=6000;
     const int nbins_th=50;
-    while (nbinsx<nbins_th){
-      if (divisor>1000) divisor -= 1000;
-      else if (divisor>100) divisor -= 100;
-      else break;
-      nbinsx=nFilteredEntries/divisor+1;
+    if (doFixedBin) nbinsx=(ZZMass_cut[1]-ZZMass_cut[0])/fixedXStepSize;
+    else{
+      while (nbinsx<nbins_th){
+        if (divisor>1000) divisor -= 1000;
+        else if (divisor>100) divisor -= 100;
+        else break;
+        nbinsx=nFilteredEntries/divisor+1;
+      }
     }
     cout << "nbinsx=" << nbinsx << endl;
     if (nbinsx<3) cerr << "Not enough bins!" << endl;
     float* kDXarray = new float[nbinsx+1];
-    kDXarray[0]=infimum;
-    kDXarray[nbinsx]=supremum;
-    int ev_stepsize = nFilteredEntries/nbinsx;
-    cout << "Event step size: " << ev_stepsize << endl;
-    cout << "Boundary (" << 0 << ") = " << kDXarray[0] << endl;
-    for (int ix=1; ix<nbinsx; ix++){
-      int ev = massArray.at(ix*ev_stepsize).first;
-      newtree[t]->GetEntry(ev);
-      float bhigh = GenHMass;
-      ev = massArray.at(ix*ev_stepsize-1).first;
-      float blow = GenHMass;
-      kDXarray[ix]=(bhigh+blow)*0.5;
-      cout << "Boundary (" << ix << ")= " << kDXarray[ix] << " [event " << ev << ", step " << ix*ev_stepsize << "]" << endl;
+    if (doFixedBin){ for (int ix=0; ix<=nbinsx; ix++) kDXarray[ix]=ZZMass_cut[0]+ix*fixedXStepSize; }
+    else{
+      kDXarray[0]=infimum;
+      kDXarray[nbinsx]=supremum;
+      int ev_stepsize = nFilteredEntries/nbinsx;
+      cout << "Event step size: " << ev_stepsize << endl;
+      cout << "Boundary (" << 0 << ") = " << kDXarray[0] << endl;
+      for (int ix=1; ix<nbinsx; ix++){
+        int ev = massArray.at(ix*ev_stepsize).first;
+        newtree[t]->GetEntry(ev);
+        float bhigh = GenHMass;
+        ev = massArray.at(ix*ev_stepsize-1).first;
+        float blow = GenHMass;
+        kDXarray[ix]=(bhigh+blow)*0.5;
+        cout << "Boundary (" << ix << ")= " << kDXarray[ix] << " [event " << ev << ", step " << ix*ev_stepsize << "]" << endl;
+      }
+      cout << "Boundary (" << nbinsx << ") = " << kDXarray[nbinsx] << endl;
     }
-    cout << "Boundary (" << nbinsx << ") = " << kDXarray[nbinsx] << endl;
 
     for (unsigned int al = 0; al<1; al++){
       D_temp_2D[t].push_back(new TH2F(templatename_2D, templatename_2D, nbinsx, kDXarray, nbinsy, kDYarray));

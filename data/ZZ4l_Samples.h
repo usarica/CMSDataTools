@@ -63,10 +63,15 @@ const TString sample_suffix[kNumSamples]={
 	"Bkg",
 	"BSI"
 };
+const TString sample_prefix_MCFM[kNumSamples]={
+  "ggTo",
+  "ggTo",
+  "ggTo"
+};
 const TString sample_suffix_MCFM[kNumSamples]={
-  "ggZZ",
-  "ggZZ",
-  "ggZZ"
+  "_Contin_MCFM701",
+  "_Contin_MCFM701",
+  "_Contin_MCFM701"
 };
 const TString sample_suffix_Phantom[kNumSamples]={
   "",
@@ -84,9 +89,12 @@ const double MCFM_widthrescale = 0.9771908764; // Signal g1=sqrt(MCFM_widthresca
 
 //Directories
 //const TString user_gg2VV_location="/scratch0/hep/usarical/CJLST/LHC_13TeV/4l/160714/";
-const TString user_gg2VV_location="/scratch0/hep/usarical/CJLST/LHC_13TeV/4l/160720/";
-const TString user_dir="/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/";
-const TString user_TemplateswithTrees_dir="/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/Templates/";
+//const TString user_gg2VV_location="/scratch0/hep/usarical/CJLST/LHC_13TeV/4l/160720/";
+//const TString user_dir="/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/";
+//const TString user_TemplateswithTrees_dir="/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/Templates/";
+const TString user_gg2VV_location="/work-zfs/lhc/usarica/hep/CJLST/LHC_13TeV/4l/160720/";
+const TString user_dir="/work-zfs/lhc/usarica/CMS-related/Analysis/MassWidth_2016/ICHEP2016_mainstream/";
+const TString user_TemplateswithTrees_dir="/work-zfs/lhc/usarica/CMS-related/Analysis/MassWidth_2016/ICHEP2016_mainstream/Templates/";
 
 const TString user_treefile = "ZZ4lAnalysis.root";
 

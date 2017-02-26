@@ -252,14 +252,21 @@ public:
   Float_t p_HadWH_SIG_ghw1_1_JHUGen_JECDn;
   Float_t p_HadZH_SIG_ghz1_1_JHUGen_JECDn;
 
+  Float_t p_Gen_CPStoBWPropRewgt;
+  Float_t p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM;
+  Float_t p_Gen_GG_BKG_MCFM;
+  Float_t p_Gen_QQB_BKG_MCFM;
+
   InputTreeHandle(const TString inputFileName, const TString treeName, const TString countersName, int type=-1);
   virtual ~InputTreeHandle();
 
   void InitDefaults();
 
   float GetNGenEvents();
+  int GetSampleType()const;
   int GetEntries()const;
   void GetEntry(int ev);
+
 };
 
 InputTreeHandle::InputTreeHandle(const TString inputFileName, const TString treeName, const TString countersName, int type) : theType(type), theFile(0), theTree(0), theCounters(0){
@@ -463,6 +470,12 @@ void InputTreeHandle::InitDefaults(){
   p_JQCD_SIG_ghg2_1_JHUGen_JECDn=-1;
   p_HadWH_SIG_ghw1_1_JHUGen_JECDn=-1;
   p_HadZH_SIG_ghz1_1_JHUGen_JECDn=-1;
+
+  p_Gen_CPStoBWPropRewgt=1;
+  p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM=1;
+  p_Gen_GG_BKG_MCFM=1;
+  p_Gen_QQB_BKG_MCFM=1;
+
 }
 
 void InputTreeHandle::InitVectors_FirstTime(){
@@ -765,6 +778,12 @@ void InputTreeHandle::SetBranchAddresses(){
   if (theTree->GetBranchStatus("p_JQCD_SIG_ghg2_1_JHUGen_JECDn")) theTree->SetBranchAddress("p_JQCD_SIG_ghg2_1_JHUGen_JECDn", &p_JQCD_SIG_ghg2_1_JHUGen_JECDn);
   if (theTree->GetBranchStatus("p_HadWH_SIG_ghw1_1_JHUGen_JECDn")) theTree->SetBranchAddress("p_HadWH_SIG_ghw1_1_JHUGen_JECDn", &p_HadWH_SIG_ghw1_1_JHUGen_JECDn);
   if (theTree->GetBranchStatus("p_HadZH_SIG_ghz1_1_JHUGen_JECDn")) theTree->SetBranchAddress("p_HadZH_SIG_ghz1_1_JHUGen_JECDn", &p_HadZH_SIG_ghz1_1_JHUGen_JECDn);
+
+  if (theTree->GetBranchStatus("p_Gen_CPStoBWPropRewgt")) theTree->SetBranchAddress("p_Gen_CPStoBWPropRewgt", &p_Gen_CPStoBWPropRewgt);
+  if (theTree->GetBranchStatus("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM")) theTree->SetBranchAddress("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM", &p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM);
+  if (theTree->GetBranchStatus("p_Gen_GG_BKG_MCFM")) theTree->SetBranchAddress("p_Gen_GG_BKG_MCFM", &p_Gen_GG_BKG_MCFM);
+  if (theTree->GetBranchStatus("p_Gen_QQB_BKG_MCFM")) theTree->SetBranchAddress("p_Gen_QQB_BKG_MCFM", &p_Gen_QQB_BKG_MCFM);
+
 }
 
 int InputTreeHandle::GetEntries()const{
@@ -772,6 +791,7 @@ int InputTreeHandle::GetEntries()const{
   return 0;
 }
 void InputTreeHandle::GetEntry(int ev){ if (theTree!=0) theTree->GetEntry(ev); }
+int InputTreeHandle::GetSampleType()const{ return theType; }
 
 float InputTreeHandle::GetNGenEvents(){
   if (theCounters!=0) return theCounters->GetBinContent(40);

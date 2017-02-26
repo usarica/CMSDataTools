@@ -233,7 +233,7 @@ const double MCFM_widthrescale = 0.9771908764; // Signal g1=sqrt(MCFM_widthresca
 
 //Directories
 const TString package_dir="/work-zfs/lhc/usarica/CMS-related/Analysis/MassWidth_2016/CMSSW_8_0_12/src/Analysis/HiggsMassWidth/";
-const TString user_input_dir="/work-zfs/lhc/usarica/CMS-related/CJLSTProduction/170203/";
+const TString user_input_dir="/work-zfs/lhc/usarica/CMS-related/CJLSTProduction/170222/";
 const TString user_output_dir="/work-zfs/lhc/usarica/CMS-related/Analysis/MassWidth_2016/Moriond2017_mainstream/";
 const TString user_TemplateswithTrees_dir="/work-zfs/lhc/usarica/CMS-related/Analysis/MassWidth_2016/Moriond2017_mainstream/Templates/";
 

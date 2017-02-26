@@ -70,7 +70,7 @@ int getCategory(
 // Main Function, runs over all desired iterations
 void estimateSystematics_Moriond2017mainstream_one(int ichan, int erg_tev, int categorizationType, float ZZMass_low, float ZZMass_high, float pickSampleWithMass){
   if (ichan>(int)nChannels) return;
-
+  const TString strChannel = channame(ichan);
   constructSampleTypeList();
 
   float ZZMass_cut[2]={ 70., 3000. };
@@ -85,7 +85,6 @@ void estimateSystematics_Moriond2017mainstream_one(int ichan, int erg_tev, int c
   for (int bin=0; bin<nbinsx+1; bin++) kDXarray[bin] = ZZMass_cut[0] + xwidth*bin;
 
   TString erg_dir = Form("LHC_%iTeV/", erg_tev);
-  const TString strChannel = channame(ichan);
   TString strdate = todaysdate();
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
@@ -233,9 +232,9 @@ void estimateSystematics_Moriond2017mainstream_one(int ichan, int erg_tev, int c
         if (theTree->ZZMass<ZZMass_cut[0] || theTree->ZZMass>=ZZMass_cut[1]) continue;
 
         int ZZFlav=theTree->Z1Flav*theTree->Z2Flav;
-        if (ichan==0 && abs(ZZFlav)!=pow(13, 4)) continue;
-        else if (ichan==1 && abs(ZZFlav)!=pow(11, 4)) continue;
-        else if (ichan==2 && abs(ZZFlav)!=pow(13*11, 2)) continue;
+        if (ichan==(int)k4mu && abs(ZZFlav)!=pow(13, 4)) continue;
+        else if (ichan==(int)k4e && abs(ZZFlav)!=pow(11, 4)) continue;
+        else if (ichan==(int)k2e2mu && abs(ZZFlav)!=pow(13*11, 2)) continue;
 
         int icat = getCategory(
           theTree->ZZMass,
@@ -443,11 +442,13 @@ void estimateSystematics_Moriond2017mainstream_one(int ichan, int erg_tev, int c
     // Print the ratio of each integral to inclusive nominal into the output file
     float integral_nom = hSyst[(int)CategoryMor17::InclusiveMor17][0]->Integral(1, hSyst[(int)CategoryMor17::InclusiveMor17][0]->GetNbinsX());
     for (int icat=(int)CategoryMor17::InclusiveMor17; icat<(int)CategoryMor17::nCategoriesMor17; icat++){
+      /*
       if (
         (categorizationType==0 && icat>(int)CategoryMor17::InclusiveMor17)
         ||
         (abs(categorizationType)==2 && icat>(int)CategoryMor17::VBF2jTaggedMor17)
         ) continue;
+      */
       tout << SampleTypeName << " " << nameCategoryMor17(icat) << " ";
       for (unsigned int isyst=0; isyst<nSyst; isyst++){
         double integral = hSyst[icat][isyst]->Integral(1, hSyst[icat][isyst]->GetNbinsX());
@@ -482,6 +483,8 @@ void estimateSystematics_Moriond2017mainstream_one(int ichan, int erg_tev, int c
     }
 
   }
+
+  for (unsigned int is=0; is<nSampleTypes; is++){ for (unsigned int it=0; it<treeList[is].size(); it++) delete treeList[is].at(it); }
 
   foutput->Close();
   tout.close();

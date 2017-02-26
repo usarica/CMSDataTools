@@ -20,7 +20,7 @@
 				"bins":[<XBINNING>,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":400, "rescalewidth":1.0}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200, "rescalewidth":1.0}
 			]
 		},
 		// T_2D_ggBkg
@@ -39,7 +39,7 @@
 				"bins":[<XBINNING>,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":400, "rescalewidth":1.0}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200, "rescalewidth":1.0}
 			]
 		},
 		// T_2D_qqBkg
@@ -58,7 +58,7 @@
 				"bins":[<XBINNING>,30,0.,1.]
 			},
 			"postprocessing":[
-				{"type":"smooth", "kernel":"adaptive", "entriesperbin":400, "rescalewidth":1.0}
+				{"type":"smooth", "kernel":"adaptive", "entriesperbin":200, "rescalewidth":1.0}
 			]
 		},
 		// T_2D_ZX

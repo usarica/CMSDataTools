@@ -22,9 +22,12 @@
 #include "TH2F.h"
 #include "TH3F.h"
 #include "TF1.h"
-#include "../data/ZZ4l_Samples.h"
-#include "../include/external_cConstants.h"
+#include <ZZMatrixElement/MELA/interface/TVar.hh>
 #include <ZZMatrixElement/MELA/interface/Mela.h>
+#include "InputTreeHandle.h"
+#include "ZZ4l_Samples.h"
+#include "external_Category.h"
+#include "external_cConstants.h"
 
 using namespace std;
 
@@ -32,19 +35,25 @@ using namespace std;
 const TString fixedDate="";
 
 // Initializers
-void makeConditionalTemplates_ICHEP2016mainstream_one(int channel, int erg_tev, int Systematics);
-void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev, int Systematics);
-void collectConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev, int Systematics, bool doSmooth=true);
+void makeConditionalTemplates_Moriond2017mainstream_one(int channel, int erg_tev, int Systematics);
+void makeConditionalTemplates_Moriond2017mainstream_ZX_one(int ichan, int erg_tev, int Systematics);
+void collectConditionalTemplates_Moriond2017mainstream_one(int ichan, int erg_tev, int Systematics, bool doSmooth=true);
 void progressbar(int val, int tot);
 vector<pair<string, double>> getFileList(string strinput);
 void convertTGraphErrorsToTH1F(TGraphErrors* tg, TH1F* histo);
 void convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F* histo);
-vector<pair<TH1F*, TH1F*>> getZXFR_SS();
+template <typename T> vector<pair<T*, T*>> getZXFR_SS();
+template <typename T> double evaluateTObject(T* obj, float val);
+template<> double evaluateTObject<TH1F>(TH1F* obj, float val);
+template<> double evaluateTObject<TGraphErrors>(TGraphErrors* obj, float val);
 TString todaysdate();
-SimpleParticleCollection_t constructFourVectors(short GenLepId[4], float GenLepPtEtaPhi[3][4]);
+SimpleParticleCollection_t constructFourVectors(short GenLepId[4], float GenLepPt[4], float GenLepEta[4], float GenLepPhi[4]);
 void addByLowest(unsigned int ev, float val, std::vector<std::pair<unsigned int, float>>& valArray);
 void addByLowest(float weight, float val, std::vector<std::pair<float, float>>& valArray);
 void addByLowest(float val, std::vector<float>& valArray);
+void splitOption(const string rawoption, string& wish, string& value, char delimiter);
+void splitOptionRecursive(const string rawoption, vector<string>& splitoptions, char delimiter);
+Bool_t checkListVariable(const vector<string>& list, const string& var);
 bool test_bit(int mask, unsigned int iBit);
 void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX=0, double omitbelow=0., int nIter_=-1, double threshold_=-1);
 void regularizeHistogram(TH2F* histo, int nIter_, double threshold_);
@@ -57,25 +66,25 @@ void wipeOverUnderFlows(TH3F* hwipe);
 
 
 // Main Function, runs over all desired iterations
-void makeConditionalTemplates_ICHEP2016mainstream(){
+void makeConditionalTemplates_Moriond2017mainstream(){
   for (int CoM=13; CoM<=13; CoM++){
     for (int channel=0; channel<3; channel++){
       for (int syst=0; syst<=0; syst++){
-        makeConditionalTemplates_ICHEP2016mainstream_one(channel, CoM, syst);
-        makeConditionalTemplates_ICHEP2016mainstream_ZX_one(channel, CoM, syst);
-        collectConditionalTemplates_ICHEP2016mainstream_one(channel, CoM, syst, true);
+        makeConditionalTemplates_Moriond2017mainstream_one(channel, CoM, syst);
+        makeConditionalTemplates_Moriond2017mainstream_ZX_one(channel, CoM, syst);
+        collectConditionalTemplates_Moriond2017mainstream_one(channel, CoM, syst, true);
       }
     }
   }
 }
 
 // Function to build one template
-// folder = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
+// ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // erg_tev = 13 (CoM energy)
-void makeConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev, int Systematics){
-  float mPOLE=125.;
-  //float wPOLE=4.07e-3;
-  //int EnergyIndex=(erg_tev==13 ? 0 : 0);
+void makeConditionalTemplates_Moriond2017mainstream_one(int ichan, int erg_tev, int Systematics){
+  if (ichan>(int)nChannels) return;
+  const TString strChannel = channame(ichan);
+  constructSampleTypeList();
 
   const float ZZMass_cut[2]={ 100., 3000. };
   const float xwidth = 2;
@@ -97,7 +106,7 @@ void makeConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev, i
   cout << "Today's date: " << strdate << endl;
 
   TString INPUT_NAME = user_treefile;
-  TString OUTPUT_NAME = Form("HtoZZ%s_ConditionalTemplatesForCombine_", user_folder[folder].Data());
+  TString OUTPUT_NAME = Form("HtoZZ%s_ConditionalTemplatesForCombine_", strChannel.Data());
   if (Systematics == 0) OUTPUT_NAME += "Nominal";
   else if (Systematics == 1) OUTPUT_NAME += "SysUp_QCD";
   else if (Systematics == -1) OUTPUT_NAME += "SysDown_QCD";
@@ -109,50 +118,16 @@ void makeConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev, i
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
 
-  TString cinput_common = user_gg2VV_location + "/";
-  TString coutput_common = user_dir + erg_dir + "Templates/" + strdate + "/";
+  TString cinput_common = user_input_dir + "/";
+  TString coutput_common = user_output_dir + erg_dir + "Templates/" + strdate + "/";
   gSystem->Exec("mkdir -p " + coutput_common);
 
   float varKD=0;
   float weight=1;
-  float overallEventWeight=1;
-  float xsec=1;
   float reweight=1;
-
-  float KFactor_QCD_ggZZ_Nominal = 1;
-  float KFactor_QCD_ggZZ_PDFScaleDn = 1;
-  float KFactor_QCD_ggZZ_PDFScaleUp = 1;
-  float KFactor_QCD_ggZZ_QCDScaleDn = 1;
-  float KFactor_QCD_ggZZ_QCDScaleUp = 1;
-  float KFactor_QCD_ggZZ_AsDn = 1;
-  float KFactor_QCD_ggZZ_AsUp = 1;
-  float KFactor_QCD_ggZZ_PDFReplicaDn = 1;
-  float KFactor_QCD_ggZZ_PDFReplicaUp = 1;
-
-  float KFactor_EW_qqZZ = 1;
-  float KFactor_EW_qqZZ_unc = 1;
-  float KFactor_QCD_qqZZ_M = 1;
-  /*
-  float LHEweight_QCDscale_muR1_muF1  = 1;
-  float LHEweight_QCDscale_muR1_muF2  = 1;
-  float LHEweight_QCDscale_muR1_muF0p5  = 1;
-  float LHEweight_QCDscale_muR2_muF1  = 1;
-  float LHEweight_QCDscale_muR2_muF2  = 1;
-  float LHEweight_QCDscale_muR2_muF0p5  = 1;
-  float LHEweight_QCDscale_muR0p5_muF1  = 1;
-  float LHEweight_QCDscale_muR0p5_muF2  = 1;
-  float LHEweight_QCDscale_muR0p5_muF0p5  = 1;
-  */
-
-  short Z1Flav, Z2Flav;
-  int ZZFlav;
-  float ZZMass, p0plus_VAJHU, bkg_VAMCFM;
-  float GenHMass;
-  short GenLepId[4];
-  float GenLepPtEtaPhi[3][4];
+  float ZZMass, GenHMass;
 
   TVar::VerbosityLevel verbosity = TVar::SILENT;
-  Mela* mela = new Mela(erg_tev, mPOLE, verbosity);
 
   TString coutput = coutput_common + OUTPUT_NAME;
   TString coutput_log = coutput_common + OUTPUT_LOG_NAME;
@@ -163,81 +138,41 @@ void makeConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev, i
   cout << "Opened file " << coutput << endl;
   cout << "===============================" << endl;
   cout << "CoM Energy: " << erg_tev << " TeV" << endl;
-  cout << "Decay Channel: " << user_folder[folder] << endl;
+  cout << "Decay Channel: " << strChannel << endl;
   cout << "===============================" << endl;
   cout << endl;
   tout << "Opened file " << coutput << endl;
   tout << "===============================" << endl;
   tout << "CoM Energy: " << erg_tev << " TeV" << endl;
-  tout << "Decay Channel: " << user_folder[folder] << endl;
+  tout << "Decay Channel: " << strChannel << endl;
   tout << "===============================" << endl;
   tout << endl;
 
+  const string path_HiggsWidthFile = "../../../ZZMatrixElement/MELA/data/HiggsTotalWidth_YR3.txt";
+  cout << "Initializing MELAHXSWidth at path " << path_HiggsWidthFile.substr(0, path_HiggsWidthFile.length()-23) << endl;
+  MELAHXSWidth xswidth(path_HiggsWidthFile.substr(0, path_HiggsWidthFile.length()-23));
+  cout << "MELAHXSWidth initialized" << endl;
+
   // Get list of samples
-  const unsigned int nProcesses = 8;
-  const TString strProcess[nProcesses][2]={
-    { "Samples_gg_Sig_POWHEG.txt", "gg_Sig" },
-    { "Samples_VBF_Sig_POWHEG.txt", "VBF_Sig" },
-    { "Samples_VBF_Sig_Phantom.txt", "VBF_Sig" },
-    { "Samples_WH_Sig_POWHEG.txt", "WH_Sig" },
-    { "Samples_ZH_Sig_POWHEG.txt", "ZH_Sig" },
-    { "Samples_tt_Sig_POWHEG.txt", "tt_Sig" },
-    { "Samples_gg_Bkg_MCFM.txt", "gg_Bkg" },
-    { "Samples_qq_Bkg_POWHEG.txt", "qq_Bkg" }
-  };
-  vector<pair<string, double>> fileNameList[nProcesses];
-  for (unsigned int is=0; is<nProcesses; is++) fileNameList[is] = getFileList(string(strProcess[is][0].Data()));
-  vector<TFile*> fileList[nProcesses];
-  vector<pair<TTree*, TH1F*>> treeList[nProcesses];
-  for (unsigned int is=0; is<nProcesses; is++){
+  vector<pair<string, double>> fileNameList[nSampleTypes];
+  for (unsigned int is=0; is<nSampleTypes; is++){
+    cout << "Constructing file name list for " << sampleTypeList[is].first << endl;
+    fileNameList[is] = getFileList(string(sampleTypeList[is].first.Data()));
+  }
+  vector<InputTreeHandle*> treeList[nSampleTypes];
+  for (unsigned int is=0; is<nSampleTypes; is++){
     for (unsigned int ifile=0; ifile<fileNameList[is].size(); ifile++){
+      //if (pickSampleWithMass>0. && !(fileNameList[is].at(ifile).second==-1. || fileNameList[is].at(ifile).second==pickSampleWithMass)) continue;
+
       string cinput = fileNameList[is].at(ifile).first;
-      cinput = user_gg2VV_location + cinput + "/" + user_treefile;
+      cinput = user_input_dir + cinput + "/" + user_treefile;
 
       cout << "Opening file " << cinput << " with mass "  << fileNameList[is].at(ifile).second << endl;
       tout << "Opening file " << cinput << " with mass "  << fileNameList[is].at(ifile).second << endl;
 
-      TFile* finput = TFile::Open(cinput.c_str(), "read"); finput->cd();
-      TTree* theTree = (TTree*)finput->Get(user_treename);
-      TH1F* theCounters = (TH1F*)finput->Get(user_countersname);
-
-      fileList[is].push_back(finput);
+      InputTreeHandle* theTree = new InputTreeHandle(TString(cinput.c_str()), user_treename, user_countersname, sampleTypeList[is].second);
       foutput->cd();
-
-      theTree->SetBranchAddress("ZZMass", &ZZMass);
-      theTree->SetBranchAddress("Z1Flav", &Z1Flav);
-      theTree->SetBranchAddress("Z2Flav", &Z2Flav);
-      theTree->SetBranchAddress("p0plus_VAJHU", &p0plus_VAJHU);
-      theTree->SetBranchAddress("bkg_VAMCFM", &bkg_VAMCFM);
-      if (theTree->GetBranchStatus("GenHMass")){
-        theTree->SetBranchAddress("GenHMass", &GenHMass);
-        for (unsigned int ilep=0; ilep<4; ilep++){
-          theTree->SetBranchAddress(Form("GenLep%iId", ilep+1), &(GenLepId[ilep]));
-          theTree->SetBranchAddress(Form("GenLep%iPt", ilep+1), &(GenLepPtEtaPhi[0][ilep]));
-          theTree->SetBranchAddress(Form("GenLep%iEta", ilep+1), &(GenLepPtEtaPhi[1][ilep]));
-          theTree->SetBranchAddress(Form("GenLep%iPhi", ilep+1), &(GenLepPtEtaPhi[2][ilep]));
-        }
-      }
-      if (theTree->GetBranchStatus("overallEventWeight")) theTree->SetBranchAddress("overallEventWeight", &overallEventWeight);
-      if (theTree->GetBranchStatus("xsec")) theTree->SetBranchAddress("xsec", &xsec);
-      if (theTree->GetBranchStatus("KFactor_QCD_ggZZ_Nominal")){
-        theTree->SetBranchAddress("KFactor_QCD_ggZZ_Nominal", &KFactor_QCD_ggZZ_Nominal);
-        theTree->SetBranchAddress("KFactor_QCD_ggZZ_PDFScaleDn", &KFactor_QCD_ggZZ_PDFScaleDn);
-        theTree->SetBranchAddress("KFactor_QCD_ggZZ_PDFScaleUp", &KFactor_QCD_ggZZ_PDFScaleUp);
-        theTree->SetBranchAddress("KFactor_QCD_ggZZ_QCDScaleDn", &KFactor_QCD_ggZZ_QCDScaleDn);
-        theTree->SetBranchAddress("KFactor_QCD_ggZZ_QCDScaleUp", &KFactor_QCD_ggZZ_QCDScaleUp);
-        theTree->SetBranchAddress("KFactor_QCD_ggZZ_AsDn", &KFactor_QCD_ggZZ_AsDn);
-        theTree->SetBranchAddress("KFactor_QCD_ggZZ_AsUp", &KFactor_QCD_ggZZ_AsUp);
-        theTree->SetBranchAddress("KFactor_QCD_ggZZ_PDFReplicaDn", &KFactor_QCD_ggZZ_PDFReplicaDn);
-        theTree->SetBranchAddress("KFactor_QCD_ggZZ_PDFReplicaUp", &KFactor_QCD_ggZZ_PDFReplicaUp);
-      }
-      if (theTree->GetBranchStatus("KFactor_QCD_qqZZ_M")) theTree->SetBranchAddress("KFactor_QCD_qqZZ_M", &KFactor_QCD_qqZZ_M);
-      if (theTree->GetBranchStatus("KFactor_EW_qqZZ")){
-        theTree->SetBranchAddress("KFactor_EW_qqZZ", &KFactor_EW_qqZZ);
-        theTree->SetBranchAddress("KFactor_EW_qqZZ_unc", &KFactor_EW_qqZZ_unc);
-      }
-
-      treeList[is].push_back(pair<TTree*, TH1F*>(theTree, theCounters));
+      treeList[is].push_back(theTree);
     }
   }
 
@@ -288,66 +223,54 @@ void makeConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev, i
     D_temp_2D[t]->GetYaxis()->SetTitle("D^{kin}_{bkg}");
     D_temp_2D[t]->GetXaxis()->SetTitle("m_{4l} (GeV)");
   }
-  for (unsigned int is=0; is<nProcesses; is++){
-    cout << "Process " << is << " under scrutiny" << endl;
-    tout << "Process " << is << " under scrutiny" << endl;
+  for (int is=0; is<nSampleTypes; is++){
+    TString SampleTypeName = nameSampleType(is);
+    cout << "Process " << SampleTypeName << "[" << is << "] under scrutiny" << endl;
+    tout << "Process " << SampleTypeName << "[" << is << "] under scrutiny" << endl;
+
     for (unsigned int it=0; it<treeList[is].size(); it++){
       double mass = fileNameList[is].at(it).second;
-      TTree* theTree = treeList[is].at(it).first;
+      double width=0;
+      if (
+        mass>0.
+        &&
+        is!=(int)SampleType::gg_Bkg_MCFM && is!=(int)SampleType::VBF_Sig_Phantom && is!=(int)SampleType::VBF_Bkg_Phantom
+        ) width = xswidth.HiggsWidth(mass);
+      else if (mass==125.) width = 4.07e-3; // Phantom and MCFM samples use 4.07 MeV.
+
+      InputTreeHandle* theTree = treeList[is].at(it);
+
       int nEntries = theTree->GetEntries();
 
       cout << "\tSample[" << it << "]=" << fileNameList[is].at(it).first << " under scrutiny. #Events = " << nEntries << endl;
       tout << "\tSample[" << it << "]=" << fileNameList[is].at(it).first << " under scrutiny. #Events = " << nEntries << endl;
+      cout << "\tIdentified (mass,width) = ( " << mass << " , " << width << " )" << endl;
 
       for (int ev=0; ev<nEntries; ev++){
-        weight=1;
-        overallEventWeight=1;
-        xsec=1;
-        reweight=1;
-
-        KFactor_QCD_ggZZ_Nominal = 1;
-        KFactor_QCD_ggZZ_PDFScaleDn = 1;
-        KFactor_QCD_ggZZ_PDFScaleUp = 1;
-        KFactor_QCD_ggZZ_QCDScaleDn = 1;
-        KFactor_QCD_ggZZ_QCDScaleUp = 1;
-        KFactor_QCD_ggZZ_AsDn = 1;
-        KFactor_QCD_ggZZ_AsUp = 1;
-        KFactor_QCD_ggZZ_PDFReplicaDn = 1;
-        KFactor_QCD_ggZZ_PDFReplicaUp = 1;
-
-        KFactor_EW_qqZZ = 1;
-        KFactor_EW_qqZZ_unc = 1;
-        KFactor_QCD_qqZZ_M = 1;
-        /*
-        LHEweight_QCDscale_muR1_muF1  = 1;
-        LHEweight_QCDscale_muR1_muF2  = 1;
-        LHEweight_QCDscale_muR1_muF0p5  = 1;
-        LHEweight_QCDscale_muR2_muF1  = 1;
-        LHEweight_QCDscale_muR2_muF2  = 1;
-        LHEweight_QCDscale_muR2_muF0p5  = 1;
-        LHEweight_QCDscale_muR0p5_muF1  = 1;
-        LHEweight_QCDscale_muR0p5_muF2  = 1;
-        LHEweight_QCDscale_muR0p5_muF0p5  = 1;
-        */
+        theTree->InitDefaults();
         theTree->GetEntry(ev);
+        weight=1;
+
         if (ev%10000==0) cout << "Event " << ev << "..." << endl;
 
         // Fix for JHUGen v6 vegas bug in low mass samples
-        if (strProcess[is][0].Contains("POWHEG") && mass>0 && mass<300 && GenHMass>mass+5.){
-          //cout << "Process " << is << " sample " << it << " has mH = " << mass << " and mH* = " << GenHMass << ">mH+5 GeV. Ignoring event..." << endl;
-          continue;
-        }
+        if (SampleTypeName.Contains("POWHEG") && mass>0 && mass<300 && theTree->GenHMass>mass+5.) continue;
 
-        ZZFlav=Z1Flav*Z2Flav;
-        if (folder==0 && abs(ZZFlav)!=pow(13, 4)) continue;
-        else if (folder==1 && abs(ZZFlav)!=pow(11, 4)) continue;
-        else if (folder==2 && abs(ZZFlav)!=pow(13*11, 2)) continue;
+        if (theTree->ZZsel<70.) continue; // Disregard non-selected events (need this if skipEmptyEvents=false)
 
-        varKD = p0plus_VAJHU/(p0plus_VAJHU + bkg_VAMCFM*getDbkgkinConstant(ZZFlav, ZZMass));
+        if (theTree->ZZMass<ZZMass_cut[0] || theTree->ZZMass>=ZZMass_cut[1]) continue;
+
+        int ZZFlav=theTree->Z1Flav*theTree->Z2Flav;
+        if (ichan==(int)k4mu && abs(ZZFlav)!=pow(13, 4)) continue;
+        else if (ichan==(int)k4e && abs(ZZFlav)!=pow(11, 4)) continue;
+        else if (ichan==(int)k2e2mu && abs(ZZFlav)!=pow(13*11, 2)) continue;
+
+        ZZMass = theTree->ZZMass;
+        varKD = theTree->p_GG_SIG_ghg2_1_ghz1_1_JHUGen/(theTree->p_GG_SIG_ghg2_1_ghz1_1_JHUGen + theTree->p_QQB_BKG_MCFM*getDbkgkinConstant(ZZFlav, ZZMass));
         if (varKD!=varKD) continue;
 
         // weight is product of everything. Only some are non-1.
-        weight = KFactor_QCD_ggZZ_Nominal*KFactor_EW_qqZZ*KFactor_QCD_qqZZ_M*overallEventWeight/**xsec*/;
+        weight = theTree->KFactor_QCD_ggZZ_Nominal*theTree->KFactor_EW_qqZZ*theTree->KFactor_QCD_qqZZ_M*theTree->overallEventWeight/**xsec*/;
         if (weight<0.) continue; // No negative weights!
 
         // Protect against any KD exceeding boundaries
@@ -360,27 +283,29 @@ void makeConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev, i
         if (varKD>=kDYarray[nbinsy] || varKD<kDYarray[0]) cout << "Fix has been numerically unsuccessful." << endl;
 
         unsigned int index=0;
-        if (strProcess[is][1]=="gg_Bkg") index = 1;
-        else if (strProcess[is][1]=="qq_Bkg") index = 2;
+        if (is==(int)SampleType::gg_Bkg_MCFM) index = 1;
+        else if (is==(int)SampleType::qq_Bkg) index = 2;
 
         rawtree[index]->Fill();
         D_temp_1D_raw[index]->Fill(ZZMass, weight);
         N_temp_1D_raw[index]->Fill(ZZMass, 1);
 
-        if (strProcess[is][1]=="gg_Sig"){
-          SimpleParticleCollection_t daughters = constructFourVectors(GenLepId, GenLepPtEtaPhi);
-          mela->setInputEvent(&daughters, (SimpleParticleCollection_t*)0, (SimpleParticleCollection_t*)0, false);
+        if (
+          (is>=(int)SampleType::gg_Sig && is<=(int)SampleType::gg_Sig_PythiaTuneUp_MiNLO)
+          ){
+          short GenLepId[4]={ theTree->GenLep1Id, theTree->GenLep2Id, theTree->GenLep3Id, theTree->GenLep4Id };
+          float GenLepPt[4]={ theTree->GenLep1Pt, theTree->GenLep2Pt, theTree->GenLep3Pt, theTree->GenLep4Pt };
+          float GenLepEta[4]={ theTree->GenLep1Eta, theTree->GenLep2Eta, theTree->GenLep3Eta, theTree->GenLep4Eta };
+          float GenLepPhi[4]={ theTree->GenLep1Phi, theTree->GenLep2Phi, theTree->GenLep3Phi, theTree->GenLep4Phi };
 
-          float sampleWeight=1;
-          mela->setProcess(TVar::HSMHiggs, TVar::MCFM, TVar::ZZGG);
-          mela->setMelaHiggsMassWidth(GenHMass, 1./GenHMass, 0); // Set prop=1
-          mela->computeP(sampleWeight, false);
+          SimpleParticleCollection_t daughters = constructFourVectors(GenLepId, GenLepPt, GenLepEta, GenLepPhi);
 
-          float targetWeight=1;
-          mela->setProcess(TVar::bkgZZ, TVar::MCFM, TVar::ZZGG);
-          mela->computeP(targetWeight, false);
+          TLorentzVector sumP(0, 0, 0, 0); for (unsigned int idau=0; idau<daughters.size(); idau++) sumP = sumP + daughters.at(idau).second;
 
-          mela->resetInputEvent();
+          float propagatorBW = 1./(pow(pow(sumP.M(), 2)-pow(mass, 2), 2)+pow(mass*width, 2));
+          float sampleWeight=theTree->p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM/propagatorBW;
+
+          float targetWeight=theTree->p_Gen_GG_BKG_MCFM;
 
           if (sampleWeight>0.){
             reweight=targetWeight/sampleWeight;
@@ -434,22 +359,20 @@ void makeConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev, i
     delete rawtree[t];
   }
 
-  for (unsigned int is=0; is<nProcesses; is++){
-    for (unsigned int ifile=0; ifile<fileList[is].size(); ifile++){
-      if (fileList[is].at(ifile)!=0 && fileList[is].at(ifile)->IsOpen()) fileList[is].at(ifile)->Close();
-    }
-  }
+  for (unsigned int is=0; is<nSampleTypes; is++){ for (unsigned int it=0; it<treeList[is].size(); it++) delete treeList[is].at(it); }
 
   foutput->Close();
   tout.close();
-  if (mela!=0) delete mela;
 }
 
 // Function to build one template for Z+X
-// folder = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
+// ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // erg_tev = 13 (CoM energy)
-void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev, int Systematics){
-  //int EnergyIndex=(erg_tev==13 ? 0 : 0);
+void makeConditionalTemplates_Moriond2017mainstream_ZX_one(int ichan, int erg_tev, int Systematics){
+  if (ichan>(int)nChannels) return;
+  const TString strChannel = channame(ichan);
+  constructSampleTypeList();
+  typedef TGraphErrors FRtype;
 
   const float ZZMass_cut[2]={ 100., 3000. };
   const float xwidth = 2;
@@ -469,8 +392,8 @@ void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
 
-  TString INPUT_NAME = Form("HtoZZ%s_ConditionalTemplatesForCombine_ZX_", user_folder[folder].Data());
-  TString OUTPUT_NAME = Form("HtoZZ%s_ConditionalTemplatesForCombine_ZX_", user_folder[folder].Data());
+  TString INPUT_NAME = Form("HtoZZ%s_ConditionalTemplatesForCombine_ZX_", strChannel.Data());
+  TString OUTPUT_NAME = Form("HtoZZ%s_ConditionalTemplatesForCombine_ZX_", strChannel.Data());
   if (Systematics == 0) OUTPUT_NAME += "Nominal";
   else return;
 
@@ -478,8 +401,8 @@ void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
 
-  TString cinput_common = user_gg2VV_location + "/";
-  TString coutput_common = user_dir + erg_dir + "Templates/" + strdate + "/";
+  TString cinput_common = user_input_dir + "/";
+  TString coutput_common = user_output_dir + erg_dir + "Templates/" + strdate + "/";
   gSystem->Exec("mkdir -p " + coutput_common);
 
   float varKD=0;
@@ -502,17 +425,17 @@ void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev
   cout << "Opened file " << coutput << endl;
   cout << "===============================" << endl;
   cout << "CoM Energy: " << erg_tev << " TeV" << endl;
-  cout << "Decay Channel: " << user_folder[folder] << endl;
+  cout << "Decay Channel: " << strChannel << endl;
   cout << "===============================" << endl;
   cout << endl;
   tout << "Opened file " << coutput << endl;
   tout << "===============================" << endl;
   tout << "CoM Energy: " << erg_tev << " TeV" << endl;
-  tout << "Decay Channel: " << user_folder[folder] << endl;
+  tout << "Decay Channel: " << strChannel << endl;
   tout << "===============================" << endl;
   tout << endl;
 
-  vector<pair<TH1F*, TH1F*>> hFR_ZX_SS = getZXFR_SS();
+  vector<pair<FRtype*, FRtype*>> hFR_ZX_SS = getZXFR_SS<TGraphErrors>();
   if (hFR_ZX_SS.size()!=2){
     cerr << "ERROR: ZX FR size " << hFR_ZX_SS.size() << "!=2. Aborting..." << endl;
     tout << "ERROR: ZX FR size " << hFR_ZX_SS.size() << "!=2. Aborting..." << endl;
@@ -525,48 +448,18 @@ void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev
   tout << "Retrieved ZX SS FRs" << endl;
 
   // Get list of samples
-  const unsigned int nProcesses = 1;
-  const TString strProcess[nProcesses][2]={
+  const unsigned int nSampleTypes = 1;
+  const TString strProcess[nSampleTypes][2]={
     { "AllData", "ZX" }
   };
-  vector<pair<string, double>> fileNameList[nProcesses];
-  for (unsigned int is=0; is<nProcesses; is++) fileNameList[is].push_back(pair<string, double>(string(strProcess[is][0].Data()), -1));
-  vector<TFile*> fileList[nProcesses];
-  vector<pair<TTree*, TH1F*>> treeList[nProcesses];
-  for (unsigned int is=0; is<nProcesses; is++){
-    for (unsigned int ifile=0; ifile<fileNameList[is].size(); ifile++){
-      string cinput = fileNameList[is].at(ifile).first;
-      cinput = user_gg2VV_location + cinput + "/" + user_treefile;
 
-      cout << "Opening file " << cinput << " with mass "  << fileNameList[is].at(ifile).second << endl;
-      tout << "Opening file " << cinput << " with mass "  << fileNameList[is].at(ifile).second << endl;
-
-      TFile* finput = TFile::Open(cinput.c_str(), "read"); finput->cd();
-      TTree* theTree = (TTree*)finput->Get(user_CRtreename);
-      TH1F* theCounters = (TH1F*)finput->Get(user_CRcountersname);
-
-      fileList[is].push_back(finput);
-      foutput->cd();
-
-      theTree->SetBranchAddress("CRflag", &CRflag);
-      theTree->SetBranchAddress("ZZMass", &ZZMass);
-      theTree->SetBranchAddress("Z1Flav", &Z1Flav);
-      theTree->SetBranchAddress("Z2Flav", &Z2Flav);
-      theTree->SetBranchAddress("p0plus_VAJHU", &p0plus_VAJHU);
-      theTree->SetBranchAddress("bkg_VAMCFM", &bkg_VAMCFM);
-      theTree->SetBranchAddress("LepLepId", &LepId);
-      theTree->SetBranchAddress("LepPt", &LepPt);
-      theTree->SetBranchAddress("LepEta", &LepEta);
-
-      treeList[is].push_back(pair<TTree*, TH1F*>(theTree, theCounters));
-    }
-  }
-
+  string cinput = "/AllData";
+  cinput = user_input_dir + cinput + "/" + user_treefile;
+  InputTreeHandle* theTree = new InputTreeHandle(TString(cinput.c_str()), user_CRtreename, user_CRcountersname);
   foutput->cd();
+
   const unsigned int nTemplates = 1;
-  TString strTemplates[nTemplates]={
-    strProcess[0][1]
-  };
+  TString strTemplates[nTemplates]={ "ZX" };
   TTree* newtree[nTemplates];
   TH2F* D_temp_2D[nTemplates];
   for (unsigned int t=0; t<nTemplates; t++){
@@ -581,70 +474,61 @@ void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev
     D_temp_2D[t]->GetYaxis()->SetTitle("D^{kin}_{bkg}");
     D_temp_2D[t]->GetXaxis()->SetTitle("m_{4l} (GeV)");
   }
-  for (unsigned int is=0; is<nProcesses; is++){
-    cout << "Process " << is << " under scrutiny" << endl;
-    tout << "Process " << is << " under scrutiny" << endl;
-    for (unsigned int it=0; it<treeList[is].size(); it++){
-      TTree* theTree = treeList[is].at(it).first;
-      int nEntries = theTree->GetEntries();
 
-      cout << "\tSample[" << it << "]=" << fileNameList[is].at(it).first << " under scrutiny. Tree name: " << theTree->GetName() << ", #Events = " << nEntries << endl;
-      tout << "\tSample[" << it << "]=" << fileNameList[is].at(it).first << " under scrutiny. Tree name: " << theTree->GetName() << ", #Events = " << nEntries << endl;
+  cout << "Process ZX under scrutiny" << endl;
+  tout << "Process ZX under scrutiny" << endl;
 
-      for (int ev=0; ev<nEntries; ev++){
-        weight=1;
+  int nEntries = theTree->GetEntries();
 
-        theTree->GetEntry(ev);
-        if (ev%10000==0) cout << "Event " << ev << "..." << endl;
+  cout << "\tSample[" << 0 << "]=ZX under scrutiny. #Events = " << nEntries << endl;
+  tout << "\tSample[" << 0 << "]=ZX under scrutiny. #Events = " << nEntries << endl;
 
-        // Best CR selection
-        if (!test_bit(CRflag, (unsigned int)CJLST_FinalState::CRZLLss)) continue;
+  for (int ev=0; ev<nEntries; ev++){
+    theTree->InitDefaults();
+    theTree->GetEntry(ev);
+    weight=1;
 
-        ZZFlav=Z1Flav*Z2Flav;
-        if (folder==0 && abs(ZZFlav)!=pow(13, 4)) continue;
-        else if (folder==1 && abs(ZZFlav)!=pow(11, 4)) continue;
-        else if (folder==2 && abs(ZZFlav)!=pow(13*11, 2)) continue;
+    if (ev%10000==0) cout << "Event " << ev << "..." << endl;
 
-        varKD = p0plus_VAJHU/(p0plus_VAJHU + bkg_VAMCFM*getDbkgkinConstant(ZZFlav, ZZMass));
-        if (varKD!=varKD) continue;
+    // Best CR selection
+    if (!test_bit(theTree->CRflag, (unsigned int)CJLST_FinalState::CRZLLss)) continue;
 
-        // Apply FRs in SS
-        if (CRflag==CJLST_FinalState::CRZLLss){
-          for (unsigned int ilep=2; ilep<=3; ilep++){
-            unsigned int whichLep = 1;
-            if (abs(LepId->at(ilep))==11) whichLep=0;
-            else if (abs(LepId->at(ilep))==13) whichLep=1;
-            if (
-              (fabs(LepEta->at(ilep))<1.2 && whichLep==0)
-              ||
-              (fabs(LepEta->at(ilep))<1.449 && whichLep==1)
-              ){
-              int bin = hFR_ZX_SS.at(whichLep).first->GetXaxis()->FindBin(LepPt->at(ilep));
-              if (bin>hFR_ZX_SS.at(whichLep).first->GetNbinsX()) bin=hFR_ZX_SS.at(whichLep).first->GetNbinsX();
-              weight *= hFR_ZX_SS.at(whichLep).first->GetBinContent(bin);
-            }
-            else{
-              int bin = hFR_ZX_SS.at(whichLep).second->GetXaxis()->FindBin(LepPt->at(ilep));
-              if (bin>hFR_ZX_SS.at(whichLep).second->GetNbinsX()) bin=hFR_ZX_SS.at(whichLep).second->GetNbinsX();
-              weight *= hFR_ZX_SS.at(whichLep).second->GetBinContent(bin);
-            }
-          }
-        }
+    if (theTree->ZZMass<ZZMass_cut[0] || theTree->ZZMass>=ZZMass_cut[1]) continue;
 
-        // Protect against any KD exceeding boundaries
-        if (varKD>=kDYarray[nbinsy]){
-          cout << "Found varKD == " << varKD;
-          varKD = kDYarray[nbinsy] - (kDYarray[nbinsy]-kDYarray[nbinsy-1])*0.1*(ev+1.)/(nEntries+1.);
-          cout << ". Corrected to have " << varKD << endl;
-        }
-        if (varKD<kDYarray[0]) varKD = kDYarray[0] + (kDYarray[1]-kDYarray[0])*0.1*ev/nEntries;
-        if (varKD>=kDYarray[nbinsy] || varKD<kDYarray[0]) cout << "Fix has been numerically unsuccessful." << endl;
+    int ZZFlav=theTree->Z1Flav*theTree->Z2Flav;
+    if (ichan==(int)k4mu && abs(ZZFlav)!=pow(13, 4)) continue;
+    else if (ichan==(int)k4e && abs(ZZFlav)!=pow(11, 4)) continue;
+    else if (ichan==(int)k2e2mu && abs(ZZFlav)!=pow(13*11, 2)) continue;
 
-        const unsigned int index=0;
-        newtree[index]->Fill();
-        D_temp_2D[index]->Fill(ZZMass, varKD, weight);
-      }
+    ZZMass = theTree->ZZMass;
+    varKD = theTree->p_GG_SIG_ghg2_1_ghz1_1_JHUGen/(theTree->p_GG_SIG_ghg2_1_ghz1_1_JHUGen + theTree->p_QQB_BKG_MCFM*getDbkgkinConstant(ZZFlav, ZZMass));
+    if (varKD!=varKD) continue;
+
+    // Apply FRs in SS
+    for (unsigned int ilep=2; ilep<=3; ilep++){
+      unsigned int whichLep = 1;
+      if (abs(theTree->LepLepId->at(ilep))==11) whichLep=0;
+      else if (abs(theTree->LepLepId->at(ilep))==13) whichLep=1;
+      if (
+        (fabs(theTree->LepEta->at(ilep))<1.2 && whichLep==0)
+        ||
+        (fabs(theTree->LepEta->at(ilep))<1.449 && whichLep==1)
+        ) weight=evaluateTObject<FRtype>(hFR_ZX_SS.at(whichLep).first, (float)theTree->LepPt->at(ilep));
+      else weight=evaluateTObject<FRtype>(hFR_ZX_SS.at(whichLep).second, (float)theTree->LepPt->at(ilep));
     }
+
+    // Protect against any KD exceeding boundaries
+    if (varKD>=kDYarray[nbinsy]){
+      cout << "Found varKD == " << varKD;
+      varKD = kDYarray[nbinsy] - (kDYarray[nbinsy]-kDYarray[nbinsy-1])*0.1*(ev+1.)/(nEntries+1.);
+      cout << ". Corrected to have " << varKD << endl;
+    }
+    if (varKD<kDYarray[0]) varKD = kDYarray[0] + (kDYarray[1]-kDYarray[0])*0.1*ev/nEntries;
+    if (varKD>=kDYarray[nbinsy] || varKD<kDYarray[0]) cout << "Fix has been numerically unsuccessful." << endl;
+
+    const unsigned int index=0;
+    newtree[index]->Fill();
+    D_temp_2D[index]->Fill(ZZMass, varKD, weight);
   }
 
   cout << "Filled the trees and templates" << endl;
@@ -669,16 +553,13 @@ void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev
   for (unsigned int ifr=0; ifr<hFR_ZX_SS.size(); ifr++){
     cout << "Deleting hFR_ZX_SS[" << ifr << "]" << endl;
     gROOT->cd();
-    TH1F* hfirst = hFR_ZX_SS.at(ifr).first;
+    FRtype* hfirst = hFR_ZX_SS.at(ifr).first;
     if (hfirst!=0) delete hfirst;
     cout << "Deleted hFR_ZX_SS[" << ifr << "] first" << endl;
-    TH1F* hsecond = hFR_ZX_SS.at(ifr).second;
+    FRtype* hsecond = hFR_ZX_SS.at(ifr).second;
     if (hsecond!=0) delete hsecond;
     cout << "Deleted hFR_ZX_SS[" << ifr << "] second" << endl;
   }
-
-  cout << "Deleted hFR_ZX" << endl;
-  tout << "Deleted hFR_ZX" << endl;
 
   foutput->cd();
   for (unsigned int t=0; t<nTemplates; t++){
@@ -688,35 +569,42 @@ void makeConditionalTemplates_ICHEP2016mainstream_ZX_one(int folder, int erg_tev
     delete newtree[t];
   }
 
-  cout << "Deleted objects" << endl;
-  tout << "Deleted objects" << endl;
-
-  for (unsigned int is=0; is<nProcesses; is++){
-    for (unsigned int ifile=0; ifile<fileList[is].size(); ifile++){
-      if (fileList[is].at(ifile)!=0 && fileList[is].at(ifile)->IsOpen()) fileList[is].at(ifile)->Close();
-    }
-  }
-
-  cout << "Deleted file list" << endl;
-  tout << "Deleted file list" << endl;
+  delete theTree;
 
   foutput->Close();
   tout.close();
 }
 
-void collectConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev, int Systematics, bool doSmooth){
+void collectConditionalTemplates_Moriond2017mainstream_one(int ichan, int erg_tev, int Systematics, bool doSmooth){
+  if (ichan>(int)nChannels) return;
+  const TString strChannel = channame(ichan);
+  constructSampleTypeList();
+
   const float ZZMass_cut[2]={ 100., 3000. };
   const float xwidth = 2;
   const int nbinsx = (ZZMass_cut[1]-ZZMass_cut[0])/xwidth;
   float kDXarray[nbinsx+1];
   for (int bin=0; bin<nbinsx+1; bin++) kDXarray[bin] = ZZMass_cut[0] + xwidth*bin;
 
+  const int nbinsy=30;
+  float kDYarray[nbinsy+1];
+  const float kDY_bounds[2]={ 0, 1 };
+  for (int bin=0; bin<nbinsy+1; bin++){
+    float binwidth = (kDY_bounds[1] - kDY_bounds[0])/nbinsy;
+    kDYarray[bin] = kDY_bounds[0] + binwidth*bin;
+  }
+
+  const float xwidth_rebin = 1;
+  const int nbinsx_rebin = (ZZMass_cut[1]-ZZMass_cut[0])/xwidth_rebin;
+  float kDXarray_rebin[nbinsx_rebin+1];
+  for (int bin=0; bin<nbinsx_rebin+1; bin++) kDXarray_rebin[bin] = ZZMass_cut[0] + xwidth_rebin*bin;
+
   TString erg_dir = Form("LHC_%iTeV/", erg_tev);
   TString strdate = todaysdate();
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
 
-  TString coutput_common = user_dir + erg_dir + "Templates/" + strdate + "/";
+  TString coutput_common = user_output_dir + erg_dir + "Templates/" + strdate + "/";
   TString cinput_common = coutput_common;
   gSystem->Exec("mkdir -p " + coutput_common);
 
@@ -731,7 +619,7 @@ void collectConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev
   if (doSmooth){
     TString strCmd_dir = strdate;
     TString strCmd_ergtev = Form("%i", erg_tev);
-    TString strCmd_channel = user_folder[folder];
+    TString strCmd_channel = strChannel;
     TString strCmd_xbinning = Form("%i,%.0f,%.0f", nbinsx, kDXarray[0], kDXarray[nbinsx]);
     TString strCmd_syst = strSyst;
     TString strCmd_djet = strDjet;
@@ -747,8 +635,8 @@ void collectConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev
     gSystem->Exec("pushd ../TemplateBuilderTemplates/; source ../TemplateBuilderTemplates/buildJson.sh " + strCmd + "; popd; ");
   }
 
-  TString INPUT_NAME = Form("HtoZZ%s_ConditionalSmoothTemplatesForCombine_", user_folder[folder].Data());
-  TString OUTPUT_NAME = Form("HtoZZ%s_ConditionalSmoothMergedTemplatesForCombine_", user_folder[folder].Data());
+  TString INPUT_NAME = Form("HtoZZ%s_ConditionalSmoothTemplatesForCombine_", strChannel.Data());
+  TString OUTPUT_NAME = Form("HtoZZ%s_ConditionalSmoothMergedTemplatesForCombine_", strChannel.Data());
   INPUT_NAME += strSyst;
   OUTPUT_NAME += strSyst;
 
@@ -766,13 +654,13 @@ void collectConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev
   cout << "Opened file " << coutput << endl;
   cout << "===============================" << endl;
   cout << "CoM Energy: " << erg_tev << " TeV" << endl;
-  cout << "Decay Channel: " << user_folder[folder] << endl;
+  cout << "Decay Channel: " << strChannel << endl;
   cout << "===============================" << endl;
   cout << endl;
   tout << "Opened file " << coutput << endl;
   tout << "===============================" << endl;
   tout << "CoM Energy: " << erg_tev << " TeV" << endl;
-  tout << "Decay Channel: " << user_folder[folder] << endl;
+  tout << "Decay Channel: " << strChannel << endl;
   tout << "===============================" << endl;
   tout << endl;
 
@@ -805,6 +693,8 @@ void collectConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev
       }
     }
 
+    // Assign same bin content for qqZZ for m>250 in ZX and >600 in qqZZ.
+    /*
     if (t>=nTemplates-2){
       int bin_int_start = D_temp_2D.at(t)->GetXaxis()->FindBin(250.);
       if (t==nTemplates-2) bin_int_start = D_temp_2D.at(t)->GetXaxis()->FindBin(600.);
@@ -816,7 +706,7 @@ void collectConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev
         }
       }
     }
-
+    */
     // Conditionalize
     wipeOverUnderFlows(D_temp_2D.at(t));
     conditionalizeHistogram(D_temp_2D.at(t), 0);
@@ -891,11 +781,10 @@ void collectConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev
       foutput->cd();
 
     //}
-    foutput->WriteTObject(D_temp_2D.at(t));
   }
   for (unsigned int izx=1; izx<=2; izx++){
     D_temp_2D.push_back(
-      (TH2F*)D_temp_2D.at(nTemplates-1)->Clone(Form("%s%s", D_temp_2D.at(nTemplates-1)->GetName(), (izx==1 ? "_ProdUp" : "_ProdDn")))
+      (TH2F*)D_temp_2D.at(nTemplates-1)->Clone(Form("%s%s", D_temp_2D.at(nTemplates-1)->GetName(), (izx==1 ? "_StatUp" : "_StatDn")))
       );
     // Mirroring from qqBkg
     for (int binx=0; binx<=D_temp_2D.at(nTemplates-1+izx)->GetNbinsX()+1; binx++){
@@ -912,11 +801,35 @@ void collectConditionalTemplates_ICHEP2016mainstream_one(int folder, int erg_tev
     // Re-conditionalize
     wipeOverUnderFlows(D_temp_2D.at(nTemplates-1+izx));
     conditionalizeHistogram(D_temp_2D.at(nTemplates-1+izx), 0);
-
-    foutput->WriteTObject(D_temp_2D.at(nTemplates-1+izx));
   }
 
-  for (unsigned int t=0; t<D_temp_2D.size(); t++) delete D_temp_2D.at(t);
+  vector<TH2F*> D_temp_2D_rebin;
+  int nloops = (int)(xwidth/xwidth_rebin+0.5);
+  for (unsigned int t=0; t<D_temp_2D.size(); t++){
+    TString tmpnamecore=D_temp_2D.at(t)->GetName();
+    TString tmpname = tmpnamecore + "_tmp";
+    TH2F* htmp = new TH2F(tmpname, D_temp_2D.at(t)->GetTitle(), nbinsx_rebin, kDXarray_rebin, nbinsy, kDYarray);
+    for (int binx=1; binx<=D_temp_2D.at(t)->GetNbinsX(); binx++){
+      for (int biny=1; biny<=D_temp_2D.at(t)->GetNbinsY(); biny++){
+        double bincontent = D_temp_2D.at(t)->GetBinContent(binx, biny);
+        for (int ist=0; ist<nloops; ist++){
+          int newbinx = nloops*(binx-1)+ist+1;
+          D_temp_2D.at(t)->SetBinContent(newbinx, biny, bincontent);
+        }
+      }
+    }
+    delete D_temp_2D.at(t);
+    htmp->SetName(tmpnamecore);
+    D_temp_2D_rebin.push_back(htmp);
+  }
+  D_temp_2D.clear();
+  for (unsigned int t=0; t<D_temp_2D_rebin.size(); t++) D_temp_2D.push_back(D_temp_2D_rebin.at(t));
+  D_temp_2D_rebin.clear();
+
+  for (unsigned int t=0; t<D_temp_2D.size(); t++){
+    foutput->WriteTObject(D_temp_2D.at(t));
+    delete D_temp_2D.at(t);
+  }
   finput->Close();
   foutput->Close();
   tout.close();
@@ -996,7 +909,7 @@ void addByLowest(float val, std::vector<float>& valArray){
 }
 
 
-SimpleParticleCollection_t constructFourVectors(short GenLepId[4], float GenLepPtEtaPhi[3][4]){
+SimpleParticleCollection_t constructFourVectors(short GenLepId[4], float GenLepPt[4], float GenLepEta[4], float GenLepPhi[4]){
   SimpleParticleCollection_t result;
   for (int idau=0; idau<4; idau++){
     float mass=0;
@@ -1005,38 +918,57 @@ SimpleParticleCollection_t constructFourVectors(short GenLepId[4], float GenLepP
     else if (abs(GenLepId[idau])==15) mass=1.7768;
     else if (abs(GenLepId[idau])==5) mass=4.75;
     else if (abs(GenLepId[idau])==4) mass=1.275;
-    TLorentzVector mom; mom.SetPtEtaPhiM((double)GenLepPtEtaPhi[0][idau], (double)GenLepPtEtaPhi[1][idau], (double)GenLepPtEtaPhi[2][idau], (double)mass);
+    TLorentzVector mom; mom.SetPtEtaPhiM((double)GenLepPt[idau], (double)GenLepEta[idau], (double)GenLepPhi[idau], (double)mass);
     result.push_back(SimpleParticle_t((int)GenLepId[idau], mom));
   }
   return result;
 }
 
 vector<pair<string, double>> getFileList(string strinput){
+  cout << strinput << endl;
   ifstream fin;
-  string filename = user_gg2VV_location.Data();
+  string filename = user_input_dir.Data();
   filename += "/"; filename += strinput;
   fin.open(filename);
   cout << "Checking list from " << filename << endl;
   vector<pair<string, double>> result;
   if (fin.good()){
-    if (filename.find("Bkg")==string::npos){ // Signal or BSI samples
-      while (!fin.eof()){
-        string strtmp;
-        double mass=-1;
-        fin >> strtmp >> mass;
-        if (strtmp!="") result.push_back(pair<string, double>(strtmp, mass));
-        else break;
-        cout << "Signal file " << strtmp << " with mass " << mass << endl;
-      }
-    }
-    else{
+    if (filename.find("Sig")!=string::npos && filename.find("POWHEG")!=string::npos){ // Signal POWHEG
       while (!fin.eof()){
         string strtmp;
         double mass=-1;
         fin >> strtmp;
+
+        if (strtmp=="") continue;
+
+        vector<string> strsplit;
+        splitOptionRecursive(strtmp, strsplit, 'H');
+        if (strsplit.size()>1){
+          string strmass = strsplit.at(1);
+          strsplit.clear();
+          splitOptionRecursive(strmass, strsplit, '_');
+          strmass = strsplit.at(0);
+          mass = std::stod(strmass);
+        }
+        else{
+          cout << "getFileList: POWHEG filename " << strtmp << " does not conform requirements" << endl;
+          cout << '\t';
+          for (unsigned int isp=0; isp<strsplit.size(); isp++) cout << strsplit.at(isp) << " ";
+          cout << endl;
+        }
+        result.push_back(pair<string, double>(strtmp, mass));
+        cout << "POWHEG file " << strtmp << " with mass " << mass << endl;
+      }
+    }
+    else{
+      double mass=-1;
+      if (filename.find("Sig")!=string::npos || filename.find("BSI")!=string::npos) mass = 125; // Sig or BSI
+      while (!fin.eof()){
+        string strtmp;
+        fin >> strtmp;
         if (strtmp!="") result.push_back(pair<string, double>(strtmp, mass));
         else break;
-        cout << "Bkg. file " << strtmp << " with mass " << mass << endl;
+        cout << "Specialized file " << strtmp << " with mass " << mass << endl;
       }
     }
   }
@@ -1044,6 +976,119 @@ vector<pair<string, double>> getFileList(string strinput){
   return result;
 }
 
+int getCategory(
+  float ZZMass,
+
+  vector<float> JetPt,
+  vector<float> JetSigma,
+  vector<float> JetPhi,
+  vector<float> JetQGLikelihood,
+  vector<float> JetIsBtaggedWithSF,
+
+  int JESvariation,
+  int nExtraLep,
+  int nExtraZ,
+  float PFMET,
+
+  float p_JJQCD_SIG_ghg2_1_JHUGen,
+  float p_JQCD_SIG_ghg2_1_JHUGen,
+  float p_JJVBF_SIG_ghv1_1_JHUGen,
+  float p_JVBF_SIG_ghv1_1_JHUGen,
+  float pAux_JVBF_SIG_ghv1_1_JHUGen,
+  float p_HadWH_SIG_ghw1_1_JHUGen,
+  float p_HadZH_SIG_ghz1_1_JHUGen,
+
+  int categorizationType
+  ){
+  bool useQGTagging = categorizationType<0;
+  bool useVHMETTagged=true;
+
+  int nCleanedJetsPt30=0;
+  int nCleanedJetsPt30BTagged_bTagSF=0;
+  float jetQGLikelihood[2]={ -1, -1 };
+  float jetPhi[2]={ 0, 0 };
+  float jetPt[2]={ 0, 0 };
+  for (unsigned int j=0; j<JetPt.size(); j++){
+    float jetpt = JetPt.at(j) * (1.+JetSigma.at(j)*((float)JESvariation));
+    if (jetpt>=30.){
+      nCleanedJetsPt30++;
+      if (JetIsBtaggedWithSF.at(j)>0.) nCleanedJetsPt30BTagged_bTagSF++;
+      if (jetpt>=jetPt[0]){
+        jetPt[0]=jetpt;
+        jetPhi[0]=JetPhi.at(j);
+        jetQGLikelihood[0]=JetQGLikelihood.at(j);
+      }
+      else if (jetpt<jetPt[0] && jetpt>=jetPt[1]){
+        jetPt[1]=jetpt;
+        jetPhi[1]=JetPhi.at(j);
+        jetQGLikelihood[1]=JetQGLikelihood.at(j);
+      }
+    }
+  }
+
+  if (categorizationType==0) return 0;
+  else if (abs(categorizationType)==1) // Main analysis categories
+    return categoryMor17(
+    nExtraLep,
+    nExtraZ,
+    nCleanedJetsPt30,
+    nCleanedJetsPt30BTagged_bTagSF,
+    jetQGLikelihood,
+    p_JJQCD_SIG_ghg2_1_JHUGen,
+    p_JQCD_SIG_ghg2_1_JHUGen,
+    p_JJVBF_SIG_ghv1_1_JHUGen,
+    p_JVBF_SIG_ghv1_1_JHUGen,
+    pAux_JVBF_SIG_ghv1_1_JHUGen,
+    p_HadWH_SIG_ghw1_1_JHUGen,
+    p_HadZH_SIG_ghz1_1_JHUGen,
+    jetPhi,
+    ZZMass,
+    PFMET,
+    useVHMETTagged,
+    useQGTagging
+    );
+  else
+    return categoryMor17_LegacyStyle(
+    nExtraLep,
+    nCleanedJetsPt30,
+    nCleanedJetsPt30BTagged_bTagSF,
+    jetQGLikelihood,
+    p_JJQCD_SIG_ghg2_1_JHUGen,
+    p_JJVBF_SIG_ghv1_1_JHUGen,
+    jetPhi,
+    ZZMass,
+    useQGTagging
+    );
+}
+
+void splitOption(const string rawoption, string& wish, string& value, char delimiter){
+  size_t posEq = rawoption.find(delimiter);
+  if (posEq!=string::npos){
+    wish=rawoption;
+    value=rawoption.substr(posEq+1);
+    wish.erase(wish.begin()+posEq, wish.end());
+  }
+  else{
+    wish="";
+    value=rawoption;
+  }
+}
+void splitOptionRecursive(const string rawoption, vector<string>& splitoptions, char delimiter){
+  string suboption=rawoption, result=rawoption;
+  string remnant;
+  while (result!=""){
+    splitOption(suboption, result, remnant, delimiter);
+    if (result!="" && !checkListVariable(splitoptions, result)) splitoptions.push_back(result);
+    suboption = remnant;
+  }
+  if (remnant!="") splitoptions.push_back(remnant);
+}
+Bool_t checkListVariable(const vector<string>& list, const string& var){
+  for (unsigned int v=0; v<list.size(); v++){
+    if (list.at(v)==var) return true; // Look for exact match
+  }
+  return false;
+}
 
 void convertTGraphErrorsToTH1F(TGraphErrors* tg, TH1F* histo){
   if (tg==0){
@@ -1114,7 +1159,7 @@ void convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F* histo){
 }
 
 // Pairs are (e-EB, e-EE), (mu-EB, mu-EE)
-vector<pair<TH1F*, TH1F*>> getZXFR_SS(){
+template <typename T> vector<pair<T*, T*>> getZXFR_SS(){
   /*
   TString tgname[2][2]={
     { "CorrFR_TG_Lep3_pT_all_EB_afterMET_wzremoved_ALL_80XB", "CorrFR_TG_Lep3_pT_all_EE_afterMET_wzremoved_ALL_80XB" },
@@ -1155,38 +1200,52 @@ vector<pair<TH1F*, TH1F*>> getZXFR_SS(){
     { "FR_SS_muon_EB", "FR_SS_muon_EE" }
   };
   TFile* finput;
-  finput = TFile::Open("../data/FakeRate_SS_2016B.root", "read");
-  vector<pair<TH1F*, TH1F*>> result;
+  finput = TFile::Open("../data/FakeRate_SS_Moriond368.root", "read");
+  vector<pair<T*, T*>> result;
   for (int f=0; f<2; f++){
     if (!(finput!=0 && finput->IsOpen())){ cerr << "getZXFR_SS: File is not open!" << endl; return result; }
     else cout << "getZXFR_SS: File opened" << endl;
-    TH1F* htmp[2];
+    T* htmp[2];
     gROOT->cd();
-    for (int t=0; t<2; t++) htmp[t] = (TH1F*)finput->Get(hname[f][t]);
-    result.push_back(pair<TH1F*, TH1F*>((TH1F*)htmp[0]->Clone(Form("%s_copy", hname[f][0].Data())), (TH1F*)htmp[1]->Clone(Form("%s_copy", hname[f][1].Data()))));
+    for (int t=0; t<2; t++) htmp[t] = (T*)finput->Get(hname[f][t]);
+    result.push_back(pair<T*, T*>((T*)htmp[0]->Clone(Form("%s_copy", hname[f][0].Data())), (T*)htmp[1]->Clone(Form("%s_copy", hname[f][1].Data()))));
   }
   if (finput!=0 && finput->IsOpen()) finput->Close();
   return result;
 }
 
+template<> double evaluateTObject<TH1F>(TH1F* obj, float val){
+  int bin = obj->GetXaxis()->FindBin(val);
+  if (bin>obj->GetXaxis()->GetNbins()) bin=obj->GetXaxis()->GetNbins();
+  return obj->GetBinContent(bin);
+}
+template<> double evaluateTObject<TGraphErrors>(TGraphErrors* obj, float val){
+  double* xx = obj->GetX();
+  double* yy = obj->GetY();
+  int n = obj->GetN();
+  if (val>xx[n-1]) val=xx[n-1];
+  return obj->Eval(val);
+}
+
 
 bool test_bit(int mask, unsigned int iBit){ return (mask >> iBit) & 1; }
 
+/*
 void checkDbkgkin(int flavor){
   if (flavor>2) return;
   TChain* tggH = new TChain("T_2D_Sig_Tree");
   TChain* tqqBkg = new TChain("T_2D_qqBkg_Tree");
   if (flavor<=0){
-    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/180716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
-    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/180716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
+    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/Moriond2017_mainstream/LHC_13TeV/Templates/180716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
+    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/Moriond2017_mainstream/LHC_13TeV/Templates/180716/HtoZZ4mu_ConditionalTemplatesForCombine_Nominal.root");
   }
   if (flavor<0 || flavor==1){
-    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/180716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
-    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/180716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
+    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/Moriond2017_mainstream/LHC_13TeV/Templates/180716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
+    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/Moriond2017_mainstream/LHC_13TeV/Templates/180716/HtoZZ4e_ConditionalTemplatesForCombine_Nominal.root");
   }
   if (flavor<0 || flavor==2){
-    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/180716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
-    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/ICHEP2016_mainstream/LHC_13TeV/Templates/180716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
+    tggH->Add("/scratch0/hep/usarical/CJLST/Analysis/Moriond2017_mainstream/LHC_13TeV/Templates/180716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
+    tqqBkg->Add("/scratch0/hep/usarical/CJLST/Analysis/Moriond2017_mainstream/LHC_13TeV/Templates/180716/HtoZZ2e2mu_ConditionalTemplatesForCombine_Nominal.root");
   }
   int ZZflav=143;
   if (flavor==0) ZZflav=169;
@@ -1300,16 +1359,16 @@ void checkDVBF2jets(int erg_tev){
   TH1F* histo = new TH1F("test", "", nbins, ZZMass_cut[0], ZZMass_cut[1]);
 
   // Get list of samples
-  const unsigned int nProcesses = 2;
-  const TString strProcess[nProcesses][2]={
+  const unsigned int nSampleTypes = 2;
+  const TString strProcess[nSampleTypes][2]={
     { "Samples_gg_Sig_POWHEG.txt", "gg_Sig" },
     { "Samples_VBF_Sig_POWHEG.txt", "VBF_Sig" }
   };
-  vector<pair<string, double>> fileNameList[nProcesses];
-  for (unsigned int is=0; is<nProcesses; is++) fileNameList[is] = getFileList(string(strProcess[is][0].Data()));
-  vector<TFile*> fileList[nProcesses];
-  vector<pair<TTree*, TH1F*>> treeList[nProcesses];
-  for (unsigned int is=0; is<nProcesses; is++){
+  vector<pair<string, double>> fileNameList[nSampleTypes];
+  for (unsigned int is=0; is<nSampleTypes; is++) fileNameList[is] = getFileList(string(strProcess[is][0].Data()));
+  vector<TFile*> fileList[nSampleTypes];
+  vector<pair<TTree*, TH1F*>> treeList[nSampleTypes];
+  for (unsigned int is=0; is<nSampleTypes; is++){
     for (unsigned int ifile=0; ifile<fileNameList[is].size(); ifile++){
       string cinput = fileNameList[is].at(ifile).first;
       cinput = user_gg2VV_location + cinput + "/" + user_treefile;
@@ -1339,7 +1398,7 @@ void checkDVBF2jets(int erg_tev){
     KDarray_HJJ[bin].clear();
     KDarray_VBF[bin].clear();
   }
-  for (unsigned int is=0; is<nProcesses; is++){
+  for (unsigned int is=0; is<nSampleTypes; is++){
     cout << "Process " << is << " under scrutiny" << endl;
     for (unsigned int it=0; it<treeList[is].size(); it++){
       double mass = fileNameList[is].at(it).second;
@@ -1406,7 +1465,7 @@ void checkDVBF2jets(int erg_tev){
 
   foutput->WriteTObject(histo);
 
-  for (unsigned int is=0; is<nProcesses; is++){
+  for (unsigned int is=0; is<nSampleTypes; is++){
     for (unsigned int ifile=0; ifile<fileList[is].size(); ifile++){
       if (fileList[is].at(ifile)!=0 && fileList[is].at(ifile)->IsOpen()) fileList[is].at(ifile)->Close();
     }
@@ -1438,16 +1497,16 @@ void checkDVBF1jet(int erg_tev){
   TH1F* histo = new TH1F("test", "", nbins, ZZMass_cut[0], ZZMass_cut[1]);
 
   // Get list of samples
-  const unsigned int nProcesses = 2;
-  const TString strProcess[nProcesses][2]={
+  const unsigned int nSampleTypes = 2;
+  const TString strProcess[nSampleTypes][2]={
     { "Samples_gg_Sig_POWHEG.txt", "gg_Sig" },
     { "Samples_VBF_Sig_POWHEG.txt", "VBF_Sig" }
   };
-  vector<pair<string, double>> fileNameList[nProcesses];
-  for (unsigned int is=0; is<nProcesses; is++) fileNameList[is] = getFileList(string(strProcess[is][0].Data()));
-  vector<TFile*> fileList[nProcesses];
-  vector<pair<TTree*, TH1F*>> treeList[nProcesses];
-  for (unsigned int is=0; is<nProcesses; is++){
+  vector<pair<string, double>> fileNameList[nSampleTypes];
+  for (unsigned int is=0; is<nSampleTypes; is++) fileNameList[is] = getFileList(string(strProcess[is][0].Data()));
+  vector<TFile*> fileList[nSampleTypes];
+  vector<pair<TTree*, TH1F*>> treeList[nSampleTypes];
+  for (unsigned int is=0; is<nSampleTypes; is++){
     for (unsigned int ifile=0; ifile<fileNameList[is].size(); ifile++){
       string cinput = fileNameList[is].at(ifile).first;
       cinput = user_gg2VV_location + cinput + "/" + user_treefile;
@@ -1478,7 +1537,7 @@ void checkDVBF1jet(int erg_tev){
     KDarray_HJJ[bin].clear();
     KDarray_VBF[bin].clear();
   }
-  for (unsigned int is=0; is<nProcesses; is++){
+  for (unsigned int is=0; is<nSampleTypes; is++){
     cout << "Process " << is << " under scrutiny" << endl;
     for (unsigned int it=0; it<treeList[is].size(); it++){
       double mass = fileNameList[is].at(it).second;
@@ -1544,7 +1603,7 @@ void checkDVBF1jet(int erg_tev){
 
   foutput->WriteTObject(histo);
 
-  for (unsigned int is=0; is<nProcesses; is++){
+  for (unsigned int is=0; is<nSampleTypes; is++){
     for (unsigned int ifile=0; ifile<fileList[is].size(); ifile++){
       if (fileList[is].at(ifile)!=0 && fileList[is].at(ifile)->IsOpen()) fileList[is].at(ifile)->Close();
     }
@@ -1552,7 +1611,7 @@ void checkDVBF1jet(int erg_tev){
 
   foutput->Close();
 }
-
+*/
 void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX, double omitbelow, int nIter_, double threshold_){
   unsigned int nbins_slice = tgSlice->GetN();
   double* xy_slice[2]={

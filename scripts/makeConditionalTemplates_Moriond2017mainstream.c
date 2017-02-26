@@ -435,7 +435,7 @@ void makeConditionalTemplates_Moriond2017mainstream_ZX_one(int ichan, int erg_te
   tout << "===============================" << endl;
   tout << endl;
 
-  vector<pair<FRtype*, FRtype*>> hFR_ZX_SS = getZXFR_SS<TGraphErrors>();
+  vector<pair<FRtype*, FRtype*>> hFR_ZX_SS = getZXFR_SS<FRtype>();
   if (hFR_ZX_SS.size()!=2){
     cerr << "ERROR: ZX FR size " << hFR_ZX_SS.size() << "!=2. Aborting..." << endl;
     tout << "ERROR: ZX FR size " << hFR_ZX_SS.size() << "!=2. Aborting..." << endl;

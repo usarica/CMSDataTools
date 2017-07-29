@@ -1,15 +1,11 @@
-HiggsWidth_PostICHEP
-====================
-====================
+# HiggsWidth_PostICHEP
 
 
-KD constants
-====================
+## KD constants
 To create pairwise KD constants, run getKDConstant_D* or write your own. Once the output ROOT file is present, pass a spline trough the TGraph by using SmoothKDConstantProducer_D*.
 
 
-Template production
-===================
+## Template production
 To produce templates for https://github.com/HZZ4l/CreateWidthDatacards, in your CMSSW release, follow these directions:
 
 _NOTE_: Use **legacywithfixes** tag to reproduce templates for width results.

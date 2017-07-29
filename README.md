@@ -1,6 +1,14 @@
+====================
 HiggsWidth_PostICHEP
 ====================
 
+
+=== KD constants ===
+To create pairwise KD constants, run getKDConstant_D* or write your own. Once the output ROOT file is present, pass a spline trough the TGraph by using SmoothKDConstantProducer_D*.
+====================
+
+
+=== Template production ===
 To produce templates for https://github.com/HZZ4l/CreateWidthDatacards, in your CMSSW release, follow these directions:
 
 _NOTE_: Use **legacywithfixes** tag to reproduce templates for width results.
@@ -31,3 +39,4 @@ Then, compile TemplateBuilder and submit jobs to queue to smooth each template.
 5) root -q -b makeCombineTemplatesSmooth_Modified_MCFM_GenLevelVBF.c+ 
 
 This will produce the final templates needed for combine. Normalizations will be output as the templates are made, you can also compare different templates using included comparesmoothedtemplates.C script.
+===========================

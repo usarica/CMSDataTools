@@ -1207,6 +1207,24 @@ namespace CalcHelpers{
   }
 
 
+  // Non-zero and NaN/Inf checkers
+  template<typename T> bool checkNonZero(vector<T> const& vars){
+    for (T const& v:vars){
+      if (v<0.){
+        cerr << "checkNonZero found value < 0" << endl;
+        return false;
+      }
+    }
+    return true;
+  }
+  template<typename T> bool checkNanInf(vector<T> const& vars){
+    for (T const& v:vars){
+      if (std::isnan(v) || std::isinf(v)) return false;
+    }
+    return true;
+  }
+
+
   // Explicit instantiations
   template void addByLowest<SimpleEntry>(std::vector<SimpleEntry>& valArray, SimpleEntry val, bool unique);
   template void addByLowest<double, int>(std::vector<std::pair<double, int>>& valArray, double val, int index);
@@ -1228,6 +1246,17 @@ namespace CalcHelpers{
   template TF1* getFcn_a0plusa1overXN<8>(TSpline3* sp, double xmin, double xmax, bool useLowBound);
   template TF1* getFcn_a0plusa1overXN<9>(TSpline3* sp, double xmin, double xmax, bool useLowBound);
   template TF1* getFcn_a0plusa1overXN<10>(TSpline3* sp, double xmin, double xmax, bool useLowBound);
+
+  template bool checkNonZero<short>(vector<short> const& vars);
+  template bool checkNanInf<short>(vector<short> const& vars);
+  template bool checkNonZero<unsigned int>(vector<unsigned int> const& vars);
+  template bool checkNanInf<unsigned int>(vector<unsigned int> const& vars);
+  template bool checkNonZero<int>(vector<int> const& vars);
+  template bool checkNanInf<int>(vector<int> const& vars);
+  template bool checkNonZero<float>(vector<float> const& vars);
+  template bool checkNanInf<float>(vector<float> const& vars);
+  template bool checkNonZero<double>(vector<double> const& vars);
+  template bool checkNanInf<double>(vector<double> const& vars);
 
 }
 

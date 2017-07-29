@@ -29,6 +29,7 @@
 #include "TRandom.h"
 #include "interface/CalcHelpers.h"
 #include "interface/Samples.h"
+#include "interface/SampleHelpers.h"
 
 
 #ifndef doDebugKD
@@ -40,459 +41,12 @@
 
 using namespace std;
 using namespace CalcHelpers;
+using namespace SampleHelpers;
 
-
-float findPoleMass(TString samplename){
-  float mass = -1;
-  string strtmp = samplename.Data();
-  std::size_t extpos = strtmp.find(".root");
-  if (extpos!=string::npos) strtmp.erase(extpos, 5);
-  vector<string> strsplit;
-  splitOptionRecursive(strtmp, strsplit, 'H');
-  if (strsplit.size()>1){
-    string strmass = strsplit.at(1);
-    strsplit.clear();
-    splitOptionRecursive(strmass, strsplit, '_');
-    strmass = strsplit.at(0);
-    mass = std::stod(strmass);
-  }
-  return mass;
-}
-TTree* findTree(vector<TTree*> treeList, int evid){
-  int ev = evid;
-  for (unsigned int t=0; t<treeList.size(); t++){
-    TTree* tree = treeList.at(t);
-    int nevts = tree->GetEntries();
-    if (ev<nevts) return tree;
-    else ev -= nevts;
-    if (ev<0) cerr << "findTree::ERROR: Could not find the event " << evid << endl;
-  }
-  return 0;
-}
-void getEntry(vector<TTree*> treeList, int evid){
-  int ev = evid;
-  for (unsigned int t=0; t<treeList.size(); t++){
-    TTree* tree = treeList.at(t);
-    int nevts = tree->GetEntries();
-    if (ev<nevts){ tree->GetEntry(ev); break; }
-    else ev -= nevts;
-    if (ev<0) cerr << "getEntry::ERROR: Could not find the event " << evid << endl;
-  }
-}
-float getEntry(vector<pair<TTree*, TH1F*>> treeList, int evid){
-  int ev = evid;
-  for (unsigned int t=0; t<treeList.size(); t++){
-    TTree* tree = treeList.at(t).first;
-    int nevts = tree->GetEntries();
-    if (ev<nevts){ tree->GetEntry(ev); return float(1./treeList.at(t).second->GetBinContent(40)); }
-    else ev -= nevts;
-    if (ev<0) cerr << "getEntry::ERROR: Could not find the event " << evid << endl;
-  }
-  return 0;
-}
-
-template<typename T> void bookBranch(TTree* tree, TString strname, T*& var){
-  if (tree!=0){
-    tree->SetBranchStatus(strname, 1); tree->SetBranchAddress(strname, var);
-  }
-}
-
-vector<TString> constructSamplesList(TString strsample, float sqrts){
-  vector<TString> samples;
-  if (strsample=="JJVBF"){
-    if (sqrts<10.){
-      samples.push_back("HZZ4lTree_VBFH116.root");
-      samples.push_back("HZZ4lTree_VBFH117.root");
-      samples.push_back("HZZ4lTree_VBFH118.root");
-      samples.push_back("HZZ4lTree_VBFH119.root");
-      samples.push_back("HZZ4lTree_VBFH120.root");
-      samples.push_back("HZZ4lTree_VBFH121.root");
-      samples.push_back("HZZ4lTree_VBFH122.root");
-      samples.push_back("HZZ4lTree_VBFH123.root");
-      samples.push_back("HZZ4lTree_VBFH124.root");
-      samples.push_back("HZZ4lTree_VBFH125.root");
-      samples.push_back("HZZ4lTree_VBFH126.root");
-      samples.push_back("HZZ4lTree_VBFH127.root");
-      samples.push_back("HZZ4lTree_VBFH128.root");
-      samples.push_back("HZZ4lTree_VBFH129.root");
-      samples.push_back("HZZ4lTree_VBFH130.root");
-      samples.push_back("HZZ4lTree_VBFH135.root");
-      samples.push_back("HZZ4lTree_VBFH140.root");
-      samples.push_back("HZZ4lTree_VBFH145.root");
-      samples.push_back("HZZ4lTree_VBFH150.root");
-      samples.push_back("HZZ4lTree_VBFH160.root");
-      samples.push_back("HZZ4lTree_VBFH170.root");
-      samples.push_back("HZZ4lTree_VBFH180.root");
-      samples.push_back("HZZ4lTree_VBFH190.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH200.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH225.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH250.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH275.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH300.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH350.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH400.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH450.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH500.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH550.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH600.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH650.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH700.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH750.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH800.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH850.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH900.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH950.root");
-      samples.push_back("HZZ4lTree_powheg15VBFH1000.root");
-    }
-    else{
-      samples.push_back("VBFH115");
-      samples.push_back("VBFH120");
-      samples.push_back("VBFH124");
-      samples.push_back("VBFH125");
-      samples.push_back("VBFH126");
-      samples.push_back("VBFH130");
-      samples.push_back("VBFH135");
-      samples.push_back("VBFH140");
-      samples.push_back("VBFH150");
-      samples.push_back("VBFH155");
-      samples.push_back("VBFH160");
-      samples.push_back("VBFH165");
-      samples.push_back("VBFH170");
-      samples.push_back("VBFH175");
-      samples.push_back("VBFH180");
-      samples.push_back("VBFH190");
-      samples.push_back("VBFH210");
-      samples.push_back("VBFH230");
-      samples.push_back("VBFH250");
-      samples.push_back("VBFH270");
-      samples.push_back("VBFH300");
-      samples.push_back("VBFH350");
-      samples.push_back("VBFH450");
-      samples.push_back("VBFH500");
-      samples.push_back("VBFH550");
-      samples.push_back("VBFH600");
-      samples.push_back("VBFH700");
-      samples.push_back("VBFH750");
-      samples.push_back("VBFH800");
-      samples.push_back("VBFH900");
-      samples.push_back("VBFH1000");
-      samples.push_back("VBFH2000");
-      samples.push_back("VBFH2500");
-      samples.push_back("VBFH3000");
-    }
-  }
-  else if (strsample=="WH"){
-    if (sqrts<10.){
-      samples.push_back("HZZ4lTree_WH110.root");
-      samples.push_back("HZZ4lTree_WH115.root");
-      samples.push_back("HZZ4lTree_WH120.root");
-      samples.push_back("HZZ4lTree_WH125.root");
-      samples.push_back("HZZ4lTree_WH126.root");
-      samples.push_back("HZZ4lTree_WH130.root");
-      samples.push_back("HZZ4lTree_WH140.root");
-      samples.push_back("HZZ4lTree_WH150.root");
-      samples.push_back("HZZ4lTree_WH160.root");
-      samples.push_back("HZZ4lTree_WH180.root");
-      samples.push_back("HZZ4lTree_WH200.root");
-    }
-    else{
-      samples.push_back("WminusH115");
-      samples.push_back("WminusH120");
-      samples.push_back("WminusH124");
-      samples.push_back("WminusH125");
-      samples.push_back("WminusH126");
-      samples.push_back("WminusH130");
-      samples.push_back("WminusH135");
-      samples.push_back("WminusH140");
-      samples.push_back("WminusH145");
-      samples.push_back("WminusH150");
-      samples.push_back("WminusH155");
-      samples.push_back("WminusH160");
-      samples.push_back("WminusH165");
-      samples.push_back("WminusH170");
-      samples.push_back("WminusH175");
-      samples.push_back("WminusH180");
-      samples.push_back("WminusH190");
-      samples.push_back("WminusH200");
-      samples.push_back("WminusH210");
-      samples.push_back("WminusH230");
-      samples.push_back("WplusH115");
-      samples.push_back("WplusH120");
-      samples.push_back("WplusH124");
-      samples.push_back("WplusH125");
-      samples.push_back("WplusH126");
-      samples.push_back("WplusH130");
-      samples.push_back("WplusH135");
-      samples.push_back("WplusH140");
-      samples.push_back("WplusH145");
-      samples.push_back("WplusH150");
-      samples.push_back("WplusH155");
-      samples.push_back("WplusH160");
-      samples.push_back("WplusH165");
-      samples.push_back("WplusH170");
-      samples.push_back("WplusH175");
-      samples.push_back("WplusH180");
-      samples.push_back("WplusH190");
-      samples.push_back("WplusH200");
-      samples.push_back("WplusH210");
-      samples.push_back("WplusH230");
-    }
-  }
-  else if (strsample=="ZH"){
-    if (sqrts<10.){
-      samples.push_back("HZZ4lTree_ZH110.root");
-      samples.push_back("HZZ4lTree_ZH115.root");
-      samples.push_back("HZZ4lTree_ZH120.root");
-      samples.push_back("HZZ4lTree_ZH125.root");
-      samples.push_back("HZZ4lTree_ZH126.root");
-      samples.push_back("HZZ4lTree_ZH130.root");
-      samples.push_back("HZZ4lTree_ZH140.root");
-      samples.push_back("HZZ4lTree_ZH150.root");
-      samples.push_back("HZZ4lTree_ZH160.root");
-      samples.push_back("HZZ4lTree_ZH180.root");
-      samples.push_back("HZZ4lTree_ZH200.root");
-    }
-    else{
-      samples.push_back("ZH115");
-      samples.push_back("ZH120");
-      samples.push_back("ZH124");
-      samples.push_back("ZH125");
-      samples.push_back("ZH126");
-      samples.push_back("ZH130");
-      samples.push_back("ZH135");
-      samples.push_back("ZH140");
-      samples.push_back("ZH145");
-      samples.push_back("ZH150");
-      samples.push_back("ZH155");
-      samples.push_back("ZH160");
-      samples.push_back("ZH165");
-      samples.push_back("ZH170");
-      samples.push_back("ZH175");
-      samples.push_back("ZH180");
-      samples.push_back("ZH190");
-      samples.push_back("ZH200");
-      //samples.push_back("ZH210");
-      //samples.push_back("ZH230");
-    }
-  }
-  else if (strsample=="JJQCD"){
-    if (sqrts<10.){
-      samples.push_back("HZZ4lTree_minloH90.root");
-      samples.push_back("HZZ4lTree_minloH95.root");
-      samples.push_back("HZZ4lTree_minloH100.root");
-      samples.push_back("HZZ4lTree_minloH105.root");
-      samples.push_back("HZZ4lTree_minloH110.root");
-      samples.push_back("HZZ4lTree_minloH115.root");
-      samples.push_back("HZZ4lTree_minloH120.root");
-      samples.push_back("HZZ4lTree_minloH124.root");
-      samples.push_back("HZZ4lTree_minloH125.root");
-      samples.push_back("HZZ4lTree_minloH126.root");
-      samples.push_back("HZZ4lTree_minloH130.root");
-      samples.push_back("HZZ4lTree_minloH135.root");
-      samples.push_back("HZZ4lTree_minloH140.root");
-      samples.push_back("HZZ4lTree_minloH145.root");
-      samples.push_back("HZZ4lTree_minloH150.root");
-      samples.push_back("HZZ4lTree_minloH155.root");
-      samples.push_back("HZZ4lTree_minloH160.root");
-      samples.push_back("HZZ4lTree_minloH170.root");
-      samples.push_back("HZZ4lTree_minloH180.root");
-      samples.push_back("HZZ4lTree_minloH190.root");
-      samples.push_back("HZZ4lTree_minloH200.root");
-      samples.push_back("HZZ4lTree_minloH250.root");
-      samples.push_back("HZZ4lTree_minloH300.root");
-      samples.push_back("HZZ4lTree_minloH350.root");
-      samples.push_back("HZZ4lTree_minloH400.root");
-      samples.push_back("HZZ4lTree_minloH450.root");
-      samples.push_back("HZZ4lTree_minloH500.root");
-      samples.push_back("HZZ4lTree_minloH550.root");
-      samples.push_back("HZZ4lTree_minloH600.root");
-      samples.push_back("HZZ4lTree_minloH650.root");
-      samples.push_back("HZZ4lTree_minloH700.root");
-      samples.push_back("HZZ4lTree_minloH750.root");
-      samples.push_back("HZZ4lTree_minloH800.root");
-      samples.push_back("HZZ4lTree_minloH850.root");
-      samples.push_back("HZZ4lTree_minloH900.root");
-      samples.push_back("HZZ4lTree_minloH950.root");
-      samples.push_back("HZZ4lTree_minloH1000.root");
-    }
-    else{
-      samples.push_back("ggH115");
-      samples.push_back("ggH120");
-      samples.push_back("ggH124");
-      samples.push_back("ggH125");
-      samples.push_back("ggH126");
-      samples.push_back("ggH130");
-      samples.push_back("ggH135");
-      samples.push_back("ggH145");
-      samples.push_back("ggH150");
-      samples.push_back("ggH155");
-      samples.push_back("ggH160");
-      samples.push_back("ggH165");
-      samples.push_back("ggH170");
-      samples.push_back("ggH175");
-      samples.push_back("ggH180");
-      samples.push_back("ggH190");
-      samples.push_back("ggH200");
-      samples.push_back("ggH210");
-      samples.push_back("ggH230");
-      samples.push_back("ggH250");
-      samples.push_back("ggH270");
-      samples.push_back("ggH300");
-      samples.push_back("ggH350");
-      samples.push_back("ggH400");
-      samples.push_back("ggH450");
-      samples.push_back("ggH500");
-      samples.push_back("ggH550");
-      samples.push_back("ggH600");
-      samples.push_back("ggH700");
-      samples.push_back("ggH750");
-      samples.push_back("ggH800");
-      samples.push_back("ggH900");
-      samples.push_back("ggH1000");
-      samples.push_back("ggH1500");
-      samples.push_back("ggH2000");
-      samples.push_back("ggH2500");
-      samples.push_back("ggH3000");
-    }
-  }
-  else if (strsample=="gg_Sig_JHUGen"){
-    if (sqrts<10.){
-      samples.push_back("HZZ4lTree_jhuGenV4-H91.2.root");
-      samples.push_back("HZZ4lTree_powheg15jhuGenV3-0PMH125.6.root");
-    }
-    else{
-    }
-  }
-  else if (strsample=="gg_Sig_MCFM"){
-    if (sqrts<10.){
-      samples.push_back("HZZ4lTree_ggTo4mu_SMH-MCFM67_H125.6.root");
-      samples.push_back("HZZ4lTree_ggTo4e_SMH-MCFM67_H125.6.root");
-      samples.push_back("HZZ4lTree_ggTo2e2mu_SMH-MCFM67_H125.6.root");
-    }
-    else{
-      samples.push_back("ggTo4mu_0PMH125_MCFM701");
-      samples.push_back("ggTo4e_0PMH125_MCFM701");
-      samples.push_back("ggTo2e2mu_0PMH125_MCFM701");
-      samples.push_back("ggTo2e2tau_0PMH125_MCFM701");
-      samples.push_back("ggTo2mu2tau_0PMH125_MCFM701");
-      samples.push_back("ggTo4tau_0PMH125_MCFM701");
-    }
-  }
-  else if (strsample=="gg_Bkg_MCFM"){
-    if (sqrts<10.){
-      samples.push_back("HZZ4lTree_ggTo2e2mu_Contin-MCFM67.root");
-      samples.push_back("HZZ4lTree_ggTo4mu_Contin-MCFM67.root");
-      samples.push_back("HZZ4lTree_ggTo4e_Contin-MCFM67.root");
-    }
-    else{
-      samples.push_back("ggTo4mu_Contin_MCFM701");
-      samples.push_back("ggTo4e_Contin_MCFM701");
-      samples.push_back("ggTo2e2mu_Contin_MCFM701");
-      samples.push_back("ggTo2e2tau_Contin_MCFM701");
-      samples.push_back("ggTo2mu2tau_Contin_MCFM701");
-      samples.push_back("ggTo4tau_Contin_MCFM701");
-    }
-  }
-  else if (strsample=="gg_Sig_ggVV"){
-    if (sqrts<10.){
-      samples.push_back("HZZ4lTree_ggTo2l2l_H125.6.root");
-      samples.push_back("HZZ4lTree_ggTo4l_H125.6.root");
-    }
-    else{
-    }
-  }
-  else if (strsample=="gg_Bkg_ggVV"){
-    if (sqrts<10.){
-      samples.push_back("HZZ4lTree_ggTo4l_Continuum.root");
-      samples.push_back("HZZ4lTree_ggZZ4l.root");
-      samples.push_back("HZZ4lTree_ggTo2l2l_Continuum.root");
-      samples.push_back("HZZ4lTree_ggZZ2l2l.root");
-    }
-    else{
-    }
-  }
-  else if (strsample=="VV_Sig_Phantom"){
-    if (sqrts<10.){
-    }
-    else{
-      samples.push_back("VBFTo2e2muJJ_0PMH125_phantom128");
-      samples.push_back("VBFTo4muJJ_0PMH125_phantom128");
-      samples.push_back("VBFTo4eJJ_0PMH125_phantom128");
-    }
-  }
-  else if (strsample=="VV_Bkg_Phantom"){
-    if (sqrts<10.){
-    }
-    else{
-      samples.push_back("VBFTo2e2muJJ_Contin_phantom128");
-      samples.push_back("VBFTo4muJJ_Contin_phantom128");
-      samples.push_back("VBFTo4eJJ_Contin_phantom128");
-    }
-  }
-  else if (strsample=="qq_Bkg"){
-    if (sqrts<10.){
-      samples.push_back("HZZ4lTree_ZZTo2e2mu.root");
-      samples.push_back("HZZ4lTree_ZZTo2e2tau.root");
-      samples.push_back("HZZ4lTree_ZZTo2mu2tau.root");
-      samples.push_back("HZZ4lTree_ZZTo4mu.root");
-      samples.push_back("HZZ4lTree_ZZTo4e.root");
-      samples.push_back("HZZ4lTree_ZZTo4tau.root");
-      samples.push_back("HZZ4lTree_ZZ95-160To2e2mu.root");
-      samples.push_back("HZZ4lTree_ZZ95-160To2e2tau.root");
-      samples.push_back("HZZ4lTree_ZZ95-160To2mu2tau.root");
-      samples.push_back("HZZ4lTree_ZZ95-160To4mu.root");
-      samples.push_back("HZZ4lTree_ZZ95-160To4e.root");
-      samples.push_back("HZZ4lTree_ZZ95-160To4tau.root");
-    }
-    else{
-      samples.push_back("ZZTo4l");
-      samples.push_back("ZZTo4l_ext");
-    }
-  }
-  else if (strsample=="qq_Bkg_Combined"){
-    if (sqrts<10.){
-      samples.push_back("HZZ4lTree_ZZTo2e2mu.root");
-      samples.push_back("HZZ4lTree_ZZTo2e2tau.root");
-      samples.push_back("HZZ4lTree_ZZTo2mu2tau.root");
-      samples.push_back("HZZ4lTree_ZZTo4mu.root");
-      samples.push_back("HZZ4lTree_ZZTo4e.root");
-      samples.push_back("HZZ4lTree_ZZTo4tau.root");
-      samples.push_back("HZZ4lTree_ZZ95-160To2e2mu.root");
-      samples.push_back("HZZ4lTree_ZZ95-160To2e2tau.root");
-      samples.push_back("HZZ4lTree_ZZ95-160To2mu2tau.root");
-      samples.push_back("HZZ4lTree_ZZ95-160To4mu.root");
-      samples.push_back("HZZ4lTree_ZZ95-160To4e.root");
-      samples.push_back("HZZ4lTree_ZZ95-160To4tau.root");
-    }
-    else{
-      samples.push_back("ZZTo4lCombined");
-    }
-  }
-  return samples;
-}
 
 //////////////////
 // KD functions //
 //////////////////
-bool checkNonZero(vector<float> const& vars){
-  for (auto const& v:vars){
-    if (v<0.){
-      cerr << "checkNonZero found value < 0" << endl;
-      return false;
-    }
-  }
-  return true;
-}
-bool checkNanInf(vector<float> const& vars){
-  for (unsigned int i=0; i<vars.size(); i++){
-    if (std::isnan(vars[i]) || std::isinf(vars[i])){
-      cerr << i << "th variable is " << vars[i] << endl;
-      return false;
-    }
-  }
-  return true;
-}
-
 float constructSimpleKD(vector<float>& vars, float constant=1){
   assert(!checkNonZero(vars) || vars.size()!=2);
   if (!checkNanInf(vars)) return -999;
@@ -1159,24 +713,24 @@ void getKDConstant_DjjVH(TString strprod, float sqrts=13){
   vector<TString> extraweights[2];
 
   vector<TString> strRecoBranch;
-  if (strprod=="ZH"){
+  if (strprod=="ZH_Sig_POWHEG"){
     strRecoBranch.push_back("p_HadZH_SIG_ghz1_1_JHUGen_JECNominal");
     strRecoBranch.push_back("p_HadZH_mavjj_JECNominal");
   }
-  else if (strprod=="WH"){
+  else if (strprod=="WH_Sig_POWHEG"){
     strRecoBranch.push_back("p_HadWH_SIG_ghw1_1_JHUGen_JECNominal");
     strRecoBranch.push_back("p_HadWH_mavjj_JECNominal");
   }
   strRecoBranch.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
   vector<TString> strSamples[2];
-  if (strprod=="ZH"){
-    vector<TString> s1; s1.push_back("ZH");
-    vector<TString> s2; s2.push_back("JJQCD"); s2.push_back("gg_Sig_JHUGen");
+  if (strprod=="ZH_Sig_POWHEG"){
+    vector<TString> s1; s1.push_back("ZH_Sig_POWHEG");
+    vector<TString> s2; s2.push_back("gg_Sig_POWHEG");
     getSamplePairs(sqrts, s1, s2, strSamples[0], strSamples[1]);
   }
-  else if (strprod=="WH"){
-    vector<TString> s1; s1.push_back("WH");
-    vector<TString> s2; s2.push_back("JJQCD"); s2.push_back("gg_Sig_JHUGen");
+  else if (strprod=="WH_Sig_POWHEG"){
+    vector<TString> s1; s1.push_back("WH_Sig_POWHEG");
+    vector<TString> s2; s2.push_back("gg_Sig_POWHEG");
     getSamplePairs(sqrts, s1, s2, strSamples[0], strSamples[1]);
   }
   else{
@@ -1193,7 +747,7 @@ void getKDConstant_DjjVH(TString strprod, float sqrts=13){
       manualboundaries, valrange
       ));
   }
-  if (strprod=="ZH"){
+  if (strprod=="ZH_Sig_POWHEG"){
     pair<float, float> valrange(230, 3500);
     vector<float> manualboundaries;
     manualboundaries.push_back(245);
@@ -1203,7 +757,7 @@ void getKDConstant_DjjVH(TString strprod, float sqrts=13){
       manualboundaries, valrange
       ));
   }
-  else if (strprod=="WH"){
+  else if (strprod=="WH_Sig_POWHEG"){
     pair<float, float> valrange(195, 3500);
     vector<float> manualboundaries;
     manualboundaries.push_back(196);
@@ -1236,8 +790,8 @@ void getKDConstant_DjjVBF(float sqrts=13){
   strRecoBranch.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
   vector<TString> strSamples[2];
   {
-    vector<TString> s1; s1.push_back("JJVBF");
-    vector<TString> s2; s2.push_back("JJQCD"); s2.push_back("gg_Sig_JHUGen");
+    vector<TString> s1; s1.push_back("VBF_Sig_POWHEG");
+    vector<TString> s2; s2.push_back("gg_Sig_POWHEG");
     getSamplePairs(sqrts, s1, s2, strSamples[0], strSamples[1]);
   }
 
@@ -1287,8 +841,8 @@ void getKDConstant_DjVBF(float sqrts=13){
   strRecoBranch.push_back("p_JQCD_SIG_ghg2_1_JHUGen_JECNominal");
   vector<TString> strSamples[2];
   {
-    vector<TString> s1; s1.push_back("JJVBF");
-    vector<TString> s2; s2.push_back("JJQCD"); s2.push_back("gg_Sig_JHUGen");
+    vector<TString> s1; s1.push_back("VBF_Sig_POWHEG");
+    vector<TString> s2; s2.push_back("gg_Sig_POWHEG");
     getSamplePairs(sqrts, s1, s2, strSamples[0], strSamples[1]);
   }
 
@@ -1339,7 +893,7 @@ void getKDConstant_Dbkgkin(TString strchannel, float sqrts=13){
   strRecoBranch.push_back("p_QQB_BKG_MCFM");
   vector<TString> strSamples[2];
   {
-    vector<TString> s1; s1.push_back("JJQCD"); s1.push_back("gg_Sig_JHUGen"); s1.push_back("JJVBF"); s1.push_back("gg_Sig_MCFM");
+    vector<TString> s1; s1.push_back("gg_Sig_POWHEG"); s1.push_back("VBF_Sig_POWHEG"); s1.push_back("gg_Sig_SM_MCFM");
     //vector<TString> s2; s2.push_back("qq_Bkg_Combined");
     vector<TString> s2; s2.push_back("qq_Bkg_Combined"); s2.push_back("gg_Bkg_MCFM");
     getSamplePairs(sqrts, s1, s2, strSamples[0], strSamples[1]);
@@ -1392,7 +946,7 @@ void getKDConstant_Dbkgdec(TString strchannel, float sqrts=13){
   strRecoBranch.push_back("p_GG_BKG_MCFM");
   vector<TString> strSamples[2];
   {
-    vector<TString> s1; s1.push_back("JJQCD"); s1.push_back("gg_Sig_JHUGen"); s1.push_back("JJVBF"); s1.push_back("gg_Sig_MCFM");
+    vector<TString> s1; s1.push_back("gg_Sig_POWHEG"); s1.push_back("VBF_Sig_POWHEG"); s1.push_back("gg_Sig_SM_MCFM");
     vector<TString> s2; s2.push_back("qq_Bkg_Combined"); s2.push_back("gg_Bkg_MCFM");
     getSamplePairs(sqrts, s1, s2, strSamples[0], strSamples[1]);
   }
@@ -1436,7 +990,7 @@ void getKDConstant_DbkgjjEWQCD(TString strchannel, float sqrts=13){
 
   vector<TString> strSamples[2];
   {
-    vector<TString> s1; s1.push_back("JJVBF"); s1.push_back("ZH"); s1.push_back("WH");
+    vector<TString> s1; s1.push_back("VBF_Sig_POWHEG"); s1.push_back("ZH_Sig_POWHEG"); s1.push_back("WH_Sig_POWHEG");
     vector<TString> s2; s2.push_back("qq_Bkg_Combined"); s2.push_back("VV_Bkg_Phantom");
     getSamplePairs(sqrts, s1, s2, strSamples[0], strSamples[1]);
   }
@@ -1647,13 +1201,13 @@ void generic_gConstantProducer(TString strprod, TString strhypo, bool useproddec
 }
 
 void gConstantProducer(){
-  generic_gConstantProducer("WH", "g2");
-  generic_gConstantProducer("WH", "g4");
-  generic_gConstantProducer("WH", "L1");
-  generic_gConstantProducer("ZH", "g2");
-  generic_gConstantProducer("ZH", "g4");
-  generic_gConstantProducer("ZH", "L1");
-  generic_gConstantProducer("ZH", "L1Zgs");
+  generic_gConstantProducer("WH_Sig_POWHEG", "g2");
+  generic_gConstantProducer("WH_Sig_POWHEG", "g4");
+  generic_gConstantProducer("WH_Sig_POWHEG", "L1");
+  generic_gConstantProducer("ZH_Sig_POWHEG", "g2");
+  generic_gConstantProducer("ZH_Sig_POWHEG", "g4");
+  generic_gConstantProducer("ZH_Sig_POWHEG", "L1");
+  generic_gConstantProducer("ZH_Sig_POWHEG", "L1Zgs");
   generic_gConstantProducer("VBF", "g2");
   generic_gConstantProducer("VBF", "g4");
   generic_gConstantProducer("VBF", "L1");
@@ -1670,7 +1224,7 @@ void testDbkgkinGGZZvsQQZZ(){
   vector<TString> strSamples[nsamples];
   vector<TString> s1; s1.push_back("qq_Bkg_Combined"); getSamplesList(13, s1, strSamples[0]);
   vector<TString> s2; s2.push_back("gg_Bkg_MCFM"); getSamplesList(13, s2, strSamples[1]);
-  vector<TString> s3; s3.push_back("JJQCD"); s3.push_back("gg_Sig_JHUGen"); s3.push_back("JJVBF"); s3.push_back("gg_Sig_MCFM"); getSamplesList(13, s3, strSamples[2]);
+  vector<TString> s3; s3.push_back("gg_Sig_POWHEG"); s3.push_back("VBF_Sig_POWHEG"); s3.push_back("gg_Sig_SM_MCFM"); getSamplesList(13, s3, strSamples[2]);
 
   TString strchannel[3]={ "4e", "4mu", "2e2mu" };
 

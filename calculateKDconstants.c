@@ -84,65 +84,6 @@ float constructDbkgkin(vector<float>& vars, float constant=1){
 float constructDbkgdec(vector<float>& vars, float constant=1){
   return constructPA1PB1PBp1KD(vars, constant);
 }
-float constructDjjbkgEW(vector<float>& vars, float constant=1){
-  // vars[0]: JJVBF sig
-  // vars[1]: JJZH sig
-  // vars[2]: JJWH sig
-
-  // vars[3]: JJVBF bkg
-  // vars[4]: JJZH bkg
-  // vars[5]: JJWH bkg
-  
-  // vars[6]: JJZH P(mjj)
-  // vars[7]: JJWH P(mjj)
-  
-  // vars[8]: JJVBF sig const
-  // vars[9]: JJZH sig const
-  // vars[10]: JJWH sig const
-
-  // vars[11]: JJVBF bkg const
-  // vars[12]: JJZH bkg const
-  // vars[13]: JJWH bkg const
-  assert(!checkNonZero(vars) || vars.size()!=14);
-  if (!checkNanInf(vars)) return -999;
-
-  float const_ew_sig = 1./(1./vars[8]+1./vars[9]+1./vars[10]);
-  float const_ew_bkg = 1./(1./vars[11]+1./vars[12]+1./vars[13]);
-
-  //float ewsig = vars[0]/const_ew_sig;
-  float vbf = vars[0]/vars[8];
-  float zh = vars[1]/vars[9];
-  float wh = vars[2]/vars[10];
-  //float vbfzh_vbfwh = (ewsig - vbf - zh - wh);
-
-  //float ewbkg = vars[4]/const_ew_bkg;
-  float vbs = vars[3]/vars[11];
-  float zzz = vars[4]/vars[12];
-  float wzz = vars[5]/vars[13];
-  //float vbszzz_vbswzz = (ewbkg - vbs - zzz - wzz);
-
-  float scale_Pmjj_vb = 1;
-  float scale_Pmjj_z = vars[6];
-  float scale_Pmjj_w = vars[7];
-  //float scale_Pmjj_int = sqrt(scale_Pmjj_z + scale_Pmjj_w)*sqrt(scale_Pmjj_vb);
-
-  vbf *= scale_Pmjj_vb;
-  vbs *= scale_Pmjj_vb;
-
-  zh *= scale_Pmjj_z;
-  zzz *= scale_Pmjj_z;
-
-  wh *= scale_Pmjj_w;
-  wzz *= scale_Pmjj_w;
-
-  //vbfzh_vbfwh *= scale_Pmjj_int;
-  //vbszzz_vbswzz *= scale_Pmjj_int;
-
-  // Ignore VBF-VH or VBS-VZZ interference terms
-  float PA = (vbf + zh + wh)*const_ew_sig;
-  float PB = (vbs + zzz + wzz)*const_ew_bkg;
-  return PA/(PA+constant*PB);
-}
 float constructDjjbkgEWQCD(vector<float>& vars, float constant=1){
   // vars[0]: JJVBF sig
   // vars[1]: JJZH sig
@@ -164,7 +105,7 @@ float constructDjjbkgEWQCD(vector<float>& vars, float constant=1){
   // vars[13]: JJZH bkg const
   // vars[14]: JJWH bkg const
   // vars[15]: JJQCD bkg const
-  assert(!checkNonZero(vars) || vars.size()!=16);
+  assert(!checkNonZero(vars) || vars.size()!=17);
   if (!checkNanInf(vars)) return -999;
 
   float const_ew_sig = 1./(1./vars[9]+1./vars[10]+1./vars[11]);
@@ -184,9 +125,10 @@ float constructDjjbkgEWQCD(vector<float>& vars, float constant=1){
   float qcdzz = vars[6]/vars[15];
   //float vbszzz_vbswzz = (ewbkg - vbs - zzz - wzz);
 
+  float sjj = pow(vars[16], 2);
   float scale_Pmjj_vb = 1;
-  float scale_Pmjj_z = vars[7];
-  float scale_Pmjj_w = vars[8];
+  float scale_Pmjj_z = vars[7]*(pow(sjj-pow(91.1876, 2), 2)+pow(91.1876*2.4952, 2));
+  float scale_Pmjj_w = vars[8]*(pow(sjj-pow(80.399, 2), 2)+pow(80.399*2.085, 2));
   //float scale_Pmjj_int = sqrt(scale_Pmjj_z + scale_Pmjj_w)*sqrt(scale_Pmjj_vb);
 
   vbf *= scale_Pmjj_vb;
@@ -262,7 +204,7 @@ void bookSampleTrees(
           bookBranch(tree, "DiJetMass", DiJetMass);
           bookBranch(tree, strTrueBranch, var_true);
 
-          for (auto& p : str_val_reco) bookBranch(tree, p.first, p.second);
+          for (auto& p : str_val_reco){ if (p.first!="DiJetMass") bookBranch(tree, p.first, p.second); }
           for (unsigned int ip=0; ip<str_weight.size(); ip++){
             pair<TString, float*>& p = str_weight.at(ip);
             if (weightExists[ip]==1) bookBranch(tree, p.first, p.second);
@@ -285,6 +227,7 @@ void getEvents(
   short& Z1Id, short& Z2Id, float& DiJetMass,
   float& varTrack,
   vector<float>& valReco,
+  vector<TString>& nameReco,
   vector<float>& weights,
   vector<SimpleEntry>& index,
   float(*KDfcn)(vector<float>&, float),
@@ -297,8 +240,12 @@ void getEvents(
   else if (strcustomselection.Contains("4e")){ matchdecid.push_back(121*121); }
 
   pair<float, float> mjjcut(-1, -1);
-  if (strcustomselection.Contains("VBFLike")){ mjjcut.first=130; }
-  else if (strcustomselection.Contains("VHLike")){ mjjcut.first=60; mjjcut.second=115; }
+  if (strcustomselection.Contains("VBFLike")){ mjjcut.first=150; }
+  else if (strcustomselection.Contains("VHLike")){ mjjcut.first=40; mjjcut.second=150; }
+
+  pair<float, float> m4lcut(-1, -1);
+  if (strcustomselection.Contains("LowMass")){ m4lcut.first=100; m4lcut.second=160; }
+  else if (strcustomselection.Contains("HighMass")){ m4lcut.first=160; }
 
   if (matchdecid.size()>0){
     cout << "Matching events to either of ";
@@ -314,6 +261,7 @@ void getEvents(
     bool recoPos=false;
     unsigned int itv=0;
     for (auto& v:valReco){
+      if (nameReco[itv]=="DiJetMass") v = DiJetMass;
       if (std::isnan(v) || std::isinf(v) || v<0.){
         if (std::isnan(v) || std::isinf(v)) cerr << "Invalid valReco[" << itv << "] = " << v << " is being discarded at mass " << varTrack << endl;
         recoPos=false;
@@ -328,7 +276,10 @@ void getEvents(
     for (short& testid : matchdecid){ if (testid == Z1Id*Z2Id){ testMatchDec=true; break; } }
     doProcess &= testMatchDec;
 
-    bool testMatchRecoMJJ = (mjjcut.first<0. || mjjcut.first<=DiJetMass) && (mjjcut.second<0. || DiJetMass<=mjjcut.second);
+    bool testMatchRecoM4L = (m4lcut.first<0. || m4lcut.first<=varTrue) && (m4lcut.second<0. || varTrue<=m4lcut.second);
+    doProcess &= testMatchRecoM4L;
+
+    bool testMatchRecoMJJ = (mjjcut.first<0. || (mjjcut.first<=DiJetMass && DiJetMass>=0.)) && (mjjcut.second<0. || (DiJetMass<=mjjcut.second && DiJetMass>=0.));
     doProcess &= testMatchRecoMJJ;
 
     if (!doProcess) continue;
@@ -538,7 +489,7 @@ void getKDConstantByMass(
       nEntries[ih],
       Z1Id, Z2Id, DiJetMass,
       varTrack,
-      valReco,
+      valReco, strRecoBranch,
       weights,
       index[ih],
       KDfcn,
@@ -961,10 +912,11 @@ void getKDConstant_Dbkgdec(TString strchannel, float sqrts=13){
 /* SPECIFIC COMMENT: NONE */
 void getKDConstant_DbkgjjEWQCD(TString strchannel, float sqrts=13){
   if (!(strchannel.Contains("2l2l") || strchannel.Contains("4l"))) return;
-  if (!(strchannel.Contains("VBFLike") || strchannel.Contains("VHLike"))) return;
+  if (!(strchannel.Contains("VBFLike") || strchannel.Contains("VHLike_LowMass"))) return;
 
   const bool writeFinalTree=false;
-  float divisor=15000;
+  float divisor=40000;
+  if (strchannel.Contains("VHLike_LowMass")) divisor = 1000;
 
   vector<TString> extraweights[2];
 
@@ -988,19 +940,49 @@ void getKDConstant_DbkgjjEWQCD(TString strchannel, float sqrts=13){
   strRecoBranch.push_back("pConst_Had_WH_BKG_MCFM_JECNominal");
   strRecoBranch.push_back("pConst_JJQCD_BKG_MCFM_JECNominal");
 
+  strRecoBranch.push_back("DiJetMass");
+
   vector<TString> strSamples[2];
   {
     vector<TString> s1; s1.push_back("VBF_Sig_POWHEG"); s1.push_back("ZH_Sig_POWHEG"); s1.push_back("WH_Sig_POWHEG");
     vector<TString> s2; s2.push_back("qq_Bkg_Combined"); s2.push_back("VV_Bkg_Phantom");
     getSamplePairs(sqrts, s1, s2, strSamples[0], strSamples[1]);
   }
+
+  vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
+  /*
+  {
+    pair<float, float> valrange(70, 120);
+    vector<float> manualboundaries;
+    manualboundaries.push_back(105);
+    manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(
+      manualboundaries, valrange
+      ));
+  }
+  */
+  if (strchannel.Contains("VBFLike")){
+    pair<float, float> valrange(750, 3500);
+    vector<float> manualboundaries;
+    manualboundaries.push_back(770);
+    manualboundaries.push_back(850);
+    manualboundaries.push_back(1100);
+    manualboundaries.push_back(1400);
+    //manualboundaries.push_back(1700);
+    manualboundaries.push_back(2100);
+    manualboundaries.push_back(2650);
+    manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(
+      manualboundaries, valrange
+      ));
+  }
+
   getKDConstantByMass(
     sqrts, "DbkgjjEWQCD",
     strRecoBranch, strSamples, extraweights,
-    constructDbkgkin, divisor, writeFinalTree,
-    strchannel
+    constructDbkgkin, divisor, writeFinalTree, strchannel,
+    &manualboundary_validity_pairs
     );
 }
+
 
 void generic_SmoothKDConstantProducer(
   float sqrts, TString strname, TString strcustomselection,
@@ -1319,5 +1301,148 @@ void testDbkgkinGGZZvsQQZZ(){
     delete hist1d[ih];
   }
   for (unsigned int ic=0; ic<3; ic++) fcKD[ic]->Close();
+  foutput->Close();
+}
+
+void testDjjEWQCDEWvsQCD(TString strcustomselection=""){
+  const unsigned int nsamples=3;
+  vector<TString> strSamples[nsamples];
+  vector<TString> s1; s1.push_back("JJVBF"); s1.push_back("ZH"); s1.push_back("WH");
+  vector<TString> s2; s2.push_back("qq_Bkg_Combined"); s2.push_back("VV_Bkg_Phantom");
+  vector<TString> s3; s3.push_back("JJQCD"); s3.push_back("gg_Sig_MCFM");
+  getSamplesList(13, s1, strSamples[0]);
+  getSamplesList(13, s2, strSamples[1]);
+  getSamplesList(13, s3, strSamples[2]);
+
+  TString strchannel[2]={ "4l", "2l2l" };
+
+  pair<float, float> mjjcut(-1, -1);
+  if (strcustomselection.Contains("VBFLike")){ mjjcut.first=150; }
+  else if (strcustomselection.Contains("VHLike")){ mjjcut.first=40; mjjcut.second=150; }
+
+  pair<float, float> m4lcut(-1, -1);
+  if (strcustomselection.Contains("LowMass")){ m4lcut.first=100; m4lcut.second=160; }
+  else if (strcustomselection.Contains("HighMass")){ m4lcut.first=160; }
+
+  float ZZMass;
+  vector<float> vars;
+  float extrawgt=1;
+
+  vector<TString> strRecoBranch;
+  strRecoBranch.push_back("p_JJVBF_SIG_ghv1_1_MCFM_JECNominal");
+  strRecoBranch.push_back("p_HadZH_SIG_ghv1_1_MCFM_JECNominal");
+  strRecoBranch.push_back("p_Had_WH_SIG_ghv1_1_MCFM_JECNominal");
+  strRecoBranch.push_back("p_JJVBF_BKG_MCFM_JECNominal");
+  strRecoBranch.push_back("p_HadZH_BKG_MCFM_JECNominal");
+  strRecoBranch.push_back("p_Had_WH_BKG_MCFM_JECNominal");
+  strRecoBranch.push_back("p_JJQCD_BKG_MCFM_JECNominal");
+
+  strRecoBranch.push_back("p_HadZH_mavjj_JECNominal");
+  strRecoBranch.push_back("p_HadWH_mavjj_JECNominal");
+
+  strRecoBranch.push_back("pConst_JJVBF_SIG_ghv1_1_MCFM_JECNominal");
+  strRecoBranch.push_back("pConst_HadZH_SIG_ghv1_1_MCFM_JECNominal");
+  strRecoBranch.push_back("pConst_Had_WH_SIG_ghv1_1_MCFM_JECNominal");
+  strRecoBranch.push_back("pConst_JJVBF_BKG_MCFM_JECNominal");
+  strRecoBranch.push_back("pConst_HadZH_BKG_MCFM_JECNominal");
+  strRecoBranch.push_back("pConst_Had_WH_BKG_MCFM_JECNominal");
+  strRecoBranch.push_back("pConst_JJQCD_BKG_MCFM_JECNominal");
+
+  strRecoBranch.push_back("DiJetMass");
+
+  for (auto const& b:strRecoBranch) vars.push_back(float(0));
+
+  TString cinput_main = inputdir;
+  TString TREE_NAME = "ZZTree/candTree";
+  TString COUNTERS_NAME = "ZZTree/Counters";
+
+  TH2F* hist[nsamples];
+  TH1F* hist1d[nsamples];
+  TFile* foutput = TFile::Open("ftmp.root", "recreate");
+
+  TFile* fcKD[3];
+  TSpline3* spcKD[3];
+  //for (unsigned int ic=0; ic<3; ic++){
+  //  fcKD[ic] = TFile::Open(Form("SmoothKDConstant_m4l_Dbkgkin_%s13TeV.root", strchannel[ic].Data()), "read");
+  //  spcKD[ic] = (TSpline3*)fcKD[ic]->Get("sp_gr_varTrue_Constant_Smooth");
+  //}
+
+  for (unsigned int ih=0; ih<nsamples; ih++){
+    foutput->cd();
+    float xlow = 70;
+    float xhigh = 4000;
+    if (m4lcut.first>=0.) xlow = m4lcut.first;
+    if (m4lcut.second>=0.) xhigh = m4lcut.second;
+    float xwidth=2;
+    if (xhigh>1000.) xwidth=50;
+    int nxbins = (xhigh-xlow)/xwidth;
+    hist[ih]=new TH2F(Form("hist%i", ih), "", nxbins, xlow, xhigh, 20, 0, 1);
+    hist1d[ih]=new TH1F(Form("hist1d%i", ih), "", nxbins, xlow, xhigh);
+    for (int is=0; is<(int)strSamples[ih].size(); is++){
+      TString cinput = Form("%s/%s/ZZ4lAnalysis.root", cinput_main.Data(), (strSamples[ih][is]).Data());
+      TFile* finput = TFile::Open(cinput, "read");
+      cout << "Opening file " << cinput << "..." << endl;
+      TTree* tree=0;
+      if (finput!=0){
+        if (finput->IsOpen() && !finput->IsZombie()){
+          cout << cinput << " opened. Extracting tree " << TREE_NAME << "..." << endl;
+          tree = (TTree*)finput->Get(TREE_NAME);
+          if (tree!=0){
+            cout << TREE_NAME << " is found." << endl;
+
+            tree->SetBranchStatus("*", 0);
+            float* ZZMassptr = &ZZMass;
+            short Z1Flav, Z2Flav;
+            short* Z1Flavptr = &Z1Flav;
+            short* Z2Flavptr = &Z2Flav;
+            bookBranch(tree, "ZZMass", ZZMassptr);
+            bookBranch(tree, "Z1Flav", Z1Flavptr);
+            bookBranch(tree, "Z2Flav", Z2Flavptr);
+            float* extrawgtptr = &extrawgt;
+            //if (ih==1) bookBranch(tree, "p_Gen_QQB_BKG_MCFM", extrawgtptr);
+            for (unsigned int iv=0; iv<vars.size(); iv++){ float* varptr = &(vars[iv]); bookBranch(tree, strRecoBranch[iv], varptr); }
+
+            for (int ev=0; ev<tree->GetEntries(); ev++){
+              extrawgt=1;
+              tree->GetEntry(ev);
+
+              float& DiJetMass = vars[16];
+              bool testMatchRecoMJJ = (mjjcut.first<0. || (mjjcut.first<=DiJetMass && DiJetMass>=0.)) && (mjjcut.second<0. || (DiJetMass<=mjjcut.second && DiJetMass>=0.));
+              if (!testMatchRecoMJJ || DiJetMass<0.) continue;
+
+              bool testMatchRecoM4L = (m4lcut.first<0. || m4lcut.first<=ZZMass) && (m4lcut.second<0. || ZZMass<=m4lcut.second);
+              if (!testMatchRecoM4L) continue;
+
+              unsigned int ic =
+                0*(Z1Flav*Z2Flav==pow(11*11, 2) || Z1Flav*Z2Flav==pow(13*13, 2))
+                +1*(Z1Flav*Z2Flav==pow(11*13, 2));
+              float cKDval = /*spcKD[ic]->Eval(ZZMass)*/1;
+
+              float KD = constructDjjbkgEWQCD(vars, cKDval);
+              hist[ih]->Fill(ZZMass, KD, extrawgt);
+              hist1d[ih]->Fill(ZZMass, extrawgt);
+            }
+
+            finput->Close();
+          }
+          else finput->Close();
+        }
+        else if (finput->IsOpen()) finput->Close();
+      }
+    }
+    for (int binx=1; binx<=hist[ih]->GetNbinsX(); binx++){
+      double integral = hist[ih]->Integral(binx, binx, 1, hist[ih]->GetNbinsY());
+      if (integral!=0.){
+        for (int biny=1; biny<=hist[ih]->GetNbinsY(); biny++){
+          hist[ih]->SetBinContent(binx, biny, hist[ih]->GetBinContent(binx, biny)/integral);
+        }
+      }
+    }
+    foutput->WriteTObject(hist[ih]);
+    foutput->WriteTObject(hist1d[ih]);
+    delete hist[ih];
+    delete hist1d[ih];
+  }
+  //for (unsigned int ic=0; ic<3; ic++) fcKD[ic]->Close();
   foutput->Close();
 }

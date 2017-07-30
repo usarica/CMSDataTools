@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <unordered_map>
 #include "TROOT.h"
+#include "TSystem.h"
 #include "TMath.h"
 #include "TLorentzVector.h"
 #include "TLorentzRotation.h"
@@ -276,7 +277,7 @@ void getEvents(
     for (short& testid : matchdecid){ if (testid == Z1Id*Z2Id){ testMatchDec=true; break; } }
     doProcess &= testMatchDec;
 
-    bool testMatchRecoM4L = (m4lcut.first<0. || m4lcut.first<=varTrue) && (m4lcut.second<0. || varTrue<=m4lcut.second);
+    bool testMatchRecoM4L = (m4lcut.first<0. || m4lcut.first<=varTrack) && (m4lcut.second<0. || varTrack<=m4lcut.second);
     doProcess &= testMatchRecoM4L;
 
     bool testMatchRecoMJJ = (mjjcut.first<0. || (mjjcut.first<=DiJetMass && DiJetMass>=0.)) && (mjjcut.second<0. || (DiJetMass<=mjjcut.second && DiJetMass>=0.));
@@ -458,10 +459,11 @@ void getKDConstantByMass(
 
   vector<SimpleEntry> index[2];
 
+  gSystem->Exec("mkdir -p ./output/KDConstants");
   TString coutput = Form("KDConstant_m4l_%s", strname.Data());
   if (strcustomselection!="") coutput += Form("_%s", strcustomselection.Data());
   if (sqrts>0.) coutput += Form("%.0fTeV", sqrts);
-  TFile* foutput = TFile::Open(Form("%s%s", coutput.Data(), ".root"), "recreate");
+  TFile* foutput = TFile::Open(Form("./output/KDConstants/%s%s", coutput.Data(), ".root"), "recreate");
 
   int nEntries[2]={ 0 };
   float infimum=0;
@@ -994,12 +996,13 @@ void generic_SmoothKDConstantProducer(
   const double xmin=0;
   const double xmax=(sqrts>0 ? (double)sqrts*1000. : 15000.);
 
+  gSystem->Exec("mkdir -p ./output/KDConstants");
   TString cinput = Form("KDConstant_m4l_%s", strname.Data());
   if (strcustomselection!="") cinput += Form("_%s", strcustomselection.Data());
   if (sqrts>0.) cinput += Form("%.0fTeV", sqrts);
 
-  TFile* finput = TFile::Open(Form("%s%s", cinput.Data(), ".root"), "read");
-  TFile* foutput = TFile::Open(Form("Smooth%s%s", cinput.Data(), ".root"), "recreate");
+  TFile* finput = TFile::Open(Form("./output/KDConstants/%s%s", cinput.Data(), ".root"), "read");
+  TFile* foutput = TFile::Open(Form("./output/KDConstants/Smooth%s%s", cinput.Data(), ".root"), "recreate");
   foutput->cd();
 
   //TH1F* h_varTrack_Constant = (TH1F*)finput->Get("varTrack_Constant");
@@ -1352,7 +1355,7 @@ void testDjjEWQCDEWvsQCD(TString strcustomselection=""){
 
   for (auto const& b:strRecoBranch) vars.push_back(float(0));
 
-  TString cinput_main = inputdir;
+  TString cinput_main = CJLSTsamplesdir;
   TString TREE_NAME = "ZZTree/candTree";
   TString COUNTERS_NAME = "ZZTree/Counters";
 
@@ -1364,7 +1367,7 @@ void testDjjEWQCDEWvsQCD(TString strcustomselection=""){
   TSpline3* spcKD[3];
   //for (unsigned int ic=0; ic<3; ic++){
   //  fcKD[ic] = TFile::Open(Form("SmoothKDConstant_m4l_Dbkgkin_%s13TeV.root", strchannel[ic].Data()), "read");
-  //  spcKD[ic] = (TSpline3*)fcKD[ic]->Get("sp_gr_varTrue_Constant_Smooth");
+  //  spcKD[ic] = (TSpline3*)fcKD[ic]->Get("sp_gr_trackingval_Constant_Smooth");
   //}
 
   for (unsigned int ih=0; ih<nsamples; ih++){

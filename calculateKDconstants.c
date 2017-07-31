@@ -31,6 +31,7 @@
 #include "interface/CalcHelpers.h"
 #include "interface/Samples.h"
 #include "interface/SampleHelpers.h"
+#include "interface/CJLSTTree.h"
 
 
 #ifndef doDebugKD
@@ -182,8 +183,6 @@ void bookSampleTrees(
   vector<pair<TTree*, TH1F*>>& treeList
   ){
   TString cinput_main = CJLSTsamplesdir;
-  TString TREE_NAME = "ZZTree/candTree";
-  TString COUNTERS_NAME = "ZZTree/Counters";
 
   for (int is=0; is<(int)strSamples.size(); is++){
     TString cinput = Form("%s/%s/ZZ4lAnalysis.root", cinput_main.Data(), (strSamples[is]).Data());
@@ -433,6 +432,7 @@ void LoopForConstant(
 void getKDConstantByMass(
   float sqrts, TString strname,
   vector<TString>& strRecoBranch,
+  vector<TString>& strExtraRecoBranches,
   vector<TString>(&strSamples)[2],
   vector<TString>(&strExtraWeights)[2],
   float(*KDfcn)(vector<float>&, float),
@@ -450,7 +450,7 @@ void getKDConstantByMass(
   strWeights.push_back(TString("KFactor_QCD_ggZZ_Nominal")); strWeights.push_back(TString("KFactor_EW_qqZZ")); strWeights.push_back(TString("KFactor_QCD_qqZZ_M"));
 
   float varTrack;
-  vector<float> valReco; for (unsigned int i=0; i<strRecoBranch.size(); i++) valReco.push_back(float(0));
+  vector<float> valReco; for (TString const& s:strRecoBranch) valReco.push_back(float(0));
   vector<TString> strAllWeights[2];
   for (unsigned int ih=0; ih<2; ih++){
     for (auto& s : strWeights) strAllWeights[ih].push_back(s);
@@ -675,6 +675,8 @@ void getKDConstant_DjjVH(TString strprod, float sqrts=13){
     strRecoBranch.push_back("p_HadWH_mavjj_JECNominal");
   }
   strRecoBranch.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
+  vector<TString> strExtraRecoBranches;
+
   vector<TString> strSamples[2];
   if (strprod=="ZH_Sig_POWHEG"){
     vector<TString> s1; s1.push_back("ZH_Sig_POWHEG");
@@ -724,7 +726,7 @@ void getKDConstant_DjjVH(TString strprod, float sqrts=13){
 
   getKDConstantByMass(
     sqrts, Form("Djj%s", strprod.Data()),
-    strRecoBranch, strSamples, extraweights,
+    strRecoBranch, strExtraRecoBranches, strSamples, extraweights,
     constructDjjVH, divisor, writeFinalTree, "",
     &manualboundary_validity_pairs
     );
@@ -741,6 +743,8 @@ void getKDConstant_DjjVBF(float sqrts=13){
   vector<TString> strRecoBranch;
   strRecoBranch.push_back("p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal");
   strRecoBranch.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
+  vector<TString> strExtraRecoBranches;
+
   vector<TString> strSamples[2];
   {
     vector<TString> s1; s1.push_back("VBF_Sig_POWHEG");
@@ -774,7 +778,7 @@ void getKDConstant_DjjVBF(float sqrts=13){
 
   getKDConstantByMass(
     sqrts, Form("Djj%s", strprod.Data()),
-    strRecoBranch, strSamples, extraweights,
+    strRecoBranch, strExtraRecoBranches, strSamples, extraweights,
     constructDjjVBF, divisor, writeFinalTree, "",
     &manualboundary_validity_pairs
     );
@@ -792,6 +796,8 @@ void getKDConstant_DjVBF(float sqrts=13){
   strRecoBranch.push_back("p_JVBF_SIG_ghv1_1_JHUGen_JECNominal");
   strRecoBranch.push_back("pAux_JVBF_SIG_ghv1_1_JHUGen_JECNominal");
   strRecoBranch.push_back("p_JQCD_SIG_ghg2_1_JHUGen_JECNominal");
+  vector<TString> strExtraRecoBranches;
+
   vector<TString> strSamples[2];
   {
     vector<TString> s1; s1.push_back("VBF_Sig_POWHEG");
@@ -819,7 +825,7 @@ void getKDConstant_DjVBF(float sqrts=13){
 
   getKDConstantByMass(
     sqrts, Form("Dj%s", strprod.Data()),
-    strRecoBranch, strSamples, extraweights,
+    strRecoBranch, strExtraRecoBranches, strSamples, extraweights,
     constructDjVBF, divisor, writeFinalTree, "",
     &manualboundary_validity_pairs
     );
@@ -844,6 +850,8 @@ void getKDConstant_Dbkgkin(TString strchannel, float sqrts=13){
   vector<TString> strRecoBranch;
   strRecoBranch.push_back("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
   strRecoBranch.push_back("p_QQB_BKG_MCFM");
+  vector<TString> strExtraRecoBranches;
+
   vector<TString> strSamples[2];
   {
     vector<TString> s1; s1.push_back("gg_Sig_POWHEG"); s1.push_back("VBF_Sig_POWHEG"); s1.push_back("gg_Sig_SM_MCFM");
@@ -876,38 +884,10 @@ void getKDConstant_Dbkgkin(TString strchannel, float sqrts=13){
 
   getKDConstantByMass(
     sqrts, "Dbkgkin",
-    strRecoBranch, strSamples, extraweights,
+    strRecoBranch, strExtraRecoBranches, strSamples, extraweights,
     constructDbkgkin, divisor, writeFinalTree,
     strchannel,
     &manualboundary_validity_pairs
-    );
-}
-
-/* SPECIFIC COMMENT: NONE */
-void getKDConstant_Dbkgdec(TString strchannel, float sqrts=13){
-  if (strchannel!="2e2mu" && strchannel!="4e" && strchannel!="4mu") return;
-
-  const bool writeFinalTree=false;
-  float divisor=25000;
-  if (strchannel=="2l2l" || strchannel=="2e2mu") divisor = 40000;
-
-  vector<TString> extraweights[2];
-
-  vector<TString> strRecoBranch;
-  strRecoBranch.push_back("p_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
-  strRecoBranch.push_back("p_QQB_BKG_MCFM");
-  strRecoBranch.push_back("p_GG_BKG_MCFM");
-  vector<TString> strSamples[2];
-  {
-    vector<TString> s1; s1.push_back("gg_Sig_POWHEG"); s1.push_back("VBF_Sig_POWHEG"); s1.push_back("gg_Sig_SM_MCFM");
-    vector<TString> s2; s2.push_back("qq_Bkg_Combined"); s2.push_back("gg_Bkg_MCFM");
-    getSamplePairs(sqrts, s1, s2, strSamples[0], strSamples[1]);
-  }
-  getKDConstantByMass(
-    sqrts, "Dbkgdec",
-    strRecoBranch, strSamples, extraweights,
-    constructDbkgdec, divisor, writeFinalTree,
-    strchannel
     );
 }
 
@@ -944,6 +924,19 @@ void getKDConstant_DbkgjjEWQCD(TString strchannel, float sqrts=13){
 
   strRecoBranch.push_back("DiJetMass");
 
+  vector<TString> strExtraRecoBranches;
+  if (strchannel.Contains("VBFLike")){
+    strExtraRecoBranches.push_back("p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal");
+    strExtraRecoBranches.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
+  }
+  else{
+    strExtraRecoBranches.push_back("p_HadZH_SIG_ghz1_1_JHUGen_JECNominal");
+    strExtraRecoBranches.push_back("p_HadWH_SIG_ghw1_1_JHUGen_JECNominal");
+    strExtraRecoBranches.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
+    strExtraRecoBranches.push_back("p_HadZH_mavjj_JECNominal");
+    strExtraRecoBranches.push_back("p_HadWH_mavjj_JECNominal");
+  }
+
   vector<TString> strSamples[2];
   {
     vector<TString> s1; s1.push_back("VBF_Sig_POWHEG"); s1.push_back("ZH_Sig_POWHEG"); s1.push_back("WH_Sig_POWHEG");
@@ -979,7 +972,7 @@ void getKDConstant_DbkgjjEWQCD(TString strchannel, float sqrts=13){
 
   getKDConstantByMass(
     sqrts, "DbkgjjEWQCD",
-    strRecoBranch, strSamples, extraweights,
+    strRecoBranch, strExtraRecoBranches, strSamples, extraweights,
     constructDbkgkin, divisor, writeFinalTree, strchannel,
     &manualboundary_validity_pairs
     );
@@ -1222,8 +1215,6 @@ void testDbkgkinGGZZvsQQZZ(){
   strRecoBranch.push_back("p_QQB_BKG_MCFM"); vars.push_back(float(0));
 
   TString cinput_main = CJLSTsamplesdir;
-  TString TREE_NAME = "ZZTree/candTree";
-  TString COUNTERS_NAME = "ZZTree/Counters";
 
   TH2F* hist[nsamples];
   TH1F* hist1d[nsamples];
@@ -1356,8 +1347,6 @@ void testDjjEWQCDEWvsQCD(TString strcustomselection=""){
   for (auto const& b:strRecoBranch) vars.push_back(float(0));
 
   TString cinput_main = CJLSTsamplesdir;
-  TString TREE_NAME = "ZZTree/candTree";
-  TString COUNTERS_NAME = "ZZTree/Counters";
 
   TH2F* hist[nsamples];
   TH1F* hist1d[nsamples];

@@ -1,3 +1,6 @@
+#ifndef SAMPLEHELPERS_H
+#define SAMPLEHELPERS_H
+
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -244,12 +247,10 @@ namespace SampleHelpers{
   }
 
   template<typename T> void bookBranch(TTree* tree, TString strname, T* var){
-    if (tree!=0){
-      tree->SetBranchStatus(strname, 1); tree->SetBranchAddress(strname, var);
-    }
+    if (tree!=nullptr){ tree->SetBranchStatus(strname, 1); tree->SetBranchAddress(strname, var); }
   }
   template<typename T> void putBranch(TTree* tree, TString strname, T& var){
-    if (tree!=0) tree->Branch(strname, &var);
+    if (tree!=nullptr) tree->Branch(strname, &var);
   }
 
   template void bookBranch<short>(TTree* tree, TString strname, short* var);
@@ -258,12 +259,11 @@ namespace SampleHelpers{
   template void bookBranch<long>(TTree* tree, TString strname, long* var);
   template void bookBranch<float>(TTree* tree, TString strname, float* var);
   template void bookBranch<double>(TTree* tree, TString strname, double* var);
-  template void bookBranch<vector<short>>(TTree* tree, TString strname, vector<short>* var);
-  template void bookBranch<vector<unsigned int>>(TTree* tree, TString strname, vector<unsigned int>* var);
-  template void bookBranch<vector<int>>(TTree* tree, TString strname, vector<int>* var);
-  template void bookBranch<vector<long>>(TTree* tree, TString strname, vector<long>* var);
-  template void bookBranch<vector<float>>(TTree* tree, TString strname, vector<float>* var);
-  template void bookBranch<vector<double>>(TTree* tree, TString strname, vector<double>* var);
+  template void bookBranch<vector<unsigned int>*>(TTree* tree, TString strname, vector<unsigned int>** var);
+  template void bookBranch<vector<int>*>(TTree* tree, TString strname, vector<int>** var);
+  template void bookBranch<vector<long>*>(TTree* tree, TString strname, vector<long>** var);
+  template void bookBranch<vector<float>*>(TTree* tree, TString strname, vector<float>** var);
+  template void bookBranch<vector<double>*>(TTree* tree, TString strname, vector<double>** var);
 
   template void putBranch<short>(TTree* tree, TString strname, short& var);
   template void putBranch<unsigned int>(TTree* tree, TString strname, unsigned int& var);
@@ -279,3 +279,5 @@ namespace SampleHelpers{
   template void putBranch<vector<double>>(TTree* tree, TString strname, vector<double>& var);
 
 }
+
+#endif

@@ -22,6 +22,7 @@
 #include "TH3F.h"
 #include "TProfile.h"
 #include "TGraphErrors.h"
+#include "StdExtensions.h"
 
 namespace CalcHelpers{
   using namespace std;
@@ -32,6 +33,12 @@ namespace CalcHelpers{
     vector<float> recoval;
     float weight;
 
+    unordered_map<TString, unsigned int> nameduints;
+    unordered_map<TString, short> namedshorts;
+    unordered_map<TString, int> namedints;
+    unordered_map<TString, float> namedfloats;
+    unordered_map<TString, double> nameddoubles;
+
     SimpleEntry() : id(0), trackingval(0), weight(0) {}
     SimpleEntry(int id_, float trackingval_, vector<float> recoval_, float weight_=1) : id(id_), trackingval(trackingval_), recoval(recoval_), weight(weight_) {}
 
@@ -41,6 +48,18 @@ namespace CalcHelpers{
     bool operator >= (const SimpleEntry& other)const{ return trackingval>=other.trackingval; }
     bool operator < (const SimpleEntry& other)const{ return trackingval<other.trackingval; }
     bool operator <= (const SimpleEntry& other)const{ return trackingval<=other.trackingval; }
+
+    void setNamedVal(TString strname, unsigned int& val){ nameduints[strname]=val; }
+    void setNamedVal(TString strname, short& val){ namedshorts[strname]=val; }
+    void setNamedVal(TString strname, int& val){ namedints[strname]=val; }
+    void setNamedVal(TString strname, float& val){ namedfloats[strname]=val; }
+    void setNamedVal(TString strname, double& val){ nameddoubles[strname]=val; }
+
+    void getNamedVal(TString strname, unsigned int& val){ val = nameduints[strname]; }
+    void getNamedVal(TString strname, short& val){ val = namedshorts[strname]; }
+    void getNamedVal(TString strname, int& val){ val = namedints[strname]; }
+    void getNamedVal(TString strname, float& val){ val = namedfloats[strname]; }
+    void getNamedVal(TString strname, double& val){ val = nameddoubles[strname]; }
 
     static void cropByTrueVal(vector<SimpleEntry>& vec, float minval, float maxval){
       vector<unsigned int> erasepos;
@@ -1206,6 +1225,7 @@ namespace CalcHelpers{
     return makeGraphFromPair(xynew, Form("%s_over_%s", tgnum->GetName(), tgdenom->GetName()));
   }
 
+  template<typename T, typename U> void cleanUnorderedMap(unordered_map<T, U> um){ for (auto& it:um){ delete it.second; it.second=0; } }
 
   // Non-zero and NaN/Inf checkers
   template<typename T> bool checkNonZero(vector<T> const& vars){
@@ -1257,6 +1277,22 @@ namespace CalcHelpers{
   template bool checkNanInf<float>(vector<float> const& vars);
   template bool checkNonZero<double>(vector<double> const& vars);
   template bool checkNanInf<double>(vector<double> const& vars);
+
+  template void cleanUnorderedMap<TString, short*>(unordered_map<TString, short*> um);
+  template void cleanUnorderedMap<TString, unsigned int*>(unordered_map<TString, unsigned int*> um);
+  template void cleanUnorderedMap<TString, int*>(unordered_map<TString, int*> um);
+  template void cleanUnorderedMap<TString, float*>(unordered_map<TString, float*> um);
+  template void cleanUnorderedMap<TString, double*>(unordered_map<TString, double*> um);
+  template void cleanUnorderedMap<TString, pair<short, short>*>(unordered_map<TString, pair<short, short>*> um);
+  template void cleanUnorderedMap<TString, pair<unsigned int, unsigned int>*>(unordered_map<TString, pair<unsigned int, unsigned int>*> um);
+  template void cleanUnorderedMap<TString, pair<int, int>*>(unordered_map<TString, pair<int, int>*> um);
+  template void cleanUnorderedMap<TString, pair<float, float>*>(unordered_map<TString, pair<float, float>*> um);
+  template void cleanUnorderedMap<TString, pair<double, double>*>(unordered_map<TString, pair<double, double>*> um);
+  template void cleanUnorderedMap<TString, vector<short>*>(unordered_map<TString, vector<short>*> um);
+  template void cleanUnorderedMap<TString, vector<unsigned int>*>(unordered_map<TString, vector<unsigned int>*> um);
+  template void cleanUnorderedMap<TString, vector<int>*>(unordered_map<TString, vector<int>*> um);
+  template void cleanUnorderedMap<TString, vector<float>*>(unordered_map<TString, vector<float>*> um);
+  template void cleanUnorderedMap<TString, vector<double>*>(unordered_map<TString, vector<double>*> um);
 
 }
 

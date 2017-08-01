@@ -16,12 +16,14 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TChain.h"
+#include "TList.h"
 #include "CalcHelpers.h"
 
 
 namespace SampleHelpers{
-  float findPoleMass(TString samplename){
+  float findPoleMass(const TString samplename){
     float mass = -1;
+    if (samplename=="") return mass;
     string strtmp = samplename.Data();
     std::size_t extpos = strtmp.find(".root");
     if (extpos!=string::npos) strtmp.erase(extpos, 5);
@@ -247,7 +249,18 @@ namespace SampleHelpers{
   }
 
   template<typename T> void bookBranch(TTree* tree, TString strname, T* var){
-    if (tree!=nullptr){ tree->SetBranchStatus(strname, 1); tree->SetBranchAddress(strname, var); }
+    if (tree!=nullptr){
+      bool found=false;
+      const TList* blist = (const TList*)tree->GetListOfBranches();
+      for (int ib=0; ib<blist->GetSize(); ib++){
+        TString bname = blist->At(ib)->GetName();
+        if (strname==bname){ found=true; break; }
+      }
+      if (found){
+        tree->SetBranchStatus(strname, 1);
+        tree->SetBranchAddress(strname, var);
+      }
+    }
   }
   template<typename T> void putBranch(TTree* tree, TString strname, T& var){
     if (tree!=nullptr) tree->Branch(strname, &var);

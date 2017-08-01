@@ -32,6 +32,7 @@
 #include "interface/Samples.h"
 #include "interface/SampleHelpers.h"
 #include "interface/CJLSTTree.h"
+#include "interface/CJLSTSet.h"
 
 
 #ifndef doDebugKD

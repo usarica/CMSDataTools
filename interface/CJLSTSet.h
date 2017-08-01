@@ -16,7 +16,7 @@ public:
 
   void bookXS();
   void bookOverallEventWgt();
-  void getPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen);
+  void getPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen, bool renormalizeWeights);
 
   CJLSTTree* getCJLSTTree(TString sampleid);
 
@@ -78,7 +78,7 @@ float CJLSTSet::getPermanentWeight(CJLSTTree* sample){
 
 
 
-void CJLSTSet::getPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen){
+void CJLSTSet::getPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen, bool renormalizeWeights){
   if (useXS) bookXS();
   
   vector<pair<float, vector<CJLSTTree*>>> massgrouping;
@@ -116,7 +116,7 @@ void CJLSTSet::getPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen
       permanentWeights[tree] = xsec/ngen;
       sumwgt += permanentWeights[tree];
     }
-    if (sumwgt!=0.){ for (auto& tree:mg.second) permanentWeights[tree] = permanentWeights[tree]/sumwgt; }
+    if (renormalizeWeights && sumwgt!=0.){ for (auto& tree:mg.second) permanentWeights[tree] = permanentWeights[tree]/sumwgt; }
   }
 }
 

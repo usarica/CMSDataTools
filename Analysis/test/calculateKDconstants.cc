@@ -28,11 +28,10 @@
 #include "TProfile.h"
 #include "TGraphErrors.h"
 #include "TRandom.h"
-#include "interface/CalcHelpers.h"
-#include "interface/Samples.h"
-#include "interface/SampleHelpers.h"
-#include "interface/CJLSTTree.h"
-#include "interface/CJLSTSet.h"
+#include "HelperFunctions.h"
+#include "Samples.h"
+#include "SampleHelpers.h"
+#include "CJLSTSet.h"
 
 
 #ifndef doDebugKD
@@ -43,7 +42,7 @@
 #endif
 
 using namespace std;
-using namespace CalcHelpers;
+using namespace HelperFunctions;
 using namespace SampleHelpers;
 
 
@@ -1013,7 +1012,7 @@ void generic_SmoothKDConstantProducer(
   double* ey = tg->GetEY();
 
   TSpline3* sp;
-  sp = convertGraphToSpline3_MightFaithfulSlopes(tg, useFaithfulSlopeFirst, useFaithfulSlopeSecond);
+  sp = convertGraphToSpline3(tg, useFaithfulSlopeFirst, useFaithfulSlopeSecond);
   double tglow = xx[0];
   double tghigh = xx[tg->GetN()-1];
   TF1* lowFcn = lowf(sp, xmin, tglow, true);
@@ -1066,7 +1065,7 @@ void generic_SmoothKDConstantProducer(
 void SmoothKDConstantProducer_DjjVH(TString strprod){
   generic_SmoothKDConstantProducer(
     13, Form("Djj%s", strprod.Data()), "",
-    &getFcn_a0plusa1timesX,
+    &getFcn_a0plusa1timesXN<1>,
     &getFcn_a0timesexpa1X,
     false, false
     );
@@ -1083,7 +1082,7 @@ void SmoothKDConstantProducer_DjjVBF(){
 
   generic_SmoothKDConstantProducer(
     13, Form("Djj%s", strprod.Data()), "",
-    &getFcn_a0plusa1timesX,
+    &getFcn_a0plusa1timesXN<1>,
     &getFcn_a0timesexpa1X,
     //&getFcn_a0plusa1overX,
     true, true,
@@ -1095,7 +1094,7 @@ void SmoothKDConstantProducer_DjVBF(){
   TString strprod="VBF";
   generic_SmoothKDConstantProducer(
     13, Form("Dj%s", strprod.Data()), "",
-    &getFcn_a0plusa1timesX,
+    &getFcn_a0plusa1timesXN<1>,
     &getFcn_a0timesexpa1X,
     true, true
     );
@@ -1105,7 +1104,7 @@ void SmoothKDConstantProducer_Dbkgkin(TString strchannel){
   if (strchannel!="2e2mu" && strchannel!="4e" && strchannel!="4mu") return;
   generic_SmoothKDConstantProducer(
     13, Form("Dbkgkin_%s", strchannel.Data()), "",
-    &getFcn_a0plusa1timesX,
+    &getFcn_a0plusa1timesXN<1>,
     &getFcn_a0timesexpa1X,
     //&getFcn_a0plusa1overXN<6>,
     true, false

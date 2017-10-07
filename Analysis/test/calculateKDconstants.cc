@@ -633,8 +633,8 @@ void getKDConstantByMass(
 
   foutput->cd();
 
-  TH1F* h_varTrack_Constant = new TH1F("varTrue_Constant", "", nbins, binning); h_varTrack_Constant->Sumw2();
-  TProfile* p_varTrack = new TProfile("avg_varTrue", "", nbins, binning); p_varTrack->Sumw2();
+  TH1F* h_varTrack_Constant = new TH1F("varReco_Constant", "", nbins, binning); h_varTrack_Constant->Sumw2();
+  TProfile* p_varTrack = new TProfile("avg_varReco", "", nbins, binning); p_varTrack->Sumw2();
   delete[] binning;
 
   LoopForConstant(
@@ -645,7 +645,7 @@ void getKDConstantByMass(
     100
     );
 
-  TGraphErrors* gr = makeGraphFromTH1(p_varTrack, h_varTrack_Constant, "gr_varTrue_Constant");
+  TGraphErrors* gr = makeGraphFromTH1(p_varTrack, h_varTrack_Constant, "gr_varReco_Constant");
   foutput->WriteTObject(p_varTrack);
   foutput->WriteTObject(h_varTrack_Constant);
   foutput->WriteTObject(gr);
@@ -998,9 +998,7 @@ void generic_SmoothKDConstantProducer(
   TFile* foutput = TFile::Open(Form("./output/KDConstants/Smooth%s%s", cinput.Data(), ".root"), "recreate");
   foutput->cd();
 
-  //TH1F* h_varTrack_Constant = (TH1F*)finput->Get("varTrack_Constant");
-  //TProfile* p_varTrack = (TProfile*)finput->Get("avg_varTrack");
-  TGraphErrors* tg = (TGraphErrors*)finput->Get("gr_varTrack_Constant");
+  TGraphErrors* tg = (TGraphErrors*)finput->Get("gr_varReco_Constant");
   foutput->WriteTObject(tg);
 
   if (addpoints!=0){ for (auto& prange : *addpoints) addPointsBetween(tg, prange.first.first, prange.first.second, prange.second); }
@@ -1224,7 +1222,7 @@ void testDbkgkinGGZZvsQQZZ(){
   TSpline3* spcKD[3];
   for (unsigned int ic=0; ic<3; ic++){
     fcKD[ic] = TFile::Open(Form("SmoothKDConstant_m4l_Dbkgkin_%s13TeV.root", strchannel[ic].Data()), "read");
-    spcKD[ic] = (TSpline3*)fcKD[ic]->Get("sp_gr_varTrue_Constant_Smooth");
+    spcKD[ic] = (TSpline3*)fcKD[ic]->Get("sp_gr_varReco_Constant_Smooth");
   }
 
   for (unsigned int ih=0; ih<nsamples; ih++){
@@ -1356,7 +1354,7 @@ void testDjjEWQCDEWvsQCD(TString strcustomselection=""){
   TSpline3* spcKD[3];
   //for (unsigned int ic=0; ic<3; ic++){
   //  fcKD[ic] = TFile::Open(Form("SmoothKDConstant_m4l_Dbkgkin_%s13TeV.root", strchannel[ic].Data()), "read");
-  //  spcKD[ic] = (TSpline3*)fcKD[ic]->Get("sp_gr_varTrue_Constant_Smooth");
+  //  spcKD[ic] = (TSpline3*)fcKD[ic]->Get("sp_gr_varReco_Constant_Smooth");
   //}
 
   for (unsigned int ih=0; ih<nsamples; ih++){

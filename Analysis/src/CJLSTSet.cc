@@ -8,7 +8,7 @@ CJLSTSet::CJLSTSet(const TString& strname){
   addCJLSTTree(strname);
 }
 CJLSTSet::CJLSTSet(const std::vector<TString>& strlist){
-  for (auto& s:strlist) addCJLSTTree(s);
+  addCJLSTTreeList(strlist);
 }
 CJLSTSet::~CJLSTSet(){
   for (auto& tree:treeList) delete tree;
@@ -19,8 +19,15 @@ bool CJLSTSet::addCJLSTTree(const TString& strname){
   if (tree->isValid()) treeList.push_back(tree);
   else{ delete tree; tree=nullptr; }
   if (tree==nullptr) std::cerr << "CJLSTSet::addCJLSTTree(" << strname << ") is invalid!" << std::endl;
+  else std::cout << "CJLSTSet::addCJLSTTree(" << strname << ") is successful!" << std::endl;
   return (tree!=nullptr);
 }
+bool CJLSTSet::addCJLSTTreeList(const std::vector<TString>& strlist){
+  bool res=true;
+  for (auto const& s:strlist) res &= addCJLSTTree(s);
+  return res;
+}
+
 
 void CJLSTSet::bookXS(){
   for (auto& tree:treeList) tree->bookBranch<float>("xsec", 1);
@@ -42,6 +49,9 @@ CJLSTTree* CJLSTSet::getCJLSTTree(TString sampleid){
   CJLSTTree* res=0;
   return res;
 }
+const std::vector<CJLSTTree*>& CJLSTSet::getCJLSTTreeList() const{ return treeList; }
+std::vector<CJLSTTree*>& CJLSTSet::getCJLSTTreeList(){ return treeList; }
+
 float CJLSTSet::getOverallEventWgt(CJLSTTree* sample){
   float PUWeight=1;
   float genHEPMCweight=1;
@@ -60,7 +70,7 @@ float CJLSTSet::getPermanentWeight(CJLSTTree* sample){
   return permanentWeights[sample];
 }
 float CJLSTSet::getPermanentWeight(TString sampleid){ return getPermanentWeight(getCJLSTTree(sampleid)); }
-void CJLSTSet::getPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen, bool renormalizeWeights){
+void CJLSTSet::setPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen, bool renormalizeWeights){
   if (useXS) bookXS();
 
   vector<pair<float, vector<CJLSTTree*>>> massgrouping;
@@ -69,6 +79,7 @@ void CJLSTSet::getPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen
   if (useNormPerMass){ // Group everything by mass
     for (auto& tree:treeList){
       mh = SampleHelpers::findPoleMass(tree->sampleIdentifier);
+      cout << "MH(" << tree->sampleIdentifier << ") = " << mh << endl;
       int whichgroup=-1;
       for (unsigned int ig=0; ig<massgrouping.size(); ig++){ // Need to keep track of group number
         if (massgrouping.at(ig).first==mh){ whichgroup=int(ig); break; }
@@ -88,12 +99,14 @@ void CJLSTSet::getPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen
       if (useXS){
         if (!tree->getSelectedEvent(0)) xsec=0; // Kill contribution to sum of weights from this tree
         tree->getVal("xsec", xsec);
+        cout << "Xsec value for " << tree->sampleIdentifier << " = " << xsec << endl;
       }
       if (xsec<=0.){ cerr << "XS=" << xsec << " is invalid for sample " << tree->sampleIdentifier << ". Setting to 1" << endl; if (xsec<0.) xsec=1; }
 
       float ngen=1;
       if (useNgen) ngen = tree->getNGenWithPU();
       if (ngen==0.) ngen=1;
+      cout << "Ngen value for " << tree->sampleIdentifier << " = " << ngen << endl;
 
       permanentWeights[tree] = xsec/ngen;
       sumwgt += permanentWeights[tree];
@@ -101,4 +114,26 @@ void CJLSTSet::getPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen
     if (renormalizeWeights && sumwgt!=0.){ for (auto& tree:mg.second) permanentWeights[tree] = permanentWeights[tree]/sumwgt; }
   }
 }
+
+CJLSTTree* CJLSTSet::getSelectedEvent(const int evid){
+  int ev = evid;
+  CJLSTTree* isfound=nullptr;
+  for (auto& tree:treeList){
+    int nevts = tree->getSelectedNEvents();
+    if (ev<nevts){ tree->getSelectedEvent(ev); isfound = tree; break; }
+    else ev -= nevts;
+  }
+  return isfound;
+}
+CJLSTTree* CJLSTSet::getFailedEvent(const int evid){
+  int ev = evid;
+  CJLSTTree* isfound=nullptr;
+  for (auto& tree:treeList){
+    int nevts = tree->getFailedNEvents();
+    if (ev<nevts){ tree->getFailedEvent(ev); isfound = tree; break; }
+    else ev -= nevts;
+  }
+  return isfound;
+}
+
 

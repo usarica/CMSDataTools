@@ -9,7 +9,7 @@ protected:
   void eval(const std::vector<float>& vars, const float& valReco);
 
 public:
-  PA2PB2Discriminant(const TString cfilename, const TString splinename="sp_gr_varReco_Constant_Smooth");
+  PA2PB2Discriminant(const TString cfilename="", const TString splinename="sp_gr_varReco_Constant_Smooth");
 };
 
 typedef PA2PB2Discriminant DjjVH_t;

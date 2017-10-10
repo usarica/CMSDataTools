@@ -38,6 +38,7 @@ receiver(true)
         if (!valid){ finput->Close(); finput=nullptr; }
         else{
           failedtree = (TTree*)finput->Get(failedtreename);
+          if (!failedtree) cout << "BaseTree::BaseTree(" << cinput << ") does not contain " << failedtreename << endl;
           hCounters = (TH1F*)finput->Get(countersname);
         }
       }
@@ -110,6 +111,7 @@ void BaseTree::silenceUnused(){
     failedtree
   };
   for (unsigned int it=0; it<ntrees; it++){
+    if (!trees[it]) continue;
     const TList* blist = (const TList*)trees[it]->GetListOfBranches();
     for (int ib=0; ib<blist->GetSize(); ib++){
       TString bname = blist->At(ib)->GetName();

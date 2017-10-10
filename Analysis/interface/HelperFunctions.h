@@ -170,7 +170,7 @@ template<typename T, typename U> void HelperFunctions::cleanUnorderedMap(std::un
 template<typename T> bool HelperFunctions::checkNonZero(std::vector<T> const& vars){
   for (T const& v:vars){
     if (v<0.){
-      std::cerr << "checkNonZero found value < 0" << std::endl;
+      std::cerr << "HelperFunctions::checkNonZero found value " << v << " < 0" << std::endl;
       return false;
     }
   }

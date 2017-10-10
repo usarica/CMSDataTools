@@ -17,11 +17,22 @@ protected:
   float getCval(const float valReco) const;
 
 public:
-  Discriminant(const TString cfilename, const TString splinename="sp_gr_varReco_Constant_Smooth");
+  Discriminant(const TString cfilename="", const TString splinename="sp_gr_varReco_Constant_Smooth");
   virtual ~Discriminant();
 
   operator float() const;
-  float update(const std::vector<float>& vars, const float& valReco);
+  operator float&();
+  operator float*();
+
+  bool operator<(const float& other) const;
+  bool operator>(const float& other) const;
+  bool operator<=(const float& other) const;
+  bool operator>=(const float& other) const;
+  bool operator==(const float& other) const;
+  bool operator!=(const float& other) const;
+
+  float update(const std::vector<float>& vars, const float valReco=0);
+  float applyAdditionalC(const float cval);
 
 };
 

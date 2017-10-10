@@ -10,7 +10,8 @@ using namespace HelperFunctions;
 SimpleDiscriminant::SimpleDiscriminant(const TString cfilename, const TString splinename) : Discriminant(cfilename, splinename){}
 
 void SimpleDiscriminant::eval(const std::vector<float>& vars, const float& valReco){
-  assert(!checkNonZero(vars) || vars.size()!=2);
+  const unsigned int nvarsreq=2;
+  assert(checkNonZero(vars) && vars.size()==nvarsreq);
   if (!checkNanInf(vars)) val = -999;
   else{
     float constant = getCval(valReco);

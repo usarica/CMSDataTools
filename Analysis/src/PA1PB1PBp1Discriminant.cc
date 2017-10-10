@@ -10,7 +10,8 @@ using namespace HelperFunctions;
 PA1PB1PBp1Discriminant::PA1PB1PBp1Discriminant(const TString cfilename, const TString splinename) : Discriminant(cfilename, splinename){}
 
 void PA1PB1PBp1Discriminant::eval(const std::vector<float>& vars, const float& valReco){
-  assert(!checkNonZero(vars) || vars.size()!=3);
+  const unsigned int nvarsreq=3;
+  assert(checkNonZero(vars) && vars.size()==nvarsreq);
   if (!checkNanInf(vars)) val = -999;
   else{
     float constant = getCval(valReco);

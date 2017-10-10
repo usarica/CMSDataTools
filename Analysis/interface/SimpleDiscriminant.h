@@ -9,7 +9,7 @@ protected:
   void eval(const std::vector<float>& vars, const float& valReco);
 
 public:
-  SimpleDiscriminant(const TString cfilename, const TString splinename="sp_gr_varReco_Constant_Smooth");
+  SimpleDiscriminant(const TString cfilename="", const TString splinename="sp_gr_varReco_Constant_Smooth");
 };
 
 typedef SimpleDiscriminant Dbkgkin_t;

@@ -36,7 +36,7 @@
 
 
 #ifndef doDebugKD
-#define doDebugKD true
+#define doDebugKD false
 #endif
 #ifndef doDebugKDExt
 #define doDebugKDExt false

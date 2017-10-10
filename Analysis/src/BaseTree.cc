@@ -8,7 +8,7 @@ using namespace std;
 int BaseTree::getSelectedNEvents(){ return (tree ? tree->GetEntries() : 0); }
 int BaseTree::getFailedNEvents(){ return (failedtree ? failedtree->GetEntries() : 0); }
 
-bool BaseTree::isValid(){ return valid; }
+bool BaseTree::isValid() const{ return valid; }
 bool BaseTree::branchExists(TString branchname){ return (searchBranchType(branchname)!=BranchType_unknown_t); }
 
 BaseTree::BaseTree() :
@@ -119,4 +119,55 @@ void BaseTree::silenceUnused(){
     }
   }
 }
+void BaseTree::releaseBranch(TString branchname){
+  const BranchType btype = searchBranchType(branchname);
+  if (btype!=BranchType_unknown_t){
+    const unsigned int ntrees = 2;
+    TTree* trees[ntrees]={
+      tree,
+      failedtree
+    };
+    for (unsigned int it=0; it<ntrees; it++){
+      if (!trees[it]) continue;
+      trees[it]->ResetBranchAddress(trees[it]->GetBranch(branchname));
+      trees[it]->SetBranchStatus(branchname, 0);
+    }
+  }
+
+  switch (btype){
+  case BranchType_short_t:
+    this->removeBranch<BranchType_short_t>(branchname);
+    break;
+  case BranchType_uint_t:
+    this->removeBranch<BranchType_uint_t>(branchname);
+    break;
+  case BranchType_int_t:
+    this->removeBranch<BranchType_int_t>(branchname);
+    break;
+  case BranchType_float_t:
+    this->removeBranch<BranchType_float_t>(branchname);
+    break;
+  case BranchType_double_t:
+    this->removeBranch<BranchType_double_t>(branchname);
+    break;
+  case BranchType_vshort_t:
+    this->removeBranch<BranchType_vshort_t>(branchname);
+    break;
+  case BranchType_vuint_t:
+    this->removeBranch<BranchType_vuint_t>(branchname);
+    break;
+  case BranchType_vint_t:
+    this->removeBranch<BranchType_vint_t>(branchname);
+    break;
+  case BranchType_vfloat_t:
+    this->removeBranch<BranchType_vfloat_t>(branchname);
+    break;
+  case BranchType_vdouble_t:
+    this->removeBranch<BranchType_vdouble_t>(branchname);
+    break;
+  default:
+    break;
+  }
+}
+
 

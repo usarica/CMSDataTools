@@ -71,15 +71,20 @@ float CJLSTSet::getPermanentWeight(CJLSTTree* sample){
 }
 float CJLSTSet::getPermanentWeight(TString sampleid){ return getPermanentWeight(getCJLSTTree(sampleid)); }
 void CJLSTSet::setPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen, bool renormalizeWeights){
-  if (useXS) bookXS();
+  cout << "CJLSTSet::setPermanentWeights is called." << endl;
+
+  vector<CJLSTTree*> extraBookXS;
+  if (useXS){
+    for (auto& tree:treeList){ if (!tree->branchExists("xsec")) extraBookXS.push_back(tree); }
+    bookXS();
+  }
 
   vector<pair<float, vector<CJLSTTree*>>> massgrouping;
-  vector<float> sumwgtpermass;
   float mh=-1;
   if (useNormPerMass){ // Group everything by mass
     for (auto& tree:treeList){
       mh = SampleHelpers::findPoleMass(tree->sampleIdentifier);
-      cout << "MH(" << tree->sampleIdentifier << ") = " << mh << endl;
+      cout << "- MH(" << tree->sampleIdentifier << ") = " << mh << endl;
       int whichgroup=-1;
       for (unsigned int ig=0; ig<massgrouping.size(); ig++){ // Need to keep track of group number
         if (massgrouping.at(ig).first==mh){ whichgroup=int(ig); break; }
@@ -99,20 +104,30 @@ void CJLSTSet::setPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen
       if (useXS){
         if (!tree->getSelectedEvent(0)) xsec=0; // Kill contribution to sum of weights from this tree
         tree->getVal("xsec", xsec);
-        cout << "Xsec value for " << tree->sampleIdentifier << " = " << xsec << endl;
       }
-      if (xsec<=0.){ cerr << "XS=" << xsec << " is invalid for sample " << tree->sampleIdentifier << ". Setting to 1" << endl; if (xsec<0.) xsec=1; }
+      if (xsec<=0.){ cerr << "- XSec=" << xsec << " is invalid for sample " << tree->sampleIdentifier << ". Setting to 1" << endl; xsec=1; }
 
       float ngen=1;
       if (useNgen) ngen = tree->getNGenWithPU();
       if (ngen==0.) ngen=1;
-      cout << "Ngen value for " << tree->sampleIdentifier << " = " << ngen << endl;
 
       permanentWeights[tree] = xsec/ngen;
+
+      cout << "- " << tree->sampleIdentifier << " specifics: "
+        << "XSec: " << xsec << ", "
+        << "Ngen: " << ngen << ", "
+        << (renormalizeWeights ? "permanent weight before renormalization: " : "permanent weight: ") << permanentWeights[tree]
+        << endl;
+
       sumwgt += permanentWeights[tree];
     }
-    if (renormalizeWeights && sumwgt!=0.){ for (auto& tree:mg.second) permanentWeights[tree] = permanentWeights[tree]/sumwgt; }
+    if (renormalizeWeights && sumwgt!=0.){
+      cout << "- Renormalizing the mass(" << mg.first << ") grouping by 1./" << sumwgt << endl;
+      for (auto& tree:mg.second) permanentWeights[tree] = permanentWeights[tree]/sumwgt;
+    }
   }
+
+  for (auto& tree:extraBookXS) tree->releaseBranch("xsec");
 }
 
 CJLSTTree* CJLSTSet::getSelectedEvent(const int evid){

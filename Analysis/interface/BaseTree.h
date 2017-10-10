@@ -50,6 +50,8 @@ protected:
   template<BranchType T> void resetBranch();
   void resetBranches();
 
+  template<BranchType T> void removeBranch(TString branchname);
+
 public:
   BaseTree();
   BaseTree(const TString cinput, const TString treename, const TString failedtreename, const TString countersname);
@@ -68,8 +70,9 @@ public:
   template<typename T> void setVal(TString branchname, T const& val);
 
   void silenceUnused();
+  void releaseBranch(TString branchname);
 
-  bool isValid();
+  bool isValid() const;
   bool branchExists(TString branchname);
 
 };

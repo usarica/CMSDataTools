@@ -51,16 +51,6 @@ using namespace DiscriminantClasses;
 ///////////////////
 // Event helpers //
 ///////////////////
-void getSamplesList(float sqrts, vector<TString> s, vector<TString>& vs){
-  for (auto& ss : s){
-    vector<TString> dumappend = constructSamplesList(ss, sqrts);
-    appendVector<TString>(vs, dumappend);
-  }
-}
-void getSamplePairs(float sqrts, vector<TString> s1, vector<TString> s2, vector<TString>& vs1, vector<TString>& vs2){
-  getSamplesList(sqrts, s1, vs1);
-  getSamplesList(sqrts, s2, vs2);
-}
 CJLSTSet* bookSampleTrees(
   const vector<TString>& strSamples,
 
@@ -109,7 +99,7 @@ void getEvents(
   Discriminant* const& KDbuilder,
   TString strcustomselection
   ){
-  cout << "Begin getKDConstantByMass" << endl;
+  cout << "Begin getEvents" << endl;
 
   vector<short> matchdecid;
   if (strcustomselection.Contains("2l2l") || strcustomselection.Contains("2e2mu")) matchdecid.push_back(121*169);
@@ -199,7 +189,7 @@ void getEvents(
     ev_acc++;
   }
   cout << "Number of valid entries: " << ev_acc << endl;
-  cout << "End getKDConstantByMass" << endl;
+  cout << "End getEvents" << endl;
 
 }
 void LoopForConstant(
@@ -210,7 +200,7 @@ void LoopForConstant(
   TH1F* hrec,
   unsigned int nstepsiter=100
   ){
-  cout << "Begin getKDConstantByMass" << endl;
+  cout << "Begin LoopForConstant" << endl;
 
   int nbins = indexboundaries[0].size()-1;
 
@@ -327,7 +317,7 @@ void LoopForConstant(
     hrec->SetBinContent(bin+1, centralConstant);
   }
 
-  cout << "End getKDConstantByMass" << endl;
+  cout << "End LoopForConstant" << endl;
 }
 void getKDConstantByMass(
   float sqrts, TString strname,

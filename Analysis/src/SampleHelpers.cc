@@ -4,6 +4,12 @@
 using namespace std;
 
 
+namespace SampleHelpers{
+  shared_ptr<Mela> GlobalMELA;
+}
+
+void SampleHelpers::makeGlobalMELA(int CoM){ if (!GlobalMELA) GlobalMELA.reset(new Mela(CoM, 125, TVar::ERROR)); }
+
 float SampleHelpers::findPoleMass(const TString samplename){
   float mass = -1;
   if (samplename=="") return mass;
@@ -21,7 +27,7 @@ float SampleHelpers::findPoleMass(const TString samplename){
   }
   return mass;
 }
-  TTree* SampleHelpers::findTree(std::vector<TTree*> treeList, int evid){
+TTree* SampleHelpers::findTree(std::vector<TTree*> treeList, int evid){
   int ev = evid;
   for (unsigned int t=0; t<treeList.size(); t++){
     TTree* tree = treeList.at(t);
@@ -32,7 +38,7 @@ float SampleHelpers::findPoleMass(const TString samplename){
   }
   return 0;
 }
-  void SampleHelpers::getEntry(std::vector<TTree*> treeList, int evid){
+void SampleHelpers::getEntry(std::vector<TTree*> treeList, int evid){
   int ev = evid;
   for (unsigned int t=0; t<treeList.size(); t++){
     TTree* tree = treeList.at(t);
@@ -42,7 +48,7 @@ float SampleHelpers::findPoleMass(const TString samplename){
     if (ev<0) cerr << "getEntry::ERROR: Could not find the event " << evid << endl;
   }
 }
-  float SampleHelpers::getEntry(std::vector<std::pair<TTree*, TH1F*>> treeList, int evid){
+float SampleHelpers::getEntry(std::vector<std::pair<TTree*, TH1F*>> treeList, int evid){
   int ev = evid;
   for (unsigned int t=0; t<treeList.size(); t++){
     TTree* tree = treeList.at(t).first;
@@ -54,7 +60,20 @@ float SampleHelpers::findPoleMass(const TString samplename){
   return 0;
 }
 
-  std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, float sqrts){
+TString SampleHelpers::getChannelName(const SampleHelpers::Channel chan){
+  switch (chan){
+  case k4mu:
+    return "4mu";
+  case k4e:
+    return "4e";
+  case k2e2mu:
+    return "2e2mu";
+  default:
+    return "";
+  }
+}
+
+std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, float sqrts){
   std::vector<TString> samples;
   if (strsample=="VBF_Sig_POWHEG"){
     if (sqrts==13){
@@ -230,6 +249,15 @@ float SampleHelpers::findPoleMass(const TString samplename){
   }
   return samples;
 }
-
+void SampleHelpers::getSamplesList(float sqrts, std::vector<TString> s, std::vector<TString>& vs){
+  for (auto& ss : s){
+    vector<TString> dumappend = constructSamplesList(ss, sqrts);
+    HelperFunctions::appendVector<TString>(vs, dumappend);
+  }
+}
+void SampleHelpers::getSamplePairs(float sqrts, std::vector<TString> s1, std::vector<TString> s2, std::vector<TString>& vs1, std::vector<TString>& vs2){
+  getSamplesList(sqrts, s1, vs1);
+  getSamplesList(sqrts, s2, vs2);
+}
 
 

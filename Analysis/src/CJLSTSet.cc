@@ -83,7 +83,7 @@ void CJLSTSet::setPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen
   float mh=-1;
   if (useNormPerMass){ // Group everything by mass
     for (auto& tree:treeList){
-      mh = SampleHelpers::findPoleMass(tree->sampleIdentifier);
+      mh = tree->MHVal;
       cout << "- MH(" << tree->sampleIdentifier << ") = " << mh << endl;
       int whichgroup=-1;
       for (unsigned int ig=0; ig<massgrouping.size(); ig++){ // Need to keep track of group number

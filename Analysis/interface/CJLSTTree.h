@@ -7,6 +7,8 @@
 class CJLSTTree : public BaseTree{
 public:
   const TString sampleIdentifier;
+  float MHVal;
+  float GHVal;
 
   static TString constructCJLSTSamplePath(TString strsample);
 

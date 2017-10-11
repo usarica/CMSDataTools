@@ -2,16 +2,16 @@
 #define HELPERFUNCTIONS_H
 
 #include <iostream>
-#include <fstream>
 #include <iomanip>
+#include <fstream>
+#include <string>
+#include <vector>
 #include <utility>
 #include <algorithm>
 #include <unordered_map>
+#include <ctime>
 #include <cmath>
 #include <cassert>
-#include <string>
-#include <vector>
-#include <fstream>
 #include <cstdlib>
 #include "TROOT.h"
 #include "TMath.h"
@@ -23,8 +23,10 @@
 #include "TH3F.h"
 #include "TProfile.h"
 #include "TGraphErrors.h"
+#include "TGraphAsymmErrors.h"
 #include "StdExtensions.h"
 #include "SimpleEntry.h"
+#include "Mela.h"
 
 namespace HelperFunctions{
 
@@ -51,16 +53,43 @@ namespace HelperFunctions{
   template<> void addPointsBetween(TGraph*& tgOriginal, double xmin, double xmax, unsigned int nadd);
   template<> void addPointsBetween(TGraphErrors*& tgOriginal, double xmin, double xmax, unsigned int nadd);
 
+  template <typename T> double evaluateTObject(T* obj, float val);
+  template<> double evaluateTObject<TH1F>(TH1F* obj, float val);
+  template<> double evaluateTObject<TGraph>(TGraph* obj, float val);
+
+  template <typename T> void regularizeHistogram(T* histo, int nIter_, double threshold_);
+  template<> void regularizeHistogram<TH2F>(TH2F* histo, int nIter_, double threshold_);
+  template<> void regularizeHistogram<TH3F>(TH3F* histo, int nIter_, double threshold_);
+
+  template <typename T> void conditionalizeHistogram(T* histo, unsigned int axis);
+  template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis);
+  template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int axis);
+
+  template <typename T> void wipeOverUnderFlows(T* hwipe);
+  template<> void wipeOverUnderFlows<TH1F>(TH1F* hwipe);
+  template<> void wipeOverUnderFlows<TH2F>(TH2F* hwipe);
+  template<> void wipeOverUnderFlows<TH3F>(TH3F* hwipe);
+
   // Spline functions
   template<int N> TF1* getFcn_a0plusa1overXN(TSpline3* sp, double xmin, double xmax, bool useLowBound);
   template<int N> TF1* getFcn_a0plusa1timesXN(TSpline3* sp, double xmin, double xmax, bool useLowBound);
 
   // Non-template functions
+  TString todaysdate();
+
+  void progressbar(unsigned int val, unsigned int tot);
+
+  bool test_bit(int mask, unsigned int iBit);
+
   void splitOption(const std::string rawoption, std::string& wish, std::string& value, char delimiter);
 
   void splitOptionRecursive(const std::string rawoption, std::vector<std::string>& splitoptions, char delimiter);
 
   TSpline3* convertGraphToSpline3(TGraph* tg, bool faithfulFirst=false, bool faithfulSecond=false, double* dfirst=nullptr, double* dlast=nullptr);
+
+  void convertTGraphErrorsToTH1F(TGraphErrors* tg, TH1F* histo);
+
+  void convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F* histo);
 
   TGraphErrors* makeGraphFromTH1(TH1* hx, TH1* hy, TString name);
 
@@ -76,6 +105,9 @@ namespace HelperFunctions{
 
   TF1* getFcn_a0plusa1expX(TSpline3* sp, double xmin, double xmax, bool useLowBound);
   TF1* getFcn_a0timesexpa1X(TSpline3* sp, double xmin, double xmax, bool useLowBound);
+
+  void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX=0, double omitbelow=0., int nIter_=-1, double threshold_=-1);
+
 }
 
 template<typename T> void HelperFunctions::addPointsBetween(T*& tgOriginal, double xmin, double xmax, unsigned int nadd){} // Dummy definition for generic types

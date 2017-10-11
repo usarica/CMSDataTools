@@ -12,15 +12,14 @@ public:
     kMultiplySampleBW
   };
 
-  ReweightingBuilder(CJLSTTree* intree, TString inStrWeight, ReweightingBuilder::BWScheme inscheme = ReweightingBuilder::kDoNotConsider);
-  ReweightingBuilder(CJLSTTree* intree, std::vector<TString> inStrWeights, ReweightingBuilder::BWScheme inscheme = ReweightingBuilder::kDoNotConsider);
+  ReweightingBuilder(TString inStrWeight, ReweightingBuilder::BWScheme inscheme = ReweightingBuilder::kDoNotConsider);
+  ReweightingBuilder(std::vector<TString> inStrWeights, ReweightingBuilder::BWScheme inscheme = ReweightingBuilder::kDoNotConsider);
 
 protected:
-  CJLSTTree* const theTree;
   const BWScheme theScheme;
   std::vector<TString> strWeights;
 
-  virtual float eval();
+  virtual float eval(CJLSTTree* theTree);
 };
 
 

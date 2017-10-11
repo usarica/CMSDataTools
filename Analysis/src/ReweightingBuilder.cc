@@ -4,20 +4,18 @@
 using namespace std;
 
 
-ReweightingBuilder::ReweightingBuilder(CJLSTTree* intree, TString inStrWeight, ReweightingBuilder::BWScheme inscheme) :
-theTree(intree),
+ReweightingBuilder::ReweightingBuilder(TString inStrWeight, ReweightingBuilder::BWScheme inscheme) :
 theScheme(inscheme)
 {
   strWeights.push_back(inStrWeight);
 }
 
-ReweightingBuilder::ReweightingBuilder(CJLSTTree* intree, std::vector<TString> inStrWeights, ReweightingBuilder::BWScheme inscheme) :
-theTree(intree),
+ReweightingBuilder::ReweightingBuilder(std::vector<TString> inStrWeights, ReweightingBuilder::BWScheme inscheme) :
 theScheme(inscheme),
 strWeights(inStrWeights)
 {}
 
-float ReweightingBuilder::eval(){
+float ReweightingBuilder::eval(CJLSTTree* theTree){
   float res=1;
   for (TString const& s : strWeights){
     float w=1;

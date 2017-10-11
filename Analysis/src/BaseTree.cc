@@ -17,7 +17,9 @@ tree(nullptr),
 failedtree(nullptr),
 hCounters(nullptr),
 valid(false),
-receiver(true)
+receiver(true),
+currentEvent(-1),
+currentTree(nullptr)
 {}
 BaseTree::BaseTree(const TString cinput, const TString treename, const TString failedtreename, const TString countersname) :
 finput(nullptr),
@@ -25,7 +27,9 @@ tree(nullptr),
 failedtree(nullptr),
 hCounters(nullptr),
 valid(false),
-receiver(true)
+receiver(true),
+currentEvent(-1),
+currentTree(nullptr)
 {
   TDirectory* curdir = gDirectory; // Save current directory to return back to it later
   if (!gSystem->AccessPathName(cinput)){
@@ -62,7 +66,7 @@ BaseTree::~BaseTree(){
   }
 }
 
-BaseTree::BranchType BaseTree::searchBranchType(TString branchname){
+BaseTree::BranchType BaseTree::searchBranchType(TString branchname) const{
   if (valshorts.find(branchname)!=valshorts.end()) return BranchType_short_t;
   else if (valuints.find(branchname)!=valuints.end()) return BranchType_uint_t;
   else if (valints.find(branchname)!=valints.end()) return BranchType_int_t;
@@ -80,16 +84,40 @@ BaseTree::BranchType BaseTree::searchBranchType(TString branchname){
 
 bool BaseTree::getSelectedEvent(int ev){
   resetBranches();
-  if (tree && ev<tree->GetEntries()) return (tree->GetEntry(ev)>0);
-  return false;
+  bool result=false;
+  if (tree && ev<tree->GetEntries()) result = (tree->GetEntry(ev)>0);
+  if (result){
+    currentEvent = ev;
+    currentTree = tree;
+  }
+  return result;
 }
 bool BaseTree::getFailedEvent(int ev){
   resetBranches();
-  if (failedtree && ev<failedtree->GetEntries()) return (failedtree->GetEntry(ev)>0);
-  return false;
+  bool result=false;
+  if (failedtree && ev<failedtree->GetEntries()) result = (failedtree->GetEntry(ev)>0);
+  if (result){
+    currentEvent = ev;
+    currentTree = failedtree;
+  }
+  return result;
+}
+void BaseTree::refreshCurrentEvent(){
+  TTree* tmpTree = currentTree;
+  int tmpEv = currentEvent;
+  resetBranches();
+  if (tmpTree){
+    tmpTree->GetEntry(tmpEv);
+    currentEvent = tmpEv;
+    currentTree = tmpTree;
+  }
 }
 
+
 void BaseTree::resetBranches(){
+  currentEvent = -1;
+  currentTree = nullptr;
+
   this->resetBranch<BaseTree::BranchType_short_t>();
   this->resetBranch<BaseTree::BranchType_uint_t>();
   this->resetBranch<BaseTree::BranchType_int_t>();

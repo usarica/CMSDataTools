@@ -33,6 +33,9 @@ protected:
   bool valid;
   const bool receiver;
 
+  int currentEvent;
+  TTree* currentTree;
+
   std::unordered_map<TString, std::pair<short, short>*> valshorts;
   std::unordered_map<TString, std::pair<unsigned int, unsigned int>*> valuints;
   std::unordered_map<TString, std::pair<int, int>*> valints;
@@ -45,7 +48,7 @@ protected:
   std::unordered_map<TString, std::vector<float>*> valVfloats;
   std::unordered_map<TString, std::vector<double>*> valVdoubles;
 
-  BranchType searchBranchType(TString branchname);
+  BranchType searchBranchType(TString branchname) const;
 
   template<BranchType T> void resetBranch();
   void resetBranches();
@@ -62,6 +65,7 @@ public:
 
   bool getSelectedEvent(int ev);
   bool getFailedEvent(int ev);
+  void refreshCurrentEvent();
 
   int getSelectedNEvents();
   int getFailedNEvents();

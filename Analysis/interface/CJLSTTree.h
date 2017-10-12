@@ -16,7 +16,9 @@ public:
   ~CJLSTTree(){}
 
   float getNGenWithPU();
-  float getTrueBW();
+  float getTrueBW(float const* overrideMH=nullptr);
+  float getTrueBWRe(float const* overrideMH=nullptr);
+  float getTrueBWIm(float const* overrideMH=nullptr);
 
 };
 

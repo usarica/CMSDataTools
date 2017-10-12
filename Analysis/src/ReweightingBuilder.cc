@@ -5,40 +5,21 @@ using namespace std;
 using namespace HelperFunctions;
 
 
-ReweightingBuilder::ReweightingBuilder(TString inStrWeight, ReweightingBuilder::BWScheme inscheme) :
-theScheme(inscheme)
-{
-  strWeights.push_back(inStrWeight);
-}
+ReweightingBuilder::ReweightingBuilder(TString inStrWeight, float(*infcn)(CJLSTTree*, const std::vector<TString>&)) :
+rule(infcn)
+{ strWeights.push_back(inStrWeight); }
 
-ReweightingBuilder::ReweightingBuilder(std::vector<TString> inStrWeights, ReweightingBuilder::BWScheme inscheme) :
-theScheme(inscheme),
+ReweightingBuilder::ReweightingBuilder(std::vector<TString> inStrWeights, float(*infcn)(CJLSTTree*, const std::vector<TString>&)) :
+rule(infcn),
 strWeights(inStrWeights)
 {}
 
-float ReweightingBuilder::eval(CJLSTTree* theTree) const{
-  if (!theTree) return 0;
+float ReweightingBuilder::eval(CJLSTTree* theTree) const{ if (rule) return rule(theTree, strWeights); else return 0; }
 
-  float res=1;
-  for (TString const& s : strWeights){
-    float w=1;
-    theTree->getVal(s, w);
-    res *= w;
-  }
-
-  if (theScheme!=kDoNotConsider){
-    float prop = theTree->getTrueBW();
-    if (theScheme==kDivideSampleBW) res /= prop;
-    else if (theScheme==kMultiplySampleBW) res *= prop;
-  }
-
-  return res;
-}
-
-std::vector<float> ReweightingBuilder::determineWeightThresholds(CJLSTTree* theTree, std::vector<std::pair<float, float>>& boundaries, float fractionRequirement, TString strOrderingVal){
+void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, std::vector<std::pair<float, float>>& boundaries, TString strOrderingVal, float fractionRequirement){
   std::vector<float> res;
 
-  if (!theTree) return res;
+  if (!theTree) return;
   const bool noBoundaries = boundaries.empty();
 
   vector<vector<SimpleEntry>> indexList;
@@ -83,7 +64,6 @@ std::vector<float> ReweightingBuilder::determineWeightThresholds(CJLSTTree* theT
   }
 
   weightThresholds[theTree] = res;
-  return res;
 }
 std::vector<float> ReweightingBuilder::getWeightThresholds(CJLSTTree* theTree){
   if (theTree && weightThresholds.find(theTree)!=weightThresholds.end()) return weightThresholds[theTree];

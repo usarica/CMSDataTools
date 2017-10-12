@@ -2,6 +2,7 @@
 #define EXTENDEDBINNING_H
 
 #include <vector>
+#include <utility>
 #include "TString.h"
 
 
@@ -20,17 +21,34 @@ public:
   bool isValid()const{ return isvalid; }
 
   void setLabel(const TString label_);
+  TString getLabel() const;
 
   double* getBinning();
   const double* getBinning() const;
-  const unsigned int getNbins() const;
-  const TString getLabel(){ return label; }
+  std::vector<double> getBinningVector();
+  const std::vector<double>& getBinningVector() const;
+  template<typename T> std::vector<std::pair<T,T>> getBoundaryPairsList() const;
+  unsigned int getNbins() const;
 
-  int getBin(double val)const; // = [ -1,0,...,vbinlow.size() ]
-  double getBinLowEdge(const int bin)const;
-  double getBinHighEdge(const int bin)const;
+  int getBin(double val) const; // = [ -1,0,...,vbinlow.size() ]
+  double getBinLowEdge(const int bin) const;
+  double getBinHighEdge(const int bin) const;
+
+  void addBinBoundary(double boundary);
 
 };
+
+template<typename T> std::vector<std::pair<T, T>> ExtendedBinning::getBoundaryPairsList() const{
+  std::vector<std::pair<T, T>> res;
+  if (vbinlow.size()>1) res.reserve(vbinlow.size()-1);
+  for (auto it=vbinlow.begin(); it!=vbinlow.end()-1; it++){
+    auto it_next = it+1;
+    res.push_back(std::pair<T, T>(T(*it), T(*it_next)));
+  }
+  return res;
+}
+template std::vector<std::pair<float, float>> ExtendedBinning::getBoundaryPairsList<float>() const;
+template std::vector<std::pair<double, double>> ExtendedBinning::getBoundaryPairsList<double>() const;
 
 
 #endif

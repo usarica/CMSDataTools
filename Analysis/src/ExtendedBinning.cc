@@ -1,4 +1,5 @@
 #include "ExtendedBinning.h"
+#include "HelperFunctions.h"
 
 
 ExtendedBinning::ExtendedBinning() : isvalid(false){}
@@ -19,28 +20,35 @@ ExtendedBinning::ExtendedBinning(const double* abinlow, const TString label_) : 
 ExtendedBinning::ExtendedBinning(const std::vector<double>& vbinlow_, const TString label_) : vbinlow(vbinlow_), label(label_), isvalid(vbinlow.size()>0){}
 
 void ExtendedBinning::setLabel(const TString label_){ label=label_; }
+TString ExtendedBinning::getLabel() const{ return label; }
 
 double* ExtendedBinning::getBinning(){ return vbinlow.data(); }
-const double* ExtendedBinning::getBinning()const{ return vbinlow.data(); }
-const unsigned int ExtendedBinning::getNbins()const{ return vbinlow.size(); }
+const double* ExtendedBinning::getBinning() const{ return vbinlow.data(); }
+std::vector<double> ExtendedBinning::getBinningVector(){ return vbinlow; }
+const std::vector<double>& ExtendedBinning::getBinningVector() const{ return vbinlow; }
+unsigned int ExtendedBinning::getNbins() const{ return vbinlow.size(); }
 
-int ExtendedBinning::getBin(double val)const{
+int ExtendedBinning::getBin(double val) const{
   for (unsigned int bin=0; bin<vbinlow.size()-1; bin++){
     if (vbinlow.at(bin)<=val && val<vbinlow.at(bin+1)) return bin;
   }
   if (val>=vbinlow.back()) return vbinlow.size();
   else return -1;
 }
-double ExtendedBinning::getBinLowEdge(const int bin)const{
+double ExtendedBinning::getBinLowEdge(const int bin) const{
   if (bin>=0 && bin<(int)vbinlow.size()) return vbinlow.at(bin);
   else if (bin<0 && vbinlow.size()>0) return vbinlow.at(0);
   else if (vbinlow.size()>0) return vbinlow.at(vbinlow.size()-1);
   else return -1;
 }
-double ExtendedBinning::getBinHighEdge(const int bin)const{
+double ExtendedBinning::getBinHighEdge(const int bin) const{
   if (bin>=-1 && bin<(int)vbinlow.size()-1) return vbinlow.at(bin+1);
   else if (bin<-1 && vbinlow.size()>0) return vbinlow.at(0);
   else if (vbinlow.size()>0) return vbinlow.at(vbinlow.size()-1);
   else return -1;
+}
+
+void ExtendedBinning::addBinBoundary(double boundary){
+  HelperFunctions::addByLowest<double>(vbinlow, boundary, true);
 }
 

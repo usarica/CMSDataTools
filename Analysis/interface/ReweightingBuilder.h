@@ -5,25 +5,18 @@
 
 
 class ReweightingBuilder{
-public:
-  enum BWScheme{
-    kDoNotConsider,
-    kDivideSampleBW,
-    kMultiplySampleBW
-  };
-
 protected:
-  const BWScheme theScheme;
+  float(*rule)(CJLSTTree*, const std::vector<TString>&);
   std::vector<TString> strWeights;
 
   std::unordered_map<CJLSTTree*, std::vector<float>> weightThresholds;
 
 public:
-  ReweightingBuilder(TString inStrWeight, ReweightingBuilder::BWScheme inscheme = ReweightingBuilder::kDoNotConsider);
-  ReweightingBuilder(std::vector<TString> inStrWeights, ReweightingBuilder::BWScheme inscheme = ReweightingBuilder::kDoNotConsider);
+  ReweightingBuilder(TString inStrWeight, float(*infcn)(CJLSTTree*, const std::vector<TString>&));
+  ReweightingBuilder(std::vector<TString> inStrWeights, float(*infcn)(CJLSTTree*, const std::vector<TString>&));
 
   virtual float eval(CJLSTTree* theTree) const;
-  std::vector<float> determineWeightThresholds(CJLSTTree* theTree, std::vector<std::pair<float, float>>& boundaries, float fractionRequirement=0.999, TString orderingVal="GenHMass");
+  void setupWeightVariables(CJLSTTree* theTree, std::vector<std::pair<float, float>>& boundaries, TString strOrderingVal, float fractionRequirement=0.999);
   std::vector<float> getWeightThresholds(CJLSTTree* theTree);
 
 };

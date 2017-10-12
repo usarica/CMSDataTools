@@ -12,14 +12,20 @@ public:
     kMultiplySampleBW
   };
 
-  ReweightingBuilder(TString inStrWeight, ReweightingBuilder::BWScheme inscheme = ReweightingBuilder::kDoNotConsider);
-  ReweightingBuilder(std::vector<TString> inStrWeights, ReweightingBuilder::BWScheme inscheme = ReweightingBuilder::kDoNotConsider);
-
 protected:
   const BWScheme theScheme;
   std::vector<TString> strWeights;
 
-  virtual float eval(CJLSTTree* theTree);
+  std::unordered_map<CJLSTTree*, std::vector<float>> weightThresholds;
+
+public:
+  ReweightingBuilder(TString inStrWeight, ReweightingBuilder::BWScheme inscheme = ReweightingBuilder::kDoNotConsider);
+  ReweightingBuilder(std::vector<TString> inStrWeights, ReweightingBuilder::BWScheme inscheme = ReweightingBuilder::kDoNotConsider);
+
+  virtual float eval(CJLSTTree* theTree) const;
+  std::vector<float> determineWeightThresholds(CJLSTTree* theTree, std::vector<std::pair<float, float>>& boundaries, float fractionRequirement=0.999, TString orderingVal="GenHMass");
+  std::vector<float> getWeightThresholds(CJLSTTree* theTree);
+
 };
 
 

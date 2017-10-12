@@ -5,6 +5,7 @@ using namespace std;
 
 
 SimpleEntry::SimpleEntry() : id(0), trackingval(0), weight(0) {}
+SimpleEntry::SimpleEntry(int id_, float trackingval_, float weight_) : id(id_), trackingval(trackingval_), weight(weight_) {}
 SimpleEntry::SimpleEntry(int id_, float trackingval_, std::vector<float> recoval_, float weight_) : id(id_), trackingval(trackingval_), recoval(recoval_), weight(weight_) {}
 
 bool SimpleEntry::operator != (const SimpleEntry& other)const{ return trackingval!=other.trackingval; }

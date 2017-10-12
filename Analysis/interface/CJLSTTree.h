@@ -16,6 +16,7 @@ public:
   ~CJLSTTree(){}
 
   float getNGenWithPU();
+  float getTrueBW();
 
 };
 

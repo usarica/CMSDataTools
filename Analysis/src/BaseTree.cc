@@ -102,6 +102,10 @@ bool BaseTree::getFailedEvent(int ev){
   }
   return result;
 }
+bool BaseTree::getEvent(int ev){
+  if (ev<this->getSelectedNEvents()) return this->getSelectedEvent(ev);
+  else return this->getFailedEvent(ev-this->getSelectedNEvents());
+}
 void BaseTree::refreshCurrentEvent(){
   TTree* tmpTree = currentTree;
   int tmpEv = currentEvent;

@@ -65,6 +65,7 @@ public:
 
   bool getSelectedEvent(int ev);
   bool getFailedEvent(int ev);
+  bool getEvent(int ev);
   void refreshCurrentEvent();
 
   int getSelectedNEvents();

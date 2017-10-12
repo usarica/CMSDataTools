@@ -21,4 +21,20 @@ TString CJLSTTree::constructCJLSTSamplePath(TString strsample){
 }
 
 float CJLSTTree::getNGenWithPU(){ return (hCounters ? hCounters->GetBinContent(40): 0.); }
+float CJLSTTree::getTrueBW(){
+  if (MHVal<0. || GHVal==0.) return 1.;
+  else{
+    if (valfloats.find("GenHMass")==valfloats.end()){ // Don't spend time trying to find the branch
+      float valdef=-1;
+      this->bookBranch("GenHMass", valdef);
+      this->refreshCurrentEvent();
+    }
+    float& GenHMass = valfloats["GenHMass"]->first;
+    if (GenHMass>=0.){
+      float invProp = pow(pow(GenHMass, 2)-pow(MHVal, 2), 2) + pow(MHVal*GHVal, 2);
+      return 1./invProp;
+    }
+    else return 1.;
+  }
+}
 

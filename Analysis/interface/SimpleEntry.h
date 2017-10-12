@@ -19,6 +19,7 @@ struct SimpleEntry{
   std::unordered_map<TString, double> nameddoubles;
 
   SimpleEntry();
+  SimpleEntry(int id_, float trackingval_, float weight_=1);
   SimpleEntry(int id_, float trackingval_, std::vector<float> recoval_, float weight_=1);
 
   bool operator != (const SimpleEntry& other)const;

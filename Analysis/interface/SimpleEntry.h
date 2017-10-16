@@ -4,7 +4,8 @@
 #include <vector>
 #include <unordered_map>
 #include "TString.h"
-#include "StdExtensions.h"
+#include "HelperFunctionsCore.h"
+
 
 struct SimpleEntry{
   int id;
@@ -12,11 +13,19 @@ struct SimpleEntry{
   std::vector<float> recoval;
   float weight;
 
+  std::unordered_map<TString, bool> namedbools;
   std::unordered_map<TString, unsigned int> nameduints;
   std::unordered_map<TString, short> namedshorts;
   std::unordered_map<TString, int> namedints;
   std::unordered_map<TString, float> namedfloats;
   std::unordered_map<TString, double> nameddoubles;
+
+  std::unordered_map<TString, std::vector<bool>> namedVbools;
+  std::unordered_map<TString, std::vector<unsigned int>> namedVuints;
+  std::unordered_map<TString, std::vector<short>> namedVshorts;
+  std::unordered_map<TString, std::vector<int>> namedVints;
+  std::unordered_map<TString, std::vector<float>> namedVfloats;
+  std::unordered_map<TString, std::vector<double>> namedVdoubles;
 
   SimpleEntry();
   SimpleEntry(int id_, float trackingval_, float weight_=1);
@@ -29,21 +38,14 @@ struct SimpleEntry{
   bool operator < (const SimpleEntry& other)const;
   bool operator <= (const SimpleEntry& other)const;
 
-  void setNamedVal(TString strname, unsigned int& val);
-  void setNamedVal(TString strname, short& val);
-  void setNamedVal(TString strname, int& val);
-  void setNamedVal(TString strname, float& val);
-  void setNamedVal(TString strname, double& val);
-
-  void getNamedVal(TString strname, unsigned int& val);
-  void getNamedVal(TString strname, short& val);
-  void getNamedVal(TString strname, int& val);
-  void getNamedVal(TString strname, float& val);
-  void getNamedVal(TString strname, double& val);
+  template<typename T> void setNamedVal(TString strname, T const& val);
+  template<typename T> void getNamedVal(TString strname, T& val) const;
 
   static void cropByTrueVal(std::vector<SimpleEntry>& vec, float minval, float maxval);
   void print();
+
 };
+
 
 struct ExtBin{
   double binlow;
@@ -51,5 +53,7 @@ struct ExtBin{
   std::vector<SimpleEntry> collection;
   void addEvent(SimpleEntry evt);
 };
+
+
 
 #endif

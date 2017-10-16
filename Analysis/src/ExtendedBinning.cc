@@ -2,22 +2,25 @@
 #include "HelperFunctions.h"
 
 
-ExtendedBinning::ExtendedBinning() : isvalid(false){}
-ExtendedBinning::ExtendedBinning(const unsigned int nbins, const double min, const double max, const TString label_) : label(label_), isvalid(nbins>0){
-  if (isvalid){
-    const double inc = (max-min)/((const double)nbins);
-    vbinlow.reserve(nbins);
+ExtendedBinning::ExtendedBinning(const TString label_) : label(label_){}
+ExtendedBinning::ExtendedBinning(const unsigned int nbins, const double min, const double max, const TString label_) : label(label_){
+  if (max>min && nbins>0){
+    const double inc = (max-min)/((const double) nbins);
+    vbinlow.reserve(nbins+1);
     for (unsigned int i=0; i<=nbins; i++) vbinlow.push_back(min+inc*(double(i)));
   }
 }
-ExtendedBinning::ExtendedBinning(const double* abinlow, const TString label_) : label(label_), isvalid(abinlow!=nullptr){
-  if (isvalid){
-    const int nbins = sizeof(abinlow)/sizeof(abinlow[0]);
-    vbinlow = std::vector<double>(abinlow, abinlow+nbins);
-    isvalid=true;
+ExtendedBinning::ExtendedBinning(const double* abinlow, const TString label_) : label(label_){
+  if (abinlow!=nullptr){
+    const int np = sizeof(abinlow)/sizeof(abinlow[0]);
+    vbinlow = std::vector<double>(abinlow, abinlow+np);
   }
 }
-ExtendedBinning::ExtendedBinning(const std::vector<double>& vbinlow_, const TString label_) : vbinlow(vbinlow_), label(label_), isvalid(vbinlow.size()>0){}
+ExtendedBinning::ExtendedBinning(const std::vector<double>& vbinlow_, const TString label_) : vbinlow(vbinlow_), label(label_){}
+
+bool ExtendedBinning::isValid() const{
+  return (vbinlow.size()>1);
+}
 
 void ExtendedBinning::setLabel(const TString label_){ label=label_; }
 TString ExtendedBinning::getLabel() const{ return label; }
@@ -26,10 +29,14 @@ double* ExtendedBinning::getBinning(){ return vbinlow.data(); }
 const double* ExtendedBinning::getBinning() const{ return vbinlow.data(); }
 std::vector<double> ExtendedBinning::getBinningVector(){ return vbinlow; }
 const std::vector<double>& ExtendedBinning::getBinningVector() const{ return vbinlow; }
-unsigned int ExtendedBinning::getNbins() const{ return vbinlow.size(); }
+
+unsigned int ExtendedBinning::getNbins() const{
+  return (this->isValid() ? vbinlow.size()-1 : 0);
+}
 
 int ExtendedBinning::getBin(double val) const{
-  for (unsigned int bin=0; bin<vbinlow.size()-1; bin++){
+  if (!this->isValid()) return -1;
+  for (int bin=0; bin<(int)(vbinlow.size()-1); bin++){
     if (vbinlow.at(bin)<=val && val<vbinlow.at(bin+1)) return bin;
   }
   if (val>=vbinlow.back()) return vbinlow.size();

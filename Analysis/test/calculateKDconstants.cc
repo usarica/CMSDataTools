@@ -36,7 +36,7 @@
 
 
 #ifndef doDebugKD
-#define doDebugKD false
+#define doDebugKD true
 #endif
 #ifndef doDebugKDExt
 #define doDebugKDExt false
@@ -180,8 +180,13 @@ void getEvents(
     if (std::isnan(KD) || std::isinf(KD) || KD<0.) continue;
 
     if (ev_acc%10000==0) cout << "Pre-processing event " << ev << endl;
-    if (doDebugKD && ev_acc==20000) break;
+    //cout << "Pre-processing event " << ev << endl;
+    if (doDebugKD && ev_acc==10000) break;
 
+    //cout << "varTrack = " << varTrack << endl;
+    //cout << "valReco: ";
+    //for (auto& v:valReco) cout << v << " ";
+    //cout << endl;
     SimpleEntry theEntry(ev, varTrack, valReco, wgt);
     if (doDebugKDExt & doDebugKD) theEntry.print();
     addByLowest(index, theEntry, false);

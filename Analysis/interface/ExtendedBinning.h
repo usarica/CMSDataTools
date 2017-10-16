@@ -10,15 +10,14 @@ class ExtendedBinning{
 protected:
   std::vector<double> vbinlow; // Size=Nbins+1
   TString label;
-  bool isvalid;
 
 public:
-  ExtendedBinning();
+  ExtendedBinning(const TString label_="");
   ExtendedBinning(const unsigned int nbins, const double min, const double max, const TString label_=""); // Uniform constructor
   ExtendedBinning(const double* abinlow, const TString label_="");
   ExtendedBinning(const std::vector<double>& vbinlow_, const TString label_="");
 
-  bool isValid()const{ return isvalid; }
+  bool isValid() const;
 
   void setLabel(const TString label_);
   TString getLabel() const;

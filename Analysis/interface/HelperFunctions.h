@@ -24,9 +24,10 @@
 #include "TProfile.h"
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
-#include "StdExtensions.h"
+#include "HelperFunctionsCore.h"
 #include "SimpleEntry.h"
 #include "Mela.h"
+
 
 namespace HelperFunctions{
 
@@ -43,7 +44,9 @@ namespace HelperFunctions{
   template<typename T, typename U> void cleanUnorderedMap(std::unordered_map<T, U> um);
 
   // Non-zero and NaN/Inf checkers
-  template<typename T> bool checkNonZero(std::vector<T> const& vars);
+  template<typename T> bool checkNonNegative(std::vector<T> const& vars, int ibegin=-1, int iend=-1);
+  template<typename T> bool checkNonZero(std::vector<T> const& vars, int ibegin=-1, int iend=-1);
+  template<typename T> bool checkPositiveDef(std::vector<T> const& vars, int ibegin=-1, int iend=-1);
   template<typename T> bool checkNanInf(std::vector<T> const& vars);
 
   // TGraph functions
@@ -198,20 +201,45 @@ template<typename T> bool HelperFunctions::checkListVariable(const std::vector<T
 
 template<typename T, typename U> void HelperFunctions::cleanUnorderedMap(std::unordered_map<T, U> um){ for (auto& it:um){ delete it.second; it.second=0; } }
 
-// Non-zero and NaN/Inf checkers
-template<typename T> bool HelperFunctions::checkNonZero(std::vector<T> const& vars){
+// Non-negative, non-zero, positive-definite and NaN/Inf checkers
+template<typename T> bool HelperFunctions::checkNonNegative(std::vector<T> const& vars, int ibegin, int iend){
+  int ipos=0;
   for (T const& v:vars){
+    if ((ibegin<0 || ipos>=ibegin) && (iend<0 || ipos<iend)) continue;
+    ipos++;
     if (v<0.){
-      std::cerr << "HelperFunctions::checkNonZero found value " << v << " < 0" << std::endl;
+      std::cerr << "HelperFunctions::checkNonNegative found value " << v << " < 0" << std::endl;
+      return false;
+    }
+  }
+  return true;
+}
+template<typename T> bool HelperFunctions::checkNonZero(std::vector<T> const& vars, int ibegin, int iend){
+  int ipos=0;
+  for (T const& v:vars){
+    if ((ibegin<0 || ipos>=ibegin) && (iend<0 || ipos<iend)) continue;
+    ipos++;
+    if (v==0.){
+      std::cerr << "HelperFunctions::checkNonZero found value " << v << " == 0" << std::endl;
+      return false;
+    }
+  }
+  return true;
+}
+template<typename T> bool HelperFunctions::checkPositiveDef(std::vector<T> const& vars, int ibegin, int iend){
+  int ipos=0;
+  for (T const& v:vars){
+    if ((ibegin<0 || ipos>=ibegin) && (iend<0 || ipos<iend)) continue;
+    ipos++;
+    if (v<=0.){
+      std::cerr << "HelperFunctions::checkPositiveDef found value " << v << " <= 0" << std::endl;
       return false;
     }
   }
   return true;
 }
 template<typename T> bool HelperFunctions::checkNanInf(std::vector<T> const& vars){
-  for (T const& v:vars){
-    if (std::isnan(v) || std::isinf(v)) return false;
-  }
+  for (T const& v:vars){ if (std::isnan(v) || std::isinf(v)) return false; }
   return true;
 }
 
@@ -271,15 +299,28 @@ template void HelperFunctions::addByLowest<double, double>(std::vector<std::pair
 template bool HelperFunctions::checkListVariable<std::string>(const std::vector<std::string>& list, const std::string& var);
 template bool HelperFunctions::checkListVariable<double>(const std::vector<double>& list, const double& var);
 
-template bool HelperFunctions::checkNonZero<short>(std::vector<short> const& vars);
+template bool HelperFunctions::checkNonNegative<short>(std::vector<short> const& vars, int ibegin, int iend);
+template bool HelperFunctions::checkNonNegative<unsigned int>(std::vector<unsigned int> const& vars, int ibegin, int iend);
+template bool HelperFunctions::checkNonNegative<int>(std::vector<int> const& vars, int ibegin, int iend);
+template bool HelperFunctions::checkNonNegative<float>(std::vector<float> const& vars, int ibegin, int iend);
+template bool HelperFunctions::checkNonNegative<double>(std::vector<double> const& vars, int ibegin, int iend);
+
+template bool HelperFunctions::checkNonZero<short>(std::vector<short> const& vars, int ibegin, int iend);
+template bool HelperFunctions::checkNonZero<unsigned int>(std::vector<unsigned int> const& vars, int ibegin, int iend);
+template bool HelperFunctions::checkNonZero<int>(std::vector<int> const& vars, int ibegin, int iend);
+template bool HelperFunctions::checkNonZero<float>(std::vector<float> const& vars, int ibegin, int iend);
+template bool HelperFunctions::checkNonZero<double>(std::vector<double> const& vars, int ibegin, int iend);
+
+template bool HelperFunctions::checkPositiveDef<short>(std::vector<short> const& vars, int ibegin, int iend);
+template bool HelperFunctions::checkPositiveDef<unsigned int>(std::vector<unsigned int> const& vars, int ibegin, int iend);
+template bool HelperFunctions::checkPositiveDef<int>(std::vector<int> const& vars, int ibegin, int iend);
+template bool HelperFunctions::checkPositiveDef<float>(std::vector<float> const& vars, int ibegin, int iend);
+template bool HelperFunctions::checkPositiveDef<double>(std::vector<double> const& vars, int ibegin, int iend);
+
 template bool HelperFunctions::checkNanInf<short>(std::vector<short> const& vars);
-template bool HelperFunctions::checkNonZero<unsigned int>(std::vector<unsigned int> const& vars);
 template bool HelperFunctions::checkNanInf<unsigned int>(std::vector<unsigned int> const& vars);
-template bool HelperFunctions::checkNonZero<int>(std::vector<int> const& vars);
 template bool HelperFunctions::checkNanInf<int>(std::vector<int> const& vars);
-template bool HelperFunctions::checkNonZero<float>(std::vector<float> const& vars);
 template bool HelperFunctions::checkNanInf<float>(std::vector<float> const& vars);
-template bool HelperFunctions::checkNonZero<double>(std::vector<double> const& vars);
 template bool HelperFunctions::checkNanInf<double>(std::vector<double> const& vars);
 
 template void HelperFunctions::cleanUnorderedMap<TString, short*>(std::unordered_map<TString, short*> um);

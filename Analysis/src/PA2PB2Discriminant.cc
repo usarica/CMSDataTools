@@ -11,7 +11,7 @@ PA2PB2Discriminant::PA2PB2Discriminant(const TString cfilename, const TString sp
 
 void PA2PB2Discriminant::eval(const std::vector<float>& vars, const float& valReco){
   const unsigned int nvarsreq=4;
-  assert(checkNonZero(vars) && vars.size()==nvarsreq);
+  assert(checkNonNegative(vars) && vars.size()==nvarsreq);
   if (!checkNanInf(vars)) val = -999;
   else{
     float constant = getCval(valReco);

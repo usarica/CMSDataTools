@@ -11,7 +11,7 @@ PA1PB1PBp1Discriminant::PA1PB1PBp1Discriminant(const TString cfilename, const TS
 
 void PA1PB1PBp1Discriminant::eval(const std::vector<float>& vars, const float& valReco){
   const unsigned int nvarsreq=3;
-  assert(checkNonZero(vars) && vars.size()==nvarsreq);
+  assert(checkNonNegative(vars) && vars.size()==nvarsreq);
   if (!checkNanInf(vars)) val = -999;
   else{
     float constant = getCval(valReco);

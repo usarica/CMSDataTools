@@ -11,7 +11,7 @@ JJEWQCDBkgDiscriminant::JJEWQCDBkgDiscriminant(const TString cfilename, const TS
 
 void JJEWQCDBkgDiscriminant::eval(const std::vector<float>& vars, const float& valReco){
   const unsigned int nvarsreq=18;
-  assert(checkNonZero(vars) && vars.size()==nvarsreq);
+  assert(checkNonNegative(vars) && vars.size()==nvarsreq);
   if (!checkNanInf(vars)) val = -999;
   else{
     float constant = getCval(valReco);

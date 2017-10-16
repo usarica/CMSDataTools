@@ -1,5 +1,7 @@
-#include "SimpleEntry.h"
 #include <iostream>
+#include "SimpleEntry.h"
+#include "SimpleEntry.hpp"
+
 
 using namespace std;
 
@@ -14,18 +16,6 @@ bool SimpleEntry::operator > (const SimpleEntry& other)const{ return trackingval
 bool SimpleEntry::operator >= (const SimpleEntry& other)const{ return trackingval>=other.trackingval; }
 bool SimpleEntry::operator < (const SimpleEntry& other)const{ return trackingval<other.trackingval; }
 bool SimpleEntry::operator <= (const SimpleEntry& other)const{ return trackingval<=other.trackingval; }
-
-void SimpleEntry::setNamedVal(TString strname, unsigned int& val){ nameduints[strname]=val; }
-void SimpleEntry::setNamedVal(TString strname, short& val){ namedshorts[strname]=val; }
-void SimpleEntry::setNamedVal(TString strname, int& val){ namedints[strname]=val; }
-void SimpleEntry::setNamedVal(TString strname, float& val){ namedfloats[strname]=val; }
-void SimpleEntry::setNamedVal(TString strname, double& val){ nameddoubles[strname]=val; }
-
-void SimpleEntry::getNamedVal(TString strname, unsigned int& val){ val = nameduints[strname]; }
-void SimpleEntry::getNamedVal(TString strname, short& val){ val = namedshorts[strname]; }
-void SimpleEntry::getNamedVal(TString strname, int& val){ val = namedints[strname]; }
-void SimpleEntry::getNamedVal(TString strname, float& val){ val = namedfloats[strname]; }
-void SimpleEntry::getNamedVal(TString strname, double& val){ val = nameddoubles[strname]; }
 
 void SimpleEntry::cropByTrueVal(std::vector<SimpleEntry>& vec, float minval, float maxval){
   vector<unsigned int> erasepos;

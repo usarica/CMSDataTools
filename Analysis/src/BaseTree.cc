@@ -5,11 +5,117 @@
 using namespace std;
 
 
+bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<short, short>*>::iterator& it){
+  auto& theMap = valshorts;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
+bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<short>*>::iterator& it){
+  auto& theMap = valVshorts;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
+bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<uint, uint>*>::iterator& it){
+  auto& theMap = valuints;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
+bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<unsigned int>*>::iterator& it){
+  auto& theMap = valVuints;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
+bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<int, int>*>::iterator& it){
+  auto& theMap = valints;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
+bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<int>*>::iterator& it){
+  auto& theMap = valVints;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
+bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<float, float>*>::iterator& it){
+  auto& theMap = valfloats;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
+bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<float>*>::iterator& it){
+  auto& theMap = valVfloats;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
+bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<double, double>*>::iterator& it){
+  auto& theMap = valdoubles;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
+bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<double>*>::iterator& it){
+  auto& theMap = valVdoubles;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
+
+bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<short, short>*>::const_iterator& it) const{
+  auto const& theMap = valshorts;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
+bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<short>*>::const_iterator& it) const{
+  auto const& theMap = valVshorts;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
+bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<uint, uint>*>::const_iterator& it) const{
+  auto const& theMap = valuints;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
+bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<unsigned int>*>::const_iterator& it) const{
+  auto const& theMap = valVuints;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
+bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<int, int>*>::const_iterator& it) const{
+  auto const& theMap = valints;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
+bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<int>*>::const_iterator& it) const{
+  auto const& theMap = valVints;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
+bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<float, float>*>::const_iterator& it) const{
+  auto const& theMap = valfloats;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
+bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<float>*>::const_iterator& it) const{
+  auto const& theMap = valVfloats;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
+bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<double, double>*>::const_iterator& it) const{
+  auto const& theMap = valdoubles;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
+bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<double>*>::const_iterator& it) const{
+  auto const& theMap = valVdoubles;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
+
 int BaseTree::getSelectedNEvents(){ return (tree ? tree->GetEntries() : 0); }
 int BaseTree::getFailedNEvents(){ return (failedtree ? failedtree->GetEntries() : 0); }
 
 bool BaseTree::isValid() const{ return valid; }
-bool BaseTree::branchExists(TString branchname){ return (searchBranchType(branchname)!=BranchType_unknown_t); }
+bool BaseTree::branchExists(TString branchname, BranchType* type){
+  BranchType theType = searchBranchType(branchname);
+  if (type) *type=theType;
+  return (theType!=BranchType_unknown_t);
+}
 
 BaseTree::BaseTree() :
 finput(nullptr),
@@ -67,17 +173,17 @@ BaseTree::~BaseTree(){
 }
 
 BaseTree::BranchType BaseTree::searchBranchType(TString branchname) const{
-  if (valshorts.find(branchname)!=valshorts.end()) return BranchType_short_t;
-  else if (valuints.find(branchname)!=valuints.end()) return BranchType_uint_t;
-  else if (valints.find(branchname)!=valints.end()) return BranchType_int_t;
-  else if (valfloats.find(branchname)!=valfloats.end()) return BranchType_float_t;
-  else if (valdoubles.find(branchname)!=valdoubles.end()) return BranchType_double_t;
+  if (valshorts.find(branchname)!=valshorts.cend()) return BranchType_short_t;
+  else if (valuints.find(branchname)!=valuints.cend()) return BranchType_uint_t;
+  else if (valints.find(branchname)!=valints.cend()) return BranchType_int_t;
+  else if (valfloats.find(branchname)!=valfloats.cend()) return BranchType_float_t;
+  else if (valdoubles.find(branchname)!=valdoubles.cend()) return BranchType_double_t;
 
-  else if (valVshorts.find(branchname)!=valVshorts.end()) return BranchType_vshort_t;
-  else if (valVuints.find(branchname)!=valVuints.end()) return BranchType_vuint_t;
-  else if (valVints.find(branchname)!=valVints.end()) return BranchType_vint_t;
-  else if (valVfloats.find(branchname)!=valVfloats.end()) return BranchType_vfloat_t;
-  else if (valVdoubles.find(branchname)!=valVdoubles.end()) return BranchType_vdouble_t;
+  else if (valVshorts.find(branchname)!=valVshorts.cend()) return BranchType_vshort_t;
+  else if (valVuints.find(branchname)!=valVuints.cend()) return BranchType_vuint_t;
+  else if (valVints.find(branchname)!=valVints.cend()) return BranchType_vint_t;
+  else if (valVfloats.find(branchname)!=valVfloats.cend()) return BranchType_vfloat_t;
+  else if (valVdoubles.find(branchname)!=valVdoubles.cend()) return BranchType_vdouble_t;
 
   else return BranchType_unknown_t;
 }

@@ -68,7 +68,6 @@ void makeGGZZTemplates(){
       //for (int icat=(int) Untagged; icat<(int) nCategoriesMor17; icat++){
       for (int icat=(int) Inclusive; icat<=(int) Inclusive; icat++){
         makeGGZZTemplates_one(ichan, icat, syst);
-        collectGGZZTemplates_one(ichan, icat, syst, true);
       }
     }
   }
@@ -99,8 +98,9 @@ void makeGGZZTemplates_one(int ichan, int icat, int Systematics){
   };
 
   // Setup binning
-  ExtendedBinning ZZMassBinning(2900/2., 100., 3000., "mZZ");
+  ExtendedBinning ZZMassBinning(2900/2., 100., 3000., "ZZMass");
   ExtendedBinning KD1Binning(30, 0, 1, "KD1");
+  ExtendedBinning KD2Binning(30, -1, 1, "KD2");
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -137,6 +137,12 @@ void makeGGZZTemplates_one(int ichan, int icat, int Systematics){
   // Get the CJLST set
   CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
 
+  // Setup GenHMass binning
+  ExtendedBinning GenHMassBinning("GenHMass");
+  for (unsigned int is=0; is<theSampleSet->getCJLSTTreeList().size()-1; is++) GenHMassBinning.addBinBoundary(
+    0.5*(theSampleSet->getCJLSTTreeList().at(is)->MHVal + theSampleSet->getCJLSTTreeList().at(is+1)->MHVal)
+    );
+
   foutput->cd();
 
   TTree* theFinalTree[nTemplates];
@@ -156,7 +162,7 @@ void makeGGZZTemplates_one(int ichan, int icat, int Systematics){
       break;
     };
     rewgtBuilder = new ReweightingBuilder(strWeight, getSimpleWeight);
-    for (auto& tree:theSampleSet->getCJLSTTreeList()) rewgtBuilder->setupWeightVariables(tree, ZZMassBinning.getBoundaryPairsList<float>(), "ZZMass");
+    for (auto& tree:theSampleSet->getCJLSTTreeList()) rewgtBuilder->setupWeightVariables(tree, GenHMassBinning);
 
     theFinalTree[t] = new TTree(Form("T_2D_%s_Tree", strTemplateName[t].Data()), "");
 

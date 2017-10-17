@@ -50,27 +50,8 @@ protected:
 
   BranchType searchBranchType(TString branchname) const;
 
-  bool getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<short, short>*>::iterator& it);
-  bool getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<short>*>::iterator& it);
-  bool getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<unsigned int, unsigned int>*>::iterator& it);
-  bool getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<unsigned int>*>::iterator& it);
-  bool getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<int, int>*>::iterator& it);
-  bool getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<int>*>::iterator& it);
-  bool getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<float, float>*>::iterator& it);
-  bool getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<float>*>::iterator& it);
-  bool getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<double, double>*>::iterator& it);
-  bool getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<double>*>::iterator& it);
-
-  bool getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<short, short>*>::const_iterator& it) const;
-  bool getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<short>*>::const_iterator& it) const;
-  bool getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<unsigned int, unsigned int>*>::const_iterator& it) const;
-  bool getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<unsigned int>*>::const_iterator& it) const;
-  bool getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<int, int>*>::const_iterator& it) const;
-  bool getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<int>*>::const_iterator& it) const;
-  bool getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<float, float>*>::const_iterator& it) const;
-  bool getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<float>*>::const_iterator& it) const;
-  bool getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<double, double>*>::const_iterator& it) const;
-  bool getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<double>*>::const_iterator& it) const;
+  template<typename T> bool getBranchCIterator(TString branchname, typename std::unordered_map<TString, T>::iterator& it);
+  template<typename T> bool getBranchCIterator(TString branchname, typename std::unordered_map<TString, T>::const_iterator& it) const;
 
   template<BranchType T> void resetBranch();
   void resetBranches();
@@ -80,7 +61,7 @@ protected:
 public:
   BaseTree();
   BaseTree(const TString cinput, const TString treename, const TString failedtreename, const TString countersname);
-  ~BaseTree();
+  virtual ~BaseTree();
 
   template<typename T> bool bookBranch(TString branchname, T valdef);
   template<BranchType T> bool bookBranch(TString branchname);
@@ -95,12 +76,15 @@ public:
 
   template<typename T> void getVal(TString branchname, T& val) const;
   template<typename T> void setVal(TString branchname, T const& val);
+  template<typename T> void getValRef(TString branchname, T* val) const;
 
   void silenceUnused();
   void releaseBranch(TString branchname);
 
   bool isValid() const;
   bool branchExists(TString branchname, BranchType* type=nullptr);
+
+  virtual bool isValidEvent() const;
 
 };
 

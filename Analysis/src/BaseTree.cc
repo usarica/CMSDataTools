@@ -5,108 +5,6 @@
 using namespace std;
 
 
-bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<short, short>*>::iterator& it){
-  auto& theMap = valshorts;
-  it = theMap.find(branchname);
-  return (it!=theMap.end());
-}
-bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<short>*>::iterator& it){
-  auto& theMap = valVshorts;
-  it = theMap.find(branchname);
-  return (it!=theMap.end());
-}
-bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<uint, uint>*>::iterator& it){
-  auto& theMap = valuints;
-  it = theMap.find(branchname);
-  return (it!=theMap.end());
-}
-bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<unsigned int>*>::iterator& it){
-  auto& theMap = valVuints;
-  it = theMap.find(branchname);
-  return (it!=theMap.end());
-}
-bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<int, int>*>::iterator& it){
-  auto& theMap = valints;
-  it = theMap.find(branchname);
-  return (it!=theMap.end());
-}
-bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<int>*>::iterator& it){
-  auto& theMap = valVints;
-  it = theMap.find(branchname);
-  return (it!=theMap.end());
-}
-bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<float, float>*>::iterator& it){
-  auto& theMap = valfloats;
-  it = theMap.find(branchname);
-  return (it!=theMap.end());
-}
-bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<float>*>::iterator& it){
-  auto& theMap = valVfloats;
-  it = theMap.find(branchname);
-  return (it!=theMap.end());
-}
-bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<double, double>*>::iterator& it){
-  auto& theMap = valdoubles;
-  it = theMap.find(branchname);
-  return (it!=theMap.end());
-}
-bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<double>*>::iterator& it){
-  auto& theMap = valVdoubles;
-  it = theMap.find(branchname);
-  return (it!=theMap.end());
-}
-
-bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<short, short>*>::const_iterator& it) const{
-  auto const& theMap = valshorts;
-  it = theMap.find(branchname);
-  return (it!=theMap.cend());
-}
-bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<short>*>::const_iterator& it) const{
-  auto const& theMap = valVshorts;
-  it = theMap.find(branchname);
-  return (it!=theMap.cend());
-}
-bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<uint, uint>*>::const_iterator& it) const{
-  auto const& theMap = valuints;
-  it = theMap.find(branchname);
-  return (it!=theMap.cend());
-}
-bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<unsigned int>*>::const_iterator& it) const{
-  auto const& theMap = valVuints;
-  it = theMap.find(branchname);
-  return (it!=theMap.cend());
-}
-bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<int, int>*>::const_iterator& it) const{
-  auto const& theMap = valints;
-  it = theMap.find(branchname);
-  return (it!=theMap.cend());
-}
-bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<int>*>::const_iterator& it) const{
-  auto const& theMap = valVints;
-  it = theMap.find(branchname);
-  return (it!=theMap.cend());
-}
-bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<float, float>*>::const_iterator& it) const{
-  auto const& theMap = valfloats;
-  it = theMap.find(branchname);
-  return (it!=theMap.cend());
-}
-bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<float>*>::const_iterator& it) const{
-  auto const& theMap = valVfloats;
-  it = theMap.find(branchname);
-  return (it!=theMap.cend());
-}
-bool BaseTree::getScalarBranchCIterator(TString branchname, std::unordered_map<TString, std::pair<double, double>*>::const_iterator& it) const{
-  auto const& theMap = valdoubles;
-  it = theMap.find(branchname);
-  return (it!=theMap.cend());
-}
-bool BaseTree::getVectorBranchCIterator(TString branchname, std::unordered_map<TString, std::vector<double>*>::const_iterator& it) const{
-  auto const& theMap = valVdoubles;
-  it = theMap.find(branchname);
-  return (it!=theMap.cend());
-}
-
 int BaseTree::getSelectedNEvents(){ return (tree ? tree->GetEntries() : 0); }
 int BaseTree::getFailedNEvents(){ return (failedtree ? failedtree->GetEntries() : 0); }
 
@@ -308,4 +206,5 @@ void BaseTree::releaseBranch(TString branchname){
   }
 }
 
+bool BaseTree::isValidEvent() const{ return true; } // To be overloaded in CJLSTTree to check for POWHEG mH<300 GeV, ZZMass < mH
 

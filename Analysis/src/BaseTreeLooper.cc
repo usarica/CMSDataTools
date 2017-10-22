@@ -81,3 +81,4 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
   } // End loop over the trees
 }
 
+const std::vector<SimpleEntry> BaseTreeLooper::getProducts() const{ return productList; }

@@ -59,6 +59,9 @@ public:
   // Function to loop over the tree list
   virtual void loop(bool loopSelected, bool loopFailed, bool keepProducts);
 
+  // Get the products
+  const std::vector<SimpleEntry> getProducts() const;
+
 };
 
 

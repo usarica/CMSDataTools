@@ -29,7 +29,7 @@
 #include "ReweightingBuilder.h"
 #include "ReweightingFunctions.h"
 #include "ExtendedBinning.h"
-#include "StringStreamer.h"
+#include "OutputStreamer.h"
 #include "Mela.h"
 
 using namespace std;
@@ -118,7 +118,7 @@ void makeGGZZTemplates_one(int ichan, int icat, int Systematics){
   OUTPUT_LOG_NAME += ".log";
   TString coutput = coutput_common + OUTPUT_NAME;
   TString coutput_log = coutput_common + OUTPUT_LOG_NAME;
-  StringStreamer tout(coutput_log.Data());
+  OutputStreamer tout(coutput_log.Data());
   tout << "Opened log file " << coutput_log << endl;
   TFile* foutput = new TFile(coutput, "recreate");
   tout << "Opened file " << coutput << endl;
@@ -136,6 +136,31 @@ void makeGGZZTemplates_one(int ichan, int icat, int Systematics){
 
   // Get the CJLST set
   CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
+  for (auto& tree:theSampleSet->getCJLSTTreeList()){
+    // Book common variables needed for analysis
+    tree->bookBranch<float>("GenHMass", 0);
+    tree->bookBranch<float>("ZZMass", 0);
+    tree->bookBranch<short>("ZiFlav", 0);
+    tree->bookBranch<short>("Z2Flav", 0);
+    // Variables for SM reweighting
+    tree->bookBranch<float>("p_Gen_GG_BKG_MCFM", 0);
+    tree->bookBranch<float>("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM", 0);
+    tree->bookBranch<float>("p_Gen_GG_BSI_kappaTopBot_1_ghz1_1_MCFM", 0);
+    // Variables for Dbkgkin
+    tree->bookBranch<float>("p_GG_SIG_ghg2_1_ghz1_1_JHUGen", 0);
+    tree->bookBranch<float>("p_QQB_BKG_MCFM", 0);
+    // Variables for Dggint
+    tree->bookBranch<float>("p_GG_SIG_kappaTopBot_1_ghz1_1_MCFM", 0);
+    tree->bookBranch<float>("p_GG_BKG_MCFM", 0);
+    tree->bookBranch<float>("p_GG_BSI_kappaTopBot_1_ghz1_1_MCFM", 0);
+    tree->bookBranch<float>("p_Const_GG_SIG_kappaTopBot_1_ghz1_1_MCFM", 0);
+    tree->bookBranch<float>("p_Const_GG_BKG_MCFM", 0);
+    // Variables for DbkgjjEW
+
+    // Variables for DJJEW
+
+    // Variables for categorization
+  }
 
   // Setup GenHMass binning
   ExtendedBinning GenHMassBinning("GenHMass");
@@ -164,7 +189,36 @@ void makeGGZZTemplates_one(int ichan, int icat, int Systematics){
     rewgtBuilder = new ReweightingBuilder(strWeight, getSimpleWeight);
     for (auto& tree:theSampleSet->getCJLSTTreeList()) rewgtBuilder->setupWeightVariables(tree, GenHMassBinning);
 
-    theFinalTree[t] = new TTree(Form("T_2D_%s_Tree", strTemplateName[t].Data()), "");
+    TreeAnalysis theAnalyzer(theSampleSet);
+    // Book common variables needed for analysis
+    theAnalyzer.addConsumed<float>("GenHMass");
+    theAnalyzer.addConsumed<float>("ZZMass");
+    theAnalyzer.addConsumed<short>("ZiFlav");
+    theAnalyzer.addConsumed<short>("Z2Flav");
+    // Variables for SM reweighting
+    theAnalyzer.addConsumed<float>("p_Gen_GG_BKG_MCFM");
+    theAnalyzer.addConsumed<float>("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
+    theAnalyzer.addConsumed<float>("p_Gen_GG_BSI_kappaTopBot_1_ghz1_1_MCFM");
+    // Variables for Dbkgkin
+    theAnalyzer.addConsumed<float>("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
+    theAnalyzer.addConsumed<float>("p_QQB_BKG_MCFM");
+    // Variables for Dggint
+    theAnalyzer.addConsumed<float>("p_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
+    theAnalyzer.addConsumed<float>("p_GG_BKG_MCFM");
+    theAnalyzer.addConsumed<float>("p_GG_BSI_kappaTopBot_1_ghz1_1_MCFM");
+    theAnalyzer.addConsumed<float>("p_Const_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
+    theAnalyzer.addConsumed<float>("p_Const_GG_BKG_MCFM");
+
+    // Register the discriminants
+    Dbkgkin_t KD1(Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+    Dintkin_t KD2(Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+    theAnalyzer.addDiscriminantBuilder("KD1", &KD1);
+    theAnalyzer.addDiscriminantBuilder("KD2", &KD2);
+
+
+    // The output is supposed to contain ZZMass:KD1:KD2
+    theFinalTree[t] = new TTree(Form("T_ggH_%s_Tree", strTemplateName[t].Data()), "");
+
 
 
   }

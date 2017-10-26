@@ -5,16 +5,6 @@
 using namespace std;
 
 
-int BaseTree::getSelectedNEvents(){ return (tree ? tree->GetEntries() : 0); }
-int BaseTree::getFailedNEvents(){ return (failedtree ? failedtree->GetEntries() : 0); }
-
-bool BaseTree::isValid() const{ return valid; }
-bool BaseTree::branchExists(TString branchname, BranchType* type){
-  BranchType theType = searchBranchType(branchname);
-  if (type) *type=theType;
-  return (theType!=BranchType_unknown_t);
-}
-
 BaseTree::BaseTree() :
 finput(nullptr),
 tree(nullptr),
@@ -121,6 +111,16 @@ void BaseTree::refreshCurrentEvent(){
   }
 }
 
+int BaseTree::getSelectedNEvents(){ return (tree ? tree->GetEntries() : 0); }
+int BaseTree::getFailedNEvents(){ return (failedtree ? failedtree->GetEntries() : 0); }
+int BaseTree::getNEvents(){ return (this->getSelectedNEvents() + this->getFailedNEvents()); }
+
+bool BaseTree::isValid() const{ return valid; }
+bool BaseTree::branchExists(TString branchname, BranchType* type){
+  BranchType theType = searchBranchType(branchname);
+  if (type) *type=theType;
+  return (theType!=BranchType_unknown_t);
+}
 
 void BaseTree::resetBranches(){
   currentEvent = -1;

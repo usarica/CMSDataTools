@@ -5,15 +5,15 @@
 
 
 namespace CategorizationHelpers{
-  enum WidthCategory{
+  enum Category{
     Inclusive,
     Untagged,
     JJVBFTagged,
     HadVHTagged,
-    nCategoriesMor17
+    nCategories
   };
 
-  TString getWidthCategoryName(CategorizationHelpers::WidthCategory category);
+  TString getCategoryName(CategorizationHelpers::Category category);
 
 }
 

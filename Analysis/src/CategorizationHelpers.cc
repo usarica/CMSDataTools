@@ -4,15 +4,7 @@
 using namespace CategorizationHelpers;
 
 
-enum WidthCategory{
-  Inclusive,
-  Untagged,
-  JJVBFTagged,
-  HadVHTagged,
-  nCategoriesMor17
-};
-
-TString CategorizationHelpers::getWidthCategoryName(CategorizationHelpers::WidthCategory category){
+TString CategorizationHelpers::getCategoryName(CategorizationHelpers::Category category){
   switch(category){
   case Inclusive:
     return "Inclusive";

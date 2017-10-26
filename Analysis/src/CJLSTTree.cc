@@ -3,6 +3,7 @@
 
 CJLSTTree::CJLSTTree(TString strsample) :
 BaseTree(CJLSTTree::constructCJLSTSamplePath(strsample), TREE_NAME, TREE_FAILED_NAME, COUNTERS_NAME),
+associatedSet(nullptr),
 sampleIdentifier(strsample),
 MHVal(-1),
 GHVal(0)
@@ -13,7 +14,6 @@ GHVal(0)
     //GHVal = SampleHelpers::GlobalMELA->getHiggsWidthAtPoleMass(MHVal);
   }
 }
-
 
 TString CJLSTTree::constructCJLSTSamplePath(TString strsample){
   TString res = CJLSTsamplesdir + "/" + strsample + "/ZZ4lAnalysis.root";
@@ -40,4 +40,6 @@ float CJLSTTree::getTrueBW(float const* overrideMH){
     else return 1.;
   }
 }
+
+void CJLSTTree::setAssociatedSet(CJLSTSet* inSet){ associatedSet = inSet; }
 

@@ -1,7 +1,9 @@
 #include "HelperFunctions.h"
+#include "MELAStreamHelpers.hh"
 
 
 using namespace std;
+using namespace MELAStreamHelpers;
 
 
 TString HelperFunctions::todaysdate(){
@@ -19,21 +21,17 @@ TString HelperFunctions::todaysdate(){
 void HelperFunctions::progressbar(unsigned int val, unsigned int tot){
   unsigned int percent=floor(0.01*tot);
   if (percent==0) percent=1;
-  if (val%percent==0 && val!=tot){
-    cout << "[ " << setw(3) << val/percent << "% |";
-    for (unsigned int k=1; k<val/percent; k++) cout << "=";
-    if (val%percent!=100) cout << ">";
-    for (unsigned int k=val/percent+1; k<100; k++) cout << " ";
-    cout << "| ]";
-    fflush(stdout);
-    putchar('\r');
-  }
-  else if (val==tot){
-    cout << "[ 100% |";
-    for (unsigned int k=0; k<100; k++) cout << "=";
-    cout << "| ]";
-    fflush(stdout);
-    putchar('\r');
+  if (val%percent==0 || val==tot){
+    unsigned int percent_done = val/percent;
+    if (val==tot) percent_done=100;
+    MELAout << "[ " << setw(3) << percent_done << "% |";
+    for (unsigned int k=0; k<percent_done; k++) MELAout << '=';
+    if (percent_done<100) MELAout << '>';
+    else MELAout << ' ';
+    for (unsigned int k=percent_done; k<100; k++) MELAout << ' ';
+    MELAout << "| ]";
+    MELAout << flush;
+    MELAout << '\r';
   }
 }
 
@@ -128,7 +126,6 @@ TSpline3* HelperFunctions::convertGraphToSpline3(TGraph* tg, bool faithfulFirst,
     derivative_last = (xy[1][nbins-1]-xy[1][nbins-2])/(xy[0][nbins-1]-xy[0][nbins-2]);
   }
   else spopt += "e2";
-  //cout << "End derivatives to be preserved (" << faithfulFirst << " , " << faithfulSecond << "): " << derivative_first << " , " << derivative_last << endl;
   TSpline3* spline = new TSpline3("spline", tg, spopt, derivative_first, derivative_last);
   spline->SetName(Form("sp_%s", tg->GetName()));
   if (dfirst!=0) *dfirst = spline->Derivative(xy[0][0]);
@@ -138,7 +135,7 @@ TSpline3* HelperFunctions::convertGraphToSpline3(TGraph* tg, bool faithfulFirst,
 
 void HelperFunctions::convertTGraphErrorsToTH1F(TGraphErrors* tg, TH1F* histo){
   if (tg==0){
-    cerr << "convertTGraphErrorsToTH1F: TGraph is 0!" << endl;
+    MELAerr << "convertTGraphErrorsToTH1F: TGraph is 0!" << endl;
     histo=0;
     return;
   }
@@ -165,7 +162,7 @@ void HelperFunctions::convertTGraphErrorsToTH1F(TGraphErrors* tg, TH1F* histo){
   gROOT->cd();
   histo = new TH1F(Form("h_%s", tg->GetName()), "", nbins, xarray);
   for (int ix=1; ix<=nbins; ix++){
-    cout << "x, y = " << xarray[ix-1] << " " << yy[ix-1] << endl;
+    //MELAout << "x, y = " << xarray[ix-1] << " " << yy[ix-1] << endl;
     histo->SetBinContent(ix, yy[ix-1]);
     //histo->SetBinError(ix, sqrt((pow(ey_dn[ix-1], 2)+pow(ey_up[ix-1], 2))*0.5));
     histo->SetBinError(ix, ey[ix-1]);
@@ -173,7 +170,7 @@ void HelperFunctions::convertTGraphErrorsToTH1F(TGraphErrors* tg, TH1F* histo){
 }
 void HelperFunctions::convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F* histo){
   if (tg==0){
-    cerr << "convertTGraphAsymmErrorsToTH1F: TGraph is 0!" << endl;
+    MELAerr << "convertTGraphAsymmErrorsToTH1F: TGraph is 0!" << endl;
     histo=0;
     return;
   }
@@ -197,7 +194,7 @@ void HelperFunctions::convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F
   gROOT->cd();
   histo = new TH1F(Form("h_%s", tg->GetName()), "", nbins, xarray);
   for (int ix=1; ix<=nbins; ix++){
-    cout << "x, y = " << xarray[ix-1] << " " << yy[ix-1] << endl;
+    //MELAout << "x, y = " << xarray[ix-1] << " " << yy[ix-1] << endl;
     histo->SetBinContent(ix, yy[ix-1]);
     histo->SetBinError(ix, sqrt((pow(ey_dn[ix-1], 2)+pow(ey_up[ix-1], 2))*0.5));
     //histo->SetBinError(ix, ey[ix-1]);
@@ -206,7 +203,7 @@ void HelperFunctions::convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F
 
 TGraphErrors* HelperFunctions::makeGraphFromTH1(TH1* hx, TH1* hy, TString name){
   if (hx->GetNbinsX()!=hy->GetNbinsX()){
-    cerr << "Number of bins for x coordinate != those for y" << endl;
+    MELAerr << "Number of bins for x coordinate != those for y" << endl;
     assert(0);
   }
   unsigned int nbins = hx->GetNbinsX();
@@ -216,7 +213,7 @@ TGraphErrors* HelperFunctions::makeGraphFromTH1(TH1* hx, TH1* hy, TString name){
     xexyey[0][bin] = hx->GetBinContent(bin+1);
     xexyey[1][bin] = hx->GetBinError(bin+1);
 
-    cout << "Bin " << bin << " x-center: " << xexyey[0][bin] << " +- " << xexyey[1][bin] << endl;
+    //MELAout << "Bin " << bin << " x-center: " << xexyey[0][bin] << " +- " << xexyey[1][bin] << endl;
     xexyey[2][bin] = hy->GetBinContent(bin+1);
     xexyey[3][bin] = hy->GetBinError(bin+1);
   }
@@ -264,9 +261,9 @@ TGraph* HelperFunctions::divideTGraphs(TGraph* tgnum, TGraph* tgdenom, double po
     if (denominator!=0.){
       double result = pow(numerator, powernum)/pow(denominator, powerdenom);
       if (std::isnan(result) || std::isinf(result)){
-        cerr << "Division gave NaN! ";
-        cerr << "Numerator = " << numerator << ", denominator = " << denominator << " at " << xval << endl;
-        cerr << " - TGraph numerator = " << tgnum->Eval(xval) << ", denominator = " << tgdenom->Eval(xval) << " at " << xval << endl;
+        MELAerr << "Division gave NaN! ";
+        MELAerr << "Numerator = " << numerator << ", denominator = " << denominator << " at " << xval << endl;
+        MELAerr << " - TGraph numerator = " << tgnum->Eval(xval) << ", denominator = " << tgdenom->Eval(xval) << " at " << xval << endl;
       }
       else xynew.push_back(pair<double, double>(xval, result));
     }
@@ -289,8 +286,8 @@ TGraphErrors* HelperFunctions::addPoint(TGraphErrors* tgSlice, double x){
     if (xexyey_slice[0][iy]<x) lowbin=iy;
     if (xexyey_slice[0][iy]>x){ highbin=iy; break; }
   }
-  cout << "Low bin " << lowbin << " at " << xexyey_slice[0][lowbin] << endl;
-  cout << "High bin " << highbin << " at " << xexyey_slice[0][highbin] << endl;
+  //MELAout << "Low bin " << lowbin << " at " << xexyey_slice[0][lowbin] << endl;
+  //MELAout << "High bin " << highbin << " at " << xexyey_slice[0][highbin] << endl;
 
   int ctr=0;
   for (unsigned int iy=0; iy<nbins_slice; iy++){
@@ -414,13 +411,13 @@ void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixe
       int bin_to_fix=-1;
       for (unsigned int bin=0; bin<nbins_slice; bin++){ if (distance>fabs(xy_mod[0][bin]-requestedVal)){ bin_to_fix = bin; distance = fabs(xy_mod[0][bin]-requestedVal); } }
       if (bin_to_fix>=0) fixedBins.push_back(bin_to_fix);
-      cout << "Requested to fix bin " << bin_to_fix << endl;
+      //MELAout << "Requested to fix bin " << bin_to_fix << endl;
     }
   }
   if (omitbelow>0.){
     for (unsigned int bin=0; bin<nbins_slice; bin++){
       if (xy_mod[0][bin]<omitbelow) fixedBins.push_back(bin);
-      cout << "Requested to fix bin " << bin << endl;
+      //MELAout << "Requested to fix bin " << bin << endl;
     }
   }
 
@@ -433,7 +430,7 @@ void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixe
     for (unsigned int binIt = bin_first; binIt<=bin_last; binIt++){
       bool doFix=false;
       for (unsigned int ifx=0; ifx<fixedBins.size(); ifx++){
-        if ((int) (binIt-1)==fixedBins.at(ifx)){ doFix=true; /*cout << "Iteration " << it << " is fixing bin " << (binIt-1) << endl; */break; }
+        if ((int) (binIt-1)==fixedBins.at(ifx)){ doFix=true; /*MELAout << "Iteration " << it << " is fixing bin " << (binIt-1) << endl; */break; }
       }
       if (doFix) continue;
 
@@ -545,7 +542,7 @@ template<> void HelperFunctions::regularizeHistogram<TH2F>(TH2F* histo, int nIte
   const int nbinsy = histo->GetNbinsY();
 
   for (int iy=1; iy<=nbinsy; iy++){
-    cout << "regularizeHistogram::Bin " << iy << " being regularized..." << endl;
+    //MELAout << "regularizeHistogram::Bin " << iy << " being regularized..." << endl;
     double xy[2][nbinsx];
     for (int ix=1; ix<=nbinsx; ix++){
       xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
@@ -566,7 +563,7 @@ template<> void HelperFunctions::regularizeHistogram<TH3F>(TH3F* histo, int nIte
 
   for (int iy=1; iy<=nbinsy; iy++){
     for (int iz=1; iz<=nbinsz; iz++){
-      cout << "regularizeHistogram::Bin " << iy << ", " << iz << " being regularized..." << endl;
+      //MELAout << "regularizeHistogram::Bin " << iy << ", " << iz << " being regularized..." << endl;
       double xy[2][nbinsx];
       for (int ix=1; ix<=nbinsx; ix++){
         xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
@@ -649,7 +646,7 @@ template<> void HelperFunctions::wipeOverUnderFlows<TH1F>(TH1F* hwipe){
     if (binx>=1 && binx<=hwipe->GetNbinsX()) continue;
     if (hwipe->GetBinContent(binx)!=0){
       hwipe->SetBinContent(binx, 0);
-      cout << hwipe->GetName() << " binX = " << binx << " non-zero." << endl;
+      //MELAout << hwipe->GetName() << " binX = " << binx << " non-zero." << endl;
     }
   }
   double wipeScale = hwipe->Integral();
@@ -664,7 +661,7 @@ template<> void HelperFunctions::wipeOverUnderFlows<TH2F>(TH2F* hwipe){
       if (biny>=1 && biny<=hwipe->GetNbinsY()) continue;
       if (hwipe->GetBinContent(binx, biny)!=0){
         hwipe->SetBinContent(binx, biny, 0);
-        cout << hwipe->GetName() << " binX = " << binx << " binY = " << biny << " non-zero." << endl;
+        //MELAout << hwipe->GetName() << " binX = " << binx << " binY = " << biny << " non-zero." << endl;
       }
     }
   }
@@ -682,7 +679,7 @@ template<> void HelperFunctions::wipeOverUnderFlows<TH3F>(TH3F* hwipe){
         if (binz>=1 && binz<=hwipe->GetNbinsZ()) continue;
         if (hwipe->GetBinContent(binx, biny, binz)!=0){
           hwipe->SetBinContent(binx, biny, binz, 0);
-          cout << hwipe->GetName() << " binX = " << binx << " binY = " << biny << " binZ = " << binz << " non-zero." << endl;
+          //MELAout << hwipe->GetName() << " binX = " << binx << " binY = " << biny << " binZ = " << binz << " non-zero." << endl;
         }
       }
     }

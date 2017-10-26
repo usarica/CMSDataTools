@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <memory>
 #include <utility>
 #include <algorithm>
 #include <cmath>

@@ -10,7 +10,7 @@ protected:
   float(*rule)(CJLSTTree*, const std::vector<TString>&);
   std::vector<TString> strWeights;
 
-  std::unordered_map<CJLSTTree*, ExtendedBinning> weightBinning;
+  ExtendedBinning weightBinning;
   std::unordered_map<CJLSTTree*, std::vector<float>> weightThresholds;
   std::unordered_map<CJLSTTree*, std::vector<float>> sumPostThrWeights;
   std::unordered_map<CJLSTTree*, std::vector<unsigned int>> sumEvents;
@@ -21,9 +21,16 @@ public:
   ReweightingBuilder(std::vector<TString> inStrWeights, float(*infcn)(CJLSTTree*, const std::vector<TString>&));
 
   virtual float eval(CJLSTTree* theTree) const;
+
+  std::vector<float> getWeightThresholds(CJLSTTree* theTree) const;
   float getPostThresholdWeight(CJLSTTree* theTree) const;
-  void setupWeightVariables(CJLSTTree* theTree, const ExtendedBinning& binning, float fractionRequirement=0.999);
-  std::vector<float> getWeightThresholds(CJLSTTree* theTree);
+  float getPostThresholdSumWeights(CJLSTTree* theTree) const;
+  unsigned int getSumEvents(CJLSTTree* theTree) const;
+  unsigned int getSumNonZeroWgtEvents(CJLSTTree* theTree) const;
+  int findBin(CJLSTTree* theTree) const;
+
+  void setWeightBinning(const ExtendedBinning& binning);
+  void setupWeightVariables(CJLSTTree* theTree, float fractionRequirement=0.999);
 
 };
 

@@ -1,7 +1,10 @@
 #include "ReweightingBuilder.h"
 #include "SimpleEntry.h"
+#include "MELAStreamHelpers.hh"
+
 
 using namespace std;
+using namespace MELAStreamHelpers;
 using namespace HelperFunctions;
 
 
@@ -16,11 +19,13 @@ strWeights(inStrWeights)
 
 float ReweightingBuilder::eval(CJLSTTree* theTree) const{ if (rule) return rule(theTree, strWeights); else return 0; }
 
-void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, const ExtendedBinning& binning, float fractionRequirement){
+void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fractionRequirement){
+  MELAout << "ReweightingBuilder[" << strWeights << "]::setupWeightVariables is called for tree " << theTree->sampleIdentifier << "." << endl;
+
   std::vector<float> res;
 
   if (!theTree) return;
-  weightBinning[theTree]=binning;
+  const ExtendedBinning& binning = this->weightBinning;
   TString strOrderingVal = binning.getLabel();
 
   const bool noBoundaries = !binning.isValid();
@@ -37,8 +42,12 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, const Extended
   indexList.assign(ns, vector<SimpleEntry>());
 
   int ev=0;
+  const int nevents = theTree->getNEvents();
+  MELAout << "\t- Ordering the " << nevents << " events";
+  if (!noBoundaries) MELAout << " based on the " << binning.getNbins() << " bins: [ " << binning.getBinningVector() << " ]";
+  MELAout << '.' << endl;
   while (theTree->getEvent(ev)){
-    ev++;
+    HelperFunctions::progressbar(ev, nevents);
 
     float wgt = this->eval(theTree);
     float orderingVal=-1;
@@ -50,6 +59,8 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, const Extended
       int bin = binning.getBin(orderingVal);
       if (bin>=0 && bin<(int)ns) addByLowest(indexList.at(bin), theEntry, false);
     }
+
+    ev++;
   }
 
   for (unsigned int ibin=0; ibin<ns; ibin++){
@@ -77,27 +88,46 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, const Extended
 
   weightThresholds[theTree] = res;
 }
-std::vector<float> ReweightingBuilder::getWeightThresholds(CJLSTTree* theTree){
-  if (theTree && weightThresholds.find(theTree)!=weightThresholds.end()) return weightThresholds[theTree];
+std::vector<float> ReweightingBuilder::getWeightThresholds(CJLSTTree* theTree) const{
+  if (!theTree) return vector<float>();
+  auto it = weightThresholds.find(theTree);
+
+  if (it!=weightThresholds.cend()) return it->second;
   else return vector<float>();
 }
 
+void ReweightingBuilder::setWeightBinning(const ExtendedBinning& binning){ weightBinning=binning; }
+int ReweightingBuilder::findBin(CJLSTTree* theTree) const{
+  const ExtendedBinning& binning = weightBinning;
+  int bin=0;
+  if (binning.isValid()){
+    float orderingVal; theTree->getVal(binning.getLabel(), orderingVal);
+    int bin = binning.getBin(orderingVal);
+    if (bin<0 || bin>(int) binning.getNbins()) bin=-1;
+  }
+  return bin;
+}
 float ReweightingBuilder::getPostThresholdWeight(CJLSTTree* theTree) const{
   float weight = this->eval(theTree);
-  auto binningIt = weightBinning.find(theTree);
-  if (binningIt!=weightBinning.cend()){
-    const ExtendedBinning& binning = binningIt->second;
-    int bin=0;
-    if (binning.isValid()){
-      float orderingVal; theTree->getVal(binning.getLabel(), orderingVal);
-      int bin = binning.getBin(orderingVal);
-      if (bin<0 || bin>(int) binning.getNbins()) bin=-1;
-    }
-    if (bin>=0){
-      const float& threshold=weightThresholds.find(theTree)->second.at(bin);
-      if (fabs(weight)>threshold) weight = pow(threshold, 2)/weight;
-    }
+  int bin=this->findBin(theTree);
+  if (bin>=0){
+    const float& threshold=weightThresholds.find(theTree)->second.at(bin);
+    if (fabs(weight)>threshold) weight = pow(threshold, 2)/weight;
   }
   return weight;
 }
-
+float ReweightingBuilder::getPostThresholdSumWeights(CJLSTTree* theTree) const{
+  int bin=this->findBin(theTree);
+  if (bin>=0) return sumPostThrWeights.find(theTree)->second.at(bin);
+  else return 0;
+}
+unsigned int ReweightingBuilder::getSumEvents(CJLSTTree* theTree) const{
+  int bin=this->findBin(theTree);
+  if (bin>=0) return sumEvents.find(theTree)->second.at(bin);
+  else return 0;
+}
+unsigned int ReweightingBuilder::getSumNonZeroWgtEvents(CJLSTTree* theTree) const{
+  int bin=this->findBin(theTree);
+  if (bin>=0) return sumNonZeroWgtEvents.find(theTree)->second.at(bin);
+  else return 0;
+}

@@ -20,6 +20,7 @@ bool CJLSTSet::addCJLSTTree(const TString& strname){
   else{ delete tree; tree=nullptr; }
   if (tree==nullptr) std::cerr << "CJLSTSet::addCJLSTTree(" << strname << ") is invalid!" << std::endl;
   else std::cout << "CJLSTSet::addCJLSTTree(" << strname << ") is successful!" << std::endl;
+  if (tree) tree->setAssociatedSet(this);
   return (tree!=nullptr);
 }
 bool CJLSTSet::addCJLSTTreeList(const std::vector<TString>& strlist){

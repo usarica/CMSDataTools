@@ -25,65 +25,52 @@
 #include "HelperFunctions.h"
 #include "SampleHelpers.h"
 #include "CJLSTSet.h"
+#include "BaseTreeLooper.h"
+#include "DiscriminantClasses.h"
 #include "CategorizationHelpers.h"
 #include "ReweightingBuilder.h"
 #include "ReweightingFunctions.h"
 #include "ExtendedBinning.h"
-#include "OutputStreamer.h"
+#include "MELAStreamHelpers.hh"
 #include "Mela.h"
 
 using namespace std;
 using namespace HelperFunctions;
 using namespace SampleHelpers;
 using namespace CategorizationHelpers;
+using namespace DiscriminantClasses;
+using namespace ReweightingFunctions;
+using namespace MELAStreamHelpers;
 
 // Constants to affect the template code
 const TString fixedDate="";
 const TString user_output_dir = "output/";
 
-// Initializers
-void makeGGZZTemplates_one(int channel, int icat, int Systematics);
 
-// FIXME:
-// 2) WRITE A REWEIGHTING CLASS THAT TAKES THE CJLSTTREE AND THE WEIGHT STRING TO CONTROL IF PROPAGATOR NEEDS TO BE TAKEN OUT
-// 3) ADD A REWEIGHTING CLASSES FIELD TO GETEVENTS
-// 4) IMPLEMENT A CATEGORIZATION PLAN TO GETEVENTS AS WELL
-// Event scanner
-void getEvents(
-  CJLSTSet* theSet,
+// ggH analyzer
+class GGHAnalyzer : public BaseTreeLooper{
+protected:
+  Channel channel;
+  Category category;
 
-  const TString& strTrackVar,
-  const vector<pair<Discriminant*, vector<TString>>>& KDVars,
-  const vector<ReweightingBuilder*>& rewgtBuilders,
+  bool runEvent(CJLSTTree* tree, SimpleEntry& product);
 
-  TTree* indexTree,
+public:
+  GGHAnalyzer(Channel channel_, Category category_) : BaseTreeLooper(), channel(channel_), category(category_){}
+  GGHAnalyzer(CJLSTTree* inTree, Channel channel_, Category category_) : BaseTreeLooper(inTree), channel(channel_), category(category_){}
+  GGHAnalyzer(std::vector<CJLSTTree*> const& inTreeList, Channel channel_, Category category_) : BaseTreeLooper(inTreeList), channel(channel_), category(category_){}
+  GGHAnalyzer(CJLSTSet const* inTreeSet, Channel channel_, Category category_) : BaseTreeLooper(inTreeSet), channel(channel_), category(category_){}
 
-  Channel& chan
-  );
-
-// Main Function, runs over all desired iterations
-void makeGGZZTemplates(){
-  for (int ichan=(int) k4mu; ichan<(int) NChannels; ichan++){
-    for (int syst=0; syst<=0; syst++){
-      //for (int icat=(int) Untagged; icat<(int) nCategoriesMor17; icat++){
-      for (int icat=(int) Inclusive; icat<=(int) Inclusive; icat++){
-        makeGGZZTemplates_one(ichan, icat, syst);
-      }
-    }
-  }
-}
+};
 
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeGGZZTemplates_one(int ichan, int icat, int Systematics){
-  if (ichan>=(int)NChannels) return;
+void makeGGZZTemplates_one(const Channel channel, const Category category, TString strSystematics){
+  if (channel==NChannels) return;
 
-  const Channel channel = (Channel) ichan;
   const TString strChannel = getChannelName(channel);
-
-  const WidthCategory category = (WidthCategory) icat;
-  const TString strCategory = getWidthCategoryName(category);
+  const TString strCategory = getCategoryName(category);
 
   enum{
     kBkg=0,
@@ -100,7 +87,7 @@ void makeGGZZTemplates_one(int ichan, int icat, int Systematics){
   // Setup binning
   ExtendedBinning ZZMassBinning(2900/2., 100., 3000., "ZZMass");
   ExtendedBinning KD1Binning(30, 0, 1, "KD1");
-  ExtendedBinning KD2Binning(30, -1, 1, "KD2");
+  //ExtendedBinning KD2Binning(30, -1, 1, "KD2");
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -110,17 +97,15 @@ void makeGGZZTemplates_one(int ichan, int icat, int Systematics){
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
   gSystem->Exec("mkdir -p " + coutput_common);
 
-  TString OUTPUT_NAME = Form("%s_HtoZZ%s_Stage1_", strCategory.Data(), strChannel.Data());
-  if (Systematics == 0) OUTPUT_NAME += "Nominal";
-  else{ cerr << "Invalid systematics " << Systematics << endl; return; }
+  TString OUTPUT_NAME = Form("%s_HtoZZ%s_Stage1_%s", strCategory.Data(), strChannel.Data(), strSystematics.Data());
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
   TString coutput = coutput_common + OUTPUT_NAME;
   TString coutput_log = coutput_common + OUTPUT_LOG_NAME;
-  OutputStreamer tout(coutput_log.Data());
+  MELAOutputStreamer tout(coutput_log.Data());
   tout << "Opened log file " << coutput_log << endl;
-  TFile* foutput = new TFile(coutput, "recreate");
+  TFile* foutput = TFile::Open(coutput, "recreate");
   tout << "Opened file " << coutput << endl;
   tout << "===============================" << endl;
   tout << "CoM Energy: " << theSqrts << " TeV" << endl;
@@ -134,46 +119,47 @@ void makeGGZZTemplates_one(int ichan, int icat, int Systematics){
   vector<TString> strSamples;
   getSamplesList(theSqrts, strSampleIdentifiers, strSamples);
 
+  // Register the discriminants
+  Discriminant* KD1 = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+  vector<TString> KD1vars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDbkgkin);
+  Discriminant* KD2=nullptr;
+  vector<TString> KD2vars;
+  //Discriminant* KD2 = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+  //vector<TString> KD2vars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDggint);
+
   // Get the CJLST set
   CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
+  // Book common variables
+  theSampleSet->bookXS();
+  theSampleSet->bookOverallEventWgt();
   for (auto& tree:theSampleSet->getCJLSTTreeList()){
     // Book common variables needed for analysis
     tree->bookBranch<float>("GenHMass", 0);
-    tree->bookBranch<float>("ZZMass", 0);
-    tree->bookBranch<short>("ZiFlav", 0);
+    tree->bookBranch<float>("ZZMass", -1);
+    tree->bookBranch<short>("Z1Flav", 0);
     tree->bookBranch<short>("Z2Flav", 0);
     // Variables for SM reweighting
     tree->bookBranch<float>("p_Gen_GG_BKG_MCFM", 0);
     tree->bookBranch<float>("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM", 0);
     tree->bookBranch<float>("p_Gen_GG_BSI_kappaTopBot_1_ghz1_1_MCFM", 0);
-    // Variables for Dbkgkin
-    tree->bookBranch<float>("p_GG_SIG_ghg2_1_ghz1_1_JHUGen", 0);
-    tree->bookBranch<float>("p_QQB_BKG_MCFM", 0);
-    // Variables for Dggint
-    tree->bookBranch<float>("p_GG_SIG_kappaTopBot_1_ghz1_1_MCFM", 0);
-    tree->bookBranch<float>("p_GG_BKG_MCFM", 0);
-    tree->bookBranch<float>("p_GG_BSI_kappaTopBot_1_ghz1_1_MCFM", 0);
-    tree->bookBranch<float>("p_Const_GG_SIG_kappaTopBot_1_ghz1_1_MCFM", 0);
-    tree->bookBranch<float>("p_Const_GG_BKG_MCFM", 0);
-    // Variables for DbkgjjEW
-
-    // Variables for DJJEW
-
-    // Variables for categorization
+    // Variables for KDs
+    for (auto& v:KD1vars) tree->bookBranch<float>(v, 0);
+    for (auto& v:KD2vars) tree->bookBranch<float>(v, 0);
   }
 
   // Setup GenHMass binning
   ExtendedBinning GenHMassBinning("GenHMass");
+  GenHMassBinning.addBinBoundary(0);
   for (unsigned int is=0; is<theSampleSet->getCJLSTTreeList().size()-1; is++) GenHMassBinning.addBinBoundary(
     0.5*(theSampleSet->getCJLSTTreeList().at(is)->MHVal + theSampleSet->getCJLSTTreeList().at(is+1)->MHVal)
     );
+  GenHMassBinning.addBinBoundary(theSqrts*1000.);
 
-  foutput->cd();
-
-  TTree* theFinalTree[nTemplates];
   for (int t=kBkg; t<nTemplates; t++){
+    foutput->cd();
+    TTree* theFinalTree = new TTree(Form("T_ggH_%s_Tree", strTemplateName[t].Data()), ""); // The tree to record into the ROOT file
+
     // Build the possible reweightings
-    ReweightingBuilder* rewgtBuilder=nullptr;
     TString strWeight;
     switch (t){
     case kBkg:
@@ -186,124 +172,99 @@ void makeGGZZTemplates_one(int ichan, int icat, int Systematics){
       strWeight = "p_Gen_GG_BSI_kappaTopBot_1_ghz1_1_MCFM";
       break;
     };
-    rewgtBuilder = new ReweightingBuilder(strWeight, getSimpleWeight);
-    for (auto& tree:theSampleSet->getCJLSTTreeList()) rewgtBuilder->setupWeightVariables(tree, GenHMassBinning);
+    ReweightingBuilder* rewgtBuilder = new ReweightingBuilder(strWeight, getSimpleWeight);
+    rewgtBuilder->setWeightBinning(GenHMassBinning);
+    //for (auto& tree:theSampleSet->getCJLSTTreeList()) rewgtBuilder->setupWeightVariables(tree);
 
-    TreeAnalysis theAnalyzer(theSampleSet);
+    // Build the analyzer and loop over the events
+    GGHAnalyzer theAnalyzer(theSampleSet, channel, category);
     // Book common variables needed for analysis
     theAnalyzer.addConsumed<float>("GenHMass");
     theAnalyzer.addConsumed<float>("ZZMass");
-    theAnalyzer.addConsumed<short>("ZiFlav");
+    theAnalyzer.addConsumed<short>("Z1Flav");
     theAnalyzer.addConsumed<short>("Z2Flav");
-    // Variables for SM reweighting
-    theAnalyzer.addConsumed<float>("p_Gen_GG_BKG_MCFM");
-    theAnalyzer.addConsumed<float>("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
-    theAnalyzer.addConsumed<float>("p_Gen_GG_BSI_kappaTopBot_1_ghz1_1_MCFM");
-    // Variables for Dbkgkin
-    theAnalyzer.addConsumed<float>("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
-    theAnalyzer.addConsumed<float>("p_QQB_BKG_MCFM");
-    // Variables for Dggint
-    theAnalyzer.addConsumed<float>("p_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
-    theAnalyzer.addConsumed<float>("p_GG_BKG_MCFM");
-    theAnalyzer.addConsumed<float>("p_GG_BSI_kappaTopBot_1_ghz1_1_MCFM");
-    theAnalyzer.addConsumed<float>("p_Const_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
-    theAnalyzer.addConsumed<float>("p_Const_GG_BKG_MCFM");
+    // Add discriminant builders
+    theAnalyzer.addDiscriminantBuilder("KD1", KD1, KD1vars);
+    theAnalyzer.addDiscriminantBuilder("KD2", KD2, KD2vars);
+    // Loop
+    theAnalyzer.loop(true, false, true);
 
-    // Register the discriminants
-    Dbkgkin_t KD1(Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
-    Dintkin_t KD2(Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
-    theAnalyzer.addDiscriminantBuilder("KD1", &KD1);
-    theAnalyzer.addDiscriminantBuilder("KD2", &KD2);
+    const std::vector<SimpleEntry>& products = theAnalyzer.getProducts();
+    unordered_map<TString, float> theTreeFloats;
+    MELAout << "There are " << products.size() << " products" << endl;
+    if (products.at(0).namedfloats.find("ZZMass")==products.at(0).namedfloats.end()) MELAerr << "Uh-oh! ZZMass could not be found in the products!" << endl;
+    for (auto it=products.at(0).namedfloats.begin(); it!=products.at(0).namedfloats.end(); it++){
+      MELAout << "Booking branch " << it->first << " in " << theFinalTree->GetName() << endl;
+      theTreeFloats[it->first]=0;
+      theFinalTree->Branch(it->first, &(theTreeFloats[it->first]));
+    }
+    for (auto& product:products){
+      for (auto it=product.namedfloats.begin(); it!=product.namedfloats.end(); it++){
+        theTreeFloats[it->first] = it->second;
+        theFinalTree->Fill();
+      }
+    }
 
+    delete rewgtBuilder;
 
-    // The output is supposed to contain ZZMass:KD1:KD2
-    theFinalTree[t] = new TTree(Form("T_ggH_%s_Tree", strTemplateName[t].Data()), "");
-
-
-
+    foutput->WriteTObject(theFinalTree);
+    delete theFinalTree;
   }
+
+  delete KD2;
+  delete KD1;
 
   delete theSampleSet;
-
-  for (int t=(int) kBkg; t<(int)nTemplates; t++){
-    foutput->WriteTObject(theFinalTree[t]);
-    delete theFinalTree[t];
-  }
-
   foutput->Close();
 }
 
 
-void getEvents(
-  CJLSTSet* theSet,
-
-  const TString& strTrackVar,
-  const vector<pair<Discriminant*, vector<TString>>>& KDVars,
-  const vector<ReweightingBuilder*>& rewgtBuilders,
-
-  TTree* indexTree,
-
-  Channel& chan
-  ){
+bool GGHAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
   short matchdecid=-1;
-  if (chan==k2e2mu) matchdecid=121*169;
-  else if (chan==k4mu) matchdecid=169*169;
-  else if (chan==k4e) matchdecid=121*121;
+  if (channel==k2e2mu) matchdecid=121*169;
+  else if (channel==k4mu) matchdecid=169*169;
+  else if (channel==k4e) matchdecid=121*121;
 
-  int ev=0, ev_acc=0;
-  CJLSTTree* tree=nullptr;
-  while ((tree = theSet->getSelectedEvent(ev))){
-    ev++;
+  bool validProducts=false;
 
+  if (tree){
+    CJLSTSet* theSet = tree->getAssociatedSet();
     float scale = theSet->getPermanentWeight(tree)*theSet->getOverallEventWgt(tree);
-    vector<float> valReco;
 
     bool doProcess = true;
     // Flavor check
     if (matchdecid>0){
-      short Z1Id, Z2Id;
-      tree->getVal("Z1Flav", Z1Id);
-      tree->getVal("Z2Flav", Z2Id);
+      short& Z1Id = *(valshorts["Z1Flav"]);
+      short& Z2Id = *(valshorts["Z2Flav"]);
       doProcess &= (matchdecid==Z1Id*Z2Id);
     }
 
-    for (auto& KDVar:KDVars){
-      Discriminant*& KDbuilder = KDVar.first;
-      vector<TString>& strKDVarsList = KDVar.second;
-      vector<float> KDBuildVals;
-      for (auto const& s : strKDVarsList){
-        float tmp;
-        tree->getVal(s, tmp);
-        KDBuildVals.push_back(tmp);
-      }
+    // Compute the KDs
+    for (auto it=KDbuilders.cbegin(); it!=KDbuilders.cend(); it++){
+      auto& KDbuilderpair = it->second;
+      auto& KDbuilder = KDbuilderpair.first;
+      auto& strKDVarsList = KDbuilderpair.second;
+      vector<float> KDBuildVals; KDBuildVals.reserve(strKDVarsList.size());
+      for (auto const& s : strKDVarsList) KDBuildVals.push_back(*(valfloats[s]));
       float KD = KDbuilder->update(KDBuildVals);
-      valReco.push_back(KD);
+      product.setNamedVal(it->first, KD);
       doProcess &= !(std::isnan(KD) || std::isinf(KD));
     }
 
-    if (!doProcess) continue;
-
-    float varTrack;
-    tree->getVal(strTrackVar, varTrack);
+    float& ZZMass = *(valfloats["ZZMass"]);
+    float& GenHMass = *(valfloats["GenHMass"]);
+    product.setNamedVal("ZZMass", ZZMass);
+    product.setNamedVal("GenHMass", GenHMass);
 
     float wgt = scale;
-    for (auto const& w : strExtraWeightsList){
-      float wval;
-      tree->getVal(w, wval);
-      wgt *= wval;
-    }
+    product.setNamedVal("weight", wgt);
     if (std::isnan(wgt) || std::isinf(wgt)){
-      // If weight is NaN, it is a big problem.
-      if (std::isnan(wgt) || std::isinf(wgt)) cerr << "Invalid weight " << wgt << " is being discarded at mass " << varTrack << endl;
-      continue;
+      MELAerr << "Invalid weight " << wgt << " is being discarded at mass " << ZZMass << endl;
+      doProcess=false;
     }
 
-    if (ev_acc%10000==0) cout << "Pre-processing event " << ev << endl;
-
-    SimpleEntry theEntry(ev, varTrack, valReco, wgt);
-    addByLowest(index, theEntry, false);
-
-    ev_acc++;
+    validProducts = doProcess;
   }
-  cout << "Number of valid entries: " << ev_acc << endl;
+
+  return validProducts;
 }

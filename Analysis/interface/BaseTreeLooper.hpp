@@ -1,8 +1,11 @@
 #ifndef BASETREELOOPER_HPP
 #define BASETREELOOPER_HPP
 
-#include <iostream>
 #include "BaseTreeLooper.h"
+#include "MELAStreamHelpers.hh"
+
+
+using namespace MELAStreamHelpers;
 
 
 template<> void BaseTreeLooper::addConsumed<short>(TString name){ valshorts[name] = nullptr; }
@@ -22,7 +25,7 @@ template<> bool BaseTreeLooper::linkConsumed<short>(CJLSTTree* tree){
   typedef short bType;
   for (auto it=theMap.begin(); it!=theMap.end(); it++){
     if (tree->branchExists(it->first)){ tree->getValRef<bType>(it->first, it->second); result &= true; }
-    else result &= false;
+    else{ result &= false; MELAerr << "BaseTreeLooper::linkConsumed(" << tree->sampleIdentifier << "): Linking failed for variable " << it->first << endl; }
   }
   return result;
 }
@@ -32,7 +35,7 @@ template<> bool BaseTreeLooper::linkConsumed<unsigned int>(CJLSTTree* tree){
   typedef unsigned int bType;
   for (auto it=theMap.begin(); it!=theMap.end(); it++){
     if (tree->branchExists(it->first)){ tree->getValRef<bType>(it->first, it->second); result &= true; }
-    else result &= false;
+    else{ result &= false; MELAerr << "BaseTreeLooper::linkConsumed(" << tree->sampleIdentifier << "): Linking failed for variable " << it->first << endl; }
   }
   return result;
 }
@@ -42,7 +45,7 @@ template<> bool BaseTreeLooper::linkConsumed<int>(CJLSTTree* tree){
   typedef int bType;
   for (auto it=theMap.begin(); it!=theMap.end(); it++){
     if (tree->branchExists(it->first)){ tree->getValRef<bType>(it->first, it->second); result &= true; }
-    else result &= false;
+    else{ result &= false; MELAerr << "BaseTreeLooper::linkConsumed(" << tree->sampleIdentifier << "): Linking failed for variable " << it->first << endl; }
   }
   return result;
 }
@@ -52,7 +55,7 @@ template<> bool BaseTreeLooper::linkConsumed<float>(CJLSTTree* tree){
   typedef float bType;
   for (auto it=theMap.begin(); it!=theMap.end(); it++){
     if (tree->branchExists(it->first)){ tree->getValRef<bType>(it->first, it->second); result &= true; }
-    else result &= false;
+    else{ result &= false; MELAerr << "BaseTreeLooper::linkConsumed(" << tree->sampleIdentifier << "): Linking failed for variable " << it->first << endl; }
   }
   return result;
 }
@@ -62,7 +65,7 @@ template<> bool BaseTreeLooper::linkConsumed<double>(CJLSTTree* tree){
   typedef double bType;
   for (auto it=theMap.begin(); it!=theMap.end(); it++){
     if (tree->branchExists(it->first)){ tree->getValRef<bType>(it->first, it->second); result &= true; }
-    else result &= false;
+    else{ result &= false; MELAerr << "BaseTreeLooper::linkConsumed(" << tree->sampleIdentifier << "): Linking failed for variable " << it->first << endl; }
   }
   return result;
 }
@@ -72,7 +75,7 @@ template<> bool BaseTreeLooper::linkConsumed<std::vector<short>>(CJLSTTree* tree
   typedef std::vector<short> bType;
   for (auto it=theMap.begin(); it!=theMap.end(); it++){
     if (tree->branchExists(it->first)){ tree->getValRef<bType>(it->first, it->second); result &= true; }
-    else result &= false;
+    else{ result &= false; MELAerr << "BaseTreeLooper::linkConsumed(" << tree->sampleIdentifier << "): Linking failed for variable " << it->first << endl; }
   }
   return result;
 }
@@ -82,7 +85,7 @@ template<> bool BaseTreeLooper::linkConsumed<std::vector<unsigned int>>(CJLSTTre
   typedef std::vector<unsigned int> bType;
   for (auto it=theMap.begin(); it!=theMap.end(); it++){
     if (tree->branchExists(it->first)){ tree->getValRef<bType>(it->first, it->second); result &= true; }
-    else result &= false;
+    else{ result &= false; MELAerr << "BaseTreeLooper::linkConsumed(" << tree->sampleIdentifier << "): Linking failed for variable " << it->first << endl; }
   }
   return result;
 }
@@ -92,7 +95,7 @@ template<> bool BaseTreeLooper::linkConsumed<std::vector<int>>(CJLSTTree* tree){
   typedef std::vector<int> bType;
   for (auto it=theMap.begin(); it!=theMap.end(); it++){
     if (tree->branchExists(it->first)){ tree->getValRef<bType>(it->first, it->second); result &= true; }
-    else result &= false;
+    else{ result &= false; MELAerr << "BaseTreeLooper::linkConsumed(" << tree->sampleIdentifier << "): Linking failed for variable " << it->first << endl; }
   }
   return result;
 }
@@ -102,7 +105,7 @@ template<> bool BaseTreeLooper::linkConsumed<std::vector<float>>(CJLSTTree* tree
   typedef std::vector<float> bType;
   for (auto it=theMap.begin(); it!=theMap.end(); it++){
     if (tree->branchExists(it->first)){ tree->getValRef<bType>(it->first, it->second); result &= true; }
-    else result &= false;
+    else{ result &= false; MELAerr << "BaseTreeLooper::linkConsumed(" << tree->sampleIdentifier << "): Linking failed for variable " << it->first << endl; }
   }
   return result;
 }
@@ -112,7 +115,7 @@ template<> bool BaseTreeLooper::linkConsumed<std::vector<double>>(CJLSTTree* tre
   typedef std::vector<double> bType;
   for (auto it=theMap.begin(); it!=theMap.end(); it++){
     if (tree->branchExists(it->first)){ tree->getValRef<bType>(it->first, it->second); result &= true; }
-    else result &= false;
+    else{ result &= false; MELAerr << "BaseTreeLooper::linkConsumed(" << tree->sampleIdentifier << "): Linking failed for variable " << it->first << endl; }
   }
   return result;
 }

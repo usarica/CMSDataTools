@@ -28,7 +28,7 @@ protected:
   bool linkConsumes(CJLSTTree* tree);
 
   // External dependencies
-  std::unordered_map<TString, Discriminant*> KDbuilders;
+  std::unordered_map<TString, std::pair<Discriminant*, std::vector<TString>>> KDbuilders;
   std::unordered_map<TString, ReweightingBuilder*> Rewgtbuilders;
   std::unordered_map<TString, void(*)(BaseTreeLooper*, SimpleEntry&)> externalFunctions;
 
@@ -37,7 +37,7 @@ protected:
   void addProduct(SimpleEntry& product);
 
   // Abstract function to loop over a single event
-  virtual void runEvent(CJLSTTree* tree, SimpleEntry& product)=0;
+  virtual bool runEvent(CJLSTTree* tree, SimpleEntry& product)=0;
 
 public:
   // Constructors
@@ -52,7 +52,7 @@ public:
 
   // Add the necessary objects
   template<typename T> void addConsumed(TString name);
-  void addDiscriminantBuilder(TString KDname, Discriminant* KDbuilder);
+  void addDiscriminantBuilder(TString KDname, Discriminant* KDbuilder, std::vector<TString> const& KDvars);
   void addReweightingBuilder(TString rewgtname, ReweightingBuilder* Rewgtbuilder);
   void addExternalFunction(TString fcnname, void(*fcn)(BaseTreeLooper*, SimpleEntry&));
 
@@ -60,7 +60,7 @@ public:
   virtual void loop(bool loopSelected, bool loopFailed, bool keepProducts);
 
   // Get the products
-  const std::vector<SimpleEntry> getProducts() const;
+  std::vector<SimpleEntry> const& getProducts() const;
 
 };
 

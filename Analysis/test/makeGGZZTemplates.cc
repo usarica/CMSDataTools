@@ -34,6 +34,7 @@
 #include "MELAStreamHelpers.hh"
 #include "Mela.h"
 
+
 using namespace std;
 using namespace HelperFunctions;
 using namespace SampleHelpers;
@@ -41,6 +42,7 @@ using namespace CategorizationHelpers;
 using namespace DiscriminantClasses;
 using namespace ReweightingFunctions;
 using namespace MELAStreamHelpers;
+
 
 // Constants to affect the template code
 const TString fixedDate="";
@@ -103,15 +105,15 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
   OUTPUT_LOG_NAME += ".log";
   TString coutput = coutput_common + OUTPUT_NAME;
   TString coutput_log = coutput_common + OUTPUT_LOG_NAME;
-  MELAOutputStreamer tout(coutput_log.Data());
-  tout << "Opened log file " << coutput_log << endl;
+  MELAout.open(coutput_log.Data());
+  MELAout << "Opened log file " << coutput_log << endl;
   TFile* foutput = TFile::Open(coutput, "recreate");
-  tout << "Opened file " << coutput << endl;
-  tout << "===============================" << endl;
-  tout << "CoM Energy: " << theSqrts << " TeV" << endl;
-  tout << "Decay Channel: " << strChannel << endl;
-  tout << "===============================" << endl;
-  tout << endl;
+  MELAout << "Opened file " << coutput << endl;
+  MELAout << "===============================" << endl;
+  MELAout << "CoM Energy: " << theSqrts << " TeV" << endl;
+  MELAout << "Decay Channel: " << strChannel << endl;
+  MELAout << "===============================" << endl;
+  MELAout << endl;
 
   // Get list of samples
   vector<TString> strSampleIdentifiers;
@@ -148,6 +150,12 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
   }
 
   // Setup GenHMass binning
+  // Binning for PUGenHepRewgt
+  ExtendedBinning GenHMassInclusiveBinning("GenHMass");
+  GenHMassInclusiveBinning.addBinBoundary(0);
+  GenHMassInclusiveBinning.addBinBoundary(theSqrts*1000.);
+
+  // Binning for MELARewgt
   ExtendedBinning GenHMassBinning("GenHMass");
   GenHMassBinning.addBinBoundary(0);
   for (unsigned int is=0; is<theSampleSet->getCJLSTTreeList().size()-1; is++) GenHMassBinning.addBinBoundary(
@@ -155,11 +163,27 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
     );
   GenHMassBinning.addBinBoundary(theSqrts*1000.);
 
+  // Construct PUGenHepRewgt
+  vector<TString> strReweightingWeigths;
+  strReweightingWeigths.push_back("PUWeight");
+  strReweightingWeigths.push_back("genHEPMCweight");
+  ReweightingBuilder* pugenheprewgtBuilder = new ReweightingBuilder(strReweightingWeigths, getSimpleWeight);
+  pugenheprewgtBuilder->setWeightBinning(GenHMassInclusiveBinning);
+  for (auto& tree:theSampleSet->getCJLSTTreeList()) pugenheprewgtBuilder->setupWeightVariables(tree, 1.);
+
+
+
   for (int t=kBkg; t<nTemplates; t++){
     foutput->cd();
     TTree* theFinalTree = new TTree(Form("T_ggH_%s_Tree", strTemplateName[t].Data()), ""); // The tree to record into the ROOT file
 
-    // Build the possible reweightings
+    /************* Reweighting setup *************/
+    // There are two builders:
+    // 1) Rewighting from MELA (x) K factors, which adjust the cross section
+    // 2) PU and GenHepMCWeight reweighting, which are supposed to keep the cross section the same
+    // Total weight is (1)x(2)
+
+    // Build the possible MELA reweightings
     TString strWeight;
     switch (t){
     case kBkg:
@@ -172,13 +196,18 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
       strWeight = "p_Gen_GG_BSI_kappaTopBot_1_ghz1_1_MCFM";
       break;
     };
-    ReweightingBuilder* rewgtBuilder = new ReweightingBuilder(strWeight, getSimpleWeight);
-    rewgtBuilder->setWeightBinning(GenHMassBinning);
-    //for (auto& tree:theSampleSet->getCJLSTTreeList()) rewgtBuilder->setupWeightVariables(tree);
+    strReweightingWeigths.clear();
+    strReweightingWeigths.push_back(strWeight);
+    strReweightingWeigths.push_back("xsec");
+    ReweightingBuilder* melarewgtBuilder = new ReweightingBuilder(strReweightingWeigths, getSimpleWeight);
+    melarewgtBuilder->setWeightBinning(GenHMassBinning);
+    for (auto& tree:theSampleSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree);
 
     // Build the analyzer and loop over the events
     GGHAnalyzer theAnalyzer(theSampleSet, channel, category);
     // Book common variables needed for analysis
+    theAnalyzer.addConsumed<float>("dataMCWeight");
+    theAnalyzer.addConsumed<float>("trigEffWeight");
     theAnalyzer.addConsumed<float>("GenHMass");
     theAnalyzer.addConsumed<float>("ZZMass");
     theAnalyzer.addConsumed<short>("Z1Flav");
@@ -186,6 +215,9 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
     // Add discriminant builders
     theAnalyzer.addDiscriminantBuilder("KD1", KD1, KD1vars);
     theAnalyzer.addDiscriminantBuilder("KD2", KD2, KD2vars);
+    // Add reweighting builders
+    theAnalyzer.addReweightingBuilder("MELARewgt", melarewgtBuilder);
+    theAnalyzer.addReweightingBuilder("PUGenHEPRewgt", pugenheprewgtBuilder);
     // Loop
     theAnalyzer.loop(true, false, true);
 
@@ -199,23 +231,22 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
       theFinalTree->Branch(it->first, &(theTreeFloats[it->first]));
     }
     for (auto& product:products){
-      for (auto it=product.namedfloats.begin(); it!=product.namedfloats.end(); it++){
-        theTreeFloats[it->first] = it->second;
-        theFinalTree->Fill();
-      }
+      for (auto it=product.namedfloats.begin(); it!=product.namedfloats.end(); it++) theTreeFloats[it->first] = it->second;
+      theFinalTree->Fill();
     }
 
-    delete rewgtBuilder;
+    delete melarewgtBuilder;
 
     foutput->WriteTObject(theFinalTree);
     delete theFinalTree;
   }
 
+  delete pugenheprewgtBuilder;
   delete KD2;
   delete KD1;
-
   delete theSampleSet;
   foutput->Close();
+  MELAout.close();
 }
 
 
@@ -225,18 +256,36 @@ bool GGHAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
   else if (channel==k4mu) matchdecid=169*169;
   else if (channel==k4e) matchdecid=121*121;
 
-  bool validProducts=false;
+  bool validProducts=(tree!=nullptr);
+  if (validProducts){
+    // Get main observables
+    float& ZZMass = *(valfloats["ZZMass"]);
+    float& GenHMass = *(valfloats["GenHMass"]);
+    product.setNamedVal("ZZMass", ZZMass);
+    product.setNamedVal("GenHMass", GenHMass);
 
-  if (tree){
-    CJLSTSet* theSet = tree->getAssociatedSet();
-    float scale = theSet->getPermanentWeight(tree)*theSet->getOverallEventWgt(tree);
+    // Construct the weights
+    float pure_reco_wgt = (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]));
 
-    bool doProcess = true;
+    auto& pugenheprewgtBuilder = Rewgtbuilders["PUGenHEPRewgt"];
+    float pugenhep_wgt = pugenheprewgtBuilder->getPostThresholdWeight(tree)/pugenheprewgtBuilder->getSumPostThresholdWeights(tree); // Normalized to unit
+
+    auto& melarewgtBuilder = Rewgtbuilders["MELARewgt"];
+    float mela_wgt = melarewgtBuilder->getPostThresholdWeight(tree)/melarewgtBuilder->getSumPostThresholdWeights(tree); // Normalized to unit
+    mela_wgt *= melarewgtBuilder->getWeightedSumAllPostThresholdWeights(tree);
+
+    float wgt = pure_reco_wgt*pugenhep_wgt*mela_wgt;
+    product.setNamedVal("weight", wgt);
+    if (std::isnan(wgt) || std::isinf(wgt) || wgt==0.){
+      MELAerr << "Invalid weight " << wgt << " is being discarded at mass " << ZZMass << endl;
+      validProducts=false;
+    }
+
     // Flavor check
     if (matchdecid>0){
       short& Z1Id = *(valshorts["Z1Flav"]);
       short& Z2Id = *(valshorts["Z2Flav"]);
-      doProcess &= (matchdecid==Z1Id*Z2Id);
+      validProducts &= (matchdecid==Z1Id*Z2Id);
     }
 
     // Compute the KDs
@@ -248,22 +297,8 @@ bool GGHAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
       for (auto const& s : strKDVarsList) KDBuildVals.push_back(*(valfloats[s]));
       float KD = KDbuilder->update(KDBuildVals);
       product.setNamedVal(it->first, KD);
-      doProcess &= !(std::isnan(KD) || std::isinf(KD));
+      validProducts &= !(std::isnan(KD) || std::isinf(KD));
     }
-
-    float& ZZMass = *(valfloats["ZZMass"]);
-    float& GenHMass = *(valfloats["GenHMass"]);
-    product.setNamedVal("ZZMass", ZZMass);
-    product.setNamedVal("GenHMass", GenHMass);
-
-    float wgt = scale;
-    product.setNamedVal("weight", wgt);
-    if (std::isnan(wgt) || std::isinf(wgt)){
-      MELAerr << "Invalid weight " << wgt << " is being discarded at mass " << ZZMass << endl;
-      doProcess=false;
-    }
-
-    validProducts = doProcess;
   }
 
   return validProducts;

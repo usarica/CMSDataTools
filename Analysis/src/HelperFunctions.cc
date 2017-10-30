@@ -19,8 +19,7 @@ TString HelperFunctions::todaysdate(){
 }
 
 void HelperFunctions::progressbar(unsigned int val, unsigned int tot){
-  unsigned int percent=floor(0.01*tot);
-  if (percent==0) percent=1;
+  unsigned int percent=std::ceil(0.01*tot);
   if (val%percent==0 || val==tot){
     unsigned int percent_done = val/percent;
     if (val==tot) percent_done=100;
@@ -31,7 +30,8 @@ void HelperFunctions::progressbar(unsigned int val, unsigned int tot){
     for (unsigned int k=percent_done; k<100; k++) MELAout << ' ';
     MELAout << "| ]";
     MELAout << flush;
-    MELAout << '\r';
+    if (val==tot) MELAout << endl;
+    else MELAout << '\r';
   }
 }
 

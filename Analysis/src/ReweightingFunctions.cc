@@ -19,6 +19,13 @@ std::vector<float*> ReweightingFunctions::getWeightRefs(CJLSTTree* tree, const s
   }
   return res;
 }
+float* ReweightingFunctions::getWeightRef(CJLSTTree* tree, const TString& strWeight){
+  float* res=nullptr;
+  if (!tree || strWeight=="") return res;
+  tree->getValRef<float>(strWeight, res);
+  if (!res) MELAerr << "ReweightingFunctions::getWeightRef: Could not get the reference for weight " << strWeight << endl;
+  return res;
+}
 
 
 float ReweightingFunctions::getSimpleWeight(CJLSTTree* tree, const std::vector<float*>& vals){

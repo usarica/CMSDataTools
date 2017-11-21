@@ -10,8 +10,9 @@
 struct SimpleEntry{
   int id;
   float trackingval;
-  std::vector<float> recoval;
   float weight;
+
+  std::vector<float> recoval;
 
   std::unordered_map<TString, bool> namedbools;
   std::unordered_map<TString, short> namedshorts;
@@ -30,6 +31,11 @@ struct SimpleEntry{
   SimpleEntry();
   SimpleEntry(int id_, float trackingval_, float weight_=1);
   SimpleEntry(int id_, float trackingval_, std::vector<float> recoval_, float weight_=1);
+  SimpleEntry(SimpleEntry const& other);
+  SimpleEntry(SimpleEntry&& other);
+
+  void swap(SimpleEntry& other);
+  SimpleEntry& operator=(const SimpleEntry& other);
 
   bool operator != (const SimpleEntry& other)const;
   bool operator == (const SimpleEntry& other)const;
@@ -37,7 +43,6 @@ struct SimpleEntry{
   bool operator >= (const SimpleEntry& other)const;
   bool operator < (const SimpleEntry& other)const;
   bool operator <= (const SimpleEntry& other)const;
-
 
   template<typename T> std::unordered_map<TString, T> const& getNamedMap() const;
   template<typename T> std::unordered_map<TString, T>& getNamedMap();

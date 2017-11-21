@@ -12,13 +12,18 @@ using namespace HelperFunctions;
 
 
 ReweightingBuilder::ReweightingBuilder(TString inStrWeight, float(*infcn)(CJLSTTree*, const std::vector<float*>&)) :
-rule(infcn)
-{ strWeights.push_back(inStrWeight); }
-
+  divideByNSample(false),
+  rule(infcn)
+{
+  strWeights.push_back(inStrWeight);
+}
 ReweightingBuilder::ReweightingBuilder(std::vector<TString> inStrWeights, float(*infcn)(CJLSTTree*, const std::vector<float*>&)) :
-rule(infcn),
-strWeights(inStrWeights)
+  divideByNSample(false),
+  rule(infcn),
+  strWeights(inStrWeights)
 {}
+
+std::vector<TString> const& ReweightingBuilder::getWeightVariables() const{ return strWeights; }
 
 float ReweightingBuilder::eval(CJLSTTree* theTree) const{
   std::unordered_map<CJLSTTree*, std::vector<float*>>::const_iterator it = componentRefs.find(theTree);
@@ -26,7 +31,8 @@ float ReweightingBuilder::eval(CJLSTTree* theTree) const{
     MELAerr << "ReweightingBuilder::eval: Could not find the weights " << strWeights << ". Call ReweightingBuilder::setupWeightVariables first!" << endl;
     return 0;
   }
-  if (rule) return rule(theTree, it->second);
+  float divisor=1; if (divideByNSample) divisor=theTree->getNGenNoPU();
+  if (rule) return rule(theTree, it->second)/divisor;
   else return 0;
 }
 
@@ -34,30 +40,38 @@ int ReweightingBuilder::findBin(CJLSTTree* theTree) const{
   const ExtendedBinning& binning = weightBinning;
   int bin=0;
   if (binning.isValid()){
-    float orderingVal; theTree->getVal(binning.getLabel(), orderingVal);
-    int bin = binning.getBin(orderingVal);
-    if (bin<0 || bin>(int) binning.getNbins()) bin=-1;
+    auto binningVarRefsIt = binningVarRefs.find(theTree);
+    if (binningVarRefsIt!=binningVarRefs.cend()){
+      float const& orderingVal=*(binningVarRefsIt->second);
+      bin = binning.getBin(orderingVal);
+      if (bin<0 || bin>=(int) binning.getNbins()) bin=-1;
+    }
   }
   return bin;
 }
+void ReweightingBuilder::setDivideByNSample(const bool flag){ divideByNSample = flag; }
 void ReweightingBuilder::setWeightBinning(const ExtendedBinning& binning){ weightBinning=binning; }
 
-void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fractionRequirement){
+void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fractionRequirement, unsigned int minimumNevents){
   MELAout << "ReweightingBuilder[" << strWeights << "]::setupWeightVariables is called for tree " << theTree->sampleIdentifier << "." << endl;
+  if (divideByNSample) MELAout << "ReweightingBuilder[" << strWeights << "]::setupWeightVariables will divide the weights by "
+    << theTree->getNGenNoPU() << "." << endl;
 
   std::vector<float> res;
 
   if (!theTree) return;
-  // First link components
-  componentRefs[theTree] = ReweightingFunctions::getWeightRefs(theTree, strWeights);
-
-  // Now compute other weigt-related variables
-  const unsigned int nEventsCap = std::max((unsigned int)(fractionRequirement>=0. ? std::ceil(float(theTree->getNEvents())*(1.-fractionRequirement)) : theTree->getNEvents()), (unsigned int)2);
-  MELAout << "\t- Will need to check the highest " << nEventsCap << " weights to set the thresholds." << endl;
 
   const ExtendedBinning& binning = this->weightBinning;
   TString strOrderingVal = binning.getLabel();
+  if (strOrderingVal=="") return;
+  float* orderingValRef = ReweightingFunctions::getWeightRef(theTree, strOrderingVal);
+  if (!orderingValRef) return;
 
+  // First link components
+  componentRefs[theTree] = ReweightingFunctions::getWeightRefs(theTree, strWeights);
+  binningVarRefs[theTree] = orderingValRef;
+
+  // Now compute other weight-related variables
   const bool noBoundaries = !binning.isValid();
   const unsigned int ns = (!noBoundaries ? binning.getNbins() : 1);
 
@@ -81,8 +95,7 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
     HelperFunctions::progressbar(ev, nevents);
 
     float wgt = this->eval(theTree);
-    float orderingVal=-1;
-    theTree->getVal(strOrderingVal, orderingVal);
+    float const& orderingVal=*orderingValRef;
     SimpleEntry theEntry(0, fabs(wgt), wgt);
 
     int bin=0;
@@ -97,7 +110,13 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
   }
 
   for (unsigned int ibin=0; ibin<ns; ibin++){
-    const vector<SimpleEntry>& index = indexList.at(ibin);
+    vector<SimpleEntry>& index = indexList.at(ibin);
+    if (minimumNevents>sumNonZeroWgtEvents[theTree].at(ibin)){
+      MELAout << "\t- Bin " << ibin << " has less number of events with non-zero weight than the requested number " << minimumNevents << ". Resetting the bin..." << endl;
+      index.clear();
+      sumNonZeroWgtEvents[theTree].at(ibin)=0;
+      //sumEvents[theTree].at(ibin)=0;
+    }
     const unsigned int nTotalPerBin = index.size();
     //MELAout << "\t- Looping over the " << nTotalPerBin << " events to find the threshold in bin " << ibin << endl;
     float threshold=0;
@@ -139,7 +158,7 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
     sumPostThrWeights[theTree].at(ibin)=sum;
     MELAout << "\t- Threshold at bin " << ibin << ": " << threshold
       << ", sum of post-threshold weights: " << sumPostThrWeights[theTree].at(ibin)
-      << ", Neveets: " << sumNonZeroWgtEvents[theTree].at(ibin) << " / " << sumEvents[theTree].at(ibin)
+      << ", Nevents: " << sumNonZeroWgtEvents[theTree].at(ibin) << " / " << sumEvents[theTree].at(ibin)
       << endl;
   }
   weightThresholds[theTree] = res;
@@ -184,36 +203,23 @@ unsigned int ReweightingBuilder::getSumNonZeroWgtEvents(CJLSTTree* theTree) cons
   else return 0;
 }
 
+
 float ReweightingBuilder::getSumAllPostThresholdWeights(CJLSTTree* theTree) const{
   int bin=this->findBin(theTree);
+  return this->getSumAllPostThresholdWeights(bin);
+}
+float ReweightingBuilder::getSumAllPostThresholdWeights(int bin) const{
   if (bin<0) return 0;
   KahanAccumulator<float> sum;
   auto const& theMap=this->sumPostThrWeights;
   for (auto it=theMap.cbegin(); it!=theMap.cend(); it++) sum += it->second.at(bin);
   return sum;
 }
-float ReweightingBuilder::getWeightedSumAllPostThresholdWeights(CJLSTTree* theTree) const{
-  int bin=this->findBin(theTree);
-  if (bin<0) return 0;
-
-  vector<CJLSTTree*> const trees = this->getRegisteredTrees();
-  KahanAccumulator<float> numerator;
-  KahanAccumulator<float> denominator;
-  for (auto& tree:trees){
-    auto itSumWeights = this->sumPostThrWeights.find(tree); if (itSumWeights==this->sumPostThrWeights.cend()) continue;
-    auto itNEvents = this->sumEvents.find(tree); if (itNEvents==this->sumEvents.cend()) continue;
-    auto itNNonZeroWgtEvents = this->sumNonZeroWgtEvents.find(tree); if (itNNonZeroWgtEvents==this->sumNonZeroWgtEvents.cend()) continue;
-
-    numerator += itSumWeights->second.at(bin) * float(itNEvents->second.at(bin));
-    denominator += float(itNNonZeroWgtEvents->second.at(bin));
-  }
-
-  float result=0;
-  if (denominator!=0.) result = numerator/denominator;
-  return result;
-}
 unsigned int ReweightingBuilder::getSumAllEvents(CJLSTTree* theTree) const{
   int bin=this->findBin(theTree);
+  return this->getSumAllEvents(bin);
+}
+unsigned int ReweightingBuilder::getSumAllEvents(int bin) const{
   if (bin<0) return 0;
   unsigned int sum(0);
   auto const& theMap=this->sumEvents;
@@ -222,6 +228,9 @@ unsigned int ReweightingBuilder::getSumAllEvents(CJLSTTree* theTree) const{
 }
 unsigned int ReweightingBuilder::getSumAllNonZeroWgtEvents(CJLSTTree* theTree) const{
   int bin=this->findBin(theTree);
+  return this->getSumAllNonZeroWgtEvents(bin);
+}
+unsigned int ReweightingBuilder::getSumAllNonZeroWgtEvents(int bin) const{
   if (bin<0) return 0;
   unsigned int sum(0);
   auto const& theMap=this->sumNonZeroWgtEvents;
@@ -229,3 +238,62 @@ unsigned int ReweightingBuilder::getSumAllNonZeroWgtEvents(CJLSTTree* theTree) c
   return sum;
 }
 
+
+float ReweightingBuilder::getNormComponent(CJLSTTree* theTree) const{
+  int bin=this->findBin(theTree);
+  return this->ReweightingBuilder::getNormComponent(bin);
+}
+float ReweightingBuilder::getNormComponent(int bin) const{
+  if (bin<0) return 0;
+
+  vector<CJLSTTree*> const trees = this->getRegisteredTrees();
+  KahanAccumulator<float> numerator;
+  KahanAccumulator<float> denominator;
+
+  // Numerator: sum{t} (sum_wgts_tj * N_tj / N_t)
+  // Denominator: sum{t} (N_tj)
+  for (auto& tree:trees){
+    auto itSumWeights = this->sumPostThrWeights.find(tree); if (itSumWeights==this->sumPostThrWeights.cend()) continue;
+    auto itNNonZeroWgtEvents = this->sumNonZeroWgtEvents.find(tree); if (itNNonZeroWgtEvents==this->sumNonZeroWgtEvents.cend()) continue;
+    //auto itNEvents = this->sumEvents.find(tree); if (itNEvents==this->sumEvents.cend()) continue;
+
+    auto const& sumwgts = itSumWeights->second.at(bin);
+    auto const& nevtsnonzerowgt = itNNonZeroWgtEvents->second.at(bin); // N_tj
+    //auto const& nevts = itNEvents->second.at(bin);
+
+    // N_t = sum{j} (N_tj)
+    unsigned int nSumNonZeroWgt = 0;
+    for (auto const& nn:itNNonZeroWgtEvents->second) nSumNonZeroWgt += nn;
+    unsigned int nSample = 1; if (divideByNSample) nSample=tree->getNGenNoPU();
+
+    // sum_wgts_tj * N_tj / N_t
+    float numerator_pertree = sumwgts * float(nevtsnonzerowgt);
+    if (nSumNonZeroWgt!=0){
+      if (!divideByNSample) numerator_pertree /= float(nSumNonZeroWgt);
+      else numerator_pertree *= float(nSample)/float(nSumNonZeroWgt);
+    }
+
+    // Numerator += sum_wgts_tj * N_tj / N_t
+    numerator += numerator_pertree;
+    // Denominator += N_tj
+    denominator += nevtsnonzerowgt;
+  }
+
+  float result=0;
+  if (denominator!=0.) result = numerator/denominator;
+  return result;
+}
+float ReweightingBuilder::getNorm() const{
+  const ExtendedBinning& binning = this->weightBinning;
+  const bool noBoundaries = !binning.isValid();
+  const int ns = (!noBoundaries ? binning.getNbins() : 1);
+
+  KahanAccumulator<float> sum;
+  unsigned int sumN=0;
+  for (int bin=0; bin<ns; bin++){
+    sum += this->getNormComponent(bin);
+    sumN += this->getSumAllNonZeroWgtEvents(bin);
+  }
+  if (sumN!=0) sum /= float(sumN);
+  return sum;
+}

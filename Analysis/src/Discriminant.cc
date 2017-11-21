@@ -1,27 +1,35 @@
 #include "Discriminant.h"
+#include "MELAStreamHelpers.hh"
 
 
 using namespace std;
+using namespace MELAStreamHelpers;
 
 
 Discriminant::Discriminant(const TString cfilename, const TString splinename) : theCFile(nullptr), theC(nullptr){
   if (cfilename!=""){
+    MELAout << "Discriminant::Discriminant: Opening " << cfilename << endl;
     theCFile = TFile::Open(cfilename);
     if (theCFile){
       if (theCFile->IsOpen() && !theCFile->IsZombie()){
         theC = (TSpline3*) theCFile->Get(splinename);
         if (!theC){
+          MELAerr << "Discriminant::Discriminant: Spline " << splinename << " does not exist!" << endl;
           theC=nullptr;
           theCFile->Close();
           theCFile=nullptr;
         }
+        else MELAout << "Discriminant::Discriminant: Acquired " << splinename << endl;
       }
       else if (theCFile->IsOpen()){
+        MELAerr << "Discriminant::Discriminant: File is zombie!" << endl;
         theCFile->Close();
         theCFile=nullptr;
       }
     }
+    else MELAerr << "Discriminant::Discriminant: File could not be opened!" << endl;
   }
+  else MELAout << "Discriminant::Discriminant: No c-constants file is specified, defaulting to c=1." << endl;
   val=-1;
 }
 Discriminant::~Discriminant(){ if (theCFile) theCFile->Close(); }

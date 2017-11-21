@@ -31,7 +31,7 @@
 
 namespace HelperFunctions{
 
-  template<typename T> void appendVector(std::vector<T>& a, std::vector<T>& b);
+  template<typename T> void appendVector(std::vector<T>& a, std::vector<T> const& b);
 
   template<typename T> void addByLowest(std::vector<T>& valArray, T val, bool unique);
   template<typename T, typename U> void addByLowest(std::vector<std::pair<T, U>>& valArray, T val, U index);
@@ -117,7 +117,7 @@ namespace HelperFunctions{
 
 template<typename T> void HelperFunctions::addPointsBetween(T*& tgOriginal, double xmin, double xmax, unsigned int nadd){} // Dummy definition for generic types
 
-template<typename T> void HelperFunctions::appendVector(std::vector<T>& a, std::vector<T>& b){ a.insert(a.end(), b.begin(), b.end()); }
+template<typename T> void HelperFunctions::appendVector(std::vector<T>& a, std::vector<T> const& b){ a.insert(a.end(), b.cbegin(), b.cend()); }
 
 template<typename T> void HelperFunctions::addByLowest(std::vector<T>& valArray, T val, bool unique){
   bool inserted = false;

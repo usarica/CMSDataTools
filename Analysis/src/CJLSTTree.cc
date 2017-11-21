@@ -2,11 +2,11 @@
 
 
 CJLSTTree::CJLSTTree(TString strsample) :
-BaseTree(CJLSTTree::constructCJLSTSamplePath(strsample), TREE_NAME, TREE_FAILED_NAME, COUNTERS_NAME),
-associatedSet(nullptr),
-sampleIdentifier(strsample),
-MHVal(-1),
-GHVal(0)
+  BaseTree(CJLSTTree::constructCJLSTSamplePath(strsample), TREE_NAME, TREE_FAILED_NAME, COUNTERS_NAME),
+  associatedSet(nullptr),
+  sampleIdentifier(strsample),
+  MHVal(-1),
+  GHVal(0)
 {
   if (valid){
     //SampleHelpers::makeGlobalMELA(theSqrts);
@@ -20,6 +20,7 @@ TString CJLSTTree::constructCJLSTSamplePath(TString strsample){
   return res;
 }
 
+unsigned int CJLSTTree::getNGenNoPU(){ return (hCounters ? hCounters->GetBinContent(1) : 0.); }
 float CJLSTTree::getNGenWithPU(){ return (hCounters ? hCounters->GetBinContent(40): 0.); }
 
 float CJLSTTree::getTrueBW(float const* overrideMH){

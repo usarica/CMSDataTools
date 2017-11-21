@@ -20,6 +20,7 @@ TString HelperFunctions::todaysdate(){
 
 void HelperFunctions::progressbar(unsigned int val, unsigned int tot){
   unsigned int percent=std::ceil(0.01*tot);
+  tot=(tot==0 ? tot : tot-1);
   if (val%percent==0 || val==tot){
     unsigned int percent_done = val/percent;
     if (val==tot) percent_done=100;

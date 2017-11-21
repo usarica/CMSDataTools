@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <utility>
+#include <iterator>
 #include "BaseTreeLooper.h"
 #include "BaseTreeLooper.hpp"
 
@@ -22,10 +25,12 @@ void BaseTreeLooper::addDiscriminantBuilder(TString KDname, Discriminant* KDbuil
   }
 }
 void BaseTreeLooper::addReweightingBuilder(TString rewgtname, ReweightingBuilder* Rewgtbuilder){
+  if (!Rewgtbuilder) return;
   if (Rewgtbuilders.find(rewgtname)!=Rewgtbuilders.end()) MELAerr << "BaseTreeLooper::addReweightingBuilder: " << rewgtname << " already exists but will override it regardless." << endl;
   Rewgtbuilders[rewgtname] = Rewgtbuilder;
 }
 void BaseTreeLooper::addExternalFunction(TString fcnname, void(*fcn)(BaseTreeLooper*, SimpleEntry&)){
+  if (!fcn) return;
   if (externalFunctions.find(fcnname)!=externalFunctions.end()) MELAerr << "BaseTreeLooper::addExternalFunction: " << fcnname << " already exists but will override it regardless." << endl;
   externalFunctions[fcnname] = fcn;
 }
@@ -93,6 +98,16 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
     }
 
   } // End loop over the trees
+  MELAout << "BaseTreeLooper::loop: Total number of products accumulated: " << productList.size() << endl;
 }
 
 std::vector<SimpleEntry> const& BaseTreeLooper::getProducts() const{ return productList; }
+
+void BaseTreeLooper::moveProducts(std::vector<SimpleEntry>& targetColl){
+  MELAout << "BaseTreeLooper::moveProducts: Moving " << productList.size() << " products into a list of initial size " << targetColl.size() << endl;
+  std::move(productList.begin(), productList.end(), std::back_inserter(targetColl));
+  clearProducts();
+  MELAout << "BaseTreeLooper::moveProducts: Target list final size: " << targetColl.size() << endl;
+}
+
+void BaseTreeLooper::clearProducts(){ std::vector<SimpleEntry> emptyList; std::swap(emptyList, productList); }

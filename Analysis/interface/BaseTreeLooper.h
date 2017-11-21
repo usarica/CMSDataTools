@@ -61,6 +61,10 @@ public:
 
   // Get the products
   std::vector<SimpleEntry> const& getProducts() const;
+  // Move the products
+  void moveProducts(std::vector<SimpleEntry>& targetColl);
+  // Clear the products
+  void clearProducts();
 
 };
 

@@ -22,6 +22,7 @@ public:
   CJLSTTree(TString strsample);
   ~CJLSTTree(){}
 
+  unsigned int getNGenNoPU();
   float getNGenWithPU();
   float getTrueBW(float const* overrideMH=nullptr);
 

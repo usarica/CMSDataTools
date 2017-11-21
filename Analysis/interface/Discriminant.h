@@ -31,7 +31,7 @@ public:
   bool operator==(const float& other) const;
   bool operator!=(const float& other) const;
 
-  float update(const std::vector<float>& vars, const float valReco=0);
+  float update(const std::vector<float>& vars, const float valReco);
   float applyAdditionalC(const float cval);
 
 };

@@ -29,10 +29,16 @@
 #include "TGraphErrors.h"
 #include "TRandom.h"
 #include "HelperFunctions.h"
-#include "Samples.h"
 #include "SampleHelpers.h"
 #include "CJLSTSet.h"
+#include "BaseTreeLooper.h"
 #include "DiscriminantClasses.h"
+#include "CategorizationHelpers.h"
+#include "ReweightingBuilder.h"
+#include "ReweightingFunctions.h"
+#include "ExtendedBinning.h"
+#include "MELAStreamHelpers.hh"
+#include "Mela.h"
 
 
 #ifndef doDebugKD
@@ -45,166 +51,183 @@
 using namespace std;
 using namespace HelperFunctions;
 using namespace SampleHelpers;
+using namespace CategorizationHelpers;
 using namespace DiscriminantClasses;
+using namespace ReweightingFunctions;
+using namespace MELAStreamHelpers;
+
+
+class EventAnalyzer : public BaseTreeLooper{
+protected:
+  Channel channel;
+  Category category;
+
+  bool runEvent(CJLSTTree* tree, SimpleEntry& product);
+
+public:
+  EventAnalyzer(Channel channel_, Category category_) : BaseTreeLooper(), channel(channel_), category(category_){}
+  EventAnalyzer(CJLSTTree* inTree, Channel channel_, Category category_) : BaseTreeLooper(inTree), channel(channel_), category(category_){}
+  EventAnalyzer(std::vector<CJLSTTree*> const& inTreeList, Channel channel_, Category category_) : BaseTreeLooper(inTreeList), channel(channel_), category(category_){}
+  EventAnalyzer(CJLSTSet const* inTreeSet, Channel channel_, Category category_) : BaseTreeLooper(inTreeSet), channel(channel_), category(category_){}
+
+};
+bool EventAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
+  short matchdecid=-1;
+  if (channel==k2e2mu) matchdecid=121*169;
+  else if (channel==k4mu) matchdecid=169*169;
+  else if (channel==k4e) matchdecid=121*121;
+
+  bool validProducts=(tree!=nullptr);
+  if (validProducts){
+    // Get main observables
+    float& ZZMass = *(valfloats["ZZMass"]);
+    float& GenHMass = *(valfloats["GenHMass"]);
+    product.trackingval = ZZMass;
+
+    // Construct the weights
+    float pure_reco_wgt = (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]));
+    float wgt = pure_reco_wgt;
+
+    const unsigned int nCheckWeights=3;
+    const TString strCheckWeights[nCheckWeights]={
+      "KFactor_QCD_ggZZ_Nominal","KFactor_EW_qqZZ","KFactor_QCD_qqZZ_M"
+    };
+    for (unsigned int icw=0; icw<nCheckWeights; icw++){
+      auto cwit=valfloats.find(strCheckWeights[icw]);
+      if (cwit!=valfloats.cend()) wgt *= *(cwit->second);
+    }
+
+    auto pugenhep_it = Rewgtbuilders.find("PUGenHEPRewgt");
+    if (pugenhep_it!=Rewgtbuilders.cend()){
+      auto& pugenheprewgtBuilder = pugenhep_it->second;
+      float pugenhep_wgt_sum = pugenheprewgtBuilder->getSumPostThresholdWeights(tree);
+      float pugenhep_wgt = (pugenhep_wgt_sum!=0. ? pugenheprewgtBuilder->getPostThresholdWeight(tree)/pugenhep_wgt_sum : 0.); // Normalized to unit
+      wgt *= pugenhep_wgt;
+    }
+
+    auto melarewgt_it = Rewgtbuilders.find("MELARewgt");
+    if (melarewgt_it!=Rewgtbuilders.cend()){
+      auto& melarewgtBuilder = melarewgt_it->second;
+      float mela_wgt_sum = melarewgtBuilder->getSumPostThresholdWeights(tree);
+      float mela_wgt = (mela_wgt_sum!=0. ? melarewgtBuilder->getPostThresholdWeight(tree)/mela_wgt_sum : 0.); // Normalized to unit
+      mela_wgt *= melarewgtBuilder->getNormComponent(tree);
+      wgt *= mela_wgt;
+    }
+
+    product.weight = wgt;
+    if (std::isnan(wgt) || std::isinf(wgt) || wgt==0.){
+      if (wgt!=0.){
+        MELAerr << "EventAnalyzer::runEvent: Invalid weight " << wgt << " is being discarded at mass " << ZZMass << " for tree " << tree->sampleIdentifier << "." << endl;
+        exit(1);
+      }
+      validProducts=false;
+    }
+
+    // Compute the KDs
+    // Reserve the special DjjVBF, DjjZH and DjjWH discriminants
+    float DjjVBF=-1;
+    float DjjWH=-1;
+    float DjjZH=-1;
+    float KDreq=-999;
+    for (auto it=KDbuilders.cbegin(); it!=KDbuilders.cend(); it++){
+      auto& KDbuilderpair = it->second;
+      auto& KDbuilder = KDbuilderpair.first;
+      auto& strKDVarsList = KDbuilderpair.second;
+      vector<float> KDBuildVals; KDBuildVals.reserve(strKDVarsList.size());
+      for (auto const& s : strKDVarsList) KDBuildVals.push_back(*(valfloats[s]));
+      float KD = KDbuilder->update(KDBuildVals, ZZMass);
+      validProducts &= !(std::isnan(KD) || std::isinf(KD));
+
+      if (it->first=="DjjVBF") DjjVBF=KD;
+      else if (it->first=="DjjZH") DjjZH=KD;
+      else if (it->first=="DjjWH") DjjWH=KD;
+      else if (it->first=="KD"){
+        product.setNamedVal(it->first, KD);
+        KDreq=KD;
+      }
+    }
+    validProducts &= (KDreq>=0.);
+
+    // Category check
+    Category catFound = CategorizationHelpers::getCategory(DjjVBF, DjjZH, DjjWH, false);
+    validProducts &= (category==Inclusive || category==catFound);
+
+    // Flavor check
+    if (matchdecid>0){
+      short& Z1Id = *(valshorts["Z1Flav"]);
+      short& Z2Id = *(valshorts["Z2Flav"]);
+      validProducts &= (matchdecid==Z1Id*Z2Id);
+    }
+  }
+
+  return validProducts;
+}
+
+
+void constructSigSamples(TString sampleType, float sqrts, const std::vector<TString>& KDvars, CJLSTSet*& theSampleSet){
+  vector<TString> samples;
+  if (sampleType=="ggHPowheg" || sampleType=="Sig") samples.push_back("gg_Sig_POWHEG");
+  if (sampleType=="VBFPowheg" || sampleType=="Sig") samples.push_back("VBF_Sig_POWHEG");
+  if (sampleType=="ggHMCFM" || sampleType=="Sig") samples.push_back("gg_Sig_SM_MCFM");
+
+  vector<TString> samplesList;
+  SampleHelpers::getSamplesList(sqrts, samples, samplesList);
+  theSampleSet = new CJLSTSet(samplesList);
+
+  theSampleSet->bookXS(); // "xsec"
+  theSampleSet->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
+  for (auto& tree:theSampleSet->getCJLSTTreeList()){
+    // Book common variables needed for analysis
+    tree->bookBranch<float>("GenHMass", 0);
+    tree->bookBranch<float>("ZZMass", -1);
+    tree->bookBranch<short>("Z1Flav", 0);
+    tree->bookBranch<short>("Z2Flav", 0);
+    // Variables for KDs
+    for (auto& v:KDvars) tree->bookBranch<float>(v, 0);
+    // Variables for reweighting on a case-by-case basis
+    tree->bookBranch<float>("KFactor_QCD_ggZZ_Nominal", 1);
+  }
+}
+void constructBkgSamples(TString sampleType, float sqrts, const std::vector<TString>& KDvars, CJLSTSet*& theSampleSet){
+  vector<TString> samples;
+  if (sampleType=="qqBkg" || sampleType=="Bkg") samples.push_back("qq_Bkg_Combined");
+  if (sampleType=="ggBkg" || sampleType=="Bkg") samples.push_back("gg_Bkg_MCFM");
+
+  vector<TString> samplesList;
+  SampleHelpers::getSamplesList(sqrts, samples, samplesList);
+  theSampleSet = new CJLSTSet(samplesList);
+
+  theSampleSet->bookXS(); // "xsec"
+  theSampleSet->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
+  for (auto& tree:theSampleSet->getCJLSTTreeList()){
+    // Book common variables needed for analysis
+    tree->bookBranch<float>("GenHMass", 0);
+    tree->bookBranch<float>("ZZMass", -1);
+    tree->bookBranch<short>("Z1Flav", 0);
+    tree->bookBranch<short>("Z2Flav", 0);
+    // Variables for KDs
+    for (auto& v:KDvars) tree->bookBranch<float>(v, 0);
+    tree->bookBranch<float>("KFactor_QCD_ggZZ_Nominal", 1);
+    tree->bookBranch<float>("KFactor_EW_qqZZ", 1);
+    tree->bookBranch<float>("KFactor_QCD_qqZZ_M", 1);
+  }
+}
+void constructSamples(TString sampleType, float sqrts, const std::vector<TString>& KDvars, CJLSTSet*& theSampleSet){
+  if (sampleType=="qqBkg" || sampleType=="ggBkg" || sampleType=="Bkg") return constructBkgSamples(sampleType, sqrts, KDvars, theSampleSet);
+  else return constructSigSamples(sampleType, sqrts, KDvars, theSampleSet);
+}
 
 
 ///////////////////
 // Event helpers //
 ///////////////////
-CJLSTSet* bookSampleTrees(
-  const vector<TString>& strSamples,
-
-  const TString& strTrackVar,
-  const vector<TString>& strExtraWeightsList,
-  const vector<TString>& strKDVarsList,
-
-  const vector<TString>& strExtraFloatVarsList,
-  const vector<TString>& strExtraShortVarsList
-  ){
-  cout << "Begin bookSampleTrees" << endl;
-
-  CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
-
-  cout << "bookSampleTrees: Calling theSampleSet->bookOverallEventWgt" << endl;
-  theSampleSet->bookOverallEventWgt();
-  cout << "bookSampleTrees: Calling theSampleSet->setPermanentWeights" << endl;
-  theSampleSet->setPermanentWeights(true, true, true, false);
-
-  int nEntries = 0;
-  cout << "bookSampleTrees: Looping over the trees in theSampleSet" << endl;
-  for (auto& tree:theSampleSet->getCJLSTTreeList()){
-    tree->bookBranch<float>(strTrackVar, 0);
-    for (auto& s:strExtraWeightsList) tree->bookBranch<float>(s, 1);
-    for (auto& s:strKDVarsList) tree->bookBranch<float>(s, 0);
-    for (auto& s:strExtraFloatVarsList) tree->bookBranch<float>(s, 0);
-    for (auto& s:strExtraShortVarsList) tree->bookBranch<short>(s, 0);
-    tree->silenceUnused();
-    nEntries += tree->getSelectedNEvents();
-    cout << "Events accumulated: " << nEntries << endl;
-  }
-
-  cout << "NEntries = " << nEntries << " over " << theSampleSet->getCJLSTTreeList().size() << " trees." << endl;
-
-  cout << "End bookSampleTrees" << endl;
-  return theSampleSet;
-}
-void getEvents(
-  CJLSTSet* theSet,
-
-  const TString& strTrackVar,
-  const vector<TString>& strExtraWeightsList,
-  const vector<TString>& strKDVarsList,
-
-  vector<SimpleEntry>& index,
-  Discriminant* const& KDbuilder,
-  TString strcustomselection
-  ){
-  cout << "Begin getEvents" << endl;
-
-  vector<short> matchdecid;
-  if (strcustomselection.Contains("2l2l") || strcustomselection.Contains("2e2mu")) matchdecid.push_back(121*169);
-  else if (strcustomselection.Contains("4l")){ matchdecid.push_back(121*121); matchdecid.push_back(169*169); }
-  else if (strcustomselection.Contains("4mu")){ matchdecid.push_back(169*169); }
-  else if (strcustomselection.Contains("4e")){ matchdecid.push_back(121*121); }
-
-  pair<float, float> mjjcut(-1, -1);
-  if (strcustomselection.Contains("VBFLike")){ mjjcut.first=150; }
-  else if (strcustomselection.Contains("VHLike")){ mjjcut.first=40; mjjcut.second=150; }
-
-  pair<float, float> m4lcut(-1, -1);
-  if (strcustomselection.Contains("LowMass")){ m4lcut.first=100; m4lcut.second=160; }
-  else if (strcustomselection.Contains("HighMass")){ m4lcut.first=160; }
-
-  if (matchdecid.size()>0){
-    cout << "Matching events to either of ";
-    for (auto& mid : matchdecid) cout << mid << " ";
-    cout << endl;
-  }
-  if (mjjcut.first>=0. || mjjcut.second>=0.) cout << "Matching events to an mjj cut of [ " << mjjcut.first << " , " << mjjcut.second << " ]" << endl;
-
-  int ev=0, ev_acc=0;
-  CJLSTTree* tree=nullptr;
-  while ((tree = theSet->getSelectedEvent(ev))){
-    ev++;
-
-    float scale = theSet->getPermanentWeight(tree)*theSet->getOverallEventWgt(tree);
-
-    bool doProcess = true;
-    { // Flavor check
-      short Z1Id, Z2Id;
-      tree->getVal("Z1Flav", Z1Id);
-      tree->getVal("Z2Flav", Z2Id);
-      bool testMatchDec=(matchdecid.size()==0);
-      for (short& testid : matchdecid){ if (testid == Z1Id*Z2Id){ testMatchDec=true; break; } }
-      doProcess &= testMatchDec;
-    }
-
-    vector<float> valReco;
-    for (auto const& s : strKDVarsList){
-      float tmp;
-      tree->getVal(s, tmp);
-      valReco.push_back(tmp);
-    }
-
-    float varTrack;
-    tree->getVal(strTrackVar, varTrack);
-    { // Check m4l cut
-      bool testMatchRecoM4L = (m4lcut.first<0. || m4lcut.first<=varTrack) && (m4lcut.second<0. || varTrack<=m4lcut.second);
-      doProcess &= testMatchRecoM4L;
-    }
-
-    { // Check mJJ cut
-      float DiJetMass=-1;
-      tree->getVal("DiJetMass", DiJetMass);
-      bool testMatchRecoMJJ = (mjjcut.first<0. || (mjjcut.first<=DiJetMass && DiJetMass>=0.)) && (mjjcut.second<0. || (DiJetMass<=mjjcut.second && DiJetMass>=0.));
-      doProcess &= testMatchRecoMJJ;
-    }
-
-    if (!doProcess) continue;
-
-    // Weight has to be positive-definite for TProfile later on
-    float wgt = scale;
-    for (auto const& w : strExtraWeightsList){
-      float wval;
-      tree->getVal(w, wval);
-      wgt *= wval;
-    }
-    if (std::isnan(wgt) || std::isinf(wgt) || wgt<=0.){
-      // If weight is NaN, it is a big problem.
-      if (std::isnan(wgt) || std::isinf(wgt)) cerr << "Invalid weight " << wgt << " is being discarded at mass " << varTrack << endl;
-      continue;
-    }
-
-    // Need to also test KD explicitly
-    float KD = KDbuilder->update(valReco);
-    if (std::isnan(KD) || std::isinf(KD) || KD<0.) continue;
-
-    if (ev_acc%10000==0) cout << "Pre-processing event " << ev << endl;
-    //cout << "Pre-processing event " << ev << endl;
-    if (doDebugKD && ev_acc==10000) break;
-
-    //cout << "varTrack = " << varTrack << endl;
-    //cout << "valReco: ";
-    //for (auto& v:valReco) cout << v << " ";
-    //cout << endl;
-    SimpleEntry theEntry(ev, varTrack, valReco, wgt);
-    if (doDebugKDExt & doDebugKD) theEntry.print();
-    addByLowest(index, theEntry, false);
-
-    ev_acc++;
-  }
-  cout << "Number of valid entries: " << ev_acc << endl;
-  cout << "End getEvents" << endl;
-
-}
 void LoopForConstant(
   vector<SimpleEntry>(&index)[2],
   vector<unsigned int>(&indexboundaries)[2],
-  Discriminant* const& KDbuilder,
   TProfile* px,
   TH1F* hrec,
   unsigned int nstepsiter=100
-  ){
+){
   cout << "Begin LoopForConstant" << endl;
 
   int nbins = indexboundaries[0].size()-1;
@@ -219,20 +242,9 @@ void LoopForConstant(
       unsigned int& evhigh = indexboundaries[ih].at(bin+1);
       cout << " - Scanning events [ " << evlow << " , " << evhigh << " ) for sample set " << ih << endl;
       for (unsigned int ev=evlow; ev<evhigh; ev++){
-        float KD = KDbuilder->update(index[ih].at(ev).recoval);
-        if (std::isnan(KD) || std::isinf(KD)){
-          cerr << "Something went terribly wrong! KD is " << KD << endl;
-          for (auto& v : index[ih].at(ev).recoval) cerr << v << " ";
-          cerr << endl;
-          continue;
-        }
-        else if (KD<0.){
-          cerr << "KD(ev=" << ev << ") is invalid (" << KD << ")" << endl;
-          continue;
-        }
-        float& varTrack = index[ih].at(ev).trackingval;
-        float& weight = index[ih].at(ev).weight;
-        if (std::isnan(weight) || std::isinf(weight) || weight<=0.){ cerr << "Invalid weight " << weight << " is being discarded." << endl; continue; }
+        float const& KD = index[ih].at(ev).namedfloats["KD"];
+        float const& varTrack = index[ih].at(ev).trackingval;
+        float const& weight = index[ih].at(ev).weight;
         sumKD[ih] += KD*weight;
         sumWgt[ih] += weight;
 
@@ -263,7 +275,7 @@ void LoopForConstant(
       else if (it==1) nsteps*=100;
       else if (it==2) nsteps*=10;
       for (unsigned int step=0; step<=nsteps; step++){
-        float testC = centralConstant*((1.-marginlow) + (marginhigh+marginlow)*(float(step))/((float)nsteps));
+        float testC = centralConstant*((1.-marginlow) + (marginhigh+marginlow)*(float(step))/((float) nsteps));
 
         float sumWgtAll[2]={ 0 };
         float sumWgtHalf[2]={ 0 };
@@ -271,12 +283,11 @@ void LoopForConstant(
           unsigned int& evlow = indexboundaries[ih].at(bin);
           unsigned int& evhigh = indexboundaries[ih].at(bin+1);
           for (unsigned int ev=evlow; ev<evhigh; ev++){
-            KDbuilder->update(index[ih].at(ev).recoval);
-            float KD = KDbuilder->applyAdditionalC(testC);
+            float const& KDold = index[ih].at(ev).namedfloats["KD"];
+            if (KDold==-999.) continue;
+            float KD = KDold/(KDold+(1.-KDold)*testC);
             if (std::isnan(KD) || std::isinf(KD)){
               cerr << "Something went terribly wrong! KD is " << KD << endl;
-              for (auto& v : index[ih].at(ev).recoval) cerr << v << " ";
-              cerr << endl;
               continue;
             }
             else if (KD<0.){
@@ -284,8 +295,6 @@ void LoopForConstant(
               continue;
             }
             float& weight = index[ih].at(ev).weight;
-            if (std::isnan(weight) || std::isinf(weight) || weight<=0.){ cerr << "Invalid weight " << weight << " is being discarded." << endl; continue; }
-            if (KD==-999.) continue;
             sumWgtAll[ih] += weight;
             if (
               (KD>=0.5 && ih==0)
@@ -325,37 +334,26 @@ void LoopForConstant(
   cout << "End LoopForConstant" << endl;
 }
 void getKDConstantByMass(
-  float sqrts, TString strname,
-  vector<TString>& strRecoBranch,
-  vector<TString>& strExtraRecoBranches,
-  vector<TString>(&strSamples)[2],
-  vector<TString>(&strExtraWeights)[2],
-  unsigned int divisor,
-  const bool writeFinalTree,
-  TString strcustomselection="",
-  vector<pair<vector<float>, pair<float, float>>>* manualboundary_validity_pairs=0
-  ){
+  float sqrts, TString strKD, vector<TString> KDvars,
+  vector<TString> strSamples[2],
+  vector<vector<TString>> strMelaWgts[2],
+  SampleHelpers::Channel channel, CategorizationHelpers::Category category,
+  unsigned int divisor, const bool writeFinalTree, vector<pair<vector<float>, pair<float, float>>>* manualboundary_validity_pairs=0
+){
   cout << "Begin getKDConstantByMass" << endl;
-
-  Discriminant* KDbuilder = constructKDFromType(strname);
-  if (!KDbuilder) return;
-
-  const TString strTrackVar = "ZZMass";
-  vector<TString> strWeights; strWeights.push_back(TString("KFactor_QCD_ggZZ_Nominal")); strWeights.push_back(TString("KFactor_EW_qqZZ")); strWeights.push_back(TString("KFactor_QCD_qqZZ_M"));
-
-  vector<TString> strAllWeights[2];
   for (unsigned int ih=0; ih<2; ih++){
-    for (auto& s : strWeights) strAllWeights[ih].push_back(s);
-    for (auto& s : strExtraWeights[ih]) strAllWeights[ih].push_back(s);
+    assert(strSamples[ih].size()==strMelaWgts[ih].size());
   }
 
-  vector<TString> strExtraShortVars; strExtraShortVars.push_back("Z1Flav"); strExtraShortVars.push_back("Z2Flav");
+  Discriminant* KDbuilder = constructKDFromType(strKD);
+  if (!KDbuilder) return;
 
   vector<SimpleEntry> index[2];
 
   gSystem->Exec("mkdir -p ./output/KDConstants");
-  TString coutput = Form("KDConstant_m4l_%s", strname.Data());
-  if (strcustomselection!="") coutput += Form("_%s", strcustomselection.Data());
+  TString coutput = Form("KDConstant_m4l_%s", strKD.Data());
+  if (channel!=SampleHelpers::NChannels) coutput += Form("_%s", SampleHelpers::getChannelName(channel).Data());
+  if (category!=CategorizationHelpers::Inclusive) coutput += Form("_%s", CategorizationHelpers::getCategoryName(category).Data());
   if (sqrts>0.) coutput += Form("%.0fTeV", sqrts);
   TFile* foutput = TFile::Open(Form("./output/KDConstants/%s%s", coutput.Data(), ".root"), "recreate");
 
@@ -364,41 +362,100 @@ void getKDConstantByMass(
   float supremum=sqrts*1000.;
 
   for (unsigned int ih=0; ih<2; ih++){
-    CJLSTSet* theSet = bookSampleTrees(
-      strSamples[ih],
+    vector<CJLSTSet*> theSets;
+    theSets.assign(strSamples[ih].size(), nullptr);
+    for (unsigned int ihs=0; ihs<strSamples[ih].size(); ihs++) constructSamples(strSamples[ih].at(ihs), 13, KDvars, theSets.at(ihs));
+    auto melawgtcollit=strMelaWgts[ih].begin();
+    for (auto& theSet:theSets){
+      for (auto& tree:theSet->getCJLSTTreeList()){
+        for (auto& strWgt:(*melawgtcollit)) tree->bookBranch<float>(strWgt, 0);
+        tree->silenceUnused(); // Will no longer book another branch
+      }
+      melawgtcollit++;
+    }
 
-      strTrackVar,
-      strAllWeights[ih],
-      strRecoBranch,
+    // Setup GenHMass binning
+    // Binning for PUGenHepRewgt
+    ExtendedBinning GenHMassInclusiveBinning("GenHMass");
 
-      strExtraRecoBranches,
-      strExtraShortVars
-      );
-    getEvents(
-      theSet,
+    // Construct PUGenHepRewgt
+    vector<TString> strReweightingWeigths;
+    strReweightingWeigths.push_back("PUWeight");
+    strReweightingWeigths.push_back("genHEPMCweight");
+    ReweightingBuilder* pugenheprewgtBuilder = new ReweightingBuilder(strReweightingWeigths, getSimpleWeight);
+    pugenheprewgtBuilder->setWeightBinning(GenHMassInclusiveBinning);
+    for (auto& theSet:theSets){ for (auto& tree:theSet->getCJLSTTreeList()) pugenheprewgtBuilder->setupWeightVariables(tree, 1.); }
 
-      strTrackVar,
-      strAllWeights[ih],
-      strRecoBranch,
+    melawgtcollit=strMelaWgts[ih].begin();
+    for (auto& theSet:theSets){
+      ReweightingBuilder* melarewgtBuilder = nullptr;
+      // Construct MELARewgt for each set
+      if (!melawgtcollit->empty()){
+        // Binning for MELARewgt
+        ExtendedBinning GenHMassBinning("GenHMass");
+        for (unsigned int is=0; is<theSet->getCJLSTTreeList().size()-1; is++){
+          if (theSet->getCJLSTTreeList().at(is)->MHVal>0. && theSet->getCJLSTTreeList().at(is+1)->MHVal>0.){
+            GenHMassBinning.addBinBoundary(
+              0.5*(theSet->getCJLSTTreeList().at(is)->MHVal + theSet->getCJLSTTreeList().at(is+1)->MHVal)
+            );
+          }
+        }
+        if (GenHMassBinning.isValid()){
+          GenHMassBinning.addBinBoundary(0);
+          GenHMassBinning.addBinBoundary(sqrts*1000.);
+        }
+        ReweightingBuilder* melarewgtBuilder = new ReweightingBuilder(*melawgtcollit, ReweightingFunctions::getSimpleWeight);
+        melarewgtBuilder->setDivideByNSample(true);
+        melarewgtBuilder->setWeightBinning(GenHMassBinning);
+        for (auto& tree:theSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.999, 10);
+      }
 
-      index[ih],
-      KDbuilder,
-      strcustomselection
-      );
+      EventAnalyzer theAnalyzer(theSet, channel, category);
+      // Book common variables needed for analysis
+      theAnalyzer.addConsumed<float>("dataMCWeight");
+      theAnalyzer.addConsumed<float>("trigEffWeight");
+      theAnalyzer.addConsumed<float>("GenHMass");
+      theAnalyzer.addConsumed<float>("ZZMass");
+      theAnalyzer.addConsumed<short>("Z1Flav");
+      theAnalyzer.addConsumed<short>("Z2Flav");
+      // Add discriminant builders
+      theAnalyzer.addDiscriminantBuilder("KD", KDbuilder, KDvars);
+      // Add reweighting builders
+      theAnalyzer.addReweightingBuilder("PUGenHEPRewgt", pugenheprewgtBuilder);
+      theAnalyzer.addReweightingBuilder("MELARewgt", melarewgtBuilder);
+      
+      // Loop
+      theAnalyzer.loop(true, false, true);
+      theAnalyzer.moveProducts(index[ih]);
 
-    delete theSet;
+      delete melarewgtBuilder;
+      melawgtcollit++;
+    }
+    delete pugenheprewgtBuilder;
+    for (auto& theSet:theSets) delete theSet;
 
-    float firstVal=index[ih].at(0).trackingval; firstVal = (float)((int)firstVal); firstVal -= (float)(((int)firstVal)%10);
-    float lastVal=index[ih].at(index[ih].size()-1).trackingval; lastVal = (float)((int)(lastVal+0.5)); lastVal += (float)(10-((int)lastVal)%10);
-    infimum = max(firstVal, infimum);
-    supremum = min(lastVal, supremum);
+    float firstVal=1000.*sqrts;
+    float lastVal=0;
+    cout << "Determining min/max for set " << ih << " (size=" << index[ih].size() << ")" << endl;
+    for (auto const& ev:index[ih]){
+      firstVal=std::min(firstVal, ev.trackingval);
+      lastVal=std::max(lastVal, ev.trackingval);
+    }
+    firstVal = (float) ((int) firstVal); firstVal -= (float) (((int) firstVal)%10);
+    lastVal = (float) ((int) (lastVal+0.5)); lastVal += (float) (10-((int) lastVal)%10);
+    infimum = std::max(firstVal, infimum);
+    supremum = std::min(lastVal, supremum);
+    cout << "Unmodified Nproducts: " << index[ih].size() << ", firstVal: " << firstVal << ", lastVal: " << lastVal << endl;
   }
   for (unsigned int ih=0; ih<2; ih++){
+    cout << "Cropping events for set " << ih << " based on min/max = " << infimum << " / " << supremum << endl;
     SimpleEntry::cropByTrueVal(index[ih], infimum, supremum);
+    cout << "Sorting..." << endl;
+    std::sort(index[ih].begin(), index[ih].end());
     nEntries[ih]=index[ih].size();
-    cout << "Nentries remaining = " << nEntries[ih] << " | truth = [ " << infimum << " , " << supremum << " ]" << endl;
+    cout << "Nentries remaining = " << nEntries[ih] << " | var = [ " << infimum << " , " << supremum << " ]" << endl;
   }
-  
+
   vector<unsigned int> indexboundaries[2];
   for (unsigned int ih=0; ih<2; ih++) indexboundaries[ih].push_back(0);
   {
@@ -426,7 +483,7 @@ void getKDConstantByMass(
       }
       else if (
         (index[0].at(iit[0]).trackingval+index[0].at(iit[0]-1).trackingval)*0.5
-        >
+          >
         (index[1].at(iit[1]).trackingval+index[1].at(iit[1]-1).trackingval)*0.5
         ){
         while (
@@ -465,7 +522,7 @@ void getKDConstantByMass(
       (index[0].at(indexboundaries[0].at(ix)-1).trackingval+index[0].at(indexboundaries[0].at(ix)).trackingval)*0.5
       ,
       (index[1].at(indexboundaries[1].at(ix)-1).trackingval+index[1].at(indexboundaries[1].at(ix)).trackingval)*0.5
-      );
+    );
 
     cout << "Initial bin boundary for bin " << ix << ": " << binboundary << endl;
 
@@ -528,11 +585,10 @@ void getKDConstantByMass(
 
   LoopForConstant(
     index, indexboundaries,
-    KDbuilder,
     p_varTrack,
     h_varTrack_Constant,
     100
-    );
+  );
 
   TGraphErrors* gr = makeGraphFromTH1(p_varTrack, h_varTrack_Constant, "gr_varReco_Constant");
   foutput->WriteTObject(p_varTrack);
@@ -552,6 +608,7 @@ void getKDConstantByMass(
 SPECIFIC COMMENT:
 - Multiplies by Pmjj
 */
+/*
 void getKDConstant_DjjVH(TString strprod, float sqrts=13){
   const bool writeFinalTree=false;
   float divisor=20000;
@@ -593,7 +650,7 @@ void getKDConstant_DjjVH(TString strprod, float sqrts=13){
     manualboundaries.push_back(105);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(
       manualboundaries, valrange
-      ));
+    ));
   }
   if (strprod=="ZH"){
     pair<float, float> valrange(230, 3500);
@@ -603,7 +660,7 @@ void getKDConstant_DjjVH(TString strprod, float sqrts=13){
     manualboundaries.push_back(500);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(
       manualboundaries, valrange
-      ));
+    ));
   }
   else if (strprod=="WH"){
     pair<float, float> valrange(195, 3500);
@@ -614,7 +671,7 @@ void getKDConstant_DjjVH(TString strprod, float sqrts=13){
     manualboundaries.push_back(500);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(
       manualboundaries, valrange
-      ));
+    ));
   }
 
   getKDConstantByMass(
@@ -622,28 +679,22 @@ void getKDConstant_DjjVH(TString strprod, float sqrts=13){
     strRecoBranch, strExtraRecoBranches, strSamples, extraweights,
     divisor, writeFinalTree, "",
     &manualboundary_validity_pairs
-    );
+  );
 }
+*/
 
 /* SPECIFIC COMMENT: NONE */
 void getKDConstant_DjjVBF(float sqrts=13){
   const bool writeFinalTree=false;
-  TString strprod="VBF";
   float divisor=40000;
-
-  vector<TString> extraweights[2];
-
-  vector<TString> strRecoBranch;
-  strRecoBranch.push_back("p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal");
-  strRecoBranch.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
-  vector<TString> strExtraRecoBranches;
+  TString strKD="DjjVBF";
+  DiscriminantClasses::Type KDtype = DiscriminantClasses::getKDType(strKD);
+  vector<TString> KDvars = DiscriminantClasses::getKDVars(KDtype);
 
   vector<TString> strSamples[2];
-  {
-    vector<TString> s1; s1.push_back("VBF_Sig_POWHEG");
-    vector<TString> s2; s2.push_back("gg_Sig_POWHEG");
-    getSamplePairs(sqrts, s1, s2, strSamples[0], strSamples[1]);
-  }
+  strSamples[0].push_back("VBFPowheg");
+  strSamples[1].push_back("ggHPowheg");
+  vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
   {
@@ -652,7 +703,7 @@ void getKDConstant_DjjVBF(float sqrts=13){
     manualboundaries.push_back(105);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(
       manualboundaries, valrange
-      ));
+    ));
   }
   {
     pair<float, float> valrange(750, 3500);
@@ -661,23 +712,23 @@ void getKDConstant_DjjVBF(float sqrts=13){
     manualboundaries.push_back(850);
     manualboundaries.push_back(1100);
     manualboundaries.push_back(1400);
-    //manualboundaries.push_back(1700);
     manualboundaries.push_back(2100);
     manualboundaries.push_back(2650);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(
       manualboundaries, valrange
-      ));
+    ));
   }
 
   getKDConstantByMass(
-    sqrts, Form("Djj%s", strprod.Data()),
-    strRecoBranch, strExtraRecoBranches, strSamples, extraweights,
-    divisor, writeFinalTree, "",
-    &manualboundary_validity_pairs
-    );
+    sqrts, strKD, KDvars,
+    strSamples, strMelaWgts,
+    SampleHelpers::NChannels, CategorizationHelpers::Inclusive,
+    divisor, writeFinalTree, &manualboundary_validity_pairs
+  );
 }
 
 /* SPECIFIC COMMENT: NONE */
+/*
 void getKDConstant_DjVBF(float sqrts=13){
   const bool writeFinalTree=false;
   TString strprod="VBF";
@@ -705,7 +756,7 @@ void getKDConstant_DjVBF(float sqrts=13){
     manualboundaries.push_back(105);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(
       manualboundaries, valrange
-      ));
+    ));
   }
   {
     pair<float, float> valrange(1000, 2000);
@@ -713,7 +764,7 @@ void getKDConstant_DjVBF(float sqrts=13){
     manualboundaries.push_back(1400);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(
       manualboundaries, valrange
-      ));
+    ));
   }
 
   getKDConstantByMass(
@@ -721,13 +772,15 @@ void getKDConstant_DjVBF(float sqrts=13){
     strRecoBranch, strExtraRecoBranches, strSamples, extraweights,
     divisor, writeFinalTree, "",
     &manualboundary_validity_pairs
-    );
+  );
 }
+*/
 
 /*
 SPECIFIC COMMENT:
 Add bin boundaries 75, 105 and 120 manually
 */
+/*
 void getKDConstant_Dbkgkin(TString strchannel, float sqrts=13){
   if (strchannel!="2e2mu" && strchannel!="4e" && strchannel!="4mu") return;
 
@@ -777,9 +830,9 @@ void getKDConstant_Dbkgkin(TString strchannel, float sqrts=13){
     divisor, writeFinalTree,
     strchannel,
     &manualboundary_validity_pairs
-    );
+  );
 }
-
+*/
 
 void generic_SmoothKDConstantProducer(
   float sqrts, TString strname, TString strcustomselection,
@@ -787,9 +840,9 @@ void generic_SmoothKDConstantProducer(
   TF1* (*highf)(TSpline3*, double, double, bool),
   bool useFaithfulSlopeFirst, bool useFaithfulSlopeSecond,
   vector<pair<pair<double, double>, unsigned int>>* addpoints=0
-  ){
+){
   const double xmin=0;
-  const double xmax=(sqrts>0 ? (double)sqrts*1000. : 15000.);
+  const double xmax=(sqrts>0 ? (double) sqrts*1000. : 15000.);
 
   gSystem->Exec("mkdir -p ./output/KDConstants");
   TString cinput = Form("KDConstant_m4l_%s", strname.Data());
@@ -800,7 +853,7 @@ void generic_SmoothKDConstantProducer(
   TFile* foutput = TFile::Open(Form("./output/KDConstants/Smooth%s%s", cinput.Data(), ".root"), "recreate");
   foutput->cd();
 
-  TGraphErrors* tg = (TGraphErrors*)finput->Get("gr_varReco_Constant");
+  TGraphErrors* tg = (TGraphErrors*) finput->Get("gr_varReco_Constant");
   foutput->WriteTObject(tg);
 
   if (addpoints!=0){ for (auto& prange : *addpoints) addPointsBetween(tg, prange.first.first, prange.first.second, prange.second); }
@@ -817,8 +870,8 @@ void generic_SmoothKDConstantProducer(
   double tghigh = xx[tg->GetN()-1];
   TF1* lowFcn = lowf(sp, xmin, tglow, true);
   TF1* highFcn = highf(sp, tghigh, xmax, false);
-  lowFcn->SetNpx((int)(tglow-xmin)*5);
-  highFcn->SetNpx((int)(xmax-tghigh)*5);
+  lowFcn->SetNpx((int) (tglow-xmin)*5);
+  highFcn->SetNpx((int) (xmax-tghigh)*5);
 
   vector<pair<double, double>> points;
   for (double xval=xmin; xval<tglow; xval+=1){
@@ -828,8 +881,8 @@ void generic_SmoothKDConstantProducer(
   for (int ix=0; ix<n; ix++){
     addByLowest<double, double>(points, xx[ix], yy[ix]);
   }
-  int tghigh_int = ((int)((tghigh+1.)/100.+0.5))*100;
-  if (tghigh>=(double)tghigh_int) tghigh_int+=100;
+  int tghigh_int = ((int) ((tghigh+1.)/100.+0.5))*100;
+  if (tghigh>=(double) tghigh_int) tghigh_int+=100;
   for (double xval=tghigh_int; xval<=xmax; xval+=100){
     double yval = highFcn->Eval(xval);
     addByLowest<double, double>(points, xval, yval);
@@ -868,7 +921,7 @@ void SmoothKDConstantProducer_DjjVH(TString strprod){
     &getFcn_a0plusa1timesXN<1>,
     &getFcn_a0timesexpa1X,
     false, false
-    );
+  );
 }
 
 void SmoothKDConstantProducer_DjjVBF(){
@@ -887,7 +940,7 @@ void SmoothKDConstantProducer_DjjVBF(){
     //&getFcn_a0plusa1overX,
     true, true,
     &addpoints
-    );
+  );
 }
 
 void SmoothKDConstantProducer_DjVBF(){
@@ -897,7 +950,7 @@ void SmoothKDConstantProducer_DjVBF(){
     &getFcn_a0plusa1timesXN<1>,
     &getFcn_a0timesexpa1X,
     true, true
-    );
+  );
 }
 
 void SmoothKDConstantProducer_Dbkgkin(TString strchannel){
@@ -908,7 +961,7 @@ void SmoothKDConstantProducer_Dbkgkin(TString strchannel){
     &getFcn_a0timesexpa1X,
     //&getFcn_a0plusa1overXN<6>,
     true, false
-    );
+  );
 }
 
 
@@ -922,7 +975,7 @@ TGraph* getSingleTGraph(TString fname){
   cout << "Opening file " << fname << endl;
 
   TFile* finput = TFile::Open(Form("JHUGenXsec/%s%s", fname.Data(), ".root"), "read");
-  TGraph* tgold = (TGraph*)finput->Get("Graph");
+  TGraph* tgold = (TGraph*) finput->Get("Graph");
   double* xx = tgold->GetX();
   double* yy = tgold->GetY();
 

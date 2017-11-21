@@ -121,6 +121,18 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
   vector<TString> strSamples;
   getSamplesList(theSqrts, strSampleIdentifiers, strSamples);
 
+  // Kfactor variable names
+  vector<TString> strKfactorVars;
+  if (strSystematics == "Nominal") strKfactorVars.push_back("KFactor_QCD_ggZZ_Nominal");
+  else if (strSystematics == "PDFScaleDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFScaleDn");
+  else if (strSystematics == "PDFScaleUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFScaleUp");
+  else if (strSystematics == "QCDScaleDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_QCDScaleDn");
+  else if (strSystematics == "QCDScaleUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_QCDScaleUp");
+  else if (strSystematics == "AsDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_AsDn");
+  else if (strSystematics == "AsUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_AsUp");
+  else if (strSystematics == "PDFReplicaDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFReplicaDn");
+  else if (strSystematics == "PDFReplicaUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFReplicaUp");
+
   // Register the discriminants
   Discriminant* KD1 = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
   vector<TString> KD1vars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDbkgkin);
@@ -130,16 +142,21 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
   //vector<TString> KD2vars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDggint);
 
   // Get the CJLST set
+  //vector<TString> newlist; newlist.push_back(strSamples.back()); newlist.push_back(strSamples.front());
+  //strSamples = newlist;
   CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
   // Book common variables
-  theSampleSet->bookXS();
-  theSampleSet->bookOverallEventWgt();
+  theSampleSet->bookXS(); // "xsec"
+  theSampleSet->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
   for (auto& tree:theSampleSet->getCJLSTTreeList()){
     // Book common variables needed for analysis
     tree->bookBranch<float>("GenHMass", 0);
     tree->bookBranch<float>("ZZMass", -1);
     tree->bookBranch<short>("Z1Flav", 0);
     tree->bookBranch<short>("Z2Flav", 0);
+    // Common variables for reweighting
+    tree->bookBranch<float>("p_Gen_CPStoBWPropRewgt", 1);
+    for (auto& s:strKfactorVars) tree->bookBranch<float>(s, 1);
     // Variables for SM reweighting
     tree->bookBranch<float>("p_Gen_GG_BKG_MCFM", 0);
     tree->bookBranch<float>("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM", 0);
@@ -152,15 +169,16 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
   // Setup GenHMass binning
   // Binning for PUGenHepRewgt
   ExtendedBinning GenHMassInclusiveBinning("GenHMass");
-  GenHMassInclusiveBinning.addBinBoundary(0);
-  GenHMassInclusiveBinning.addBinBoundary(theSqrts*1000.);
-
   // Binning for MELARewgt
   ExtendedBinning GenHMassBinning("GenHMass");
   GenHMassBinning.addBinBoundary(0);
-  for (unsigned int is=0; is<theSampleSet->getCJLSTTreeList().size()-1; is++) GenHMassBinning.addBinBoundary(
-    0.5*(theSampleSet->getCJLSTTreeList().at(is)->MHVal + theSampleSet->getCJLSTTreeList().at(is+1)->MHVal)
-    );
+  for (unsigned int is=0; is<theSampleSet->getCJLSTTreeList().size()-1; is++){
+  //for (unsigned int is=0; is<theSampleSet->getCJLSTTreeList().size(); is++){
+    GenHMassBinning.addBinBoundary(
+      //theSampleSet->getCJLSTTreeList().at(is)->MHVal
+      0.5*(theSampleSet->getCJLSTTreeList().at(is)->MHVal + theSampleSet->getCJLSTTreeList().at(is+1)->MHVal)
+      );
+  }
   GenHMassBinning.addBinBoundary(theSqrts*1000.);
 
   // Construct PUGenHepRewgt
@@ -171,10 +189,18 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
   pugenheprewgtBuilder->setWeightBinning(GenHMassInclusiveBinning);
   for (auto& tree:theSampleSet->getCJLSTTreeList()) pugenheprewgtBuilder->setupWeightVariables(tree, 1.);
 
-
-
   for (int t=kBkg; t<nTemplates; t++){
     foutput->cd();
+
+    TDirectory* controlsDir = foutput->mkdir(Form("controls_%s", strTemplateName[t].Data()), "");
+    controlsDir->cd();
+    TH1F* h_MELARewgtSumAllNonZeroWgtEventsPerBin = new TH1F("MELARewgtSumAllNonZeroWgtEventsPerBin", "", GenHMassBinning.getNbins(), GenHMassBinning.getBinning());
+    h_MELARewgtSumAllNonZeroWgtEventsPerBin->GetXaxis()->SetTitle(GenHMassBinning.getLabel());
+    TH1F* h_MELARewgtNormComponentPerBin = new TH1F("MELARewgtNormComponentPerBin", "", GenHMassBinning.getNbins(), GenHMassBinning.getBinning());
+    h_MELARewgtNormComponentPerBin->GetXaxis()->SetTitle(GenHMassBinning.getLabel());
+
+    foutput->cd();
+
     TTree* theFinalTree = new TTree(Form("T_ggH_%s_Tree", strTemplateName[t].Data()), ""); // The tree to record into the ROOT file
 
     /************* Reweighting setup *************/
@@ -198,10 +224,48 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
     };
     strReweightingWeigths.clear();
     strReweightingWeigths.push_back(strWeight);
+    strReweightingWeigths.push_back("p_Gen_CPStoBWPropRewgt");
+    for (auto& s:strKfactorVars) strReweightingWeigths.push_back(s);
     strReweightingWeigths.push_back("xsec");
     ReweightingBuilder* melarewgtBuilder = new ReweightingBuilder(strReweightingWeigths, getSimpleWeight);
+    melarewgtBuilder->setDivideByNSample(true);
     melarewgtBuilder->setWeightBinning(GenHMassBinning);
-    for (auto& tree:theSampleSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree);
+    for (auto& tree:theSampleSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.999, 1000);
+
+    controlsDir->cd();
+    for (unsigned int bin=0; bin<GenHMassBinning.getNbins(); bin++){
+      unsigned int nSANZWEPB = melarewgtBuilder->getSumAllNonZeroWgtEvents(bin);
+      float NCPB = melarewgtBuilder->getNormComponent(bin);
+      MELAout
+        << "GenHMass bin " << bin << " has a normalization contribution in melarewgtBuilder of " << NCPB
+        << " and number of events with non-zero weight: " << nSANZWEPB
+        << endl;
+
+      h_MELARewgtSumAllNonZeroWgtEventsPerBin->SetBinContent(bin, nSANZWEPB);
+      h_MELARewgtNormComponentPerBin->SetBinContent(bin, NCPB);
+
+      /*
+      for (unsigned int itree=0; itree<theSampleSet->getCJLSTTreeList().size(); itree++){
+        CJLSTTree* tree = theSampleSet->getCJLSTTreeList()[itree];
+        TH1F* h_MELARewgtPostThrWeights = new TH1F(
+          Form("MELARewgtPostThrWeights_%s_Bin%i", tree->sampleIdentifier.Data(), bin), "",
+          2000,
+          -melarewgtBuilder->getWeightThresholds(tree).at(bin),
+          melarewgtBuilder->getWeightThresholds(tree).at(bin)
+          );
+        for (int ev=0; ev<tree->getSelectedNEvents(); ev++){
+          if (tree->getSelectedEvent(ev) & tree->isValidEvent()) h_MELARewgtPostThrWeights->Fill(melarewgtBuilder->getPostThresholdWeight(tree));
+        }
+        controlsDir->WriteTObject(h_MELARewgtPostThrWeights); delete h_MELARewgtPostThrWeights;
+      }
+      */
+    }
+    MELAout << "Overall normalization in melarewgtBuilder is " << melarewgtBuilder->getNorm() << endl;
+
+    controlsDir->WriteTObject(h_MELARewgtSumAllNonZeroWgtEventsPerBin); delete h_MELARewgtSumAllNonZeroWgtEventsPerBin;
+    controlsDir->WriteTObject(h_MELARewgtNormComponentPerBin); delete h_MELARewgtNormComponentPerBin;
+
+    foutput->cd();
 
     // Build the analyzer and loop over the events
     GGHAnalyzer theAnalyzer(theSampleSet, channel, category);
@@ -216,8 +280,8 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
     theAnalyzer.addDiscriminantBuilder("KD1", KD1, KD1vars);
     theAnalyzer.addDiscriminantBuilder("KD2", KD2, KD2vars);
     // Add reweighting builders
-    theAnalyzer.addReweightingBuilder("MELARewgt", melarewgtBuilder);
     theAnalyzer.addReweightingBuilder("PUGenHEPRewgt", pugenheprewgtBuilder);
+    theAnalyzer.addReweightingBuilder("MELARewgt", melarewgtBuilder);
     // Loop
     theAnalyzer.loop(true, false, true);
 
@@ -237,6 +301,7 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
 
     delete melarewgtBuilder;
 
+    controlsDir->Close();
     foutput->WriteTObject(theFinalTree);
     delete theFinalTree;
   }
@@ -258,6 +323,15 @@ bool GGHAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
 
   bool validProducts=(tree!=nullptr);
   if (validProducts){
+    // Get the reweighting builders
+    auto& pugenheprewgtBuilder = Rewgtbuilders["PUGenHEPRewgt"];
+    auto& melarewgtBuilder = Rewgtbuilders["MELARewgt"];
+    int melarewgtBin = melarewgtBuilder->findBin(tree);
+
+    // Get tree and binning information
+    product.setNamedVal("MH", tree->MHVal);
+    product.setNamedVal("MELARewgtBin", float(melarewgtBin));
+
     // Get main observables
     float& ZZMass = *(valfloats["ZZMass"]);
     float& GenHMass = *(valfloats["GenHMass"]);
@@ -267,37 +341,63 @@ bool GGHAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
     // Construct the weights
     float pure_reco_wgt = (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]));
 
-    auto& pugenheprewgtBuilder = Rewgtbuilders["PUGenHEPRewgt"];
-    float pugenhep_wgt = pugenheprewgtBuilder->getPostThresholdWeight(tree)/pugenheprewgtBuilder->getSumPostThresholdWeights(tree); // Normalized to unit
+    float pugenhep_wgt_sum = pugenheprewgtBuilder->getSumPostThresholdWeights(tree);
+    float pugenhep_wgt = (pugenhep_wgt_sum!=0. ? pugenheprewgtBuilder->getPostThresholdWeight(tree)/pugenhep_wgt_sum : 0.); // Normalized to unit
 
-    auto& melarewgtBuilder = Rewgtbuilders["MELARewgt"];
-    float mela_wgt = melarewgtBuilder->getPostThresholdWeight(tree)/melarewgtBuilder->getSumPostThresholdWeights(tree); // Normalized to unit
-    mela_wgt *= melarewgtBuilder->getWeightedSumAllPostThresholdWeights(tree);
+    float mela_wgt_sum = melarewgtBuilder->getSumPostThresholdWeights(tree);
+    float mela_wgt = (mela_wgt_sum!=0. ? melarewgtBuilder->getPostThresholdWeight(tree)/mela_wgt_sum : 0.); // Normalized to unit
+    mela_wgt *= melarewgtBuilder->getNormComponent(tree);
+
 
     float wgt = pure_reco_wgt*pugenhep_wgt*mela_wgt;
     product.setNamedVal("weight", wgt);
     if (std::isnan(wgt) || std::isinf(wgt) || wgt==0.){
-      MELAerr << "Invalid weight " << wgt << " is being discarded at mass " << ZZMass << endl;
+      if (wgt!=0.){
+        MELAerr << "GGHAnalyzer::runEvent: Invalid weight " << wgt << " is being discarded at mass " << ZZMass << " for tree " << tree->sampleIdentifier << "." << endl;
+        cout << "GGHAnalyzer::runEvent: pugenheprewgtBuilder->getPostThresholdWeight = " << pugenheprewgtBuilder->getPostThresholdWeight(tree) << endl;
+        cout << "GGHAnalyzer::runEvent: pugenheprewgtBuilder->getSumPostThresholdWeights = " << pugenheprewgtBuilder->getSumPostThresholdWeights(tree) << endl;
+        cout << "GGHAnalyzer::runEvent: melarewgtBuilder->getPostThresholdWeight = " << melarewgtBuilder->getPostThresholdWeight(tree) << endl;
+        cout << "GGHAnalyzer::runEvent: melarewgtBuilder->getSumPostThresholdWeights = " << melarewgtBuilder->getSumPostThresholdWeights(tree) << endl;
+        cout << "GGHAnalyzer::runEvent: melarewgtBuilder->getNorm = " << melarewgtBuilder->getNorm() << endl;
+        for (auto const& s:melarewgtBuilder->getWeightVariables()){
+          float val;
+          tree->getVal<float>(s, val);
+          cout << "\t- Tree[" << s << "] = " << val << endl;
+        }
+        exit(1);
+      }
       validProducts=false;
     }
 
-    // Flavor check
-    if (matchdecid>0){
-      short& Z1Id = *(valshorts["Z1Flav"]);
-      short& Z2Id = *(valshorts["Z2Flav"]);
-      validProducts &= (matchdecid==Z1Id*Z2Id);
-    }
-
     // Compute the KDs
+    // Reserve the special DjjVBF, DjjZH and DjjWH discriminants
+    float DjjVBF=-1;
+    float DjjWH=-1;
+    float DjjZH=-1;
     for (auto it=KDbuilders.cbegin(); it!=KDbuilders.cend(); it++){
       auto& KDbuilderpair = it->second;
       auto& KDbuilder = KDbuilderpair.first;
       auto& strKDVarsList = KDbuilderpair.second;
       vector<float> KDBuildVals; KDBuildVals.reserve(strKDVarsList.size());
       for (auto const& s : strKDVarsList) KDBuildVals.push_back(*(valfloats[s]));
-      float KD = KDbuilder->update(KDBuildVals);
+      float KD = KDbuilder->update(KDBuildVals, ZZMass);
       product.setNamedVal(it->first, KD);
       validProducts &= !(std::isnan(KD) || std::isinf(KD));
+
+      if (it->first=="DjjVBF") DjjVBF=KD;
+      else if (it->first=="DjjZH") DjjZH=KD;
+      else if (it->first=="DjjWH") DjjWH=KD;
+    }
+
+    // Category check
+    Category catFound = CategorizationHelpers::getCategory(DjjVBF, DjjZH, DjjWH, false);
+    validProducts &= (category==Inclusive || category==catFound);
+
+    // Flavor check
+    if (matchdecid>0){
+      short& Z1Id = *(valshorts["Z1Flav"]);
+      short& Z2Id = *(valshorts["Z2Flav"]);
+      validProducts &= (matchdecid==Z1Id*Z2Id);
     }
   }
 

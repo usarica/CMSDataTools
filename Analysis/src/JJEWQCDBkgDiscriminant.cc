@@ -7,13 +7,16 @@ using namespace std;
 using namespace HelperFunctions;
 
 
-JJEWQCDBkgDiscriminant::JJEWQCDBkgDiscriminant(const TString cfilename, const TString splinename) : Discriminant(cfilename, splinename){}
+JJEWQCDBkgDiscriminant::JJEWQCDBkgDiscriminant(
+  const TString cfilename, const TString splinename,
+  const TString gfilename, const TString gsplinename,
+  const float gscale_
+) : Discriminant(cfilename, splinename, gfilename, gsplinename, gscale_){}
 
 void JJEWQCDBkgDiscriminant::eval(const std::vector<float>& vars, const float& valReco){
   const unsigned int nvarsreq=18;
-  assert(checkNonNegative(vars) && vars.size()==nvarsreq);
-  if (!checkNanInf(vars)) val = -999;
-  else{
+  this->resetVal();
+  if (checkNanInf(vars) && checkNonNegative(vars) && vars.size()==nvarsreq){
     float constant = getCval(valReco);
 
     float vbf = vars[0]/vars[11];

@@ -27,8 +27,16 @@ namespace DiscriminantClasses{
   };
 
   Type getKDType(const TString name);
-  Discriminant* constructKDFromType(const Type type, const TString filename="", const TString splinename="");
-  Discriminant* constructKDFromType(const TString name, const TString filename="", const TString splinename="");
+  Discriminant* constructKDFromType(
+    const Type type,
+    const TString cfilename="", const TString splinename="",
+    const TString gfilename="", const TString gsplinename="", const float gscale=1
+  );
+  Discriminant* constructKDFromType(
+    const TString name,
+    const TString cfilename="", const TString splinename="",
+    const TString gfilename="", const TString gsplinename="", const float gscale=1
+  );
 
   std::vector<TString> getKDVars(const Type type);
   std::vector<TString> getKDVars(const TString name);

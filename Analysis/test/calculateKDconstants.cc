@@ -81,8 +81,8 @@ bool EventAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
   if (validProducts){
     // Get main observables
     float& ZZMass = *(valfloats["ZZMass"]);
-    float& GenHMass = *(valfloats["GenHMass"]);
-    product.trackingval = ZZMass;
+    //float& GenHMass = *(valfloats["GenHMass"]);
+    product.trackingval = ZZMass; product.setNamedVal("ZZMass", ZZMass);
 
     // Construct the weights
     float pure_reco_wgt = (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]));
@@ -114,7 +114,7 @@ bool EventAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
       wgt *= mela_wgt;
     }
 
-    product.weight = wgt;
+    product.weight = wgt; product.setNamedVal("weight", wgt);
     if (std::isnan(wgt) || std::isinf(wgt) || wgt==0.){
       if (wgt!=0.){
         MELAerr << "EventAnalyzer::runEvent: Invalid weight " << wgt << " is being discarded at mass " << ZZMass << " for tree " << tree->sampleIdentifier << "." << endl;
@@ -237,14 +237,19 @@ void LoopForConstant(
 
     // First find the average KD in each sample
     float sumKD[2]={ 0 }; float sumWgt[2]={ 0 }; float avgKD[2]={ 0 };
+    std::vector<SimpleEntry>::iterator it_begin[2], it_end[2];
     for (unsigned int ih=0; ih<2; ih++){
-      unsigned int& evlow = indexboundaries[ih].at(bin);
-      unsigned int& evhigh = indexboundaries[ih].at(bin+1);
+      unsigned int const& evlow = indexboundaries[ih].at(bin);
+      unsigned int const& evhigh = indexboundaries[ih].at(bin+1);
+      it_begin[ih] = index[ih].begin()+evlow;
+      it_end[ih] = index[ih].begin()+evhigh;
       cout << " - Scanning events [ " << evlow << " , " << evhigh << " ) for sample set " << ih << endl;
-      for (unsigned int ev=evlow; ev<evhigh; ev++){
-        float const& KD = index[ih].at(ev).namedfloats["KD"];
-        float const& varTrack = index[ih].at(ev).trackingval;
-        float const& weight = index[ih].at(ev).weight;
+    }
+    for (unsigned int ih=0; ih<2; ih++){
+      for (std::vector<SimpleEntry>::iterator it_inst=it_begin[ih]; it_inst!=it_end[ih]; it_inst++){
+        float const& KD = it_inst->namedfloats["KD"];
+        float const& varTrack = it_inst->trackingval;
+        float const& weight = it_inst->weight;
         sumKD[ih] += KD*weight;
         sumWgt[ih] += weight;
 
@@ -269,21 +274,24 @@ void LoopForConstant(
       cout << " - Iteration " << it << " with margins = " << marginlow << ", " << marginhigh << endl;
       cout << "   - Checking c = [ " << centralConstant*(1.-marginlow) << " , " << centralConstant*(1.+marginhigh) << " ]" << endl;
       float mindiff=1;
+      short sgnMinDiff=0;
       float finalFraction[2]={ 2, 2 };
       unsigned int nsteps = nstepsiter;
       if (it==0) nsteps*=1000;
       else if (it==1) nsteps*=100;
       else if (it==2) nsteps*=10;
+
       for (unsigned int step=0; step<=nsteps; step++){
+        HelperFunctions::progressbar(step, nsteps);
         float testC = centralConstant*((1.-marginlow) + (marginhigh+marginlow)*(float(step))/((float) nsteps));
+        if (testC<=0.) continue;
 
         float sumWgtAll[2]={ 0 };
         float sumWgtHalf[2]={ 0 };
         for (unsigned int ih=0; ih<2; ih++){
-          unsigned int& evlow = indexboundaries[ih].at(bin);
-          unsigned int& evhigh = indexboundaries[ih].at(bin+1);
-          for (unsigned int ev=evlow; ev<evhigh; ev++){
-            float const& KDold = index[ih].at(ev).namedfloats["KD"];
+          for (std::vector<SimpleEntry>::iterator it_inst=it_begin[ih]; it_inst!=it_end[ih]; it_inst++){
+            float const& KDold = it_inst->namedfloats["KD"];
+            float const& weight = it_inst->weight;
             if (KDold==-999.) continue;
             float KD = KDold/(KDold+(1.-KDold)*testC);
             if (std::isnan(KD) || std::isinf(KD)){
@@ -291,10 +299,9 @@ void LoopForConstant(
               continue;
             }
             else if (KD<0.){
-              cerr << "KD(ev=" << ev << ") is invalid (" << KD << ")" << endl;
+              cerr << "KD is invalid (" << KD << ")" << endl;
               continue;
             }
-            float& weight = index[ih].at(ev).weight;
             sumWgtAll[ih] += weight;
             if (
               (KD>=0.5 && ih==0)
@@ -305,15 +312,20 @@ void LoopForConstant(
           sumWgtHalf[ih]=sumWgtHalf[ih]/sumWgtAll[ih];
         }
 
-        if (mindiff>fabs(sumWgtHalf[0]-sumWgtHalf[1])){
+        float sumWgtHalfDiff=sumWgtHalf[0]-sumWgtHalf[1];
+        float absSumWgtHalfDiff=fabs(sumWgtHalfDiff);
+        short sgnSumWgtHalfDiff = TMath::Sign(float(1), sumWgtHalfDiff);
+        if (mindiff>absSumWgtHalfDiff){
           finalFraction[0] = sumWgtHalf[0];
           finalFraction[1] = sumWgtHalf[1];
-          mindiff=fabs(sumWgtHalf[0]-sumWgtHalf[1]);
+          mindiff=absSumWgtHalfDiff;
+          if (sgnMinDiff==0 && sgnSumWgtHalfDiff!=0) sgnMinDiff=sgnSumWgtHalfDiff;
           Cfound=testC;
         }
+        if (sgnMinDiff!=sgnSumWgtHalfDiff) break;
       }
       cout << "  - New c found = " << Cfound << " (old was " << centralConstant << ")" << endl;
-      cout << "  - Final fractions were = " << finalFraction[0] << " , " << finalFraction[1] << endl;
+      cout << "  - Final fractions were = " << finalFraction[0] << " , " << finalFraction[1] << " (sign of difference: " << sgnMinDiff << ")" << endl;
       if (fabs(Cfound/centralConstant-1)<1e-4 && it>0) break;
       centralConstant=Cfound;
       if (it>2){
@@ -425,8 +437,8 @@ void getKDConstantByMass(
       theAnalyzer.addReweightingBuilder("MELARewgt", melarewgtBuilder);
       
       // Loop
+      theAnalyzer.setExternalProductList(&(index[ih]));
       theAnalyzer.loop(true, false, true);
-      theAnalyzer.moveProducts(index[ih]);
 
       delete melarewgtBuilder;
       melawgtcollit++;
@@ -583,6 +595,17 @@ void getKDConstantByMass(
   TProfile* p_varTrack = new TProfile("avg_varReco", "", nbins, binning); p_varTrack->Sumw2();
   delete[] binning;
 
+  if (writeFinalTree){
+    for (unsigned int bin=0; bin<nbins; bin++){
+      for (unsigned int ih=0; ih<2; ih++){
+        TTree* theFinalTree = new TTree(Form("Sample%i_Bin%i", ih, bin), "");
+        SimpleEntry::writeToTree(index[ih].cbegin()+indexboundaries[ih].at(bin), index[ih].cbegin()+indexboundaries[ih].at(bin+1), theFinalTree);
+        foutput->WriteTObject(theFinalTree);
+        delete theFinalTree;
+      }
+    }
+  }
+
   LoopForConstant(
     index, indexboundaries,
     p_varTrack,
@@ -684,8 +707,7 @@ void getKDConstant_DjjVH(TString strprod, float sqrts=13){
 */
 
 /* SPECIFIC COMMENT: NONE */
-void getKDConstant_DjjVBF(float sqrts=13){
-  const bool writeFinalTree=false;
+void getKDConstant_DjjVBF(float sqrts=13, const bool writeFinalTree=false){
   float divisor=40000;
   TString strKD="DjjVBF";
   DiscriminantClasses::Type KDtype = DiscriminantClasses::getKDType(strKD);

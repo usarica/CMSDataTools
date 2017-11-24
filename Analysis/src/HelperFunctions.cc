@@ -24,7 +24,7 @@ void HelperFunctions::progressbar(unsigned int val, unsigned int tot){
   if (val%percent==0 || val==tot){
     unsigned int percent_done = val/percent;
     if (val==tot) percent_done=100;
-    MELAout << "[ " << setw(3) << percent_done << "% |";
+    MELAout << "[ " << setw(3) << percent_done << "% | ";
     for (unsigned int k=0; k<percent_done; k++) MELAout << '=';
     if (percent_done<100) MELAout << '>';
     else MELAout << ' ';

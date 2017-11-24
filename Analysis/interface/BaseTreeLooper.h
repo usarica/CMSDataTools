@@ -34,6 +34,7 @@ protected:
 
   // List of products
   std::vector<SimpleEntry> productList;
+  std::vector<SimpleEntry>* productListRef;
   void addProduct(SimpleEntry& product);
 
   // Abstract function to loop over a single event
@@ -55,6 +56,7 @@ public:
   void addDiscriminantBuilder(TString KDname, Discriminant* KDbuilder, std::vector<TString> const& KDvars);
   void addReweightingBuilder(TString rewgtname, ReweightingBuilder* Rewgtbuilder);
   void addExternalFunction(TString fcnname, void(*fcn)(BaseTreeLooper*, SimpleEntry&));
+  void setExternalProductList(std::vector<SimpleEntry>* extProductListRef=nullptr);
 
   // Function to loop over the tree list
   virtual void loop(bool loopSelected, bool loopFailed, bool keepProducts);

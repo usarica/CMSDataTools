@@ -278,10 +278,10 @@ template<typename T, typename U> void HelperFunctions::cleanUnorderedMap(std::un
 template<typename T> bool HelperFunctions::checkNonNegative(std::vector<T> const& vars, int ibegin, int iend){
   int ipos=0;
   for (T const& v:vars){
-    if ((ibegin<0 || ipos>=ibegin) && (iend<0 || ipos<iend)) continue;
+    if ((ibegin>=0 && ipos<ibegin) || (iend>=0 && ipos>=iend)) continue;
     ipos++;
     if (v<0.){
-      std::cerr << "HelperFunctions::checkNonNegative found value " << v << " < 0" << std::endl;
+      //std::cerr << "HelperFunctions::checkNonNegative found value " << v << " < 0" << std::endl;
       return false;
     }
   }
@@ -290,10 +290,10 @@ template<typename T> bool HelperFunctions::checkNonNegative(std::vector<T> const
 template<typename T> bool HelperFunctions::checkNonZero(std::vector<T> const& vars, int ibegin, int iend){
   int ipos=0;
   for (T const& v:vars){
-    if ((ibegin<0 || ipos>=ibegin) && (iend<0 || ipos<iend)) continue;
+    if ((ibegin>=0 && ipos<ibegin) || (iend>=0 && ipos>=iend)) continue;
     ipos++;
     if (v==0.){
-      std::cerr << "HelperFunctions::checkNonZero found value " << v << " == 0" << std::endl;
+      //std::cerr << "HelperFunctions::checkNonZero found value " << v << " == 0" << std::endl;
       return false;
     }
   }
@@ -302,10 +302,10 @@ template<typename T> bool HelperFunctions::checkNonZero(std::vector<T> const& va
 template<typename T> bool HelperFunctions::checkPositiveDef(std::vector<T> const& vars, int ibegin, int iend){
   int ipos=0;
   for (T const& v:vars){
-    if ((ibegin<0 || ipos>=ibegin) && (iend<0 || ipos<iend)) continue;
+    if ((ibegin>=0 && ipos<ibegin) || (iend>=0 && ipos>=iend)) continue;
     ipos++;
     if (v<=0.){
-      std::cerr << "HelperFunctions::checkPositiveDef found value " << v << " <= 0" << std::endl;
+      //std::cerr << "HelperFunctions::checkPositiveDef found value " << v << " <= 0" << std::endl;
       return false;
     }
   }

@@ -16,33 +16,41 @@ DiscriminantClasses::Type DiscriminantClasses::getKDType(const TString name){
 
   else return kNTypes;
 }
-Discriminant* DiscriminantClasses::constructKDFromType(const DiscriminantClasses::Type type, const TString filename, const TString splinename){
+Discriminant* DiscriminantClasses::constructKDFromType(
+  const DiscriminantClasses::Type type,
+  const TString cfilename, const TString splinename,
+  const TString gfilename, const TString gsplinename, const float gscale
+){
   Discriminant* res=nullptr;
   switch (type){
   case kDbkgkin:
-    return new Dbkgkin_t(filename, splinename);
+    return new Dbkgkin_t(cfilename, splinename, gfilename, gsplinename, gscale);
   case kDbkgdec:
-    return new Dbkgdec_t(filename, splinename);
+    return new Dbkgdec_t(cfilename, splinename, gfilename, gsplinename, gscale);
   case kDggint:
-    return new Dintkin_t(filename, splinename);
+    return new Dintkin_t(cfilename, splinename, gfilename, gsplinename, gscale);
 
   case kDjVBF:
-    return new DjVBF_t(filename, splinename);
+    return new DjVBF_t(cfilename, splinename, gfilename, gsplinename, gscale);
   case kDjjVBF:
-    return new DjjVBF_t(filename, splinename);
+    return new DjjVBF_t(cfilename, splinename, gfilename, gsplinename, gscale);
 
   case kDjjZH:
   case kDjjWH:
-    return new DjjVH_t(filename, splinename);
+    return new DjjVH_t(cfilename, splinename, gfilename, gsplinename, gscale);
 
   case kDbkgjjEWQCD:
-    return new DbkgjjEWQCD_t(filename, splinename);
+    return new DbkgjjEWQCD_t(cfilename, splinename, gfilename, gsplinename, gscale);
 
   default:
     return res;
   };
 }
-Discriminant* DiscriminantClasses::constructKDFromType(const TString name, const TString filename, const TString splinename){ return constructKDFromType(getKDType(name), filename, splinename); }
+Discriminant* DiscriminantClasses::constructKDFromType(
+  const TString name,
+  const TString cfilename, const TString splinename,
+  const TString gfilename, const TString gsplinename, const float gscale
+){ return constructKDFromType(getKDType(name), cfilename, splinename, gfilename, gsplinename, gscale); }
 
 std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
   std::vector<TString> res;

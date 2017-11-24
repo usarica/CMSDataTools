@@ -8,13 +8,21 @@
 using namespace std;
 
 
-BaseTreeLooper::BaseTreeLooper(){}
-BaseTreeLooper::BaseTreeLooper(CJLSTTree* inTree){ this->addTree(inTree); }
-BaseTreeLooper::BaseTreeLooper(std::vector<CJLSTTree*> const& inTreeList) : treeList(inTreeList){}
-BaseTreeLooper::BaseTreeLooper(CJLSTSet const* inTreeSet) : treeList(inTreeSet->getCJLSTTreeList()){}
-void BaseTreeLooper::addTree(CJLSTTree* tree){ this->treeList.push_back(tree); }
-
+BaseTreeLooper::BaseTreeLooper(){ setExternalProductList(); }
+BaseTreeLooper::BaseTreeLooper(CJLSTTree* inTree){ this->addTree(inTree); setExternalProductList(); }
+BaseTreeLooper::BaseTreeLooper(std::vector<CJLSTTree*> const& inTreeList) :
+  treeList(inTreeList)
+{
+  setExternalProductList();
+}
+BaseTreeLooper::BaseTreeLooper(CJLSTSet const* inTreeSet) :
+  treeList(inTreeSet->getCJLSTTreeList())
+{
+  setExternalProductList();
+}
 BaseTreeLooper::~BaseTreeLooper(){}
+
+void BaseTreeLooper::addTree(CJLSTTree* tree){ this->treeList.push_back(tree); }
 
 void BaseTreeLooper::addDiscriminantBuilder(TString KDname, Discriminant* KDbuilder, std::vector<TString> const& KDvars){
   if (!KDbuilder) return;
@@ -35,7 +43,12 @@ void BaseTreeLooper::addExternalFunction(TString fcnname, void(*fcn)(BaseTreeLoo
   externalFunctions[fcnname] = fcn;
 }
 
-void BaseTreeLooper::addProduct(SimpleEntry& product){ this->productList.push_back(product); }
+void BaseTreeLooper::setExternalProductList(std::vector<SimpleEntry>* extProductListRef){
+  if (extProductListRef) this->productListRef=extProductListRef;
+  else this->productListRef=&(this->productList);
+}
+
+void BaseTreeLooper::addProduct(SimpleEntry& product){ this->productListRef->push_back(product); }
 
 bool BaseTreeLooper::linkConsumes(CJLSTTree* tree){
   bool process = tree->isValid();
@@ -98,16 +111,16 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
     }
 
   } // End loop over the trees
-  MELAout << "BaseTreeLooper::loop: Total number of products accumulated: " << productList.size() << endl;
+  MELAout << "BaseTreeLooper::loop: Total number of products accumulated over " << ev_acc << " events considered: " << productListRef->size() << endl;
 }
 
-std::vector<SimpleEntry> const& BaseTreeLooper::getProducts() const{ return productList; }
+std::vector<SimpleEntry> const& BaseTreeLooper::getProducts() const{ return *productListRef; }
 
 void BaseTreeLooper::moveProducts(std::vector<SimpleEntry>& targetColl){
-  MELAout << "BaseTreeLooper::moveProducts: Moving " << productList.size() << " products into a list of initial size " << targetColl.size() << endl;
-  std::move(productList.begin(), productList.end(), std::back_inserter(targetColl));
+  MELAout << "BaseTreeLooper::moveProducts: Moving " << productListRef->size() << " products into a list of initial size " << targetColl.size() << endl;
+  std::move(productListRef->begin(), productListRef->end(), std::back_inserter(targetColl));
   clearProducts();
   MELAout << "BaseTreeLooper::moveProducts: Target list final size: " << targetColl.size() << endl;
 }
 
-void BaseTreeLooper::clearProducts(){ std::vector<SimpleEntry> emptyList; std::swap(emptyList, productList); }
+void BaseTreeLooper::clearProducts(){ std::vector<SimpleEntry> emptyList; std::swap(emptyList, *productListRef); }

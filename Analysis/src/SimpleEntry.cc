@@ -62,14 +62,49 @@ bool SimpleEntry::operator < (const SimpleEntry& other)const{ return trackingval
 bool SimpleEntry::operator <= (const SimpleEntry& other)const{ return trackingval<=other.trackingval; }
 
 void SimpleEntry::cropByTrueVal(std::vector<SimpleEntry>& vec, float minval, float maxval){
-  vector<unsigned int> erasepos;
+  std::vector<unsigned int> erasepos;
   unsigned int pos=0;
-  for (std::vector<SimpleEntry>::iterator it=vec.begin(); it!=vec.end(); it++){
+  for (std::vector<SimpleEntry>::const_iterator it=vec.cbegin(); it!=vec.cend(); it++){
     if (it->trackingval<minval || it->trackingval>maxval) erasepos.push_back(pos);
     pos++;
   }
-  for (int ipos=(int) erasepos.size()-1; ipos>=0; ipos--) vec.erase(vec.begin()+erasepos.at(ipos));
+  for (std::vector<unsigned int>::reverse_iterator ipos=erasepos.rbegin(); ipos!=erasepos.rend(); ipos++) vec.erase(vec.begin()+(*ipos));
 }
+void SimpleEntry::writeToTree(std::vector<SimpleEntry>::const_iterator const& vecBegin, std::vector<SimpleEntry>::const_iterator const& vecEnd, TTree* const tree){
+  if (!tree) return;
+  SimpleEntry commonEntry;
+  for (std::vector<SimpleEntry>::const_iterator it=vecBegin; it!=vecEnd; it++){
+    SimpleEntry const& entry = *it;
+    for (auto itb=entry.namedbools.begin(); itb!=entry.namedbools.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    for (auto itb=entry.namedshorts.begin(); itb!=entry.namedshorts.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    for (auto itb=entry.nameduints.begin(); itb!=entry.nameduints.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    for (auto itb=entry.namedints.begin(); itb!=entry.namedints.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    for (auto itb=entry.namedfloats.begin(); itb!=entry.namedfloats.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    for (auto itb=entry.nameddoubles.begin(); itb!=entry.nameddoubles.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    for (auto itb=entry.namedVbools.begin(); itb!=entry.namedVbools.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    for (auto itb=entry.namedVshorts.begin(); itb!=entry.namedVshorts.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    for (auto itb=entry.namedVuints.begin(); itb!=entry.namedVuints.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    for (auto itb=entry.namedVints.begin(); itb!=entry.namedVints.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    for (auto itb=entry.namedVfloats.begin(); itb!=entry.namedVfloats.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    for (auto itb=entry.namedVdoubles.begin(); itb!=entry.namedVdoubles.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    if (it==vecBegin){
+      for (auto itb=commonEntry.namedbools.begin(); itb!=commonEntry.namedbools.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedbools[itb->first]));
+      for (auto itb=commonEntry.namedshorts.begin(); itb!=commonEntry.namedshorts.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedshorts[itb->first]));
+      for (auto itb=commonEntry.nameduints.begin(); itb!=commonEntry.nameduints.end(); itb++) tree->Branch(itb->first, &(commonEntry.nameduints[itb->first]));
+      for (auto itb=commonEntry.namedints.begin(); itb!=commonEntry.namedints.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedints[itb->first]));
+      for (auto itb=commonEntry.namedfloats.begin(); itb!=commonEntry.namedfloats.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedfloats[itb->first]));
+      for (auto itb=commonEntry.nameddoubles.begin(); itb!=commonEntry.nameddoubles.end(); itb++) tree->Branch(itb->first, &(commonEntry.nameddoubles[itb->first]));
+      for (auto itb=commonEntry.namedVbools.begin(); itb!=commonEntry.namedVbools.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedVbools[itb->first]));
+      for (auto itb=commonEntry.namedVshorts.begin(); itb!=commonEntry.namedVshorts.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedVshorts[itb->first]));
+      for (auto itb=commonEntry.namedVuints.begin(); itb!=commonEntry.namedVuints.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedVuints[itb->first]));
+      for (auto itb=commonEntry.namedVints.begin(); itb!=commonEntry.namedVints.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedVints[itb->first]));
+      for (auto itb=commonEntry.namedVfloats.begin(); itb!=commonEntry.namedVfloats.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedVfloats[itb->first]));
+      for (auto itb=commonEntry.namedVdoubles.begin(); itb!=commonEntry.namedVdoubles.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedVdoubles[itb->first]));
+    }
+    tree->Fill();
+  }
+}
+
 void SimpleEntry::print(){
   cout << "Simple entry:" << endl;
   cout << " - Id = " << id << endl;

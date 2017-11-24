@@ -286,9 +286,11 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
     theAnalyzer.loop(true, false, true);
 
     const std::vector<SimpleEntry>& products = theAnalyzer.getProducts();
-    unordered_map<TString, float> theTreeFloats;
     MELAout << "There are " << products.size() << " products" << endl;
     if (products.at(0).namedfloats.find("ZZMass")==products.at(0).namedfloats.end()) MELAerr << "Uh-oh! ZZMass could not be found in the products!" << endl;
+    SimpleEntry::writeToTree(products.cbegin(), products.cend(), theFinalTree);
+    /*
+    unordered_map<TString, float> theTreeFloats;
     for (auto it=products.at(0).namedfloats.begin(); it!=products.at(0).namedfloats.end(); it++){
       MELAout << "Booking branch " << it->first << " in " << theFinalTree->GetName() << endl;
       theTreeFloats[it->first]=0;
@@ -298,6 +300,7 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
       for (auto it=product.namedfloats.begin(); it!=product.namedfloats.end(); it++) theTreeFloats[it->first] = it->second;
       theFinalTree->Fill();
     }
+    */
 
     delete melarewgtBuilder;
 

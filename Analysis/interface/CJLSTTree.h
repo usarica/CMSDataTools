@@ -26,7 +26,7 @@ public:
   float getNGenWithPU();
   float getTrueBW(float const* overrideMH=nullptr);
 
-  void setAssociatedSet(CJLSTSet* inSet);
+  void setAssociatedSet(CJLSTSet* inSet){ associatedSet = inSet; }
   CJLSTSet* getAssociatedSet(){ return associatedSet; }
   CJLSTSet const* getAssociatedSet() const{ return associatedSet; }
 

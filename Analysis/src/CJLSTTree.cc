@@ -42,5 +42,3 @@ float CJLSTTree::getTrueBW(float const* overrideMH){
   }
 }
 
-void CJLSTTree::setAssociatedSet(CJLSTSet* inSet){ associatedSet = inSet; }
-

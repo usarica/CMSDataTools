@@ -7,6 +7,18 @@
 
 
 class CJLSTSet{
+public:
+  enum NormScheme{
+    NormScheme_None,
+    NormScheme_OneOverNgen,
+    NormScheme_OneOverNgen_RenormBySumOneOverNgen,
+    NormScheme_OneOverNgen_RelRenormToSumNgen,
+    NormScheme_XsecOnly,
+    NormScheme_XsecOverNgen,
+    NormScheme_XsecOverNgen_RenormBySumXsecOverNgen,
+    NormScheme_XsecOverNgen_RelRenormToSumNgen
+  };
+
 protected:
   std::vector<CJLSTTree*> treeList;
   std::unordered_map<CJLSTTree*, float> permanentWeights;
@@ -18,6 +30,8 @@ public:
 
   bool addCJLSTTree(const TString& strname);
   bool addCJLSTTreeList(const std::vector<TString>& strlist);
+  bool dissociateCJLSTTree(CJLSTTree*& tree);
+  bool associateCJLSTTree(CJLSTTree*& tree);
 
   CJLSTTree* getCJLSTTree(TString sampleid);
   const std::vector<CJLSTTree*>& getCJLSTTreeList() const;
@@ -28,7 +42,7 @@ public:
   // Call this to book "reco-dependent" event weights (x gen weights), basically product of weights that can change per event
   void bookOverallEventWgt();
   // Call this to store the immutable tree weights (those that depend on xsec and NGenTrue)
-  void setPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen, bool renormalizeWeights);
+  void setPermanentWeights(const CJLSTSet::NormScheme scheme, const bool useNormPerMass, const bool useNgenWPU=false);
 
   // Get the overall "reco" weight (no xsec)
   float getOverallEventWgt(CJLSTTree* sample);

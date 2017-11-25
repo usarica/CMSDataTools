@@ -1,4 +1,5 @@
 #include "CJLSTSet.h"
+#include <algorithm>
 
 
 using namespace std;
@@ -18,8 +19,8 @@ bool CJLSTSet::addCJLSTTree(const TString& strname){
   CJLSTTree* tree = new CJLSTTree(strname);
   if (tree->isValid()) treeList.push_back(tree);
   else{ delete tree; tree=nullptr; }
-  if (tree==nullptr) std::cerr << "CJLSTSet::addCJLSTTree(" << strname << ") is invalid!" << std::endl;
-  else std::cout << "CJLSTSet::addCJLSTTree(" << strname << ") is successful!" << std::endl;
+  if (!tree) cerr << "CJLSTSet::addCJLSTTree(" << strname << ") is invalid!" << endl;
+  else cout << "CJLSTSet::addCJLSTTree(" << strname << ") is successful!" << endl;
   if (tree) tree->setAssociatedSet(this);
   return (tree!=nullptr);
 }
@@ -27,6 +28,24 @@ bool CJLSTSet::addCJLSTTreeList(const std::vector<TString>& strlist){
   bool res=true;
   for (auto const& s:strlist) res &= addCJLSTTree(s);
   return res;
+}
+bool CJLSTSet::dissociateCJLSTTree(CJLSTTree*& tree){
+  if (!tree) return false;
+  auto it = std::find(treeList.begin(), treeList.end(), tree);
+  if (it!=treeList.end()){ treeList.erase(it); tree->setAssociatedSet(nullptr); return true; }
+  return false;
+}
+bool CJLSTSet::associateCJLSTTree(CJLSTTree*& tree){
+  if (!tree) return false;
+  CJLSTSet* theSet = tree->getAssociatedSet();
+  if (theSet==this) return true;
+  else if (theSet){
+    theSet->dissociateCJLSTTree(tree);
+    treeList.push_back(tree);
+    tree->setAssociatedSet(this);
+    return true;
+  }
+  return false;
 }
 
 
@@ -71,8 +90,41 @@ float CJLSTSet::getPermanentWeight(CJLSTTree* sample){
   return permanentWeights[sample];
 }
 float CJLSTSet::getPermanentWeight(TString sampleid){ return getPermanentWeight(getCJLSTTree(sampleid)); }
-void CJLSTSet::setPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen, bool renormalizeWeights){
-  cout << "CJLSTSet::setPermanentWeights is called." << endl;
+void CJLSTSet::setPermanentWeights(const CJLSTSet::NormScheme scheme, const bool useNormPerMass, const bool useNgenWPU){
+  cout << "CJLSTSet::setPermanentWeights(" << scheme << "," << useNormPerMass << "," << useNgenWPU << ") is called." << endl;
+
+  const bool renormalizeWeights = !(
+    scheme==NormScheme_None
+    ||
+    scheme==NormScheme_OneOverNgen
+    ||
+    scheme==NormScheme_XsecOnly
+    ||
+    scheme==NormScheme_XsecOverNgen
+    );
+  const bool useXS = (
+    scheme==NormScheme_XsecOnly
+    ||
+    scheme==NormScheme_XsecOverNgen
+    ||
+    scheme==NormScheme_XsecOverNgen_RenormBySumXsecOverNgen
+    ||
+    scheme==NormScheme_XsecOverNgen_RelRenormToSumNgen
+    );
+  const bool useNgen = (
+    scheme==NormScheme_OneOverNgen
+    ||
+    scheme==NormScheme_OneOverNgen_RenormBySumOneOverNgen
+    ||
+    scheme==NormScheme_OneOverNgen_RelRenormToSumNgen
+    ||
+    scheme==NormScheme_XsecOverNgen
+    ||
+    scheme==NormScheme_XsecOverNgen_RenormBySumXsecOverNgen
+    ||
+    scheme==NormScheme_XsecOverNgen_RelRenormToSumNgen
+    );
+  cout << "- CJLSTSet::setPermanentWeights: (renormalizeWeights,useXS,useNgen) = (" << renormalizeWeights << "," << useXS << "," << useNgen << ")" << endl;
 
   vector<CJLSTTree*> extraBookXS;
   if (useXS){
@@ -100,16 +152,22 @@ void CJLSTSet::setPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen
   }
   for (auto& mg:massgrouping){
     float sumwgt=0;
+    float sumxsec=0;
+    float sumngen=0;
+    float sumNonZero=0;
     for (auto& tree:mg.second){
       float xsec=1;
       if (useXS){
-        if (!tree->getSelectedEvent(0)) xsec=0; // Kill contribution to sum of weights from this tree
+        if (!(tree->getSelectedEvent(0) || tree->getFailedEvent(0))) xsec=0; // Kill contribution to sum of weights from this tree
         tree->getVal("xsec", xsec);
       }
       if (xsec<=0.){ cerr << "- XSec=" << xsec << " is invalid for sample " << tree->sampleIdentifier << ". Setting to 1" << endl; xsec=1; }
 
       float ngen=1;
-      if (useNgen) ngen = tree->getNGenWithPU();
+      if (useNgen){
+        if (!useNgenWPU) ngen = tree->getNGenNoPU();
+        else ngen = tree->getNGenWithPU();
+      }
       if (ngen==0.) ngen=1;
 
       permanentWeights[tree] = xsec/ngen;
@@ -121,10 +179,22 @@ void CJLSTSet::setPermanentWeights(bool useXS, bool useNormPerMass, bool useNgen
         << endl;
 
       sumwgt += permanentWeights[tree];
+      if (permanentWeights[tree]!=0.){
+        sumxsec += xsec;
+        sumngen += ngen;
+        sumNonZero += 1.;
+      }
     }
-    if (renormalizeWeights && sumwgt!=0.){
-      cout << "- Renormalizing the mass(" << mg.first << ") grouping by 1./" << sumwgt << endl;
-      for (auto& tree:mg.second) permanentWeights[tree] = permanentWeights[tree]/sumwgt;
+    if (renormalizeWeights){
+      float renormMult = 0;
+      if (scheme==NormScheme_OneOverNgen_RelRenormToSumNgen && sumNonZero!=0.) renormMult = sumngen/sumNonZero;
+      else if (scheme==NormScheme_XsecOverNgen_RelRenormToSumNgen && sumxsec!=0.) renormMult = sumngen/sumxsec;
+      else if (sumwgt!=0.) renormMult = 1./sumwgt;
+
+      cout << "- Renormalizing the mass(" << mg.first << ") grouping by x" << renormMult << endl;
+      for (auto& tree:mg.second){
+        permanentWeights[tree] = permanentWeights[tree]*renormMult;
+      }
     }
   }
 

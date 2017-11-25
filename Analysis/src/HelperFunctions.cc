@@ -202,6 +202,24 @@ void HelperFunctions::convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F
   }
 }
 
+TGraph* HelperFunctions::createROCFromDistributions(TH1* hA, TH1* hB, TString name){
+  if (!hA || !hB) return nullptr;
+  assert(hA->GetNbinsX()==hB->GetNbinsX());
+
+  vector<pair<float, float>> sumWgtsPerBin; sumWgtsPerBin.assign(hA->GetNbinsX(), pair<float, float>(0, 0));
+  for (int ix=1; ix<=hA->GetNbinsX(); ix++){
+    for (int jx=ix; jx<=hA->GetNbinsX(); jx++){
+      sumWgtsPerBin.at(ix-1).second += hA->GetBinContent(jx);
+      sumWgtsPerBin.at(ix-1).first += hB->GetBinContent(jx);
+    }
+  }
+  TGraph* tg=HelperFunctions::makeGraphFromPair(sumWgtsPerBin, name);
+  HelperFunctions::addPoint(tg, 0, 0);
+  //tg->GetYaxis()->SetTitle("Sample A efficiency");
+  //tg->GetXaxis()->SetTitle("Sample B efficiency");
+  return tg;
+}
+
 TGraphErrors* HelperFunctions::makeGraphFromTH1(TH1* hx, TH1* hy, TString name){
   if (hx->GetNbinsX()!=hy->GetNbinsX()){
     MELAerr << "Number of bins for x coordinate != those for y" << endl;

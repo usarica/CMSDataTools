@@ -68,7 +68,7 @@ public:
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeGGZZTemplates_one(const Channel channel, const Category category, TString strSystematics){
+void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category category, TString strSystematics){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);

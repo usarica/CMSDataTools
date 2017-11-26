@@ -26,6 +26,8 @@ namespace SampleHelpers{
     k4mu,
     k4e,
     k2e2mu,
+    k4l,
+    k2l2l,
     NChannels
   };
 
@@ -34,15 +36,17 @@ namespace SampleHelpers{
   void makeGlobalMELA(int CoM);
 
   float findPoleMass(const TString samplename);
-  TTree* findTree(std::vector<TTree*> treeList, int evid);
-  void getEntry(std::vector<TTree*> treeList, int evid);
-  float getEntry(std::vector<std::pair<TTree*, TH1F*>> treeList, int evid);
+  TTree* findTree(std::vector<TTree*> const& treeList, int evid);
+  void getEntry(std::vector<TTree*>& treeList, int evid);
+  float getEntry(std::vector<std::pair<TTree*, TH1F*>>& treeList, int evid);
 
   TString getChannelName(const SampleHelpers::Channel chan);
+  SampleHelpers::Channel getChannelFromName(const TString channame);
+  bool testChannel(SampleHelpers::Channel const& targetChannel, short const& Z1Flav, short const& Z2Flav);
 
   std::vector<TString> constructSamplesList(TString strsample, float sqrts);
-  void getSamplesList(float sqrts, std::vector<TString> s, std::vector<TString>& vs);
-  void getSamplePairs(float sqrts, std::vector<TString> s1, std::vector<TString> s2, std::vector<TString>& vs1, std::vector<TString>& vs2);
+  void getSamplesList(float sqrts, std::vector<TString> const& s, std::vector<TString>& vs);
+  void getSamplePairs(float sqrts, std::vector<TString> const& s1, std::vector<TString> const& s2, std::vector<TString>& vs1, std::vector<TString>& vs2);
 
   template <typename T> std::vector<std::pair<T*, T*>> getZXFR_SS();
 

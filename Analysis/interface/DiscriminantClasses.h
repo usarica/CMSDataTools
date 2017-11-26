@@ -13,6 +13,8 @@ namespace DiscriminantClasses{
   enum Type{
     kDbkgkin,
     kDbkgdec,
+
+    kDggbkgkin,
     kDggint,
 
     kDjVBF,

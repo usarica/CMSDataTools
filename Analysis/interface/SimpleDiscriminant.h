@@ -17,6 +17,7 @@ public:
 };
 
 typedef SimpleDiscriminant Dbkgkin_t;
+typedef SimpleDiscriminant Dggbkgkin_t;
 typedef SimpleDiscriminant DjjVBF_t;
 
 #endif

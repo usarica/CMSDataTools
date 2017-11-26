@@ -75,11 +75,6 @@ public:
 
 };
 bool EventAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
-  short matchdecid=-1;
-  if (channel==k2e2mu) matchdecid=121*169;
-  else if (channel==k4mu) matchdecid=169*169;
-  else if (channel==k4e) matchdecid=121*121;
-
   bool validProducts=(tree!=nullptr);
   if (validProducts){
     // Get main observables
@@ -159,12 +154,8 @@ bool EventAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
     Category catFound = CategorizationHelpers::getCategory(DjjVBF, DjjZH, DjjWH, false);
     validProducts &= (category==Inclusive || category==catFound);
 
-    // Flavor check
-    if (matchdecid>0){
-      short& Z1Id = *(valshorts["Z1Flav"]);
-      short& Z2Id = *(valshorts["Z2Flav"]);
-      validProducts &= (matchdecid==Z1Id*Z2Id);
-    }
+    // Channel check
+    validProducts &= SampleHelpers::testChannel(channel, *(valshorts["Z1Flav"]), *(valshorts["Z2Flav"]));
   }
 
   return validProducts;
@@ -233,8 +224,8 @@ protected:
   float sqrts;
   TString strKD;
   unsigned int nstepsiter;
-  CJLSTSet::NormScheme NormSchemeA;
-  CJLSTSet::NormScheme NormSchemeB;
+  std::vector<CJLSTSet::NormScheme> NormSchemeA;
+  std::vector<CJLSTSet::NormScheme> NormSchemeB;
 
   void LoopForConstant(
     vector<SimpleEntry>(&index)[2],
@@ -247,8 +238,8 @@ public:
   KDConstantByMass(float sqrts_, TString strKD_);
 
   void setNStepsIter(unsigned int nsteps){ nstepsiter=nsteps; }
-  void setNormSchemeA(CJLSTSet::NormScheme scheme){ NormSchemeA=scheme; }
-  void setNormSchemeB(CJLSTSet::NormScheme scheme){ NormSchemeB=scheme; }
+  void setNormSchemeA(std::vector<CJLSTSet::NormScheme> scheme){ NormSchemeA=scheme; }
+  void setNormSchemeB(std::vector<CJLSTSet::NormScheme> scheme){ NormSchemeB=scheme; }
 
   void run(
     vector<TString> strSamples[2], vector<vector<TString>> strMelaWgts[2],
@@ -260,8 +251,7 @@ public:
 
 KDConstantByMass::KDConstantByMass(float sqrts_, TString strKD_) :
   sqrts(sqrts_), strKD(strKD_),
-  nstepsiter(100),
-  NormSchemeA(CJLSTSet::NormScheme_None), NormSchemeB(CJLSTSet::NormScheme_None)
+  nstepsiter(100)
 {}
 
 
@@ -426,13 +416,16 @@ void KDConstantByMass::run(
     theSets.assign(strSamples[ih].size(), nullptr);
     for (unsigned int ihs=0; ihs<strSamples[ih].size(); ihs++) constructSamples(strSamples[ih].at(ihs), 13, KDvars, theSets.at(ihs));
     auto melawgtcollit=strMelaWgts[ih].begin();
+    std::vector<CJLSTSet::NormScheme> const& schemeSet = (ih==0 ? NormSchemeA : NormSchemeB);
+    unsigned int iset=0;
     for (auto& theSet:theSets){
       for (auto& tree:theSet->getCJLSTTreeList()){ for (auto& strWgt:(*melawgtcollit)) tree->bookBranch<float>(strWgt, 0); }
       melawgtcollit++;
 
-      theSet->setPermanentWeights((ih==0 ? NormSchemeA : NormSchemeB), true, false);
+      theSet->setPermanentWeights((schemeSet.empty() ? CJLSTSet::NormScheme_None : schemeSet.at(iset)), true, false);
 
       for (auto& tree:theSet->getCJLSTTreeList()) tree->silenceUnused(); // Will no longer book another branch
+      iset++;
     }
 
     // Setup GenHMass binning
@@ -674,6 +667,8 @@ void KDConstantByMass::run(
 
   delete KDbuilder;
 
+  NormSchemeA.clear();
+  NormSchemeB.clear();
   cout << "End KDConstantByMass::run" << endl;
 }
 
@@ -748,7 +743,12 @@ void getKDConstant_DjjWH(float sqrts=13, const bool writeFinalTree=false){
   }
 
   KDConstantByMass constProducer(sqrts, strKD);
-  constProducer.setNormSchemeA(CJLSTSet::NormScheme_XsecOverNgen_RelRenormToSumNgen);
+  {
+    std::vector<CJLSTSet::NormScheme> NormSchemeA;
+    NormSchemeA.assign(strSamples[0].size(), CJLSTSet::NormScheme_None);
+    NormSchemeA.at(0)=CJLSTSet::NormScheme_XsecOverNgen_RelRenormToSumNgen;
+    constProducer.setNormSchemeA(NormSchemeA);
+  }
   constProducer.run(
     strSamples, strMelaWgts,
     SampleHelpers::NChannels, CategorizationHelpers::Inclusive,
@@ -833,63 +833,95 @@ void getKDConstant_DjVBF(float sqrts=13, const bool writeFinalTree=false){
   );
 }
 
-/*
-SPECIFIC COMMENT:
-Add bin boundaries 75, 105 and 120 manually
-*/
-/*
-void getKDConstant_Dbkgkin(TString strchannel, float sqrts=13){
-if (strchannel!="2e2mu" && strchannel!="4e" && strchannel!="4mu") return;
+/* SPECIFIC COMMENT: NONE */
+void getKDConstant_Dbkgkin(TString const strchannel, float sqrts=13, const bool writeFinalTree=false){
+  if (strchannel!="2e2mu" && strchannel!="4e" && strchannel!="4mu") return;
 
-const bool writeFinalTree=false;
-//float divisor=25000;
-//if (strchannel=="2l2l" || strchannel=="2e2mu") divisor = 50000;
-float divisor=21000;
-if (strchannel=="2l2l" || strchannel=="2e2mu") divisor = 50000;
+  float divisor=21000;
+  if (strchannel=="2l2l" || strchannel=="2e2mu") divisor = 50000;
+  TString strKD="Dbkgkin";
 
-vector<TString> extraweights[2];
-extraweights[1].push_back(TString("p_Gen_QQB_BKG_MCFM"));
+  vector<TString> strSamples[2];
+  strSamples[0].push_back("ggHPowheg");
+  strSamples[0].push_back("ggHMCFM");
+  strSamples[0].push_back("VBFPowheg");
+  strSamples[1].push_back("qqBkg");
+  strSamples[1].push_back("ggBkg");
+  vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
+  // Reweight ggBkg decay kinematics to qqBkg
+  strMelaWgts[1].at(0).push_back("xsec");
+  strMelaWgts[1].at(0).push_back("p_Gen_QQB_BKG_MCFM");
 
-vector<TString> strRecoBranch;
-strRecoBranch.push_back("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
-strRecoBranch.push_back("p_QQB_BKG_MCFM");
-vector<TString> strExtraRecoBranches;
+  vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
+  {
+    pair<float, float> valrange(70, 142);
+    vector<float> manualboundaries;
+    manualboundaries.push_back(75); manualboundaries.push_back(85);
+    manualboundaries.push_back(89); manualboundaries.push_back(93); manualboundaries.push_back(96);
+    manualboundaries.push_back(100); manualboundaries.push_back(105); manualboundaries.push_back(110); manualboundaries.push_back(115);
+    manualboundaries.push_back(120); manualboundaries.push_back(123); manualboundaries.push_back(135);
+    manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+  }
+  {
+    pair<float, float> valrange(600, 2500);
+    vector<float> manualboundaries;
+    manualboundaries.push_back(700); manualboundaries.push_back(900); manualboundaries.push_back(1100); manualboundaries.push_back(1400); manualboundaries.push_back(1900);
+    manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+  }
 
-vector<TString> strSamples[2];
-{
-vector<TString> s1; s1.push_back("gg_Sig_POWHEG"); s1.push_back("VBF_Sig_POWHEG"); s1.push_back("gg_Sig_SM_MCFM");
-//vector<TString> s2; s2.push_back("qq_Bkg_Combined");
-vector<TString> s2; s2.push_back("qq_Bkg_Combined"); s2.push_back("gg_Bkg_MCFM");
-getSamplePairs(sqrts, s1, s2, strSamples[0], strSamples[1]);
+  KDConstantByMass constProducer(sqrts, strKD);
+  {
+    std::vector<CJLSTSet::NormScheme> NormSchemeB;
+    NormSchemeB.assign(strSamples[1].size(), CJLSTSet::NormScheme_None);
+    NormSchemeB.at(0)=CJLSTSet::NormScheme_XsecOverNgen;
+    constProducer.setNormSchemeB(NormSchemeB);
+  }
+  constProducer.run(
+    strSamples, strMelaWgts,
+    SampleHelpers::getChannelFromName(strchannel), CategorizationHelpers::Inclusive,
+    divisor, writeFinalTree, &manualboundary_validity_pairs
+  );
 }
 
-// Define manual bin boundaries
-vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
-{
-pair<float, float> valrange(70, 142);
-vector<float> manualboundaries;
-manualboundaries.push_back(75); manualboundaries.push_back(85);
-manualboundaries.push_back(89); manualboundaries.push_back(93); manualboundaries.push_back(96);
-manualboundaries.push_back(100); manualboundaries.push_back(105); manualboundaries.push_back(110); manualboundaries.push_back(115);
-manualboundaries.push_back(120); manualboundaries.push_back(123); manualboundaries.push_back(135);
-manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
-}
-{
-pair<float, float> valrange(600, 2500);
-vector<float> manualboundaries;
-manualboundaries.push_back(700); manualboundaries.push_back(900); manualboundaries.push_back(1100); manualboundaries.push_back(1400); manualboundaries.push_back(1900);
-manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+/* SPECIFIC COMMENT: NONE */
+void getKDConstant_Dggbkgkin(TString const strchannel, float sqrts=13, const bool writeFinalTree=false){
+  if (strchannel!="2e2mu" && strchannel!="4e" && strchannel!="4mu") return;
+
+  float divisor=21000;
+  if (strchannel=="2l2l" || strchannel=="2e2mu") divisor = 50000;
+  TString strKD="Dggbkgkin";
+
+  vector<TString> strSamples[2];
+  strSamples[0].push_back("ggHPowheg");
+  strSamples[0].push_back("ggHMCFM");
+  strSamples[1].push_back("ggBkg");
+  vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
+
+  vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
+  {
+    pair<float, float> valrange(70, 142);
+    vector<float> manualboundaries;
+    manualboundaries.push_back(75); manualboundaries.push_back(85);
+    manualboundaries.push_back(89); manualboundaries.push_back(93); manualboundaries.push_back(96);
+    manualboundaries.push_back(100); manualboundaries.push_back(105); manualboundaries.push_back(110); manualboundaries.push_back(115);
+    manualboundaries.push_back(120); manualboundaries.push_back(123); manualboundaries.push_back(135);
+    manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+  }
+  {
+    pair<float, float> valrange(600, 2500);
+    vector<float> manualboundaries;
+    manualboundaries.push_back(700); manualboundaries.push_back(900); manualboundaries.push_back(1100); manualboundaries.push_back(1400); manualboundaries.push_back(1900);
+    manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+  }
+
+  KDConstantByMass constProducer(sqrts, strKD);
+  constProducer.run(
+    strSamples, strMelaWgts,
+    SampleHelpers::getChannelFromName(strchannel), CategorizationHelpers::Inclusive,
+    divisor, writeFinalTree, &manualboundary_validity_pairs
+  );
 }
 
-getKDConstantByMass(
-sqrts, "Dbkgkin",
-strRecoBranch, strExtraRecoBranches, strSamples, extraweights,
-divisor, writeFinalTree,
-strchannel,
-&manualboundary_validity_pairs
-);
-}
-*/
 
 void generic_SmoothKDConstantProducer(
   float sqrts, TString strname, TString strcustomselection,
@@ -972,6 +1004,7 @@ void generic_SmoothKDConstantProducer(
   finput->Close();
 }
 
+
 void SmoothKDConstantProducer_DjjZH(){
   generic_SmoothKDConstantProducer(
     13, "DjjZH", "",
@@ -980,6 +1013,7 @@ void SmoothKDConstantProducer_DjjZH(){
     false, false
   );
 }
+
 void SmoothKDConstantProducer_DjjWH(){
   generic_SmoothKDConstantProducer(
     13, "DjjWH", "",

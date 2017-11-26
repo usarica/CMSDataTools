@@ -4,6 +4,8 @@
 DiscriminantClasses::Type DiscriminantClasses::getKDType(const TString name){
   if (name=="Dbkgkin") return kDbkgkin;
   else if (name=="Dbkgdec") return kDbkgdec;
+
+  else if (name=="Dggbkgkin") return kDggbkgkin;
   else if (name=="Dggint") return kDggint;
 
   else if (name=="DjVBF") return kDjVBF;
@@ -27,6 +29,9 @@ Discriminant* DiscriminantClasses::constructKDFromType(
     return new Dbkgkin_t(cfilename, splinename, gfilename, gsplinename, gscale);
   case kDbkgdec:
     return new Dbkgdec_t(cfilename, splinename, gfilename, gsplinename, gscale);
+
+  case kDggbkgkin:
+    return new Dggbkgkin_t(cfilename, splinename, gfilename, gsplinename, gscale);
   case kDggint:
     return new Dintkin_t(cfilename, splinename, gfilename, gsplinename, gscale);
 
@@ -66,6 +71,11 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     res.push_back("p_QQB_BKG_MCFM");
     res.push_back("p_Const_GG_BKG_MCFM");
     res.push_back("p_Const_QQB_BKG_MCFM");
+    break;
+
+  case kDggbkgkin:
+    res.push_back("p_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
+    res.push_back("p_GG_BKG_MCFM");
     break;
   case kDggint:
     res.push_back("p_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");

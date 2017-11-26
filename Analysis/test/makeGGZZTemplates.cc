@@ -287,20 +287,7 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
 
     const std::vector<SimpleEntry>& products = theAnalyzer.getProducts();
     MELAout << "There are " << products.size() << " products" << endl;
-    if (products.at(0).namedfloats.find("ZZMass")==products.at(0).namedfloats.end()) MELAerr << "Uh-oh! ZZMass could not be found in the products!" << endl;
     SimpleEntry::writeToTree(products.cbegin(), products.cend(), theFinalTree);
-    /*
-    unordered_map<TString, float> theTreeFloats;
-    for (auto it=products.at(0).namedfloats.begin(); it!=products.at(0).namedfloats.end(); it++){
-      MELAout << "Booking branch " << it->first << " in " << theFinalTree->GetName() << endl;
-      theTreeFloats[it->first]=0;
-      theFinalTree->Branch(it->first, &(theTreeFloats[it->first]));
-    }
-    for (auto& product:products){
-      for (auto it=product.namedfloats.begin(); it!=product.namedfloats.end(); it++) theTreeFloats[it->first] = it->second;
-      theFinalTree->Fill();
-    }
-    */
 
     delete melarewgtBuilder;
 
@@ -319,21 +306,10 @@ void makeGGZZTemplates_one(const Channel channel, const Category category, TStri
 
 
 bool GGHAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
-  short matchdecid=-1;
-  if (channel==k2e2mu) matchdecid=121*169;
-  else if (channel==k4mu) matchdecid=169*169;
-  else if (channel==k4e) matchdecid=121*121;
-
   bool validProducts=(tree!=nullptr);
   if (validProducts){
-    // Get the reweighting builders
-    auto& pugenheprewgtBuilder = Rewgtbuilders["PUGenHEPRewgt"];
-    auto& melarewgtBuilder = Rewgtbuilders["MELARewgt"];
-    int melarewgtBin = melarewgtBuilder->findBin(tree);
-
     // Get tree and binning information
     product.setNamedVal("MH", tree->MHVal);
-    product.setNamedVal("MELARewgtBin", float(melarewgtBin));
 
     // Get main observables
     float& ZZMass = *(valfloats["ZZMass"]);
@@ -343,30 +319,31 @@ bool GGHAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
 
     // Construct the weights
     float pure_reco_wgt = (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]));
+    float wgt = pure_reco_wgt;
+    wgt *= tree->getAssociatedSet()->getPermanentWeight(tree);
 
-    float pugenhep_wgt_sum = pugenheprewgtBuilder->getSumPostThresholdWeights(tree);
-    float pugenhep_wgt = (pugenhep_wgt_sum!=0. ? pugenheprewgtBuilder->getPostThresholdWeight(tree)/pugenhep_wgt_sum : 0.); // Normalized to unit
+    auto pugenhep_it = Rewgtbuilders.find("PUGenHEPRewgt");
+    if (pugenhep_it!=Rewgtbuilders.cend()){
+      auto& pugenheprewgtBuilder = pugenhep_it->second;
+      float pugenhep_wgt_sum = pugenheprewgtBuilder->getSumPostThresholdWeights(tree);
+      float pugenhep_wgt = (pugenhep_wgt_sum!=0. ? pugenheprewgtBuilder->getPostThresholdWeight(tree)/pugenhep_wgt_sum : 0.); // Normalized to unit
+      wgt *= pugenhep_wgt;
+    }
 
-    float mela_wgt_sum = melarewgtBuilder->getSumPostThresholdWeights(tree);
-    float mela_wgt = (mela_wgt_sum!=0. ? melarewgtBuilder->getPostThresholdWeight(tree)/mela_wgt_sum : 0.); // Normalized to unit
-    mela_wgt *= melarewgtBuilder->getNormComponent(tree);
+    auto melarewgt_it = Rewgtbuilders.find("MELARewgt");
+    if (melarewgt_it!=Rewgtbuilders.cend()){
+      auto& melarewgtBuilder = melarewgt_it->second;
+      float mela_wgt_sum = melarewgtBuilder->getSumPostThresholdWeights(tree);
+      float mela_wgt = (mela_wgt_sum!=0. ? melarewgtBuilder->getPostThresholdWeight(tree)/mela_wgt_sum : 0.); // Normalized to unit
+      mela_wgt *= melarewgtBuilder->getNormComponent(tree);
+      wgt *= mela_wgt;
+      product.setNamedVal("MELARewgtBin", melarewgtBuilder->findBin(tree));
+    }
 
-
-    float wgt = pure_reco_wgt*pugenhep_wgt*mela_wgt;
     product.setNamedVal("weight", wgt);
     if (std::isnan(wgt) || std::isinf(wgt) || wgt==0.){
       if (wgt!=0.){
         MELAerr << "GGHAnalyzer::runEvent: Invalid weight " << wgt << " is being discarded at mass " << ZZMass << " for tree " << tree->sampleIdentifier << "." << endl;
-        cout << "GGHAnalyzer::runEvent: pugenheprewgtBuilder->getPostThresholdWeight = " << pugenheprewgtBuilder->getPostThresholdWeight(tree) << endl;
-        cout << "GGHAnalyzer::runEvent: pugenheprewgtBuilder->getSumPostThresholdWeights = " << pugenheprewgtBuilder->getSumPostThresholdWeights(tree) << endl;
-        cout << "GGHAnalyzer::runEvent: melarewgtBuilder->getPostThresholdWeight = " << melarewgtBuilder->getPostThresholdWeight(tree) << endl;
-        cout << "GGHAnalyzer::runEvent: melarewgtBuilder->getSumPostThresholdWeights = " << melarewgtBuilder->getSumPostThresholdWeights(tree) << endl;
-        cout << "GGHAnalyzer::runEvent: melarewgtBuilder->getNorm = " << melarewgtBuilder->getNorm() << endl;
-        for (auto const& s:melarewgtBuilder->getWeightVariables()){
-          float val;
-          tree->getVal<float>(s, val);
-          cout << "\t- Tree[" << s << "] = " << val << endl;
-        }
         exit(1);
       }
       validProducts=false;
@@ -384,24 +361,23 @@ bool GGHAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
       vector<float> KDBuildVals; KDBuildVals.reserve(strKDVarsList.size());
       for (auto const& s : strKDVarsList) KDBuildVals.push_back(*(valfloats[s]));
       float KD = KDbuilder->update(KDBuildVals, ZZMass);
-      product.setNamedVal(it->first, KD);
       validProducts &= !(std::isnan(KD) || std::isinf(KD));
 
       if (it->first=="DjjVBF") DjjVBF=KD;
       else if (it->first=="DjjZH") DjjZH=KD;
       else if (it->first=="DjjWH") DjjWH=KD;
+      else{
+        product.setNamedVal(it->first, KD);
+        validProducts &= (KD != float(-999.));
+      }
     }
 
     // Category check
     Category catFound = CategorizationHelpers::getCategory(DjjVBF, DjjZH, DjjWH, false);
     validProducts &= (category==Inclusive || category==catFound);
 
-    // Flavor check
-    if (matchdecid>0){
-      short& Z1Id = *(valshorts["Z1Flav"]);
-      short& Z2Id = *(valshorts["Z2Flav"]);
-      validProducts &= (matchdecid==Z1Id*Z2Id);
-    }
+    // Channel check
+    validProducts &= SampleHelpers::testChannel(channel, *(valshorts["Z1Flav"]), *(valshorts["Z2Flav"]));
   }
 
   return validProducts;

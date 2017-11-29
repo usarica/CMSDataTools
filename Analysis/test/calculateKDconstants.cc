@@ -74,7 +74,7 @@ public:
   EventAnalyzer(CJLSTSet const* inTreeSet, Channel channel_, Category category_) : BaseTreeLooper(inTreeSet), channel(channel_), category(category_){}
 
 };
-bool EventAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
+bool EventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEntry& product){
   bool validProducts=(tree!=nullptr);
   if (validProducts){
     // Get main observables
@@ -86,9 +86,26 @@ bool EventAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
     validProducts &= (product.trackingval>=this->infTrackingVal && product.trackingval<this->supTrackingVal);
 
     // Construct the weights
-    float pure_reco_wgt = (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]));
-    float wgt = pure_reco_wgt;
-    wgt *= tree->getAssociatedSet()->getPermanentWeight(tree);
+    float wgt = externalWgt;
+    bool hasPUGenHEPRewgt=false;
+    for (auto rewgt_it=Rewgtbuilders.cbegin(); rewgt_it!=Rewgtbuilders.cend(); rewgt_it++){
+      auto& rewgtBuilder = rewgt_it->second;
+      if (rewgt_it->first=="PUGenHEPRewgt"){
+        float pugenhep_wgt_sum = rewgtBuilder->getSumPostThresholdWeights(tree);
+        float pugenhep_wgt = (pugenhep_wgt_sum!=0. ? rewgtBuilder->getPostThresholdWeight(tree)/pugenhep_wgt_sum : 0.); // Normalized to unit
+        wgt *= pugenhep_wgt;
+        hasPUGenHEPRewgt=true;
+      }
+      else if (rewgt_it->first=="MELARewgt"){
+        float mela_wgt_sum = rewgtBuilder->getSumPostThresholdWeights(tree);
+        float mela_wgt = (mela_wgt_sum!=0. ? rewgtBuilder->getPostThresholdWeight(tree)/mela_wgt_sum : 0.); // Normalized to unit
+        mela_wgt *= rewgtBuilder->getNormComponent(tree);
+        wgt *= mela_wgt;
+        product.setNamedVal("MELARewgtBin", rewgtBuilder->findBin(tree));
+      }
+    }
+    wgt *= (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]));
+    if (!hasPUGenHEPRewgt) wgt *= (*(valfloats["PUWeight"]))*(*(valfloats["genHEPMCweight"]));
 
     const unsigned int nCheckWeights=3;
     const TString strCheckWeights[nCheckWeights]={
@@ -97,23 +114,6 @@ bool EventAnalyzer::runEvent(CJLSTTree* tree, SimpleEntry& product){
     for (unsigned int icw=0; icw<nCheckWeights; icw++){
       auto cwit=valfloats.find(strCheckWeights[icw]);
       if (cwit!=valfloats.cend()) wgt *= *(cwit->second);
-    }
-
-    auto pugenhep_it = Rewgtbuilders.find("PUGenHEPRewgt");
-    if (pugenhep_it!=Rewgtbuilders.cend()){
-      auto& pugenheprewgtBuilder = pugenhep_it->second;
-      float pugenhep_wgt_sum = pugenheprewgtBuilder->getSumPostThresholdWeights(tree);
-      float pugenhep_wgt = (pugenhep_wgt_sum!=0. ? pugenheprewgtBuilder->getPostThresholdWeight(tree)/pugenhep_wgt_sum : 0.); // Normalized to unit
-      wgt *= pugenhep_wgt;
-    }
-
-    auto melarewgt_it = Rewgtbuilders.find("MELARewgt");
-    if (melarewgt_it!=Rewgtbuilders.cend()){
-      auto& melarewgtBuilder = melarewgt_it->second;
-      float mela_wgt_sum = melarewgtBuilder->getSumPostThresholdWeights(tree);
-      float mela_wgt = (mela_wgt_sum!=0. ? melarewgtBuilder->getPostThresholdWeight(tree)/mela_wgt_sum : 0.); // Normalized to unit
-      mela_wgt *= melarewgtBuilder->getNormComponent(tree);
-      wgt *= mela_wgt;
     }
 
     product.weight = wgt; product.setNamedVal("weight", wgt);
@@ -422,23 +422,15 @@ void KDConstantByMass::run(
       for (auto& tree:theSet->getCJLSTTreeList()){ for (auto& strWgt:(*melawgtcollit)) tree->bookBranch<float>(strWgt, 0); }
       melawgtcollit++;
 
-      theSet->setPermanentWeights((schemeSet.empty() ? CJLSTSet::NormScheme_None : schemeSet.at(iset)), true, false);
+      theSet->setPermanentWeights((schemeSet.empty() ? CJLSTSet::NormScheme_None : schemeSet.at(iset)), true, true);
 
       for (auto& tree:theSet->getCJLSTTreeList()) tree->silenceUnused(); // Will no longer book another branch
       iset++;
     }
 
-    // Setup GenHMass binning
-    // Binning for PUGenHepRewgt
+    // Setup GenHMass inclusive binning
     ExtendedBinning GenHMassInclusiveBinning("GenHMass");
-
-    // Construct PUGenHepRewgt
     vector<TString> strReweightingWeigths;
-    strReweightingWeigths.push_back("PUWeight");
-    strReweightingWeigths.push_back("genHEPMCweight");
-    ReweightingBuilder* pugenheprewgtBuilder = new ReweightingBuilder(strReweightingWeigths, getSimpleWeight);
-    pugenheprewgtBuilder->setWeightBinning(GenHMassInclusiveBinning);
-    for (auto& theSet:theSets){ for (auto& tree:theSet->getCJLSTTreeList()) pugenheprewgtBuilder->setupWeightVariables(tree, 1.); }
 
     melawgtcollit=strMelaWgts[ih].begin();
     for (auto& theSet:theSets){
@@ -468,6 +460,8 @@ void KDConstantByMass::run(
       theAnalyzer.infTrackingVal=infimum;
       theAnalyzer.supTrackingVal=supremum;
       // Book common variables needed for analysis
+      theAnalyzer.addConsumed<float>("PUWeight");
+      theAnalyzer.addConsumed<float>("genHEPMCweight");
       theAnalyzer.addConsumed<float>("dataMCWeight");
       theAnalyzer.addConsumed<float>("trigEffWeight");
       theAnalyzer.addConsumed<float>("GenHMass");
@@ -477,7 +471,6 @@ void KDConstantByMass::run(
       // Add discriminant builders
       theAnalyzer.addDiscriminantBuilder("KD", KDbuilder, KDvars);
       // Add reweighting builders
-      theAnalyzer.addReweightingBuilder("PUGenHEPRewgt", pugenheprewgtBuilder);
       theAnalyzer.addReweightingBuilder("MELARewgt", melarewgtBuilder);
 
       // Loop
@@ -487,7 +480,6 @@ void KDConstantByMass::run(
       delete melarewgtBuilder;
       melawgtcollit++;
     }
-    delete pugenheprewgtBuilder;
     for (auto& theSet:theSets) delete theSet;
 
     float firstVal=1000.*sqrts;

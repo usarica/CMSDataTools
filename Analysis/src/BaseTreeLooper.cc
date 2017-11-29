@@ -77,7 +77,15 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
     // Skip the tree if it cannot be linked
     if (!(this->linkConsumes(tree))) continue;
 
+    float wgtExternal = 1;
+    CJLSTSet const* associatedSet = tree->getAssociatedSet();
+    if (associatedSet) wgtExternal *= associatedSet->getPermanentWeight(tree);
+
     // Loop over selected events
+    if (wgtExternal==0.){
+      MELAerr << "BaseTreeLooper::loop: External weights are 0 for the " << tree->sampleIdentifier << " sample. Skipping..." << endl;
+      continue;
+    }
     if (loopSelected){
       MELAout << "BaseTreeLooper::loop: Looping over " << tree->sampleIdentifier << " selected events" << endl;
       int ev=0;
@@ -85,7 +93,7 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
       while (tree->getSelectedEvent(ev)){
         SimpleEntry product;
         if (tree->isValidEvent()){
-          if (this->runEvent(tree, product)){
+          if (this->runEvent(tree, wgtExternal, product)){
             if (keepProducts) this->addProduct(product);
           }
         }
@@ -101,7 +109,7 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
       while (tree->getFailedEvent(ev)){
         SimpleEntry product;
         if (tree->isValidEvent()){
-          if (this->runEvent(tree, product)){
+          if (this->runEvent(tree, wgtExternal, product)){
             if (keepProducts) this->addProduct(product);
           }
         }

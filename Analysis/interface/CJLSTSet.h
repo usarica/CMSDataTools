@@ -33,7 +33,7 @@ public:
   bool dissociateCJLSTTree(CJLSTTree*& tree);
   bool associateCJLSTTree(CJLSTTree*& tree);
 
-  CJLSTTree* getCJLSTTree(TString sampleid);
+  CJLSTTree* getCJLSTTree(TString sampleid) const;
   const std::vector<CJLSTTree*>& getCJLSTTreeList() const;
   std::vector<CJLSTTree*>& getCJLSTTreeList();
 
@@ -45,12 +45,12 @@ public:
   void setPermanentWeights(const CJLSTSet::NormScheme scheme, const bool useNormPerMass, const bool useNgenWPU=false);
 
   // Get the overall "reco" weight (no xsec)
-  float getOverallEventWgt(CJLSTTree* sample);
-  float getOverallEventWgt(TString sampleid);
+  float getOverallEventWgt(CJLSTTree* const sample) const;
+  float getOverallEventWgt(TString sampleid) const;
 
   // Get the permanent, immutable weights of the different trees
-  float getPermanentWeight(CJLSTTree* sample);
-  float getPermanentWeight(TString sampleid);
+  float getPermanentWeight(CJLSTTree* const sample) const;
+  float getPermanentWeight(TString sampleid) const;
 
   CJLSTTree* getSelectedEvent(const int evid);
   CJLSTTree* getFailedEvent(const int evid);

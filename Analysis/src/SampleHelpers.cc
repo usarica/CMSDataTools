@@ -20,6 +20,7 @@ float SampleHelpers::findPoleMass(const TString samplename){
   HelperFunctions::splitOptionRecursive(strtmp, strsplit, 'H');
   if (strsplit.size()>1){
     std::string strmass = strsplit.at(1);
+    if (strmass=="f05ph0" || strmass=="f05ph90") strmass = strsplit.at(2);
     strsplit.clear();
     HelperFunctions::splitOptionRecursive(strmass, strsplit, '_');
     strmass = strsplit.at(0);
@@ -633,6 +634,256 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
   if (strsample=="gg_BSI10_0Mf05ph0_MCFM_2e2tau") samples.push_back("ggTo2e2tau_0Mf05ph0H125Contin_10GaSM_MCFM701");
   if (strsample=="gg_BSI10_0Mf05ph0_MCFM_2mu2tau") samples.push_back("ggTo2mu2tau_0Mf05ph0H125Contin_10GaSM_MCFM701");
   if (strsample=="gg_BSI10_0Mf05ph0_MCFM_4tau") samples.push_back("ggTo4tau_0Mf05ph0H125Contin_10GaSM_MCFM701");
+
+  if (strsample=="gg_Sig_MCFM_4mu"){
+    vector<TString> vreq;
+    vreq.push_back("gg_Sig_SM_MCFM_4mu");
+    vreq.push_back("gg_Sig_0PL1_MCFM_4mu");
+    vreq.push_back("gg_Sig_0PH_MCFM_4mu");
+    vreq.push_back("gg_Sig_0M_MCFM_4mu");
+    vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_4mu");
+    vreq.push_back("gg_Sig_0PHf05ph0_MCFM_4mu");
+    vreq.push_back("gg_Sig_0Mf05ph0_MCFM_4mu");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_Sig_MCFM_4e"){
+    vector<TString> vreq;
+    vreq.push_back("gg_Sig_SM_MCFM_4e");
+    vreq.push_back("gg_Sig_0PL1_MCFM_4e");
+    vreq.push_back("gg_Sig_0PH_MCFM_4e");
+    vreq.push_back("gg_Sig_0M_MCFM_4e");
+    vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_4e");
+    vreq.push_back("gg_Sig_0PHf05ph0_MCFM_4e");
+    vreq.push_back("gg_Sig_0Mf05ph0_MCFM_4e");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_Sig_MCFM_2e2mu"){
+    vector<TString> vreq;
+    vreq.push_back("gg_Sig_SM_MCFM_2e2mu");
+    vreq.push_back("gg_Sig_0PL1_MCFM_2e2mu");
+    vreq.push_back("gg_Sig_0PH_MCFM_2e2mu");
+    vreq.push_back("gg_Sig_0M_MCFM_2e2mu");
+    vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_2e2mu");
+    vreq.push_back("gg_Sig_0PHf05ph0_MCFM_2e2mu");
+    vreq.push_back("gg_Sig_0Mf05ph0_MCFM_2e2mu");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_Sig_MCFM_2e2tau"){
+    vector<TString> vreq;
+    vreq.push_back("gg_Sig_SM_MCFM_2e2tau");
+    vreq.push_back("gg_Sig_0PL1_MCFM_2e2tau");
+    vreq.push_back("gg_Sig_0PH_MCFM_2e2tau");
+    vreq.push_back("gg_Sig_0M_MCFM_2e2tau");
+    vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_2e2tau");
+    vreq.push_back("gg_Sig_0PHf05ph0_MCFM_2e2tau");
+    vreq.push_back("gg_Sig_0Mf05ph0_MCFM_2e2tau");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_Sig_MCFM_2mu2tau"){
+    vector<TString> vreq;
+    vreq.push_back("gg_Sig_SM_MCFM_2mu2tau");
+    vreq.push_back("gg_Sig_0PL1_MCFM_2mu2tau");
+    vreq.push_back("gg_Sig_0PH_MCFM_2mu2tau");
+    vreq.push_back("gg_Sig_0M_MCFM_2mu2tau");
+    vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_2mu2tau");
+    vreq.push_back("gg_Sig_0PHf05ph0_MCFM_2mu2tau");
+    vreq.push_back("gg_Sig_0Mf05ph0_MCFM_2mu2tau");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_Sig_MCFM_4tau"){
+    vector<TString> vreq;
+    vreq.push_back("gg_Sig_SM_MCFM_4tau");
+    vreq.push_back("gg_Sig_0PL1_MCFM_4tau");
+    vreq.push_back("gg_Sig_0PH_MCFM_4tau");
+    vreq.push_back("gg_Sig_0M_MCFM_4tau");
+    vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_4tau");
+    vreq.push_back("gg_Sig_0PHf05ph0_MCFM_4tau");
+    vreq.push_back("gg_Sig_0Mf05ph0_MCFM_4tau");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+
+  if (strsample=="gg_BSI_MCFM_4mu"){
+    vector<TString> vreq;
+    vreq.push_back("gg_BSI_SM_MCFM_4mu");
+    vreq.push_back("gg_BSI_0PL1_MCFM_4mu");
+    vreq.push_back("gg_BSI_0PH_MCFM_4mu");
+    vreq.push_back("gg_BSI_0M_MCFM_4mu");
+    vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_4mu");
+    vreq.push_back("gg_BSI_0PHf05ph0_MCFM_4mu");
+    vreq.push_back("gg_BSI_0Mf05ph0_MCFM_4mu");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_BSI_MCFM_4e"){
+    vector<TString> vreq;
+    vreq.push_back("gg_BSI_SM_MCFM_4e");
+    vreq.push_back("gg_BSI_0PL1_MCFM_4e");
+    vreq.push_back("gg_BSI_0PH_MCFM_4e");
+    vreq.push_back("gg_BSI_0M_MCFM_4e");
+    vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_4e");
+    vreq.push_back("gg_BSI_0PHf05ph0_MCFM_4e");
+    vreq.push_back("gg_BSI_0Mf05ph0_MCFM_4e");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_BSI_MCFM_2e2mu"){
+    vector<TString> vreq;
+    vreq.push_back("gg_BSI_SM_MCFM_2e2mu");
+    vreq.push_back("gg_BSI_0PL1_MCFM_2e2mu");
+    vreq.push_back("gg_BSI_0PH_MCFM_2e2mu");
+    vreq.push_back("gg_BSI_0M_MCFM_2e2mu");
+    vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_2e2mu");
+    vreq.push_back("gg_BSI_0PHf05ph0_MCFM_2e2mu");
+    vreq.push_back("gg_BSI_0Mf05ph0_MCFM_2e2mu");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_BSI_MCFM_2e2tau"){
+    vector<TString> vreq;
+    vreq.push_back("gg_BSI_SM_MCFM_2e2tau");
+    vreq.push_back("gg_BSI_0PL1_MCFM_2e2tau");
+    vreq.push_back("gg_BSI_0PH_MCFM_2e2tau");
+    vreq.push_back("gg_BSI_0M_MCFM_2e2tau");
+    vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_2e2tau");
+    vreq.push_back("gg_BSI_0PHf05ph0_MCFM_2e2tau");
+    vreq.push_back("gg_BSI_0Mf05ph0_MCFM_2e2tau");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_BSI_MCFM_2mu2tau"){
+    vector<TString> vreq;
+    vreq.push_back("gg_BSI_SM_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI_0PL1_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI_0PH_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI_0M_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI_0PHf05ph0_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI_0Mf05ph0_MCFM_2mu2tau");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_BSI_MCFM_4tau"){
+    vector<TString> vreq;
+    vreq.push_back("gg_BSI_SM_MCFM_4tau");
+    vreq.push_back("gg_BSI_0PL1_MCFM_4tau");
+    vreq.push_back("gg_BSI_0PH_MCFM_4tau");
+    vreq.push_back("gg_BSI_0M_MCFM_4tau");
+    vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_4tau");
+    vreq.push_back("gg_BSI_0PHf05ph0_MCFM_4tau");
+    vreq.push_back("gg_BSI_0Mf05ph0_MCFM_4tau");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+
+  if (strsample=="gg_BSI10_MCFM_4mu"){
+    vector<TString> vreq;
+    vreq.push_back("gg_BSI10_SM_MCFM_4mu");
+    vreq.push_back("gg_BSI10_0PL1_MCFM_4mu");
+    vreq.push_back("gg_BSI10_0PH_MCFM_4mu");
+    vreq.push_back("gg_BSI10_0M_MCFM_4mu");
+    vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_4mu");
+    vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_4mu");
+    vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_4mu");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_BSI10_MCFM_4e"){
+    vector<TString> vreq;
+    vreq.push_back("gg_BSI10_SM_MCFM_4e");
+    vreq.push_back("gg_BSI10_0PL1_MCFM_4e");
+    vreq.push_back("gg_BSI10_0PH_MCFM_4e");
+    vreq.push_back("gg_BSI10_0M_MCFM_4e");
+    vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_4e");
+    vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_4e");
+    vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_4e");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_BSI10_MCFM_2e2mu"){
+    vector<TString> vreq;
+    vreq.push_back("gg_BSI10_SM_MCFM_2e2mu");
+    vreq.push_back("gg_BSI10_0PL1_MCFM_2e2mu");
+    vreq.push_back("gg_BSI10_0PH_MCFM_2e2mu");
+    vreq.push_back("gg_BSI10_0M_MCFM_2e2mu");
+    vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_2e2mu");
+    vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_2e2mu");
+    vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_2e2mu");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_BSI10_MCFM_2e2tau"){
+    vector<TString> vreq;
+    vreq.push_back("gg_BSI10_SM_MCFM_2e2tau");
+    vreq.push_back("gg_BSI10_0PL1_MCFM_2e2tau");
+    vreq.push_back("gg_BSI10_0PH_MCFM_2e2tau");
+    vreq.push_back("gg_BSI10_0M_MCFM_2e2tau");
+    vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_2e2tau");
+    vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_2e2tau");
+    vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_2e2tau");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_BSI10_MCFM_2mu2tau"){
+    vector<TString> vreq;
+    vreq.push_back("gg_BSI10_SM_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI10_0PL1_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI10_0PH_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI10_0M_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_2mu2tau");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_BSI10_MCFM_4tau"){
+    vector<TString> vreq;
+    vreq.push_back("gg_BSI10_SM_MCFM_4tau");
+    vreq.push_back("gg_BSI10_0PL1_MCFM_4tau");
+    vreq.push_back("gg_BSI10_0PH_MCFM_4tau");
+    vreq.push_back("gg_BSI10_0M_MCFM_4tau");
+    vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_4tau");
+    vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_4tau");
+    vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_4tau");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+
+  if (strsample=="gg_MCFM_4mu"){
+    vector<TString> vreq;
+    vreq.push_back("gg_Bkg_MCFM_4mu");
+    vreq.push_back("gg_Sig_MCFM_4mu");
+    vreq.push_back("gg_BSI_MCFM_4mu");
+    vreq.push_back("gg_BSI10_MCFM_4mu");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_MCFM_4e"){
+    vector<TString> vreq;
+    vreq.push_back("gg_Bkg_MCFM_4e");
+    vreq.push_back("gg_Sig_MCFM_4e");
+    vreq.push_back("gg_BSI_MCFM_4e");
+    vreq.push_back("gg_BSI10_MCFM_4e");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_MCFM_2e2mu"){
+    vector<TString> vreq;
+    vreq.push_back("gg_Bkg_MCFM_2e2mu");
+    vreq.push_back("gg_Sig_MCFM_2e2mu");
+    vreq.push_back("gg_BSI_MCFM_2e2mu");
+    vreq.push_back("gg_BSI10_MCFM_2e2mu");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_MCFM_2e2tau"){
+    vector<TString> vreq;
+    vreq.push_back("gg_Bkg_MCFM_2e2tau");
+    vreq.push_back("gg_Sig_MCFM_2e2tau");
+    vreq.push_back("gg_BSI_MCFM_2e2tau");
+    vreq.push_back("gg_BSI10_MCFM_2e2tau");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_MCFM_2mu2tau"){
+    vector<TString> vreq;
+    vreq.push_back("gg_Bkg_MCFM_2mu2tau");
+    vreq.push_back("gg_Sig_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI_MCFM_2mu2tau");
+    vreq.push_back("gg_BSI10_MCFM_2mu2tau");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
+  if (strsample=="gg_MCFM_4tau"){
+    vector<TString> vreq;
+    vreq.push_back("gg_Bkg_MCFM_4tau");
+    vreq.push_back("gg_Sig_MCFM_4tau");
+    vreq.push_back("gg_BSI_MCFM_4tau");
+    vreq.push_back("gg_BSI10_MCFM_4tau");
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+  }
 
   if (strsample=="VV_Sig_Phantom"){
     vector<TString> vreq;

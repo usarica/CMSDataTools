@@ -64,15 +64,16 @@ void CJLSTSet::bookOverallEventWgt(){
   }
 }
 
-CJLSTTree* CJLSTSet::getCJLSTTree(TString sampleid){
+CJLSTTree* CJLSTSet::getCJLSTTree(TString sampleid) const{
   for (auto tree:treeList){ if (tree->sampleIdentifier==sampleid) return tree; }
-  CJLSTTree* res=0;
+  CJLSTTree* res=nullptr;
   return res;
 }
 const std::vector<CJLSTTree*>& CJLSTSet::getCJLSTTreeList() const{ return treeList; }
 std::vector<CJLSTTree*>& CJLSTSet::getCJLSTTreeList(){ return treeList; }
 
-float CJLSTSet::getOverallEventWgt(CJLSTTree* sample){
+float CJLSTSet::getOverallEventWgt(CJLSTTree* const sample) const{
+  if (!sample) return 0;
   float PUWeight=1;
   float genHEPMCweight=1;
   float dataMCWeight=1;
@@ -83,13 +84,15 @@ float CJLSTSet::getOverallEventWgt(CJLSTTree* sample){
   sample->getVal("trigEffWeight", trigEffWeight);
   return (PUWeight*genHEPMCweight*dataMCWeight*trigEffWeight);
 }
-float CJLSTSet::getOverallEventWgt(TString sampleid){ return getOverallEventWgt(getCJLSTTree(sampleid)); }
+float CJLSTSet::getOverallEventWgt(TString sampleid) const{ return getOverallEventWgt(getCJLSTTree(sampleid)); }
 
-float CJLSTSet::getPermanentWeight(CJLSTTree* sample){
-  if (permanentWeights.empty() || permanentWeights.find(sample)==permanentWeights.end()) return 1;
-  return permanentWeights[sample];
+float CJLSTSet::getPermanentWeight(CJLSTTree* const sample) const{
+  if (!sample) return 0;
+  auto it = permanentWeights.find(sample);
+  if (it==permanentWeights.cend()) return 1;
+  return it->second;
 }
-float CJLSTSet::getPermanentWeight(TString sampleid){ return getPermanentWeight(getCJLSTTree(sampleid)); }
+float CJLSTSet::getPermanentWeight(TString sampleid) const{ return getPermanentWeight(getCJLSTTree(sampleid)); }
 void CJLSTSet::setPermanentWeights(const CJLSTSet::NormScheme scheme, const bool useNormPerMass, const bool useNgenWPU){
   cout << "CJLSTSet::setPermanentWeights(" << scheme << "," << useNormPerMass << "," << useNgenWPU << ") is called." << endl;
 

@@ -12,6 +12,7 @@ namespace ReweightingFunctions{
   float* getWeightRef(CJLSTTree* tree, const TString& strWeight);
 
   float getSimpleWeight(CJLSTTree* tree, const std::vector<float*>& vals);
+  float getA1OverB1Weight(CJLSTTree* tree, const std::vector<float*>& vals);
 
 }
 

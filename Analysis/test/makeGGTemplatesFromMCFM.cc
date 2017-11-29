@@ -9,7 +9,7 @@ const TString user_output_dir = "output/";
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category category, TString strSystematics){
+void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category, TString strSystematics){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);
@@ -57,10 +57,17 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   MELAout << endl;
 
   // Get list of samples
-  vector<TString> strSampleIdentifiers;
-  strSampleIdentifiers.push_back("gg_Sig_POWHEG");
-  vector<TString> strSamples;
-  getSamplesList(theSqrts, strSampleIdentifiers, strSamples);
+  const unsigned int nMCFMChannels=1/*6*/;
+  TString strMCFMChannels[nMCFMChannels]={
+    "4mu"/*,"4e","2e2mu",
+    "2e2tau","2mu2tau","4tau"*/
+  };
+  vector<TString> strSamples[nMCFMChannels];
+  for (unsigned int ich=0; ich<nMCFMChannels; ich++){
+    vector<TString> strSampleIdentifiers;
+    strSampleIdentifiers.push_back(Form("gg_Sig_MCFM_%s", strMCFMChannels[ich].Data()));
+    getSamplesList(theSqrts, strSampleIdentifiers, strSamples[ich]);
+  }
 
   // Kfactor variable names
   vector<TString> strKfactorVars;
@@ -85,43 +92,44 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   // Get the CJLST set
   //vector<TString> newlist; newlist.push_back(strSamples.back()); newlist.push_back(strSamples.front());
   //strSamples = newlist;
-  CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
-  // Book common variables
-  theSampleSet->bookXS(); // "xsec"
-  theSampleSet->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
-  for (auto& tree:theSampleSet->getCJLSTTreeList()){
-    // Book common variables needed for analysis
-    tree->bookBranch<float>("GenHMass", 0);
-    tree->bookBranch<float>("ZZMass", -1);
-    tree->bookBranch<short>("Z1Flav", 0);
-    tree->bookBranch<short>("Z2Flav", 0);
-    // Common variables for reweighting
-    tree->bookBranch<float>("p_Gen_CPStoBWPropRewgt", 1);
-    for (auto& s:strKfactorVars) tree->bookBranch<float>(s, 1);
-    // Variables for SM reweighting
-    tree->bookBranch<float>("p_Gen_GG_BKG_MCFM", 0);
-    tree->bookBranch<float>("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM", 0);
-    tree->bookBranch<float>("p_Gen_GG_BSI_kappaTopBot_1_ghz1_1_MCFM", 0);
-    // Variables for KDs
-    for (auto& v:KD1vars) tree->bookBranch<float>(v, 0);
-    for (auto& v:KD2vars) tree->bookBranch<float>(v, 0);
-    tree->silenceUnused(); // Will no longer book another branch
+  vector<CJLSTSet*> theSets;
+  for (unsigned int ich=0; ich<nMCFMChannels; ich++){
+    CJLSTSet* theSampleSet = new CJLSTSet(strSamples[ich]);
+    // Book common variables
+    theSampleSet->bookXS(); // "xsec"
+    theSampleSet->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
+    for (auto& tree:theSampleSet->getCJLSTTreeList()){
+      // Book common variables needed for analysis
+      tree->bookBranch<float>("GenHMass", 0);
+      tree->bookBranch<float>("ZZMass", -1);
+      tree->bookBranch<short>("Z1Flav", 0);
+      tree->bookBranch<short>("Z2Flav", 0);
+      // Common variables for reweighting
+      for (auto& s:strKfactorVars) tree->bookBranch<float>(s, 1);
+      // Variables for SM reweighting
+      tree->bookBranch<float>("p_Gen_GG_BKG_MCFM", 0);
+      tree->bookBranch<float>("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM", 0);
+      tree->bookBranch<float>("p_Gen_GG_BSI_kappaTopBot_1_ghz1_1_MCFM", 0);
+      // Variables for KDs
+      for (auto& v:KD1vars) tree->bookBranch<float>(v, 0);
+      for (auto& v:KD2vars) tree->bookBranch<float>(v, 0);
+      tree->silenceUnused(); // Will no longer book another branch
+    }
+    theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_OneOverNgen, false, true);
+    theSets.push_back(theSampleSet);
   }
-  theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_OneOverNgen, false, true);
 
   // Setup GenHMass binning
-  // Binning for PUGenHepRewgt
+  // Binning for inclusive reweighting
   ExtendedBinning GenHMassInclusiveBinning("GenHMass");
   // Binning for MELARewgt
   ExtendedBinning GenHMassBinning("GenHMass");
   GenHMassBinning.addBinBoundary(0);
-  for (unsigned int is=0; is<theSampleSet->getCJLSTTreeList().size()-1; is++){
-  //for (unsigned int is=0; is<theSampleSet->getCJLSTTreeList().size(); is++){
-    GenHMassBinning.addBinBoundary(
-      //theSampleSet->getCJLSTTreeList().at(is)->MHVal
-      0.5*(theSampleSet->getCJLSTTreeList().at(is)->MHVal + theSampleSet->getCJLSTTreeList().at(is+1)->MHVal)
-    );
-  }
+  GenHMassBinning.addBinBoundary(124);
+  GenHMassBinning.addBinBoundary(126);
+  GenHMassBinning.addBinBoundary(160);
+  GenHMassBinning.addBinBoundary(220);
+  GenHMassBinning.addBinBoundary(1000);
   GenHMassBinning.addBinBoundary(theSqrts*1000.);
 
   // Construct reweighting variables vector
@@ -161,13 +169,12 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     };
     strReweightingWeigths.clear();
     strReweightingWeigths.push_back(strWeight);
-    strReweightingWeigths.push_back("p_Gen_CPStoBWPropRewgt");
     for (auto& s:strKfactorVars) strReweightingWeigths.push_back(s);
     strReweightingWeigths.push_back("xsec");
     ReweightingBuilder* melarewgtBuilder = new ReweightingBuilder(strReweightingWeigths, getSimpleWeight);
     melarewgtBuilder->setDivideByNSample(true);
     melarewgtBuilder->setWeightBinning(GenHMassBinning);
-    for (auto& tree:theSampleSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.999, 1000);
+    for (auto& theSampleSet:theSets){ for (auto& tree:theSampleSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.999, 250); }
 
     controlsDir->cd();
     for (unsigned int bin=0; bin<GenHMassBinning.getNbins(); bin++){
@@ -180,22 +187,6 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
       h_MELARewgtSumAllNonZeroWgtEventsPerBin->SetBinContent(bin, nSANZWEPB);
       h_MELARewgtNormComponentPerBin->SetBinContent(bin, NCPB);
-
-      /*
-      for (unsigned int itree=0; itree<theSampleSet->getCJLSTTreeList().size(); itree++){
-        CJLSTTree* tree = theSampleSet->getCJLSTTreeList()[itree];
-        TH1F* h_MELARewgtPostThrWeights = new TH1F(
-          Form("MELARewgtPostThrWeights_%s_Bin%i", tree->sampleIdentifier.Data(), bin), "",
-          2000,
-          -melarewgtBuilder->getWeightThresholds(tree).at(bin),
-          melarewgtBuilder->getWeightThresholds(tree).at(bin)
-          );
-        for (int ev=0; ev<tree->getSelectedNEvents(); ev++){
-          if (tree->getSelectedEvent(ev) & tree->isValidEvent()) h_MELARewgtPostThrWeights->Fill(melarewgtBuilder->getPostThresholdWeight(tree));
-        }
-        controlsDir->WriteTObject(h_MELARewgtPostThrWeights); delete h_MELARewgtPostThrWeights;
-      }
-      */
     }
     MELAout << "Overall normalization in melarewgtBuilder is " << melarewgtBuilder->getNorm() << endl;
 
@@ -204,26 +195,28 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
     foutput->cd();
 
+    std::vector<SimpleEntry> products;
     // Build the analyzer and loop over the events
-    GGAnalyzer theAnalyzer(theSampleSet, channel, category);
-    // Book common variables needed for analysis
-    theAnalyzer.addConsumed<float>("PUWeight");
-    theAnalyzer.addConsumed<float>("genHEPMCweight");
-    theAnalyzer.addConsumed<float>("dataMCWeight");
-    theAnalyzer.addConsumed<float>("trigEffWeight");
-    theAnalyzer.addConsumed<float>("GenHMass");
-    theAnalyzer.addConsumed<float>("ZZMass");
-    theAnalyzer.addConsumed<short>("Z1Flav");
-    theAnalyzer.addConsumed<short>("Z2Flav");
-    // Add discriminant builders
-    theAnalyzer.addDiscriminantBuilder("KD1", KD1, KD1vars);
-    theAnalyzer.addDiscriminantBuilder("KD2", KD2, KD2vars);
-    // Add reweighting builders
-    theAnalyzer.addReweightingBuilder("MELARewgt", melarewgtBuilder);
-    // Loop
-    theAnalyzer.loop(true, false, true);
-
-    const std::vector<SimpleEntry>& products = theAnalyzer.getProducts();
+    for (auto& theSampleSet:theSets){
+      GGAnalyzer theAnalyzer(theSampleSet, channel, category);
+      theAnalyzer.setExternalProductList(&products);
+      // Book common variables needed for analysis
+      theAnalyzer.addConsumed<float>("PUWeight");
+      theAnalyzer.addConsumed<float>("genHEPMCweight");
+      theAnalyzer.addConsumed<float>("dataMCWeight");
+      theAnalyzer.addConsumed<float>("trigEffWeight");
+      theAnalyzer.addConsumed<float>("GenHMass");
+      theAnalyzer.addConsumed<float>("ZZMass");
+      theAnalyzer.addConsumed<short>("Z1Flav");
+      theAnalyzer.addConsumed<short>("Z2Flav");
+      // Add discriminant builders
+      theAnalyzer.addDiscriminantBuilder("KD1", KD1, KD1vars);
+      theAnalyzer.addDiscriminantBuilder("KD2", KD2, KD2vars);
+      // Add reweighting builders
+      theAnalyzer.addReweightingBuilder("MELARewgt", melarewgtBuilder);
+      // Loop
+      theAnalyzer.loop(true, false, true);
+    }
     MELAout << "There are " << products.size() << " products" << endl;
     SimpleEntry::writeToTree(products.cbegin(), products.cend(), theFinalTree);
 
@@ -236,7 +229,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
   delete KD2;
   delete KD1;
-  delete theSampleSet;
+  for (auto& theSampleSet:theSets) delete theSampleSet; theSets.clear();
   foutput->Close();
   MELAout.close();
 }

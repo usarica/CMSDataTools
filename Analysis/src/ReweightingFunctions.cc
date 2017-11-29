@@ -27,12 +27,22 @@ float* ReweightingFunctions::getWeightRef(CJLSTTree* tree, const TString& strWei
   return res;
 }
 
-
 float ReweightingFunctions::getSimpleWeight(CJLSTTree* tree, const std::vector<float*>& vals){
   float res=0;
   if (!tree) return res;
   res=1;
   for (auto const& v:vals){ if (v) res *= *v; }
+  return res;
+}
+float ReweightingFunctions::getA1OverB1Weight(CJLSTTree* tree, const std::vector<float*>& vals){
+  float res=0;
+  if (!tree) return res;
+  res=1;
+  if (vals.size()!=2 || !(vals.at(0) && vals.at(1))){
+    MELAerr << "ReweightingFunctions::getA1OverB1Weight: (vals.size()=" << vals.size() << "!=2) || !(vals.at(0) && vals.at(1)). Returning " << res << "..." << endl;
+    return res;
+  }
+  res = (*(vals.at(0)))/(*(vals.at(1)));
   return res;
 }
 

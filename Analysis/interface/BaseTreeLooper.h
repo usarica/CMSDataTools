@@ -38,7 +38,7 @@ protected:
   void addProduct(SimpleEntry& product);
 
   // Abstract function to loop over a single event
-  virtual bool runEvent(CJLSTTree* tree, SimpleEntry& product)=0;
+  virtual bool runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEntry& product)=0;
 
 public:
   // Constructors

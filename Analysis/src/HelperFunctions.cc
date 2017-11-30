@@ -708,3 +708,80 @@ template<> void HelperFunctions::wipeOverUnderFlows<TH3F>(TH3F* hwipe){
   hwipe->Scale(wipeScale);
 }
 
+void HelperFunctions::CopyFile(TString fname, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*)){
+  // Copy all objects and subdirs of file fname as a subdir of the current directory
+  TDirectory* target = gDirectory;
+  TFile* f = TFile::Open(fname, "read");
+  if (!f || f->IsZombie()){
+    MELAerr << "HelperFunctions::CopyFile: Cannot copy file " << fname << endl;
+    target->cd();
+    if (f && f->IsOpen()){ f->Close(); f=nullptr; }
+    delete f;
+    return;
+  }
+  target->cd();
+  CopyDirectory(f, fcnTree, fcnDirectory);
+  f->Close();
+  target->cd();
+}
+void HelperFunctions::CopyDirectory(TDirectory* source, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*)){
+  // Copy all objects and subdirs of directory source as a subdir of the current directory
+  source->ls();
+  TDirectory* savdir = gDirectory;
+  TDirectory* adir;
+  if (dynamic_cast<TFile*>(source)==nullptr) adir = savdir->mkdir(source->GetName());
+  else adir=savdir;
+  adir->cd();
+  // Loop on all entries of this directory
+  TKey* key;
+  TIter nextkey(source->GetListOfKeys());
+  vector<TString> copiedTrees;
+  while ((key = (TKey*)nextkey())){
+    MELAout << "HelperFunctions::CopyDirectory: Copying key " << key->GetName() << endl;
+    const char* classname = key->GetClassName();
+    TClass* cl = gROOT->GetClass(classname);
+    if (!cl) continue;
+    if (cl->InheritsFrom(TDirectory::Class())){
+      MELAout << "- HelperFunctions::CopyDirectory: Key " << key->GetName() << " is a directory." << endl;
+      source->cd(key->GetName());
+      TDirectory* subdir = gDirectory;
+      if (fcnDirectory) subdir = fcnDirectory(subdir);
+      adir->cd();
+      CopyDirectory(subdir, fcnTree, fcnDirectory);
+      adir->cd();
+    }
+    else if (cl->InheritsFrom(TTree::Class())){
+      MELAout << "- HelperFunctions::CopyDirectory: Key " << key->GetName() << " is a tree." << endl;
+      TTree* T = (TTree*)source->Get(key->GetName());
+      bool alreadyCopied=false;
+      for (auto& k:copiedTrees){
+        if (k==key->GetName()){
+          alreadyCopied=true;
+          break;
+        }
+      }
+      adir->cd();
+      if (!alreadyCopied){
+        TTree* newT=nullptr;
+        if (fcnTree) newT = fcnTree(T);
+        if (!newT) newT = T->CloneTree(-1, "fast");
+        if (newT){
+          MELAout << "- HelperFunctions::CopyDirectory: A new tree " << newT->GetName() << " is created." << endl;
+          newT->Write(nullptr, TObject::kWriteDelete);
+          copiedTrees.push_back(key->GetName());
+        }
+        //delete newT;
+      }
+      else MELAout << "- HelperFunctions::CopyDirectory: A copy of " << key->GetName() << " already exists." << endl;
+    }
+    else{
+      source->cd();
+      TObject* obj = key->ReadObj();
+      adir->cd();
+      obj->Write();
+      delete obj;
+    }
+  }
+  adir->SaveSelf(kTRUE);
+  savdir->cd();
+}

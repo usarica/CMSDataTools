@@ -5,6 +5,34 @@
 // Constants to affect the template code
 const TString fixedDate="";
 const TString user_output_dir = "output/";
+enum{
+  kBkg=0,
+  kSig=1,
+  kBSI=2,
+  nTemplates=3
+};
+TString strTemplateName[nTemplates]={
+  "Bkg",
+  "Sig",
+  "BSI"
+};
+TString getMELAHypothesisWeight(int const ihypo){
+  TString strWeight;
+  switch (ihypo){
+  case kBkg:
+    strWeight = "p_Gen_GG_BKG_MCFM";
+    break;
+  case kSig:
+    strWeight = "p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM";
+    break;
+  case kBSI:
+    strWeight = "p_Gen_GG_BSI_kappaTopBot_1_ghz1_1_MCFM";
+    break;
+  };
+  return strWeight;
+}
+
+TTree* fixTreeWeights(TTree* tree);
 
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
@@ -14,18 +42,6 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
-
-  enum{
-    kBkg=0,
-    kSig=1,
-    kBSI=2,
-    nTemplates=3
-  };
-  TString strTemplateName[nTemplates]={
-    "Bkg",
-    "Sig",
-    "BSI"
-  };
 
   // Setup binning
   ExtendedBinning ZZMassBinning(2900/2., 100., 3000., "ZZMass");
@@ -40,7 +56,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
   gSystem->Exec("mkdir -p " + coutput_common);
 
-  TString OUTPUT_NAME = Form("%s_HtoZZ%s_Stage1_%s", strCategory.Data(), strChannel.Data(), strSystematics.Data());
+  TString OUTPUT_NAME = Form("%s_ggHtoZZ%s_MCFM_Stage1_%s", strCategory.Data(), strChannel.Data(), strSystematics.Data());
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -57,10 +73,10 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   MELAout << endl;
 
   // Get list of samples
-  const unsigned int nMCFMChannels=1/*6*/;
+  const unsigned int nMCFMChannels=6;
   TString strMCFMChannels[nMCFMChannels]={
-    "4mu"/*,"4e","2e2mu",
-    "2e2tau","2mu2tau","4tau"*/
+    "4mu","4e","2e2mu",
+    "2e2tau","2mu2tau","4tau"
   };
   vector<TString> strSamples[nMCFMChannels];
   for (unsigned int ich=0; ich<nMCFMChannels; ich++){
@@ -115,7 +131,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
       for (auto& v:KD2vars) tree->bookBranch<float>(v, 0);
       tree->silenceUnused(); // Will no longer book another branch
     }
-    theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_OneOverNgen, false, true);
+    theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_NgenOverNgenWPU, false, true);
     theSets.push_back(theSampleSet);
   }
 
@@ -155,23 +171,13 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
     // Total weight is (1)x(2)
 
     // Build the possible MELA reweightings
-    TString strWeight;
-    switch (t){
-    case kBkg:
-      strWeight = "p_Gen_GG_BKG_MCFM";
-      break;
-    case kSig:
-      strWeight = "p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM";
-      break;
-    case kBSI:
-      strWeight = "p_Gen_GG_BSI_kappaTopBot_1_ghz1_1_MCFM";
-      break;
-    };
+    TString strWeight = getMELAHypothesisWeight(t);
     strReweightingWeigths.clear();
     strReweightingWeigths.push_back(strWeight);
     for (auto& s:strKfactorVars) strReweightingWeigths.push_back(s);
     strReweightingWeigths.push_back("xsec");
     ReweightingBuilder* melarewgtBuilder = new ReweightingBuilder(strReweightingWeigths, getSimpleWeight);
+    melarewgtBuilder->rejectNegativeWeights(true);
     melarewgtBuilder->setDivideByNSample(true);
     melarewgtBuilder->setWeightBinning(GenHMassBinning);
     for (auto& theSampleSet:theSets){ for (auto& tree:theSampleSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.999, 250); }
@@ -232,5 +238,61 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   for (auto& theSampleSet:theSets) delete theSampleSet; theSets.clear();
   foutput->Close();
   MELAout.close();
+}
+
+void makeGGTemplatesFromMCFM_two(const Channel channel, const Category category, TString strSystematics){
+  if (channel==NChannels) return;
+
+  const TString strChannel = getChannelName(channel);
+  const TString strCategory = getCategoryName(category);
+
+  // Setup the output directories
+  TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
+  TString strdate = todaysdate();
+  if (fixedDate!="") strdate=fixedDate;
+  cout << "Today's date: " << strdate << endl;
+  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
+
+  TString INPUT_NAME = Form("%s_ggHtoZZ%s_MCFM_Stage1_%s", strCategory.Data(), strChannel.Data(), strSystematics.Data());
+  INPUT_NAME += ".root";
+  TString cinput = coutput_common + INPUT_NAME;
+  if (gSystem->AccessPathName(cinput)) return;
+
+  gSystem->Exec("mkdir -p " + coutput_common);
+  TString OUTPUT_NAME = Form("%s_ggHtoZZ%s_MCFM_Stage2_%s", strCategory.Data(), strChannel.Data(), strSystematics.Data());
+  TString OUTPUT_LOG_NAME = OUTPUT_NAME;
+  OUTPUT_NAME += ".root";
+  OUTPUT_LOG_NAME += ".log";
+  TString coutput = coutput_common + OUTPUT_NAME;
+  TString coutput_log = coutput_common + OUTPUT_LOG_NAME;
+  MELAout.open(coutput_log.Data());
+  MELAout << "Opened log file " << coutput_log << endl;
+  TFile* foutput = TFile::Open(coutput, "recreate");
+  MELAout << "Opened file " << coutput << endl;
+  MELAout << "===============================" << endl;
+  MELAout << "CoM Energy: " << theSqrts << " TeV" << endl;
+  MELAout << "Decay Channel: " << strChannel << endl;
+  MELAout << "===============================" << endl;
+  MELAout << endl;
+
+  HelperFunctions::CopyFile(cinput, fixTreeWeights, nullptr);
+  foutput->ls();
+
+  foutput->Close();
+  MELAout.close();
+}
+
+TTree* fixTreeWeights(TTree* tree){
+  float ZZMass, weight;
+  tree->SetBranchAddress("ZZMass", &ZZMass);
+  tree->SetBranchAddress("weight", &weight);
+
+  TTree* newtree = tree->CloneTree(0);
+  for (int ev=0; ev<tree->GetEntries(); ev++){
+    tree->GetEntry(ev);
+
+    newtree->Fill();
+  }
+  return newtree;
 }
 

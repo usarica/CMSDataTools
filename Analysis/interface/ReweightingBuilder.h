@@ -7,6 +7,7 @@
 
 class ReweightingBuilder{
 protected:
+  bool allowNegativeWeights;
   bool divideByNSample;
   float(*rule)(CJLSTTree*, const std::vector<float*>&);
   std::vector<TString> strWeights;
@@ -34,6 +35,7 @@ public:
   unsigned int getSumNonZeroWgtEvents(CJLSTTree* theTree) const;
   int findBin(CJLSTTree* theTree) const;
 
+  void rejectNegativeWeights(const bool flag);
   void setDivideByNSample(const bool flag);
   void setWeightBinning(const ExtendedBinning& binning);
   void setupWeightVariables(CJLSTTree* theTree, float fractionRequirement=0.999, unsigned int minimumNevents=0);

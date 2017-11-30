@@ -12,12 +12,14 @@ using namespace HelperFunctions;
 
 
 ReweightingBuilder::ReweightingBuilder(TString inStrWeight, float(*infcn)(CJLSTTree*, const std::vector<float*>&)) :
+  allowNegativeWeights(true),
   divideByNSample(false),
   rule(infcn)
 {
   strWeights.push_back(inStrWeight);
 }
 ReweightingBuilder::ReweightingBuilder(std::vector<TString> inStrWeights, float(*infcn)(CJLSTTree*, const std::vector<float*>&)) :
+  allowNegativeWeights(true),
   divideByNSample(false),
   rule(infcn),
   strWeights(inStrWeights)
@@ -32,8 +34,10 @@ float ReweightingBuilder::eval(CJLSTTree* theTree) const{
     return 0;
   }
   float divisor=1; if (divideByNSample) divisor=theTree->getNGenNoPU();
-  if (rule) return rule(theTree, it->second)/divisor;
-  else return 0;
+  float weight=0;
+  if (rule && divisor!=0.) weight=rule(theTree, it->second)/divisor;
+  if (!allowNegativeWeights && weight<0.) weight=0;
+  return weight;
 }
 
 int ReweightingBuilder::findBin(CJLSTTree* theTree) const{
@@ -49,6 +53,7 @@ int ReweightingBuilder::findBin(CJLSTTree* theTree) const{
   }
   return bin;
 }
+void ReweightingBuilder::rejectNegativeWeights(const bool flag){ allowNegativeWeights = !flag; }
 void ReweightingBuilder::setDivideByNSample(const bool flag){ divideByNSample = flag; }
 void ReweightingBuilder::setWeightBinning(const ExtendedBinning& binning){ weightBinning=binning; }
 

@@ -40,7 +40,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
   gSystem->Exec("mkdir -p " + coutput_common);
 
-  TString OUTPUT_NAME = Form("%s_HtoZZ%s_Stage1_%s", strCategory.Data(), strChannel.Data(), strSystematics.Data());
+  TString OUTPUT_NAME = Form("%s_ggHtoZZ%s_POWHEG_Stage1_%s", strCategory.Data(), strChannel.Data(), strSystematics.Data());
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -107,7 +107,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     for (auto& v:KD2vars) tree->bookBranch<float>(v, 0);
     tree->silenceUnused(); // Will no longer book another branch
   }
-  theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_OneOverNgen, false, true);
+  theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_NgenOverNgenWPU, false, true);
 
   // Setup GenHMass binning
   // Binning for PUGenHepRewgt
@@ -165,6 +165,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     for (auto& s:strKfactorVars) strReweightingWeigths.push_back(s);
     strReweightingWeigths.push_back("xsec");
     ReweightingBuilder* melarewgtBuilder = new ReweightingBuilder(strReweightingWeigths, getSimpleWeight);
+    melarewgtBuilder->rejectNegativeWeights(true);
     melarewgtBuilder->setDivideByNSample(true);
     melarewgtBuilder->setWeightBinning(GenHMassBinning);
     for (auto& tree:theSampleSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.999, 1000);

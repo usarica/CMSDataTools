@@ -33,26 +33,18 @@ bool GGAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEntry
 
     // Construct the weights
     float wgt = externalWgt;
-    bool hasPUGenHEPRewgt=false;
+    wgt *= (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]))*(*(valfloats["PUWeight"]))*(*(valfloats["genHEPMCweight"]));
     for (auto rewgt_it=Rewgtbuilders.cbegin(); rewgt_it!=Rewgtbuilders.cend(); rewgt_it++){
       auto& rewgtBuilder = rewgt_it->second;
-      if (rewgt_it->first=="PUGenHEPRewgt"){
-        float pugenhep_wgt_sum = rewgtBuilder->getSumPostThresholdWeights(tree);
-        float pugenhep_wgt = (pugenhep_wgt_sum!=0. ? rewgtBuilder->getPostThresholdWeight(tree)/pugenhep_wgt_sum : 0.); // Normalized to unit
-        wgt *= pugenhep_wgt;
-        hasPUGenHEPRewgt=true;
-      }
-      else if (rewgt_it->first=="MELARewgt"){
+      if (rewgt_it->first=="MELARewgt"){
         float mela_wgt_sum = rewgtBuilder->getSumPostThresholdWeights(tree);
         float mela_wgt = (mela_wgt_sum!=0. ? rewgtBuilder->getPostThresholdWeight(tree)/mela_wgt_sum : 0.); // Normalized to unit
         mela_wgt *= rewgtBuilder->getNormComponent(tree);
         wgt *= mela_wgt;
         product.setNamedVal("MELARewgtBin", rewgtBuilder->findBin(tree));
       }
+      else wgt *= rewgtBuilder->getPostThresholdWeight(tree);
     }
-    wgt *= (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]));
-    if (!hasPUGenHEPRewgt) wgt *= (*(valfloats["PUWeight"]))*(*(valfloats["genHEPMCweight"]));
-
     product.setNamedVal("weight", wgt);
     if (std::isnan(wgt) || std::isinf(wgt) || wgt==0.){
       if (wgt!=0.){

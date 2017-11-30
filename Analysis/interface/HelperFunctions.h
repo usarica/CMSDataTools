@@ -14,8 +14,12 @@
 #include <cassert>
 #include <cstdlib>
 #include "TROOT.h"
-#include "TMath.h"
+#include "TSystem.h"
+#include "TObject.h"
+#include "TKey.h"
+#include "TFile.h"
 #include "TString.h"
+#include "TMath.h"
 #include "TF1.h"
 #include "TSpline.h"
 #include "TH1F.h"
@@ -114,6 +118,11 @@ namespace HelperFunctions{
   TF1* getFcn_a0timesexpa1X(TSpline3* sp, double xmin, double xmax, bool useLowBound);
 
   void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX=0, double omitbelow=0., int nIter_=-1, double threshold_=-1);
+
+
+  // Function to copy a file
+  void CopyFile(TString fname, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*));
+  void CopyDirectory(TDirectory* source, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*));
 
 }
 

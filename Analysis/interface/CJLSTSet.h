@@ -13,6 +13,7 @@ public:
     NormScheme_OneOverNgen,
     NormScheme_OneOverNgen_RenormBySumOneOverNgen,
     NormScheme_OneOverNgen_RelRenormToSumNgen,
+    NormScheme_NgenOverNgenWPU,
     NormScheme_XsecOnly,
     NormScheme_XsecOverNgen,
     NormScheme_XsecOverNgen_RenormBySumXsecOverNgen,

@@ -96,10 +96,14 @@ float CJLSTSet::getPermanentWeight(TString sampleid) const{ return getPermanentW
 void CJLSTSet::setPermanentWeights(const CJLSTSet::NormScheme scheme, const bool useNormPerMass, const bool useNgenWPU){
   cout << "CJLSTSet::setPermanentWeights(" << scheme << "," << useNormPerMass << "," << useNgenWPU << ") is called." << endl;
 
-  const bool renormalizeWeights = !(
+  if (scheme==NormScheme_NgenOverNgenWPU && (!useNgenWPU || useNormPerMass)) return; // permanentWeight=1 would be the case
+
+  const bool renormalizeWeights = !( // !!!!!
     scheme==NormScheme_None
     ||
     scheme==NormScheme_OneOverNgen
+    ||
+    scheme==NormScheme_NgenOverNgenWPU
     ||
     scheme==NormScheme_XsecOnly
     ||
@@ -120,6 +124,8 @@ void CJLSTSet::setPermanentWeights(const CJLSTSet::NormScheme scheme, const bool
     scheme==NormScheme_OneOverNgen_RenormBySumOneOverNgen
     ||
     scheme==NormScheme_OneOverNgen_RelRenormToSumNgen
+    ||
+    scheme==NormScheme_NgenOverNgenWPU
     ||
     scheme==NormScheme_XsecOverNgen
     ||
@@ -166,10 +172,13 @@ void CJLSTSet::setPermanentWeights(const CJLSTSet::NormScheme scheme, const bool
       }
       if (xsec<=0.){ cerr << "- XSec=" << xsec << " is invalid for sample " << tree->sampleIdentifier << ". Setting to 1" << endl; xsec=1; }
 
+      float ngen_nopuhep=tree->getNGenNoPU();
+      float ngen_wpuhep=tree->getNGenWithPU();
       float ngen=1;
       if (useNgen){
-        if (!useNgenWPU) ngen = tree->getNGenNoPU();
-        else ngen = tree->getNGenWithPU();
+        if (!useNgenWPU) ngen = ngen_nopuhep;
+        else ngen = ngen_wpuhep;
+        if (scheme==NormScheme_NgenOverNgenWPU) ngen /= ngen_nopuhep;
       }
       if (ngen==0.) ngen=1;
 
@@ -184,8 +193,8 @@ void CJLSTSet::setPermanentWeights(const CJLSTSet::NormScheme scheme, const bool
       sumwgt += permanentWeights[tree];
       if (permanentWeights[tree]!=0.){
         sumxsec += xsec;
-        sumngen += ngen;
-        sumNonZero += 1.;
+        sumngen += ngen_nopuhep;
+        sumNonZero += 1;
       }
     }
     if (renormalizeWeights){

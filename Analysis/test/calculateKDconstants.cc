@@ -87,25 +87,17 @@ bool EventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEn
 
     // Construct the weights
     float wgt = externalWgt;
-    bool hasPUGenHEPRewgt=false;
+    wgt *= (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]))*(*(valfloats["PUWeight"]))*(*(valfloats["genHEPMCweight"]));
     for (auto rewgt_it=Rewgtbuilders.cbegin(); rewgt_it!=Rewgtbuilders.cend(); rewgt_it++){
       auto& rewgtBuilder = rewgt_it->second;
-      if (rewgt_it->first=="PUGenHEPRewgt"){
-        float pugenhep_wgt_sum = rewgtBuilder->getSumPostThresholdWeights(tree);
-        float pugenhep_wgt = (pugenhep_wgt_sum!=0. ? rewgtBuilder->getPostThresholdWeight(tree)/pugenhep_wgt_sum : 0.); // Normalized to unit
-        wgt *= pugenhep_wgt;
-        hasPUGenHEPRewgt=true;
-      }
-      else if (rewgt_it->first=="MELARewgt"){
+      if (rewgt_it->first=="MELARewgt"){
         float mela_wgt_sum = rewgtBuilder->getSumPostThresholdWeights(tree);
         float mela_wgt = (mela_wgt_sum!=0. ? rewgtBuilder->getPostThresholdWeight(tree)/mela_wgt_sum : 0.); // Normalized to unit
         mela_wgt *= rewgtBuilder->getNormComponent(tree);
         wgt *= mela_wgt;
-        product.setNamedVal("MELARewgtBin", rewgtBuilder->findBin(tree));
       }
+      else wgt *= rewgtBuilder->getPostThresholdWeight(tree);
     }
-    wgt *= (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]));
-    if (!hasPUGenHEPRewgt) wgt *= (*(valfloats["PUWeight"]))*(*(valfloats["genHEPMCweight"]));
 
     const unsigned int nCheckWeights=3;
     const TString strCheckWeights[nCheckWeights]={
@@ -422,7 +414,7 @@ void KDConstantByMass::run(
       for (auto& tree:theSet->getCJLSTTreeList()){ for (auto& strWgt:(*melawgtcollit)) tree->bookBranch<float>(strWgt, 0); }
       melawgtcollit++;
 
-      theSet->setPermanentWeights((schemeSet.empty() ? CJLSTSet::NormScheme_None : schemeSet.at(iset)), true, true);
+      theSet->setPermanentWeights((schemeSet.empty() ? CJLSTSet::NormScheme_NgenOverNgenWPU : schemeSet.at(iset)), true, true);
 
       for (auto& tree:theSet->getCJLSTTreeList()) tree->silenceUnused(); // Will no longer book another branch
       iset++;
@@ -451,6 +443,7 @@ void KDConstantByMass::run(
           GenHMassBinning.addBinBoundary(sqrts*1000.);
         }
         ReweightingBuilder* melarewgtBuilder = new ReweightingBuilder(*melawgtcollit, ReweightingFunctions::getSimpleWeight);
+        melarewgtBuilder->rejectNegativeWeights(true);
         melarewgtBuilder->setDivideByNSample(true);
         melarewgtBuilder->setWeightBinning(GenHMassBinning);
         for (auto& tree:theSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.999, 10);

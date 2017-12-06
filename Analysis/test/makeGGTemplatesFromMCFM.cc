@@ -10,11 +10,13 @@ TTree* fixTreeWeights(TTree* tree);
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category, TString strSystematics, const TString fixedDate=""){
+void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category, ACHypothesis hypo, TString strSystematics, const TString fixedDate=""){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
+  const std::vector<TemplateHelpers::GGHypothesisType> tplset = getGGHypothesesForACHypothesis(hypo);
+  std::vector<TString> melawgtvars; for (auto& gghypotype:tplset) melawgtvars.push_back(getMELAGGHypothesisWeight(gghypotype, hypo));
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -24,7 +26,12 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
   gSystem->Exec("mkdir -p " + coutput_common);
 
-  TString OUTPUT_NAME = Form("%s_ggHtoZZ%s_MCFM_%s_Stage1", strCategory.Data(), strChannel.Data(), strSystematics.Data());
+  TString OUTPUT_NAME = Form(
+    "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_MCFM_Stage1",
+    strChannel.Data(), strCategory.Data(),
+    getACHypothesisName(hypo).Data(), getGGProcessName(true).Data(),
+    strSystematics.Data()
+  );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -111,10 +118,8 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
       tree->bookBranch<short>("Z2Flav", 0);
       // Common variables for reweighting
       for (auto& s:strKfactorVars) tree->bookBranch<float>(s, 1);
-      // Variables for SM reweighting
-      tree->bookBranch<float>("p_Gen_GG_BKG_MCFM", 0);
-      tree->bookBranch<float>("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM", 0);
-      tree->bookBranch<float>("p_Gen_GG_BSI_kappaTopBot_1_ghz1_1_MCFM", 0);
+      // Variables for MELA reweighting
+      for (TString const& wgtvar:melawgtvars) tree->bookBranch<float>(wgtvar, 0);
       // Variables for KDs
       for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
       tree->silenceUnused(); // Will no longer book another branch
@@ -137,7 +142,8 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   GenHMassBinning.addBinBoundary(theSqrts*1000.);
 
   // Construct reweighting variables vector
-  for (int t=GGBkg; t<nGGSMTypes; t++){
+  for (unsigned int t=0; t<tplset.size();t++){
+    auto& gghypotype = tplset.at(t);
     foutput->cd();
 
     /************* Reweighting setup *************/
@@ -146,12 +152,11 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
     // 2) PU and GenHepMCWeight reweighting, which are supposed to keep the cross section the same
     // Total weight is (1)x(2)
     vector<TString> strReweightingWeights;
-    TString strWeight = getMELAGGHypothesisWeight((GGHypothesisType) t);
-    strReweightingWeights.push_back(strWeight);
+    strReweightingWeights.push_back(melawgtvars.at(t));
     for (auto& s:strKfactorVars) strReweightingWeights.push_back(s);
     strReweightingWeights.push_back("xsec");
 
-    TString treename = getGGOutputTreeName((GGHypothesisType)t, true);
+    TString treename = getGGOutputTreeName(gghypotype, true);
     TTree* theFinalTree = new TTree(treename, ""); // The tree to record into the ROOT file
 
     std::vector<SimpleEntry> products;
@@ -226,7 +231,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   MELAout.close();
 }
 
-void makeGGTemplatesFromMCFM_two(const Channel channel, const Category category, TString strSystematics, const TString fixedDate=""){
+void makeGGTemplatesFromMCFM_two(const Channel channel, const Category category, ACHypothesis hypo, TString strSystematics, const TString fixedDate=""){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);
@@ -239,13 +244,23 @@ void makeGGTemplatesFromMCFM_two(const Channel channel, const Category category,
   cout << "Today's date: " << strdate << endl;
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
 
-  TString INPUT_NAME = Form("%s_ggHtoZZ%s_MCFM_%s_Stage1", strCategory.Data(), strChannel.Data(), strSystematics.Data());
+  TString INPUT_NAME = Form(
+    "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_MCFM_Stage1",
+    strChannel.Data(), strCategory.Data(),
+    getACHypothesisName(hypo).Data(), getGGProcessName(true).Data(),
+    strSystematics.Data()
+  );
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
-  if (gSystem->AccessPathName(cinput)) makeGGTemplatesFromMCFM_one(channel, category, strSystematics);
+  if (gSystem->AccessPathName(cinput)) makeGGTemplatesFromMCFM_one(channel, category, hypo, strSystematics, fixedDate);
 
   gSystem->Exec("mkdir -p " + coutput_common);
-  TString OUTPUT_NAME = Form("%s_ggHtoZZ%s_MCFM_%s_Stage2", strCategory.Data(), strChannel.Data(), strSystematics.Data());
+  TString OUTPUT_NAME = Form(
+    "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_MCFM_Stage2",
+    strChannel.Data(), strCategory.Data(),
+    getACHypothesisName(hypo).Data(), getGGProcessName(true).Data(),
+    strSystematics.Data()
+  );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -291,27 +306,18 @@ void makeGGTemplatesFromMCFM_checkstage(
   cout << "Today's date: " << strdate << endl;
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
 
-  TString INPUT_NAME = Form(
-    "%s_ggHtoZZ%s_MCFM_%s_Stage%i",
-    strCategory.Data(), strChannel.Data(),
-    strSystematics.Data(), istage
-  );
+  TString INPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_MCFM_Stage%i", strChannel.Data(), strCategory.Data(), getGGProcessName(true).Data(), strSystematics.Data(), istage);
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
   if (gSystem->AccessPathName(cinput)){
-    if (istage==1) makeGGTemplatesFromMCFM_one(channel, category, strSystematics);
+    if (istage==1) makeGGTemplatesFromMCFM_one(channel, category, kSM, strSystematics);
     else if (istage==2) makeGGTemplatesFromMCFM_two(channel, category, strSystematics);
     else return;
   }
   TFile* finput = TFile::Open(cinput, "read");
 
   gSystem->Exec("mkdir -p " + coutput_common);
-  TString OUTPUT_NAME = Form(
-    "Check%sDiscriminants_%s_ggHtoZZ%s_MCFM_%s_Stage%i",
-    ACHypothesisHelpers::getACHypothesisName(whichKDset).Data(),
-    strCategory.Data(), strChannel.Data(),
-    strSystematics.Data(), istage
-  );
+  TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_MCFM_Check%sDiscriminants_Stage%i", strChannel.Data(), strCategory.Data(), getGGProcessName(true).Data(), strSystematics.Data(), getACHypothesisName(whichKDset).Data(), istage);
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";

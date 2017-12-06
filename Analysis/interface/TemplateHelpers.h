@@ -1,12 +1,18 @@
 #ifndef TEMPLATEHELPERS_H
 #define TEMPLATEHELPERS_H
 
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TH3F.h"
 #include "DiscriminantClasses.h"
 #include "CategorizationHelpers.h"
 #include "ACHypothesisHelpers.h"
 
 
 namespace TemplateHelpers{
+  /****************/
+  /* Gluon fusion */
+  /****************/
   enum GGHypothesisType{
     GGBkg=0,
     GGSig=1, // fai=0
@@ -33,8 +39,19 @@ namespace TemplateHelpers{
   TString getGGProcessName(bool useOffshell);
   TString getGGOutputTreeName(TemplateHelpers::GGHypothesisType type, bool useOffshell);
   TString getGGTemplateName(TemplateHelpers::GGTemplateType type, bool useOffshell);
-  TString getMELAGGHypothesisWeight(TemplateHelpers::GGHypothesisType type);
+  TString getMELAGGHypothesisWeight(TemplateHelpers::GGHypothesisType type, ACHypothesisHelpers::ACHypothesis hypo);
+  std::vector<TemplateHelpers::GGHypothesisType> getGGHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo);
 
+  template<typename T> void recombineGGHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo);
+  template<> void recombineGGHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo);
+  template<> void recombineGGHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo);
+  template<> void recombineGGHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo);
+  template<> void recombineGGHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo);
+
+
+  /*****************/
+  /* QQ background */
+  /*****************/
   enum QQBkgHypothesisType{
     QQBkg=0,
     nQQBkgTypes

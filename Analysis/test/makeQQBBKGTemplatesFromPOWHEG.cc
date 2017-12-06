@@ -25,7 +25,7 @@ void makeQQBKGTemplatesFromPOWHEG_one(const Channel channel, const Category cate
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
   gSystem->Exec("mkdir -p " + coutput_common);
 
-  TString OUTPUT_NAME = Form("%s_qqTo%s_POWHEG_%s_Stage1", strCategory.Data(), strChannel.Data(), strSystematics.Data());
+  TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1", strChannel.Data(), strCategory.Data(), getQQBkgProcessName(true).Data(), strSystematics.Data());
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -183,13 +183,13 @@ void makeQQBKGTemplatesFromPOWHEG_two(const Channel channel, const Category cate
   cout << "Today's date: " << strdate << endl;
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
 
-  TString INPUT_NAME = Form("%s_qqTo%s_POWHEG_%s_Stage1", strCategory.Data(), strChannel.Data(), strSystematics.Data());
+  TString INPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1", strChannel.Data(), strCategory.Data(), getQQBkgProcessName(true).Data(), strSystematics.Data());
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
   if (gSystem->AccessPathName(cinput)) makeQQBKGTemplatesFromPOWHEG_one(channel, category, strSystematics);
 
   gSystem->Exec("mkdir -p " + coutput_common);
-  TString OUTPUT_NAME = Form("%s_qqTo%s_POWHEG_%s_Stage2", strCategory.Data(), strChannel.Data(), strSystematics.Data());
+  TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage2", strChannel.Data(), strCategory.Data(), getQQBkgProcessName(true).Data(), strSystematics.Data());
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -236,11 +236,7 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
   cout << "Today's date: " << strdate << endl;
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
 
-  TString INPUT_NAME = Form(
-    "%s_qqTo%s_POWHEG_%s_Stage%i",
-    strCategory.Data(), strChannel.Data(),
-    strSystematics.Data(), istage
-  );
+  TString INPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage%i", strChannel.Data(), strCategory.Data(), getQQBkgProcessName(true).Data(), strSystematics.Data(), istage);
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
   if (gSystem->AccessPathName(cinput)){
@@ -251,12 +247,7 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
   TFile* finput = TFile::Open(cinput, "read");
 
   gSystem->Exec("mkdir -p " + coutput_common);
-  TString OUTPUT_NAME = Form(
-    "Check%sDiscriminants_%s_qqTo%s_POWHEG_%s_Stage%i",
-    ACHypothesisHelpers::getACHypothesisName(whichKDset).Data(),
-    strCategory.Data(), strChannel.Data(),
-    strSystematics.Data(), istage
-  );
+  TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Check%sDiscriminants_Stage%i", strChannel.Data(), strCategory.Data(), getQQBkgProcessName(true).Data(), strSystematics.Data(), ACHypothesisHelpers::getACHypothesisName(whichKDset).Data(), istage);
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";

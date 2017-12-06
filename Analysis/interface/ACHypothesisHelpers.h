@@ -19,6 +19,9 @@ namespace ACHypothesisHelpers{
 
   std::vector<TString> getACHypothesisKDNameSet(ACHypothesisHelpers::ACHypothesis hypo, CategorizationHelpers::Category category);
 
+  float getACHypothesisMEHZZGVal(ACHypothesisHelpers::ACHypothesis hypo);
+  float getACHypothesisHZZGVal(ACHypothesisHelpers::ACHypothesis hypo);
+
 }
 
 #endif

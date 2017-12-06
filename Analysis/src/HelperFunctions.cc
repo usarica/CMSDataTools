@@ -13,8 +13,10 @@ TString HelperFunctions::todaysdate(){
   int year = 1900 + ltm->tm_year-2000;
   int month = 1 + ltm->tm_mon;
   int day = ltm->tm_mday;
-  if (month>=10) result = Form("%i%i%i", day, month, year);
-  else result = Form("%i%i%i%i", day, 0, month, year);
+  TString strday = (day>=10 ? Form("%i", day) : Form("%i%i", 0, day));
+  TString strmonth = (month>=10 ? Form("%i", month) : Form("%i%i", 0, month));
+  TString stryear = Form("%i", year);
+  result = stryear + strmonth + strday;
   return result;
 }
 
@@ -659,36 +661,32 @@ template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsi
   }
 }
 
-template<> void HelperFunctions::wipeOverUnderFlows<TH1F>(TH1F* hwipe){
+template<> void HelperFunctions::wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool rescale){
   double integral = hwipe->Integral(0, hwipe->GetNbinsX()+1);
   for (int binx=0; binx<=hwipe->GetNbinsX()+1; binx++){
     if (binx>=1 && binx<=hwipe->GetNbinsX()) continue;
-    if (hwipe->GetBinContent(binx)!=0){
-      hwipe->SetBinContent(binx, 0);
-      //MELAout << hwipe->GetName() << " binX = " << binx << " non-zero." << endl;
-    }
+    hwipe->SetBinContent(binx, 0);
+    hwipe->SetBinError(binx, 0);
   }
   double wipeScale = hwipe->Integral();
   wipeScale = integral / wipeScale;
-  hwipe->Scale(wipeScale);
+  if (rescale) hwipe->Scale(wipeScale);
 }
-template<> void HelperFunctions::wipeOverUnderFlows<TH2F>(TH2F* hwipe){
+template<> void HelperFunctions::wipeOverUnderFlows<TH2F>(TH2F* hwipe, bool rescale){
   double integral = hwipe->Integral(0, hwipe->GetNbinsX()+1, 0, hwipe->GetNbinsY()+1);
   for (int binx=0; binx<=hwipe->GetNbinsX()+1; binx++){
     if (binx>=1 && binx<=hwipe->GetNbinsX()) continue;
     for (int biny=0; biny<=hwipe->GetNbinsY()+1; biny++){
       if (biny>=1 && biny<=hwipe->GetNbinsY()) continue;
-      if (hwipe->GetBinContent(binx, biny)!=0){
-        hwipe->SetBinContent(binx, biny, 0);
-        //MELAout << hwipe->GetName() << " binX = " << binx << " binY = " << biny << " non-zero." << endl;
-      }
+      hwipe->SetBinContent(binx, biny, 0);
+      hwipe->SetBinError(binx, biny, 0);
     }
   }
   double wipeScale = hwipe->Integral();
   wipeScale = integral / wipeScale;
-  hwipe->Scale(wipeScale);
+  if (rescale) hwipe->Scale(wipeScale);
 }
-template<> void HelperFunctions::wipeOverUnderFlows<TH3F>(TH3F* hwipe){
+template<> void HelperFunctions::wipeOverUnderFlows<TH3F>(TH3F* hwipe, bool rescale){
   double integral = hwipe->Integral(0, hwipe->GetNbinsX()+1, 0, hwipe->GetNbinsY()+1, 0, hwipe->GetNbinsZ()+1);
   for (int binx=0; binx<=hwipe->GetNbinsX()+1; binx++){
     if (binx>=1 && binx<=hwipe->GetNbinsX()) continue;
@@ -696,16 +694,101 @@ template<> void HelperFunctions::wipeOverUnderFlows<TH3F>(TH3F* hwipe){
       if (biny>=1 && biny<=hwipe->GetNbinsY()) continue;
       for (int binz=0; binz<=hwipe->GetNbinsZ()+1; binz++){
         if (binz>=1 && binz<=hwipe->GetNbinsZ()) continue;
-        if (hwipe->GetBinContent(binx, biny, binz)!=0){
-          hwipe->SetBinContent(binx, biny, binz, 0);
-          //MELAout << hwipe->GetName() << " binX = " << binx << " binY = " << biny << " binZ = " << binz << " non-zero." << endl;
-        }
+        hwipe->SetBinContent(binx, biny, binz, 0);
+        hwipe->SetBinError(binx, biny, binz, 0);
       }
     }
   }
   double wipeScale = hwipe->Integral();
   wipeScale = integral / wipeScale;
-  hwipe->Scale(wipeScale);
+  if (rescale) hwipe->Scale(wipeScale);
+}
+
+template<> void HelperFunctions::divideBinWidth<TH1F>(TH1F* histo){
+  TAxis const* xaxis = histo->GetXaxis();
+  for (int binx=1; binx<=histo->GetNbinsX(); binx++){
+    float binwidthX = xaxis->GetBinWidth(binx);
+    histo->SetBinContent(binx, histo->GetBinContent(binx)/binwidthX);
+    histo->SetBinError(binx, histo->GetBinError(binx)/binwidthX);
+  }
+}
+template<> void HelperFunctions::divideBinWidth<TH2F>(TH2F* histo){
+  TAxis const* xaxis = histo->GetXaxis();
+  TAxis const* yaxis = histo->GetYaxis();
+  for (int binx=1; binx<=histo->GetNbinsX(); binx++){
+    float binwidthX = xaxis->GetBinWidth(binx);
+    for (int biny=1; biny<=histo->GetNbinsY(); biny++){
+      float binwidthY = yaxis->GetBinWidth(biny);
+      float binwidth=binwidthX*binwidthY;
+      histo->SetBinContent(binx, biny, histo->GetBinContent(binx, biny)/binwidth);
+      histo->SetBinError(binx, biny, histo->GetBinError(binx, biny)/binwidth);
+    }
+  }
+}
+template<> void HelperFunctions::divideBinWidth<TH3F>(TH3F* histo){
+  TAxis const* xaxis = histo->GetXaxis();
+  TAxis const* yaxis = histo->GetYaxis();
+  TAxis const* zaxis = histo->GetZaxis();
+  for (int binx=1; binx<=histo->GetNbinsX(); binx++){
+    float binwidthX = xaxis->GetBinWidth(binx);
+    for (int biny=1; biny<=histo->GetNbinsY(); biny++){
+      float binwidthY = yaxis->GetBinWidth(biny);
+      for (int binz=1; binz<=histo->GetNbinsZ(); binz++){
+        float binwidthZ = zaxis->GetBinWidth(binz);
+        float binwidth=binwidthX*binwidthY*binwidthZ;
+        histo->SetBinContent(binx, biny, binz, histo->GetBinContent(binx, biny, binz)/binwidth);
+        histo->SetBinError(binx, biny, binz, histo->GetBinError(binx, biny, binz)/binwidth);
+      }
+    }
+  }
+}
+
+template<> float HelperFunctions::computeIntegral<TH1F>(TH1F* histo, bool useWidth){
+  TAxis const* xaxis = histo->GetXaxis();
+  float sum=0;
+  for (int binx=1; binx<=histo->GetNbinsX(); binx++){
+    float binwidthX = xaxis->GetBinWidth(binx);
+    float bincontent = histo->GetBinContent(binx);
+    if (useWidth) bincontent *= binwidthX;
+    sum += bincontent;
+  }
+  return sum;
+}
+template<> float HelperFunctions::computeIntegral<TH2F>(TH2F* histo, bool useWidth){
+  TAxis const* xaxis = histo->GetXaxis();
+  TAxis const* yaxis = histo->GetYaxis();
+  float sum=0;
+  for (int binx=1; binx<=histo->GetNbinsX(); binx++){
+    float binwidthX = xaxis->GetBinWidth(binx);
+    for (int biny=1; biny<=histo->GetNbinsY(); biny++){
+      float binwidthY = yaxis->GetBinWidth(biny);
+      float binwidth=binwidthX*binwidthY;
+      float bincontent = histo->GetBinContent(binx, biny);
+      if (useWidth) bincontent *= binwidth;
+      sum += bincontent;
+    }
+  }
+  return sum;
+}
+template<> float HelperFunctions::computeIntegral<TH3F>(TH3F* histo, bool useWidth){
+  TAxis const* xaxis = histo->GetXaxis();
+  TAxis const* yaxis = histo->GetYaxis();
+  TAxis const* zaxis = histo->GetZaxis();
+  float sum=0;
+  for (int binx=1; binx<=histo->GetNbinsX(); binx++){
+    float binwidthX = xaxis->GetBinWidth(binx);
+    for (int biny=1; biny<=histo->GetNbinsY(); biny++){
+      float binwidthY = yaxis->GetBinWidth(biny);
+      for (int binz=1; binz<=histo->GetNbinsZ(); binz++){
+        float binwidthZ = zaxis->GetBinWidth(binz);
+        float binwidth=binwidthX*binwidthY*binwidthZ;
+        float bincontent = histo->GetBinContent(binx, biny, binz);
+        if (useWidth) bincontent *= binwidth;
+        sum += bincontent;
+      }
+    }
+  }
+  return sum;
 }
 
 void HelperFunctions::CopyFile(TString fname, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*)){

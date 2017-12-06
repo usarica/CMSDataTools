@@ -1,36 +1,29 @@
 #include "common_includes.h"
-#include "GGAnalyzer.h"
+#include "TemplatesEventAnalyzer.h"
 
 
 // Constants to affect the template code
-const TString fixedDate="";
 const TString user_output_dir = "output/";
+enum{
+  kBkg=0,
+  kSig=1,
+  kBSI=2,
+  nHypotheses=3
+};
+TString strHypothesisName[nHypotheses]={
+  "Bkg",
+  "Sig",
+  "BSI"
+};
 
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category category, TString strSystematics){
+void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category category, TString strSystematics, const TString fixedDate=""){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
-
-  enum{
-    kBkg=0,
-    kSig=1,
-    kBSI=2,
-    nTemplates=3
-  };
-  TString strTemplateName[nTemplates]={
-    "Bkg",
-    "Sig",
-    "BSI"
-  };
-
-  // Setup binning
-  ExtendedBinning ZZMassBinning(2900/2., 100., 3000., "ZZMass");
-  ExtendedBinning KD1Binning(30, 0, 1, "KD1");
-  //ExtendedBinning KD2Binning(30, -1, 1, "KD2");
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -75,12 +68,29 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   else if (strSystematics == "PDFReplicaUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFReplicaUp");
 
   // Register the discriminants
-  Discriminant* KD1 = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
-  vector<TString> KD1vars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDbkgkin);
-  Discriminant* KD2=nullptr;
-  vector<TString> KD2vars;
-  //Discriminant* KD2 = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
-  //vector<TString> KD2vars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDggint);
+  vector<KDspecs> KDlist;
+  if (category==Inclusive || category==Untagged){
+    KDspecs KDbkg("KDbkkg");
+    KDbkg.KD = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+    KDbkg.KDvars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDbkgkin);
+    KDlist.push_back(KDbkg);
+    KDspecs KDbkgint("KDbkgint");
+    //KDbkgint.KD = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+    //KDbkgint.KDvars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDggint);
+    KDlist.push_back(KDint);
+    KDspecs KDL1("KDL1");
+    KDL1.KD = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDL1dec, "", "", "../data/gConstant_HZZ2e2mu_L1.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_L1", 1e-4);
+    KDL1.KDvars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDL1dec);
+    KDlist.push_back(KDL1);
+    KDspecs KDa2("KDa2");
+    KDa2.KD = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDa2dec, "", "", "../data/gConstant_HZZ2e2mu_g2.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_g2");
+    KDa2.KDvars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDa2dec);
+    KDlist.push_back(KDa2);
+    KDspecs KDa3("KDa3");
+    KDa3.KD = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDa3dec, "", "", "../data/gConstant_HZZ2e2mu_g4.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_g4");
+    KDa3.KDvars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDa3dec);
+    KDlist.push_back(KDa3);
+  }
 
   // Get the CJLST set
   //vector<TString> newlist; newlist.push_back(strSamples.back()); newlist.push_back(strSamples.front());
@@ -103,8 +113,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     tree->bookBranch<float>("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM", 0);
     tree->bookBranch<float>("p_Gen_GG_BSI_kappaTopBot_1_ghz1_1_MCFM", 0);
     // Variables for KDs
-    for (auto& v:KD1vars) tree->bookBranch<float>(v, 0);
-    for (auto& v:KD2vars) tree->bookBranch<float>(v, 0);
+    for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
     tree->silenceUnused(); // Will no longer book another branch
   }
   theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_NgenOverNgenWPU, false, true);
@@ -126,10 +135,10 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
   // Construct reweighting variables vector
   vector<TString> strReweightingWeigths;
-  for (int t=kBkg; t<nTemplates; t++){
+  for (int t=kBkg; t<nHypotheses; t++){
     foutput->cd();
 
-    TDirectory* controlsDir = foutput->mkdir(Form("controls_%s", strTemplateName[t].Data()), "");
+    TDirectory* controlsDir = foutput->mkdir(Form("controls_%s", strHypothesisName[t].Data()), "");
     controlsDir->cd();
     TH1F* h_MELARewgtSumAllNonZeroWgtEventsPerBin = new TH1F("MELARewgtSumAllNonZeroWgtEventsPerBin", "", GenHMassBinning.getNbins(), GenHMassBinning.getBinning());
     h_MELARewgtSumAllNonZeroWgtEventsPerBin->GetXaxis()->SetTitle(GenHMassBinning.getLabel());
@@ -138,7 +147,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
     foutput->cd();
 
-    TTree* theFinalTree = new TTree(Form("T_ggH_%s_Tree", strTemplateName[t].Data()), ""); // The tree to record into the ROOT file
+    TTree* theFinalTree = new TTree(Form("T_ggH_%s_Tree", strHypothesisName[t].Data()), ""); // The tree to record into the ROOT file
 
     /************* Reweighting setup *************/
     // There are two builders:
@@ -206,7 +215,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     foutput->cd();
 
     // Build the analyzer and loop over the events
-    GGAnalyzer theAnalyzer(theSampleSet, channel, category);
+    TemplatesEventAnalyzer theAnalyzer(theSampleSet, channel, category);
     // Book common variables needed for analysis
     theAnalyzer.addConsumed<float>("PUWeight");
     theAnalyzer.addConsumed<float>("genHEPMCweight");
@@ -217,8 +226,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     theAnalyzer.addConsumed<short>("Z1Flav");
     theAnalyzer.addConsumed<short>("Z2Flav");
     // Add discriminant builders
-    theAnalyzer.addDiscriminantBuilder("KD1", KD1, KD1vars);
-    theAnalyzer.addDiscriminantBuilder("KD2", KD2, KD2vars);
+    for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
     // Add reweighting builders
     theAnalyzer.addReweightingBuilder("MELARewgt", melarewgtBuilder);
     // Loop
@@ -235,8 +243,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     delete theFinalTree;
   }
 
-  delete KD2;
-  delete KD1;
+  for (auto& KD:KDlist) delete KD.KD;
   delete theSampleSet;
   foutput->Close();
   MELAout.close();

@@ -1,44 +1,4 @@
-#include <iostream>
-#include <fstream>
-#include <iomanip>
-#include <utility>
-#include <algorithm>
-#include <cmath>
-#include <cassert>
-#include <string>
-#include <vector>
-#include <fstream>
-#include <cstdlib>
-#include <unordered_map>
-#include "TROOT.h"
-#include "TSystem.h"
-#include "TMath.h"
-#include "TLorentzVector.h"
-#include "TLorentzRotation.h"
-#include "TFile.h"
-#include "TTree.h"
-#include "TChain.h"
-#include "TString.h"
-#include "TF1.h"
-#include "TSpline.h"
-#include "TCanvas.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TH3F.h"
-#include "TProfile.h"
-#include "TGraphErrors.h"
-#include "TRandom.h"
-#include "HelperFunctions.h"
-#include "SampleHelpers.h"
-#include "CJLSTSet.h"
-#include "BaseTreeLooper.h"
-#include "DiscriminantClasses.h"
-#include "CategorizationHelpers.h"
-#include "ReweightingBuilder.h"
-#include "ReweightingFunctions.h"
-#include "ExtendedBinning.h"
-#include "MELAStreamHelpers.hh"
-#include "Mela.h"
+#include "common_includes.h"
 
 
 #ifndef doDebugKD
@@ -48,21 +8,13 @@
 #define doDebugKDExt false
 #endif
 
-using namespace std;
-using namespace HelperFunctions;
-using namespace SampleHelpers;
-using namespace CategorizationHelpers;
-using namespace DiscriminantClasses;
-using namespace ReweightingFunctions;
-using namespace MELAStreamHelpers;
-
 
 class EventAnalyzer : public BaseTreeLooper{
 protected:
   Channel channel;
   Category category;
 
-  bool runEvent(CJLSTTree* tree, SimpleEntry& product);
+  bool runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEntry& product);
 
 public:
   float infTrackingVal;
@@ -93,6 +45,9 @@ bool EventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEn
       if (rewgt_it->first=="MELARewgt"){
         float mela_wgt_sum = rewgtBuilder->getSumPostThresholdWeights(tree);
         float mela_wgt = (mela_wgt_sum!=0. ? rewgtBuilder->getPostThresholdWeight(tree)/mela_wgt_sum : 0.); // Normalized to unit
+        unsigned int mela_nevts = rewgtBuilder->getSumNonZeroWgtEvents(tree);
+        unsigned int mela_sumnevts = rewgtBuilder->getSumAllNonZeroWgtEvents(tree);
+        if (mela_sumnevts!=0) mela_wgt *= static_cast<float>(mela_nevts) / static_cast<float>(mela_sumnevts);
         mela_wgt *= rewgtBuilder->getNormComponent(tree);
         wgt *= mela_wgt;
       }

@@ -6,24 +6,24 @@ using namespace std;
 
 
 BaseTree::BaseTree() :
-finput(nullptr),
-tree(nullptr),
-failedtree(nullptr),
-hCounters(nullptr),
-valid(false),
-receiver(true),
-currentEvent(-1),
-currentTree(nullptr)
+  finput(nullptr),
+  tree(nullptr),
+  failedtree(nullptr),
+  hCounters(nullptr),
+  valid(false),
+  receiver(true),
+  currentEvent(-1),
+  currentTree(nullptr)
 {}
 BaseTree::BaseTree(const TString cinput, const TString treename, const TString failedtreename, const TString countersname) :
-finput(nullptr),
-tree(nullptr),
-failedtree(nullptr),
-hCounters(nullptr),
-valid(false),
-receiver(true),
-currentEvent(-1),
-currentTree(nullptr)
+  finput(nullptr),
+  tree(nullptr),
+  failedtree(nullptr),
+  hCounters(nullptr),
+  valid(false),
+  receiver(true),
+  currentEvent(-1),
+  currentTree(nullptr)
 {
   TDirectory* curdir = gDirectory; // Save current directory to return back to it later
   if (!gSystem->AccessPathName(cinput)){
@@ -31,13 +31,13 @@ currentTree(nullptr)
     if (finput){
       if (finput->IsOpen() && !finput->IsZombie()){
         finput->cd();
-        tree = (TTree*)finput->Get(treename);
+        tree = (TTree*) finput->Get(treename);
         valid = (tree!=nullptr);
         if (!valid){ finput->Close(); finput=nullptr; }
         else{
-          failedtree = (TTree*)finput->Get(failedtreename);
+          failedtree = (TTree*) finput->Get(failedtreename);
           if (!failedtree) cout << "BaseTree::BaseTree(" << cinput << ") does not contain " << failedtreename << endl;
-          hCounters = (TH1F*)finput->Get(countersname);
+          hCounters = (TH1F*) finput->Get(countersname);
         }
       }
       else if (finput->IsOpen()){ finput->Close(); finput=nullptr; }
@@ -45,6 +45,17 @@ currentTree(nullptr)
   }
   curdir->cd(); // Return back to the directory before opening the input file
 }
+BaseTree::BaseTree(const TString treename) :
+  finput(nullptr),
+  tree(new TTree(treename, "")),
+  failedtree(nullptr),
+  hCounters(nullptr),
+  valid(true),
+  receiver(false),
+  currentEvent(-1),
+  currentTree(nullptr)
+{}
+
 BaseTree::~BaseTree(){
   HelperFunctions::cleanUnorderedMap(valshorts);
   HelperFunctions::cleanUnorderedMap(valuints);
@@ -57,6 +68,10 @@ BaseTree::~BaseTree(){
     HelperFunctions::cleanUnorderedMap(valVints);
     HelperFunctions::cleanUnorderedMap(valVfloats);
     HelperFunctions::cleanUnorderedMap(valVdoubles);
+
+    delete hCounters;
+    delete failedtree;
+    delete tree;
   }
 }
 

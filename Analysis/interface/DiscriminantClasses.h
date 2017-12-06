@@ -1,6 +1,7 @@
 #ifndef DISCRIMINANTCLASSES_H
 #define DISCRIMINANTCLASSES_H
 
+#include "HelperFunctionsCore.h"
 #include "SimpleDiscriminant.h"
 #include "PA2PB1Discriminant.h"
 #include "PA2PB2Discriminant.h"
@@ -9,9 +10,21 @@
 #include "JJEWQCDBkgDiscriminant.h"
 #include "SimpleInterferenceDiscriminant.h"
 
+
 namespace DiscriminantClasses{
+  struct KDspecs{
+    TString KDname;
+    std::vector<TString> KDvars;
+
+    Discriminant* KD;
+
+    KDspecs();
+    KDspecs(TString strname);
+    bool isValid() const;
+  };
+
   enum Type{
-    kDbkgkin,
+    kDbkgkin=0,
     kDbkgdec,
 
     kDggbkgkin,
@@ -25,10 +38,22 @@ namespace DiscriminantClasses{
 
     kDbkgjjEWQCD,
 
+    kDL1dec,
+    kDL1decint,
+    kDa2dec,
+    kDa2decint,
+    kDa3dec,
+    kDa3decint,
+
     kNTypes
   };
 
-  Type getKDType(const TString name);
+  extern const std::unordered_map<TString, DiscriminantClasses::Type> mapKDNameType;
+
+  std::unordered_map<TString, DiscriminantClasses::Type> getKDNameTypeMap();
+  DiscriminantClasses::Type getKDType(const TString name);
+  TString getKDName(DiscriminantClasses::Type type);
+
   Discriminant* constructKDFromType(
     const Type type,
     const TString cfilename="", const TString splinename="",

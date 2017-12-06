@@ -208,6 +208,80 @@ template<> bool BaseTree::bookBranch<BaseTree::BranchType_vint_t>(TString branch
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_vfloat_t>(TString branchname){ return this->bookBranch<std::vector<float>*>(branchname, 0); }
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_vdouble_t>(TString branchname){ return this->bookBranch<std::vector<double>*>(branchname, 0); }
 
+template<> bool BaseTree::putBranch<short>(TString branchname, short valdef){
+  if (valshorts.find(branchname)==valshorts.end()) valshorts[branchname] = new std::pair<short, short>(valdef, valdef);
+  else{ valshorts[branchname]->first=valdef; valshorts[branchname]->second=valdef; }
+  SampleHelpers::putBranch(tree, branchname, valshorts[branchname]->first);
+  return true;
+}
+template<> bool BaseTree::putBranch<unsigned int>(TString branchname, unsigned int valdef){
+  if (valuints.find(branchname)==valuints.end()) valuints[branchname] = new std::pair<unsigned int, unsigned int>(valdef, valdef);
+  else{ valuints[branchname]->first=valdef; valuints[branchname]->second=valdef; }
+  SampleHelpers::putBranch(tree, branchname, valuints[branchname]->first);
+  return true;
+}
+template<> bool BaseTree::putBranch<int>(TString branchname, int valdef){
+  if (valints.find(branchname)==valints.end()) valints[branchname] = new std::pair<int, int>(valdef, valdef);
+  else{ valints[branchname]->first=valdef; valints[branchname]->second=valdef; }
+  SampleHelpers::putBranch(tree, branchname, valints[branchname]->first);
+  return true;
+}
+template<> bool BaseTree::putBranch<float>(TString branchname, float valdef){
+  if (valfloats.find(branchname)==valfloats.end()) valfloats[branchname] = new std::pair<float, float>(valdef, valdef);
+  else{ valfloats[branchname]->first=valdef; valfloats[branchname]->second=valdef; }
+  SampleHelpers::putBranch(tree, branchname, valfloats[branchname]->first);
+  return true;
+}
+template<> bool BaseTree::putBranch<double>(TString branchname, double valdef){
+  if (valdoubles.find(branchname)==valdoubles.end()) valdoubles[branchname] = new std::pair<double, double>(valdef, valdef);
+  else{ valdoubles[branchname]->first=valdef; valdoubles[branchname]->second=valdef; }
+  SampleHelpers::putBranch(tree, branchname, valdoubles[branchname]->first);
+  return true;
+}
+
+template<> bool BaseTree::putBranch<std::vector<short>*>(TString branchname, std::vector<short>*/* valdef*/){
+  if (valVshorts.find(branchname)==valVshorts.end()) valVshorts[branchname] = new std::vector<short>();
+  else valVshorts[branchname]->clear();
+  SampleHelpers::putBranch(tree, branchname, *(valVshorts[branchname]));
+  return true;
+}
+template<> bool BaseTree::putBranch<std::vector<unsigned int>*>(TString branchname, std::vector<unsigned int>*/* valdef*/){
+  if (valVuints.find(branchname)==valVuints.end()) valVuints[branchname] = new std::vector<unsigned int>();
+  else valVuints[branchname]->clear();
+  SampleHelpers::putBranch(tree, branchname, *(valVuints[branchname]));
+  return true;
+}
+template<> bool BaseTree::putBranch<std::vector<int>*>(TString branchname, std::vector<int>*/* valdef*/){
+  if (valVints.find(branchname)==valVints.end()) valVints[branchname] = new std::vector<int>();
+  else valVints[branchname]->clear();
+  SampleHelpers::putBranch(tree, branchname, *(valVints[branchname]));
+  return true;
+}
+template<> bool BaseTree::putBranch<std::vector<float>*>(TString branchname, std::vector<float>*/* valdef*/){
+  if (valVfloats.find(branchname)==valVfloats.end()) valVfloats[branchname] = new std::vector<float>();
+  else valVfloats[branchname]->clear();
+  SampleHelpers::putBranch(tree, branchname, *(valVfloats[branchname]));
+  return true;
+}
+template<> bool BaseTree::putBranch<std::vector<double>*>(TString branchname, std::vector<double>*/* valdef*/){
+  if (valVdoubles.find(branchname)==valVdoubles.end()) valVdoubles[branchname] = new std::vector<double>();
+  else valVdoubles[branchname]->clear();
+  SampleHelpers::putBranch(tree, branchname, *(valVdoubles[branchname]));
+  return true;
+}
+
+template<> bool BaseTree::putBranch<BaseTree::BranchType_short_t>(TString branchname){ return this->putBranch<short>(branchname, 0); }
+template<> bool BaseTree::putBranch<BaseTree::BranchType_uint_t>(TString branchname){ return this->putBranch<unsigned int>(branchname, 0); }
+template<> bool BaseTree::putBranch<BaseTree::BranchType_int_t>(TString branchname){ return this->putBranch<int>(branchname, 0); }
+template<> bool BaseTree::putBranch<BaseTree::BranchType_float_t>(TString branchname){ return this->putBranch<float>(branchname, 0); }
+template<> bool BaseTree::putBranch<BaseTree::BranchType_double_t>(TString branchname){ return this->putBranch<double>(branchname, 0); }
+
+template<> bool BaseTree::putBranch<BaseTree::BranchType_vshort_t>(TString branchname){ return this->putBranch<std::vector<short>*>(branchname, 0); }
+template<> bool BaseTree::putBranch<BaseTree::BranchType_vuint_t>(TString branchname){ return this->putBranch<std::vector<unsigned int>*>(branchname, 0); }
+template<> bool BaseTree::putBranch<BaseTree::BranchType_vint_t>(TString branchname){ return this->putBranch<std::vector<int>*>(branchname, 0); }
+template<> bool BaseTree::putBranch<BaseTree::BranchType_vfloat_t>(TString branchname){ return this->putBranch<std::vector<float>*>(branchname, 0); }
+template<> bool BaseTree::putBranch<BaseTree::BranchType_vdouble_t>(TString branchname){ return this->putBranch<std::vector<double>*>(branchname, 0); }
+
 template<> void BaseTree::getVal<short>(TString branchname, short& val) const{
   typedef short itType;
   std::unordered_map<TString, std::pair<itType, itType>*>::const_iterator it;

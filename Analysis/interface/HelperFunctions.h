@@ -74,10 +74,20 @@ namespace HelperFunctions{
   template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis);
   template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int axis);
 
-  template <typename T> void wipeOverUnderFlows(T* hwipe);
-  template<> void wipeOverUnderFlows<TH1F>(TH1F* hwipe);
-  template<> void wipeOverUnderFlows<TH2F>(TH2F* hwipe);
-  template<> void wipeOverUnderFlows<TH3F>(TH3F* hwipe);
+  template <typename T> void wipeOverUnderFlows(T* hwipe, bool rescale=false);
+  template<> void wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool rescale);
+  template<> void wipeOverUnderFlows<TH2F>(TH2F* hwipe, bool rescale);
+  template<> void wipeOverUnderFlows<TH3F>(TH3F* hwipe, bool rescale);
+
+  template <typename T> void divideBinWidth(T* histo);
+  template<> void divideBinWidth<TH1F>(TH1F* histo);
+  template<> void divideBinWidth<TH2F>(TH2F* histo);
+  template<> void divideBinWidth<TH3F>(TH3F* histo);
+
+  template <typename T> float computeIntegral(T* histo, bool useWidth);
+  template<> float computeIntegral<TH1F>(TH1F* histo, bool useWidth);
+  template<> float computeIntegral<TH2F>(TH2F* histo, bool useWidth);
+  template<> float computeIntegral<TH3F>(TH3F* histo, bool useWidth);
 
   // Spline functions
   template<int N> TF1* getFcn_a0plusa1overXN(TSpline3* sp, double xmin, double xmax, bool useLowBound);

@@ -58,4 +58,7 @@ double ExtendedBinning::getBinHighEdge(const int bin) const{
 void ExtendedBinning::addBinBoundary(double boundary){
   HelperFunctions::addByLowest<double>(vbinlow, boundary, true);
 }
+void ExtendedBinning::removeBinLowEdge(const int bin){
+  if (bin>=0 && bin<(int) vbinlow.size()) vbinlow.erase(vbinlow.begin()+bin);
+}
 

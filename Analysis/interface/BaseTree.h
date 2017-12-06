@@ -61,10 +61,14 @@ protected:
 public:
   BaseTree();
   BaseTree(const TString cinput, const TString treename, const TString failedtreename, const TString countersname);
+  BaseTree(const TString treename); // Output constructor
   virtual ~BaseTree();
 
   template<typename T> bool bookBranch(TString branchname, T valdef);
   template<BranchType T> bool bookBranch(TString branchname);
+
+  template<typename T> bool putBranch(TString branchname, T valdef);
+  template<BranchType T> bool putBranch(TString branchname);
 
   bool getSelectedEvent(int ev);
   bool getFailedEvent(int ev);

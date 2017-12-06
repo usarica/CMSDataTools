@@ -39,6 +39,18 @@ TTree* SampleHelpers::findTree(std::vector<TTree*> const& treeList, int evid){
   }
   return 0;
 }
+bool SampleHelpers::branchExists(TTree* tree, TString strname){
+  if (!tree) return false;
+  bool found=false;
+  const TList* blist = (const TList*) tree->GetListOfBranches();
+  for (int ib=0; ib<blist->GetSize(); ib++){
+    TObject* branch = blist->At(ib);
+    if (!branch) continue;
+    TString bname = branch->GetName();
+    if (strname==bname){ found=true; break; }
+  }
+  return found;
+}
 void SampleHelpers::getEntry(std::vector<TTree*>& treeList, int evid){
   int ev = evid;
   for (unsigned int t=0; t<treeList.size(); t++){
@@ -908,9 +920,9 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
 
   if (strsample=="qq_Bkg"){
     samples.push_back("ZZTo4l");
-    samples.push_back("ZZTo4l_ext");
+    samples.push_back("ZZTo4lext");
   }
-  if (strsample=="qq_Bkg_Combined"){ // ZZTo4l + ZZTo4l_ext (use this one if possible)
+  if (strsample=="qq_Bkg_Combined"){ // ZZTo4l + ZZTo4lext (use this one if possible)
     samples.push_back("ZZTo4lCombined");
   }
 

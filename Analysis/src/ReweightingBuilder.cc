@@ -62,8 +62,6 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
   if (divideByNSample) MELAout << "ReweightingBuilder[" << strWeights << "]::setupWeightVariables will divide the weights by "
     << theTree->getNGenNoPU() << "." << endl;
 
-  std::vector<float> res;
-
   if (!theTree) return;
 
   const ExtendedBinning& binning = this->weightBinning;
@@ -81,13 +79,26 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
   const unsigned int ns = (!noBoundaries ? binning.getNbins() : 1);
 
   // Get sum of weights
+  weightThresholds[theTree]=std::vector<float>();
   sumPostThrWeights[theTree]=std::vector<float>();
   sumEvents[theTree]=std::vector<unsigned int>();
   sumNonZeroWgtEvents[theTree]=std::vector<unsigned int>();
-  vector<vector<SimpleEntry>> indexList;
+  weightThresholds[theTree].assign(ns, 0);
   sumPostThrWeights[theTree].assign(ns, 0);
   sumEvents[theTree].assign(ns, 0);
   sumNonZeroWgtEvents[theTree].assign(ns, 0);
+
+  if (fractionRequirement<0.){
+    for (unsigned int ibin=0; ibin<ns; ibin++){
+      weightThresholds[theTree].at(ibin)=-1;
+      sumPostThrWeights[theTree].at(ibin)=0;
+      sumEvents[theTree].at(ibin)=-1;
+      sumNonZeroWgtEvents[theTree].at(ibin)=-1;
+    }
+    return;
+  }
+
+  vector<vector<SimpleEntry>> indexList;
   indexList.assign(ns, vector<SimpleEntry>());
   for (auto& index:indexList) index.reserve(theTree->getNEvents()/ns+1);
 
@@ -129,7 +140,7 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
       const unsigned int maxPrunedSize = std::max((unsigned int) (fractionRequirement>=0. ? std::ceil(float(nTotalPerBin)*(1.-fractionRequirement)) : nTotalPerBin), (unsigned int) 3);
       vector<SimpleEntry> indexPruned; indexPruned.reserve(maxPrunedSize);
 
-      unsigned int itrk=0;
+      //unsigned int itrk=0;
       for (auto& theEntry:index){
         //HelperFunctions::progressbar(itrk, nTotalPerBin);
         if (indexPruned.size()<maxPrunedSize) addByHighest(indexPruned, theEntry, false);
@@ -137,7 +148,7 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
           addByHighest(indexPruned, theEntry, false);
           indexPruned.pop_back();
         }
-        itrk++;
+        //itrk++;
       }
 
       // Find the threshold
@@ -145,11 +156,11 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
       unsigned int index_entry_prev=index_entry+1;
       threshold = (indexPruned.at(index_entry_prev).trackingval + indexPruned.at(index_entry).trackingval)*0.5;
       cout << "Threshold raw: " << threshold << endl;
-      if (threshold>0. && indexPruned.front().trackingval<threshold*5.) threshold = indexPruned.front().trackingval; // Prevent false-positives
+      if ((threshold>0. && indexPruned.front().trackingval<threshold*5.) || fractionRequirement>=1.) threshold = indexPruned.front().trackingval; // Prevent false-positives
     }
     else if (nTotalPerBin==2) threshold = std::max(index.at(0).trackingval, index.at(1).trackingval);
     else if (nTotalPerBin==1) threshold = index.at(0).trackingval;
-    res.push_back(threshold);
+    weightThresholds[theTree].at(ibin)=threshold;
 
     //MELAout << "\t- Looping over the " << nTotalPerBin << " events to find the sum of weights after threshold " << threshold << " in bin " << ibin << endl;
     // Do a precise summation with the Kahan method
@@ -166,7 +177,6 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
       << ", Nevents: " << sumNonZeroWgtEvents[theTree].at(ibin) << " / " << sumEvents[theTree].at(ibin)
       << endl;
   }
-  weightThresholds[theTree] = res;
 }
 
 std::vector<CJLSTTree*> ReweightingBuilder::getRegisteredTrees() const{
@@ -188,7 +198,7 @@ float ReweightingBuilder::getPostThresholdWeight(CJLSTTree* theTree) const{
   int bin=this->findBin(theTree);
   if (bin>=0){
     const float& threshold=weightThresholds.find(theTree)->second.at(bin);
-    if (fabs(weight)>threshold) weight = pow(threshold, 2)/weight;
+    if (threshold>=0. && fabs(weight)>threshold) weight = pow(threshold, 2)/weight;
   }
   return weight;
 }
@@ -262,21 +272,36 @@ float ReweightingBuilder::getNormComponent(int bin) const{
     auto itNNonZeroWgtEvents = this->sumNonZeroWgtEvents.find(tree); if (itNNonZeroWgtEvents==this->sumNonZeroWgtEvents.cend()) continue;
     //auto itNEvents = this->sumEvents.find(tree); if (itNEvents==this->sumEvents.cend()) continue;
 
-    auto const& sumwgts = itSumWeights->second.at(bin);
-    auto const& nevtsnonzerowgt = itNNonZeroWgtEvents->second.at(bin); // N_tj
+    float const& sumwgts = itSumWeights->second.at(bin);
+    float const& nevtsnonzerowgt = itNNonZeroWgtEvents->second.at(bin); // N_tj
     //auto const& nevts = itNEvents->second.at(bin);
 
     // N_t = sum{j} (N_tj)
     unsigned int nSumNonZeroWgt = 0;
-    for (auto const& nn:itNNonZeroWgtEvents->second) nSumNonZeroWgt += nn;
-    unsigned int nSample = 1; if (divideByNSample) nSample=tree->getNGenNoPU();
+    for (unsigned int const& nn:itNNonZeroWgtEvents->second) nSumNonZeroWgt += nn;
+
+    unsigned int nSample = 1;
+    if (divideByNSample) nSample=tree->getNGenNoPU();
 
     // sum_wgts_tj * N_tj / N_t
-    float numerator_pertree = sumwgts * float(nevtsnonzerowgt);
-    if (nSumNonZeroWgt!=0){
-      if (!divideByNSample) numerator_pertree /= float(nSumNonZeroWgt);
-      else numerator_pertree *= float(nSample)/float(nSumNonZeroWgt);
-    }
+    float numerator_pertree = 0;
+    if (nSumNonZeroWgt!=0) numerator_pertree = sumwgts * static_cast<float>(nevtsnonzerowgt*nSample)/static_cast<float>(nSumNonZeroWgt);
+    if (divideByNSample && fabs(static_cast<float>(nSample)/static_cast<float>(nSumNonZeroWgt)-1.)>0.01)
+      MELAerr
+      << "ReweightingBuilder::getNormComponent: WARNING! N events with non-zero weights (" << nSumNonZeroWgt
+      << ") is more than 1% different from N of sample (" << nSample
+      << ") in reweighting bin " << bin << " of tree " << tree->sampleIdentifier
+      << endl;
+
+    /*
+    MELAout << "- Tree " << tree->sampleIdentifier << " bin " << bin << " norm: \n"
+      << "- sum_wgts_tj: " << sumwgts << '\n'
+      << "- N_tj: " << nevtsnonzerowgt << '\n'
+      << "- 1/N_t: " << static_cast<float>(nSample)/static_cast<float>(nSumNonZeroWgt) << '\n'
+      << "- Num per tree: " << numerator_pertree << '\n'
+      << "- Den per tree: " << nevtsnonzerowgt
+      << endl;
+    */
 
     // Numerator += sum_wgts_tj * N_tj / N_t
     numerator += numerator_pertree;
@@ -286,6 +311,8 @@ float ReweightingBuilder::getNormComponent(int bin) const{
 
   float result=0;
   if (denominator!=0.) result = numerator/denominator;
+  //MELAout << "Final norm: " << numerator << " / " << denominator << " = " << result << endl;
+  //exit(1);
   return result;
 }
 float ReweightingBuilder::getNorm() const{

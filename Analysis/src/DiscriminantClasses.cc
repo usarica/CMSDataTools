@@ -1,23 +1,51 @@
 #include "DiscriminantClasses.h"
 
 
+namespace DiscriminantClasses{
+  const std::unordered_map<TString, DiscriminantClasses::Type> mapKDNameType = DiscriminantClasses::getKDNameTypeMap();
+}
+
+DiscriminantClasses::KDspecs::KDspecs() : KD(nullptr) {}
+DiscriminantClasses::KDspecs::KDspecs(TString strname) : KDname(strname), KD(nullptr) {}
+bool DiscriminantClasses::KDspecs::isValid() const{ return (KD!=nullptr); }
+
+std::unordered_map<TString, DiscriminantClasses::Type> DiscriminantClasses::getKDNameTypeMap(){
+  std::unordered_map<TString, DiscriminantClasses::Type> res;
+
+  res["Dbkgkin"] = kDbkgkin;
+  res["Dbkgdec"] = kDbkgdec;
+
+  res["Dggbkgkin"] = kDggbkgkin;
+  res["Dggint"] = kDggint;
+
+  res["DjVBF"] = kDjVBF;
+  res["DjjVBF"] = kDjjVBF;
+
+  res["DjjZH"] = kDjjZH;
+  res["DjjWH"] = kDjjWH;
+
+  res["DbkgjjEWQCD"] = kDbkgjjEWQCD;
+
+  res["DL1dec"] = kDL1dec;
+  res["DL1decint"] = kDL1decint;
+  res["Da2dec"] = kDa2dec;
+  res["Da2decint"] = kDa2decint;
+  res["Da3dec"] = kDa3dec;
+  res["Da3decint"] = kDa3decint;
+
+  return res;
+}
+
 DiscriminantClasses::Type DiscriminantClasses::getKDType(const TString name){
-  if (name=="Dbkgkin") return kDbkgkin;
-  else if (name=="Dbkgdec") return kDbkgdec;
-
-  else if (name=="Dggbkgkin") return kDggbkgkin;
-  else if (name=="Dggint") return kDggint;
-
-  else if (name=="DjVBF") return kDjVBF;
-  else if (name=="DjjVBF") return kDjjVBF;
-
-  else if (name=="DjjZH") return kDjjZH;
-  else if (name=="DjjWH") return kDjjWH;
-
-  else if (name=="DbkgjjEWQCD") return kDbkgjjEWQCD;
-
+  std::unordered_map<TString, DiscriminantClasses::Type>::const_iterator it;
+  if (HelperFunctions::getUnorderedMapIterator(name, mapKDNameType, it)) return it->second;
   else return kNTypes;
 }
+TString DiscriminantClasses::getKDName(DiscriminantClasses::Type type){
+  for (auto it=mapKDNameType.cbegin(); it!=mapKDNameType.cend(); it++){ if (it->second==type) return it->first; }
+  return "";
+}
+
 Discriminant* DiscriminantClasses::constructKDFromType(
   const DiscriminantClasses::Type type,
   const TString cfilename, const TString splinename,
@@ -46,6 +74,15 @@ Discriminant* DiscriminantClasses::constructKDFromType(
 
   case kDbkgjjEWQCD:
     return new DbkgjjEWQCD_t(cfilename, splinename, gfilename, gsplinename, gscale);
+
+  case kDL1dec:
+  case kDa2dec:
+  case kDa3dec:
+    return new Dbkgkin_t(cfilename, splinename, gfilename, gsplinename, gscale);
+  case kDL1decint:
+  case kDa2decint:
+  case kDa3decint:
+    return new Dintkin_t(cfilename, splinename, gfilename, gsplinename, gscale);
 
   default:
     return res;
@@ -110,6 +147,35 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
 
   case kDbkgjjEWQCD:
     /* Not yet implemented */
+    break;
+
+  case kDL1dec:
+    res.push_back("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
+    res.push_back("p_GG_SIG_ghg2_1_ghz1prime2_1E4_JHUGen");
+    break;
+  case kDa2dec:
+    res.push_back("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
+    res.push_back("p_GG_SIG_ghg2_1_ghz2_1_JHUGen");
+    break;
+  case kDa3dec:
+    res.push_back("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
+    res.push_back("p_GG_SIG_ghg2_1_ghz4_1_JHUGen");
+    break;
+
+  case kDL1decint:
+    res.push_back("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
+    res.push_back("p_GG_SIG_ghg2_1_ghz1prime2_1E4_JHUGen");
+    res.push_back("p_GG_SIG_ghg2_1_ghz1_1_ghz1prime2_1E4_JHUGen");
+    break;
+  case kDa2decint:
+    res.push_back("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
+    res.push_back("p_GG_SIG_ghg2_1_ghz2_1_JHUGen");
+    res.push_back("p_GG_SIG_ghg2_1_ghz1_1_ghz2_1_JHUGen");
+    break;
+  case kDa3decint:
+    res.push_back("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
+    res.push_back("p_GG_SIG_ghg2_1_ghz4_1_JHUGen");
+    res.push_back("p_GG_SIG_ghg2_1_ghz1_1_ghz4_1_JHUGen");
     break;
 
   default:

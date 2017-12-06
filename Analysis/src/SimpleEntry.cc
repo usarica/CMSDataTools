@@ -1,6 +1,7 @@
 #include <iostream>
 #include "SimpleEntry.h"
 #include "SimpleEntry.hpp"
+#include "SampleHelpers.h"
 
 
 using namespace std;
@@ -88,18 +89,18 @@ void SimpleEntry::writeToTree(std::vector<SimpleEntry>::const_iterator const& ve
     for (auto itb=entry.namedVfloats.begin(); itb!=entry.namedVfloats.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
     for (auto itb=entry.namedVdoubles.begin(); itb!=entry.namedVdoubles.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
     if (it==vecBegin){
-      for (auto itb=commonEntry.namedbools.begin(); itb!=commonEntry.namedbools.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedbools[itb->first]));
-      for (auto itb=commonEntry.namedshorts.begin(); itb!=commonEntry.namedshorts.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedshorts[itb->first]));
-      for (auto itb=commonEntry.nameduints.begin(); itb!=commonEntry.nameduints.end(); itb++) tree->Branch(itb->first, &(commonEntry.nameduints[itb->first]));
-      for (auto itb=commonEntry.namedints.begin(); itb!=commonEntry.namedints.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedints[itb->first]));
-      for (auto itb=commonEntry.namedfloats.begin(); itb!=commonEntry.namedfloats.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedfloats[itb->first]));
-      for (auto itb=commonEntry.nameddoubles.begin(); itb!=commonEntry.nameddoubles.end(); itb++) tree->Branch(itb->first, &(commonEntry.nameddoubles[itb->first]));
-      for (auto itb=commonEntry.namedVbools.begin(); itb!=commonEntry.namedVbools.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedVbools[itb->first]));
-      for (auto itb=commonEntry.namedVshorts.begin(); itb!=commonEntry.namedVshorts.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedVshorts[itb->first]));
-      for (auto itb=commonEntry.namedVuints.begin(); itb!=commonEntry.namedVuints.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedVuints[itb->first]));
-      for (auto itb=commonEntry.namedVints.begin(); itb!=commonEntry.namedVints.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedVints[itb->first]));
-      for (auto itb=commonEntry.namedVfloats.begin(); itb!=commonEntry.namedVfloats.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedVfloats[itb->first]));
-      for (auto itb=commonEntry.namedVdoubles.begin(); itb!=commonEntry.namedVdoubles.end(); itb++) tree->Branch(itb->first, &(commonEntry.namedVdoubles[itb->first]));
+      for (auto itb=commonEntry.namedbools.begin(); itb!=commonEntry.namedbools.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedbools[itb->first]);
+      for (auto itb=commonEntry.namedshorts.begin(); itb!=commonEntry.namedshorts.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedshorts[itb->first]);
+      for (auto itb=commonEntry.nameduints.begin(); itb!=commonEntry.nameduints.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.nameduints[itb->first]);
+      for (auto itb=commonEntry.namedints.begin(); itb!=commonEntry.namedints.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedints[itb->first]);
+      for (auto itb=commonEntry.namedfloats.begin(); itb!=commonEntry.namedfloats.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedfloats[itb->first]);
+      for (auto itb=commonEntry.nameddoubles.begin(); itb!=commonEntry.nameddoubles.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.nameddoubles[itb->first]);
+      for (auto itb=commonEntry.namedVbools.begin(); itb!=commonEntry.namedVbools.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedVbools[itb->first]);
+      for (auto itb=commonEntry.namedVshorts.begin(); itb!=commonEntry.namedVshorts.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedVshorts[itb->first]);
+      for (auto itb=commonEntry.namedVuints.begin(); itb!=commonEntry.namedVuints.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedVuints[itb->first]);
+      for (auto itb=commonEntry.namedVints.begin(); itb!=commonEntry.namedVints.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedVints[itb->first]);
+      for (auto itb=commonEntry.namedVfloats.begin(); itb!=commonEntry.namedVfloats.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedVfloats[itb->first]);
+      for (auto itb=commonEntry.namedVdoubles.begin(); itb!=commonEntry.namedVdoubles.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedVdoubles[itb->first]);
     }
     tree->Fill();
   }

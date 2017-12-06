@@ -1,5 +1,6 @@
 #include "common_includes.h"
 #include "TemplatesEventAnalyzer.h"
+#define doSmoothing true
 
 
 // Constants to affect the template code
@@ -10,7 +11,7 @@ TTree* fixTreeWeights(TTree* tree);
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category, TString strSystematics, const TString fixedDate=""){
+void makeQQBKGTemplatesFromPOWHEG_one(const Channel channel, const Category category, TString strSystematics, const TString fixedDate=""){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);
@@ -24,7 +25,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
   gSystem->Exec("mkdir -p " + coutput_common);
 
-  TString OUTPUT_NAME = Form("%s_ggHtoZZ%s_MCFM_%s_Stage1", strCategory.Data(), strChannel.Data(), strSystematics.Data());
+  TString OUTPUT_NAME = Form("%s_qqTo%s_POWHEG_%s_Stage1", strCategory.Data(), strChannel.Data(), strSystematics.Data());
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -41,25 +42,18 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   MELAout << endl;
 
   // Get list of samples
-  const unsigned int nMCFMChannels=6;
-  TString strMCFMChannels[nMCFMChannels]={
-    "4mu","4e","2e2mu",
-    "2e2tau","2mu2tau","4tau"
-  };
-  vector<TString> strSamples[nMCFMChannels];
-  for (unsigned int ich=0; ich<nMCFMChannels; ich++){
-    vector<TString> strSampleIdentifiers;
-    //strSampleIdentifiers.push_back(Form("gg_BSI_MCFM_%s", strMCFMChannels[ich].Data()));
-    strSampleIdentifiers.push_back(Form("gg_Bkg_MCFM_%s", strMCFMChannels[ich].Data()));
-    strSampleIdentifiers.push_back(Form("gg_Sig_SM_MCFM_%s", strMCFMChannels[ich].Data()));
-    strSampleIdentifiers.push_back(Form("gg_BSI_SM_MCFM_%s", strMCFMChannels[ich].Data()));
-    strSampleIdentifiers.push_back(Form("gg_BSI10_SM_MCFM_%s", strMCFMChannels[ich].Data()));
-    getSamplesList(theSqrts, strSampleIdentifiers, strSamples[ich]);
-  }
+  vector<TString> strSamples;
+  vector<TString> strSampleIdentifiers;
+  strSampleIdentifiers.push_back("qq_Bkg_Combined");
+  getSamplesList(theSqrts, strSampleIdentifiers, strSamples);
 
   // Kfactor variable names
   vector<TString> strKfactorVars;
-  if (strSystematics == "Nominal") strKfactorVars.push_back("KFactor_QCD_ggZZ_Nominal");
+  strKfactorVars.push_back("KFactor_QCD_qqZZ_M");
+  strKfactorVars.push_back("KFactor_EW_qqZZ");
+  if (strSystematics == "Nominal"){}
+  // Revise below
+  /*
   else if (strSystematics == "PDFScaleDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFScaleDn");
   else if (strSystematics == "PDFScaleUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFScaleUp");
   else if (strSystematics == "QCDScaleDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_QCDScaleDn");
@@ -68,6 +62,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   else if (strSystematics == "AsUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_AsUp");
   else if (strSystematics == "PDFReplicaDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFReplicaDn");
   else if (strSystematics == "PDFReplicaUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFReplicaUp");
+  */
 
   // Register the discriminants
   vector<KDspecs> KDlist;
@@ -95,138 +90,87 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   }
 
   // Get the CJLST set
-  //vector<TString> newlist; newlist.push_back(strSamples.back()); newlist.push_back(strSamples.front());
-  //strSamples = newlist;
-  vector<CJLSTSet*> theSets;
-  for (unsigned int ich=0; ich<nMCFMChannels; ich++){
-    CJLSTSet* theSampleSet = new CJLSTSet(strSamples[ich]);
-    // Book common variables
-    theSampleSet->bookXS(); // "xsec"
-    theSampleSet->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
-    for (auto& tree:theSampleSet->getCJLSTTreeList()){
-      // Book common variables needed for analysis
-      tree->bookBranch<float>("GenHMass", 0);
-      tree->bookBranch<float>("ZZMass", -1);
-      tree->bookBranch<short>("Z1Flav", 0);
-      tree->bookBranch<short>("Z2Flav", 0);
-      // Common variables for reweighting
-      for (auto& s:strKfactorVars) tree->bookBranch<float>(s, 1);
-      // Variables for SM reweighting
-      tree->bookBranch<float>("p_Gen_GG_BKG_MCFM", 0);
-      tree->bookBranch<float>("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM", 0);
-      tree->bookBranch<float>("p_Gen_GG_BSI_kappaTopBot_1_ghz1_1_MCFM", 0);
-      // Variables for KDs
-      for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
-      tree->silenceUnused(); // Will no longer book another branch
-    }
-    theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_NgenOverNgenWPU, false, true);
-    theSets.push_back(theSampleSet);
+  CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
+  // Book common variables
+  theSampleSet->bookXS(); // "xsec"
+  theSampleSet->bookOverallEventWgt(); // Gen weights "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
+  for (auto& tree:theSampleSet->getCJLSTTreeList()){
+    // Book common variables needed for analysis
+    tree->bookBranch<float>("GenHMass", 0);
+    tree->bookBranch<float>("ZZMass", -1);
+    tree->bookBranch<short>("Z1Flav", 0);
+    tree->bookBranch<short>("Z2Flav", 0);
+    // Common variables for reweighting
+    for (auto& s:strKfactorVars) tree->bookBranch<float>(s, 1);
+    // Variables for KDs
+    for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
+    tree->silenceUnused(); // Will no longer book another branch
   }
+  theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_OneOverNgen, false, true);
 
-  // Setup GenHMass binning
-  // Binning for inclusive reweighting
+// Setup GenHMass binning
+// Binning for inclusive reweighting
   ExtendedBinning GenHMassInclusiveBinning("GenHMass");
-  // Binning for MELARewgt
-  ExtendedBinning GenHMassBinning("GenHMass");
-  GenHMassBinning.addBinBoundary(0);
-  GenHMassBinning.addBinBoundary(124);
-  GenHMassBinning.addBinBoundary(126);
-  GenHMassBinning.addBinBoundary(160);
-  GenHMassBinning.addBinBoundary(220);
-  GenHMassBinning.addBinBoundary(1000);
-  GenHMassBinning.addBinBoundary(theSqrts*1000.);
 
   // Construct reweighting variables vector
-  for (int t=GGBkg; t<nGGSMTypes; t++){
+  for (int t=QQBkg; t<(int) nQQBkgTypes; t++){
     foutput->cd();
+
+    TString treename = getQQBkgOutputTreeName(true);
+    TTree* theFinalTree = new TTree(treename, ""); // The tree to record into the ROOT file
 
     /************* Reweighting setup *************/
     // There are two builders:
     // 1) Rewighting from MELA (x) K factors, which adjust the cross section
     // 2) PU and GenHepMCWeight reweighting, which are supposed to keep the cross section the same
     // Total weight is (1)x(2)
-    vector<TString> strReweightingWeights;
-    TString strWeight = getMELAGGHypothesisWeight((GGHypothesisType) t);
-    strReweightingWeights.push_back(strWeight);
-    for (auto& s:strKfactorVars) strReweightingWeights.push_back(s);
-    strReweightingWeights.push_back("xsec");
 
-    TString treename = getGGOutputTreeName((GGHypothesisType)t, true);
-    TTree* theFinalTree = new TTree(treename, ""); // The tree to record into the ROOT file
+    // Build the possible reweightings
+    vector<TString> strReweightingWeigths;
+    for (auto& s:strKfactorVars) strReweightingWeigths.push_back(s);
+    strReweightingWeigths.push_back("xsec");
+    ReweightingBuilder* regularewgtBuilder = new ReweightingBuilder(strReweightingWeigths, getSimpleWeight);
+    regularewgtBuilder->rejectNegativeWeights(true);
+    regularewgtBuilder->setDivideByNSample(false);
+    regularewgtBuilder->setWeightBinning(GenHMassInclusiveBinning);
+    for (auto& tree:theSampleSet->getCJLSTTreeList()) regularewgtBuilder->setupWeightVariables(tree, -1, 0);
 
     std::vector<SimpleEntry> products;
     // Build the analyzer and loop over the events
-    unsigned int ich=0;
-    for (auto& theSampleSet:theSets){
-      foutput->cd();
-      // Build the MELA reweightings separately for each MCFM 2f2f' sample set since NormComponent combines xsec
-      ReweightingBuilder* melarewgtBuilder = new ReweightingBuilder(strReweightingWeights, getSimpleWeight);
-      melarewgtBuilder->rejectNegativeWeights(true);
-      melarewgtBuilder->setDivideByNSample(true);
-      melarewgtBuilder->setWeightBinning(GenHMassBinning);
-      for (auto& tree:theSampleSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.999, 250);
+    TemplatesEventAnalyzer theAnalyzer(theSampleSet, channel, category);
+    theAnalyzer.setExternalProductList(&products);
+    // Book common variables needed for analysis
+    theAnalyzer.addConsumed<float>("PUWeight");
+    theAnalyzer.addConsumed<float>("genHEPMCweight");
+    theAnalyzer.addConsumed<float>("dataMCWeight");
+    theAnalyzer.addConsumed<float>("trigEffWeight");
+    theAnalyzer.addConsumed<float>("GenHMass");
+    theAnalyzer.addConsumed<float>("ZZMass");
+    theAnalyzer.addConsumed<short>("Z1Flav");
+    theAnalyzer.addConsumed<short>("Z2Flav");
+    // Add discriminant builders
+    for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
+    // Add reweighting builders
+    theAnalyzer.addReweightingBuilder("RegularRewgt", regularewgtBuilder);
+    // Loop
+    theAnalyzer.loop(true, false, true);
 
-      // Make reweighting conrol plots
-      TDirectory* controlsDir = foutput->mkdir(Form("controls_%s_%s", treename.Data(), strMCFMChannels[ich].Data()), "");
-      controlsDir->cd();
-      TH1F* h_MELARewgtSumAllNonZeroWgtEventsPerBin = new TH1F("MELARewgtSumAllNonZeroWgtEventsPerBin", "", GenHMassBinning.getNbins(), GenHMassBinning.getBinning());
-      h_MELARewgtSumAllNonZeroWgtEventsPerBin->GetXaxis()->SetTitle(GenHMassBinning.getLabel());
-      TH1F* h_MELARewgtNormComponentPerBin = new TH1F("MELARewgtNormComponentPerBin", "", GenHMassBinning.getNbins(), GenHMassBinning.getBinning());
-      h_MELARewgtNormComponentPerBin->GetXaxis()->SetTitle(GenHMassBinning.getLabel());
-      for (unsigned int bin=0; bin<GenHMassBinning.getNbins(); bin++){
-        unsigned int nSANZWEPB = melarewgtBuilder->getSumAllNonZeroWgtEvents(bin); // sum{t} N_tj
-        float NCPB = melarewgtBuilder->getNormComponent(bin);
-        MELAout
-          << "GenHMass bin " << bin << " has a normalization contribution in melarewgtBuilder of " << NCPB
-          << " and number of events with non-zero weight: " << nSANZWEPB
-          << endl;
-
-        h_MELARewgtSumAllNonZeroWgtEventsPerBin->SetBinContent(bin, nSANZWEPB);
-        h_MELARewgtNormComponentPerBin->SetBinContent(bin, NCPB);
-      }
-      MELAout << "Overall normalization in melarewgtBuilder is " << melarewgtBuilder->getNorm() << endl;
-
-      controlsDir->WriteTObject(h_MELARewgtSumAllNonZeroWgtEventsPerBin); delete h_MELARewgtSumAllNonZeroWgtEventsPerBin;
-      controlsDir->WriteTObject(h_MELARewgtNormComponentPerBin); delete h_MELARewgtNormComponentPerBin;
-
-      controlsDir->Close();
-      foutput->cd();
-
-      TemplatesEventAnalyzer theAnalyzer(theSampleSet, channel, category);
-      theAnalyzer.setExternalProductList(&products);
-      // Book common variables needed for analysis
-      theAnalyzer.addConsumed<float>("PUWeight");
-      theAnalyzer.addConsumed<float>("genHEPMCweight");
-      theAnalyzer.addConsumed<float>("dataMCWeight");
-      theAnalyzer.addConsumed<float>("trigEffWeight");
-      theAnalyzer.addConsumed<float>("GenHMass");
-      theAnalyzer.addConsumed<float>("ZZMass");
-      theAnalyzer.addConsumed<short>("Z1Flav");
-      theAnalyzer.addConsumed<short>("Z2Flav");
-      // Add discriminant builders
-      for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
-      // Add reweighting builders
-      theAnalyzer.addReweightingBuilder("MELARewgt", melarewgtBuilder);
-      // Loop
-      theAnalyzer.loop(true, false, true);
-
-      delete melarewgtBuilder;
-      ich++;
-    }
     MELAout << "There are " << products.size() << " products" << endl;
     SimpleEntry::writeToTree(products.cbegin(), products.cend(), theFinalTree);
+
+    delete regularewgtBuilder;
 
     foutput->WriteTObject(theFinalTree);
     delete theFinalTree;
   }
 
   for (auto& KD:KDlist) delete KD.KD;
-  for (auto& theSampleSet:theSets) delete theSampleSet; theSets.clear();
+  delete theSampleSet;
   foutput->Close();
   MELAout.close();
 }
 
-void makeGGTemplatesFromMCFM_two(const Channel channel, const Category category, TString strSystematics, const TString fixedDate=""){
+void makeQQBKGTemplatesFromPOWHEG_two(const Channel channel, const Category category, TString strSystematics, const TString fixedDate=""){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);
@@ -239,13 +183,13 @@ void makeGGTemplatesFromMCFM_two(const Channel channel, const Category category,
   cout << "Today's date: " << strdate << endl;
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
 
-  TString INPUT_NAME = Form("%s_ggHtoZZ%s_MCFM_%s_Stage1", strCategory.Data(), strChannel.Data(), strSystematics.Data());
+  TString INPUT_NAME = Form("%s_qqTo%s_POWHEG_%s_Stage1", strCategory.Data(), strChannel.Data(), strSystematics.Data());
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
-  if (gSystem->AccessPathName(cinput)) makeGGTemplatesFromMCFM_one(channel, category, strSystematics);
+  if (gSystem->AccessPathName(cinput)) makeQQBKGTemplatesFromPOWHEG_one(channel, category, strSystematics);
 
   gSystem->Exec("mkdir -p " + coutput_common);
-  TString OUTPUT_NAME = Form("%s_ggHtoZZ%s_MCFM_%s_Stage2", strCategory.Data(), strChannel.Data(), strSystematics.Data());
+  TString OUTPUT_NAME = Form("%s_qqTo%s_POWHEG_%s_Stage2", strCategory.Data(), strChannel.Data(), strSystematics.Data());
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -261,14 +205,15 @@ void makeGGTemplatesFromMCFM_two(const Channel channel, const Category category,
   MELAout << "===============================" << endl;
   MELAout << endl;
 
-  HelperFunctions::CopyFile(cinput, fixTreeWeights, nullptr);
+  //HelperFunctions::CopyFile(cinput, fixTreeWeights, nullptr);
+  HelperFunctions::CopyFile(cinput, nullptr, nullptr);
   foutput->ls();
 
   foutput->Close();
   MELAout.close();
 }
 
-void makeGGTemplatesFromMCFM_checkstage(
+void makeQQBKGTemplatesFromPOWHEG_checkstage(
   const Channel channel, const Category category, TString strSystematics, ACHypothesisHelpers::ACHypothesis whichKDset,
   const unsigned int istage,
   const TString fixedDate=""
@@ -292,22 +237,22 @@ void makeGGTemplatesFromMCFM_checkstage(
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
 
   TString INPUT_NAME = Form(
-    "%s_ggHtoZZ%s_MCFM_%s_Stage%i",
+    "%s_qqTo%s_POWHEG_%s_Stage%i",
     strCategory.Data(), strChannel.Data(),
     strSystematics.Data(), istage
   );
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
   if (gSystem->AccessPathName(cinput)){
-    if (istage==1) makeGGTemplatesFromMCFM_one(channel, category, strSystematics);
-    else if (istage==2) makeGGTemplatesFromMCFM_two(channel, category, strSystematics);
+    if (istage==1) makeQQBKGTemplatesFromPOWHEG_one(channel, category, strSystematics);
+    else if (istage==2) makeQQBKGTemplatesFromPOWHEG_two(channel, category, strSystematics);
     else return;
   }
   TFile* finput = TFile::Open(cinput, "read");
 
   gSystem->Exec("mkdir -p " + coutput_common);
   TString OUTPUT_NAME = Form(
-    "Check%sDiscriminants_%s_ggHtoZZ%s_MCFM_%s_Stage%i",
+    "Check%sDiscriminants_%s_qqTo%s_POWHEG_%s_Stage%i",
     ACHypothesisHelpers::getACHypothesisName(whichKDset).Data(),
     strCategory.Data(), strChannel.Data(),
     strSystematics.Data(), istage
@@ -332,10 +277,10 @@ void makeGGTemplatesFromMCFM_checkstage(
   const int offshellMassBegin=220;
   const int offshellMassWidth=20;
   const int supMass=1000;
-  TH2F* finalTemplates_2D[nGGSMTypes]={ 0 };
-  TH3F* finalTemplates_3D[nGGSMTypes]={ 0 };
-  TH1F* htpl_1D[nGGSMTypes]={ 0 };
-  vector<TH2F*> htpl_2D[nGGSMTypes];
+  TH2F* finalTemplates_2D[nQQBkgTypes]={ 0 };
+  TH3F* finalTemplates_3D[nQQBkgTypes]={ 0 };
+  TH1F* htpl_1D[nQQBkgTypes]={ 0 };
+  vector<TH2F*> htpl_2D[nQQBkgTypes];
   ExtendedBinning binning_KDpure(30, 0, 1, "KDpure");
   ExtendedBinning binning_KDint(30, -1, 1, "KDint");
   ExtendedBinning binning_mass_offshell((supMass-offshellMassBegin)/offshellMassWidth, offshellMassBegin, supMass, "m_{4l}");
@@ -344,29 +289,29 @@ void makeGGTemplatesFromMCFM_checkstage(
   for (unsigned int bin=0; bin<=(140-105)/1; bin++) binning_mass.addBinBoundary(105 + bin*1);
   binning_mass.addBinBoundary(180);
   for (unsigned int bin=0; bin<=(supMass-offshellMassBegin)/offshellMassWidth; bin++) binning_mass.addBinBoundary(offshellMassBegin + bin*offshellMassWidth);
-  for (int t=GGBkg; t<nGGSMTypes; t++){
+  for (int t=QQBkg; t<(int)nQQBkgTypes; t++){
     finput->cd();
 
-    TString templatename = getGGTemplateName((GGTemplateType)t, true);
-    TString treename = getGGOutputTreeName((GGHypothesisType)t, true);
-    TTree* tree = (TTree*) finput->Get(treename);
+    TString templatename = getQQBkgTemplateName(true);
+    TString treename = getQQBkgOutputTreeName(true);
+    TTree* tree = (TTree*)finput->Get(treename);
 
     foutput->cd();
     float ZZMass, weight;
     tree->SetBranchAddress("ZZMass", &ZZMass);
     tree->SetBranchAddress("weight", &weight);
-    for (auto const& KDname:KDset){
+    for(auto const& KDname:KDset){
       MELAout << "Setting up KD " << KDname << " tree variable" << endl;
       tree->SetBranchAddress(KDname, &(KDvars[KDname]));
     }
 
-    htpl_1D[t] = new TH1F(Form("h1D_%s", templatename.Data()), templatename, binning_mass.getNbins(), binning_mass.getBinning());
+    htpl_1D[t] = new TH1F(Form("h1D_%s", treename.Data()), templatename, binning_mass.getNbins(), binning_mass.getBinning());
     htpl_1D[t]->GetXaxis()->SetTitle(Form("%s (GeV)", binning_mass.getLabel().Data()));
     htpl_1D[t]->SetOption("hist");
     for (unsigned int iKD=0; iKD<nKDs; iKD++){
       const TString& KDname = KDset.at(iKD);
       MELAout << "Setting up KD " << KDname << " histograms" << endl;
-      TString hname = Form("h2D_%s_ZZMass_vs_%s", templatename.Data(), KDname.Data());
+      TString hname = Form("h2D_%s_ZZMass_vs_%s", treename.Data(), KDname.Data());
       TH2F* htmp = new TH2F(
         hname, templatename,
         binning_mass.getNbins(), binning_mass.getBinning(),
@@ -379,13 +324,13 @@ void makeGGTemplatesFromMCFM_checkstage(
       htpl_2D[t].push_back(htmp);
     }
     if (nKDs==1) finalTemplates_2D[t] = new TH2F(
-      templatename, templatename,
+      templatename, "",
       binning_mass_offshell.getNbins(), binning_mass_offshell.getBinning(),
       (KDset.at(0).Contains("int") ? binning_KDint.getNbins() : binning_KDpure.getNbins()),
       (KDset.at(0).Contains("int") ? binning_KDint.getBinning() : binning_KDpure.getBinning())
     );
     else finalTemplates_3D[t] = new TH3F(
-      templatename, templatename,
+      templatename, "",
       binning_mass_offshell.getNbins(), binning_mass_offshell.getBinning(),
       (KDset.at(0).Contains("int") ? binning_KDint.getNbins() : binning_KDpure.getNbins()),
       (KDset.at(0).Contains("int") ? binning_KDint.getBinning() : binning_KDpure.getBinning()),
@@ -395,7 +340,8 @@ void makeGGTemplatesFromMCFM_checkstage(
 
     for (int ev=0; ev<tree->GetEntries(); ev++){
       tree->GetEntry(ev);
-
+      htpl_1D[t]->Fill(ZZMass, weight);
+      
       for (auto& KD:KDvars){ if (KD.second==1.) KD.second -= 0.001*float(ev)/float(tree->GetEntries()); }
       unsigned int iKD=0;
       for (auto& KDname:KDset){
@@ -416,26 +362,10 @@ void makeGGTemplatesFromMCFM_checkstage(
     for (auto& htmp:htpl_2D[t]) HelperFunctions::wipeOverUnderFlows(htmp);
     if (finalTemplates_2D[t]) HelperFunctions::wipeOverUnderFlows(finalTemplates_2D[t]);
     else HelperFunctions::wipeOverUnderFlows(finalTemplates_3D[t]);
-
-    if (t==(int)GGBSI){
-      htpl_1D[t]->Add(htpl_1D[GGTplBkg], -1);
-      htpl_1D[t]->Add(htpl_1D[GGTplSig], -1);
-      for (unsigned int iKD=0; iKD<nKDs; iKD++){
-        htpl_2D[t].at(iKD)->Add(htpl_2D[GGTplBkg].at(iKD), -1);
-        htpl_2D[t].at(iKD)->Add(htpl_2D[GGTplSig].at(iKD), -1);
-      }
-      if (finalTemplates_2D[t]){
-        finalTemplates_2D[t]->Add(finalTemplates_2D[GGTplBkg], -1);
-        finalTemplates_2D[t]->Add(finalTemplates_2D[GGTplSig], -1);
-      }
-      else{
-        finalTemplates_3D[t]->Add(finalTemplates_3D[GGTplBkg], -1);
-        finalTemplates_3D[t]->Add(finalTemplates_3D[GGTplSig], -1);
-      }
-    }
   }
-
-  for (int t=GGTplBkg; t<nGGTplSMTypes; t++){
+  for (int t=QQBkgTpl; t<(int)nQQBkgTplTypes; t++){
+    HelperFunctions::divideBinWidth(htpl_1D[t]);
+    for (auto& htmp:htpl_2D[t]) HelperFunctions::conditionalizeHistogram(htmp, 0);
     if (finalTemplates_2D[t]){
       HelperFunctions::divideBinWidth(finalTemplates_2D[t]);
       MELAout << "Template " << finalTemplates_2D[t]->GetName() << " integral: " << HelperFunctions::computeIntegral(finalTemplates_2D[t], true) << endl;
@@ -444,26 +374,8 @@ void makeGGTemplatesFromMCFM_checkstage(
       HelperFunctions::divideBinWidth(finalTemplates_3D[t]);
       MELAout << "Template " << finalTemplates_3D[t]->GetName() << " integral: " << HelperFunctions::computeIntegral(finalTemplates_3D[t], true) << endl;
     }
-    HelperFunctions::divideBinWidth(htpl_1D[t]);
   }
-
-  for (unsigned int iKD=0; iKD<nKDs; iKD++){
-    TH2F*& hbkg = htpl_2D[GGTplBkg].at(iKD);
-    TH2F*& hsig = htpl_2D[GGTplSig].at(iKD);
-    TH2F*& hint_re = htpl_2D[GGTplInt_Re].at(iKD);
-    for (int ix=1; ix<=hbkg->GetNbinsX(); ix++){
-      for (int iy=1; iy<=hbkg->GetNbinsY(); iy++){
-        float bincontent2D = hint_re->GetBinContent(ix, iy);
-        float binintegral2D_sig = hsig->GetBinContent(ix, iy);
-        float binintegral2D_bkg = hbkg->GetBinContent(ix, iy);
-        float binintegral2D = 2.*std::sqrt(binintegral2D_sig*binintegral2D_bkg);
-        if (binintegral2D!=0.) hint_re->SetBinContent(ix, iy, bincontent2D/binintegral2D);
-      }
-    }
-    HelperFunctions::conditionalizeHistogram(hbkg, 0);
-    HelperFunctions::conditionalizeHistogram(hsig, 0);
-  }
-  for (int t=GGTplBkg; t<nGGTplSMTypes; t++){
+  for (int t=QQBkgTpl; t<(int)nQQBkgTplTypes; t++){
     foutput->WriteTObject(htpl_1D[t]);
     delete htpl_1D[t];
     for (auto& htmp:htpl_2D[t]){

@@ -34,6 +34,7 @@ public:
   double getBinHighEdge(const int bin) const;
 
   void addBinBoundary(double boundary);
+  void removeBinLowEdge(const int bin);
 
 };
 

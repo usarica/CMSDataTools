@@ -6,6 +6,8 @@ using namespace std;
 
 TString ACHypothesisHelpers::getACHypothesisName(ACHypothesisHelpers::ACHypothesis hypo){
   switch (hypo){
+  case kSM:
+    return "SM";
   case kL1:
     return "L1";
   case kA2:

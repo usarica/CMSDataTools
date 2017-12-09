@@ -46,6 +46,50 @@ TString DiscriminantClasses::getKDName(DiscriminantClasses::Type type){
   return "";
 }
 
+TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
+  switch (type){
+  case kDbkgkin:
+    return "D^{kin}_{bkg}";
+  case kDbkgdec:
+    return "D^{dec}_{bkg}";
+
+  case kDggbkgkin:
+    return "D^{gg}_{bkg}";
+  case kDggint:
+    return "D^{gg}_{int}";
+
+  case kDjVBF:
+    return "D^{VBF}_{j}";
+  case kDjjVBF:
+    return "D^{VBF}_{jj}";
+
+  case kDjjZH:
+    return "D^{ZH}_{jj}";
+  case kDjjWH:
+    return "D^{WH}_{jj}";
+
+  case kDbkgjjEWQCD:
+    return "D^{jj+dec}_{bkg}";
+
+  case kDL1dec:
+    return "D^{dec}_{#Lambda1}";
+  case kDa2dec:
+    return "D^{dec}_{0h+}";
+  case kDa3dec:
+    return "D^{dec}_{0-}";
+  case kDL1decint:
+    return "D^{dec}_{#Lambda1, int}";
+  case kDa2decint:
+    return "D^{dec}_{int}";
+  case kDa3decint:
+    return "D^{dec}_{CP}";
+
+  default:
+    return "";
+  };
+}
+TString DiscriminantClasses::getKDLabel(TString name){ return getKDLabel(getKDType(name)); }
+
 Discriminant* DiscriminantClasses::constructKDFromType(
   const DiscriminantClasses::Type type,
   const TString cfilename, const TString splinename,
@@ -184,3 +228,13 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
   return res;
 }
 std::vector<TString> DiscriminantClasses::getKDVars(const TString name){ return getKDVars(getKDType(name)); }
+
+bool DiscriminantClasses::isCPSensitive(const Type type){
+  bool res = (type==kDa3decint);
+  return res;
+}
+bool DiscriminantClasses::isCPSensitive(const TString name){
+  std::unordered_map<TString, DiscriminantClasses::Type>::const_iterator it;
+  if (HelperFunctions::getUnorderedMapIterator(name, mapKDNameType, it)) return isCPSensitive(it->second);
+  else return false;
+}

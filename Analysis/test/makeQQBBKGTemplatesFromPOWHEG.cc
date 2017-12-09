@@ -214,7 +214,7 @@ void makeQQBKGTemplatesFromPOWHEG_two(const Channel channel, const Category cate
 }
 
 void makeQQBKGTemplatesFromPOWHEG_checkstage(
-  const Channel channel, const Category category, TString strSystematics, ACHypothesisHelpers::ACHypothesis whichKDset,
+  const Channel channel, const Category category, ACHypothesisHelpers::ACHypothesis hypo, TString strSystematics,
   const unsigned int istage,
   const TString fixedDate=""
 ){
@@ -222,9 +222,11 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
+  std::vector<TemplateHelpers::QQBkgHypothesisType> tplset; tplset.push_back(TemplateHelpers::QQBkg);
+  const unsigned int ntpls = tplset.size();
 
   // Get the KDs needed for the AC hypothesis
-  vector<TString> KDset = ACHypothesisHelpers::getACHypothesisKDNameSet(whichKDset, category);
+  vector<TString> KDset = ACHypothesisHelpers::getACHypothesisKDNameSet(hypo, category);
   const unsigned int nKDs = KDset.size();
   unordered_map<TString, float> KDvars;
   for (auto& KDname:KDset) KDvars[KDname]=0;
@@ -240,14 +242,20 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
   if (gSystem->AccessPathName(cinput)){
-    if (istage==1) makeQQBKGTemplatesFromPOWHEG_one(channel, category, strSystematics);
-    else if (istage==2) makeQQBKGTemplatesFromPOWHEG_two(channel, category, strSystematics);
+    if (istage==1) makeQQBKGTemplatesFromPOWHEG_one(channel, category, strSystematics, fixedDate);
+    else if (istage==2) makeQQBKGTemplatesFromPOWHEG_two(channel, category, strSystematics, fixedDate);
     else return;
   }
   TFile* finput = TFile::Open(cinput, "read");
 
   gSystem->Exec("mkdir -p " + coutput_common);
-  TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Check%sDiscriminants_Stage%i", strChannel.Data(), strCategory.Data(), getQQBkgProcessName(true).Data(), strSystematics.Data(), ACHypothesisHelpers::getACHypothesisName(whichKDset).Data(), istage);
+  TString OUTPUT_NAME = Form(
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Check%sDiscriminants_Stage%i",
+    strChannel.Data(), strCategory.Data(),
+    getQQBkgProcessName(true).Data(),
+    strSystematics.Data(),
+    ACHypothesisHelpers::getACHypothesisName(hypo).Data(), istage
+  );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -268,10 +276,10 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
   const int offshellMassBegin=220;
   const int offshellMassWidth=20;
   const int supMass=1000;
-  TH2F* finalTemplates_2D[nQQBkgTypes]={ 0 };
-  TH3F* finalTemplates_3D[nQQBkgTypes]={ 0 };
-  TH1F* htpl_1D[nQQBkgTypes]={ 0 };
-  vector<TH2F*> htpl_2D[nQQBkgTypes];
+  vector<TH2F*> finalTemplates_2D; finalTemplates_2D.assign(ntpls, nullptr);
+  vector<TH3F*> finalTemplates_3D; finalTemplates_3D.assign(ntpls, nullptr);
+  vector<TH1F*> htpl_1D; htpl_1D.assign(ntpls, nullptr);
+  vector<vector<TH2F*>> htpl_2D; htpl_2D.assign(ntpls, vector<TH2F*>());
   ExtendedBinning binning_KDpure(30, 0, 1, "KDpure");
   ExtendedBinning binning_KDint(30, -1, 1, "KDint");
   ExtendedBinning binning_mass_offshell((supMass-offshellMassBegin)/offshellMassWidth, offshellMassBegin, supMass, "m_{4l}");
@@ -280,14 +288,15 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
   for (unsigned int bin=0; bin<=(140-105)/1; bin++) binning_mass.addBinBoundary(105 + bin*1);
   binning_mass.addBinBoundary(180);
   for (unsigned int bin=0; bin<=(supMass-offshellMassBegin)/offshellMassWidth; bin++) binning_mass.addBinBoundary(offshellMassBegin + bin*offshellMassWidth);
-  for (int t=QQBkg; t<(int)nQQBkgTypes; t++){
-    finput->cd();
-
+  for (unsigned int t=0; t<ntpls; t++){
     TString templatename = getQQBkgTemplateName(true);
     TString treename = getQQBkgOutputTreeName(true);
-    TTree* tree = (TTree*)finput->Get(treename);
+    MELAout << "Setting up tree " << treename << " and template " << templatename << endl;
 
+    finput->cd();
+    TTree* tree = (TTree*)finput->Get(treename);
     foutput->cd();
+
     float ZZMass, weight;
     tree->SetBranchAddress("ZZMass", &ZZMass);
     tree->SetBranchAddress("weight", &weight);
@@ -315,13 +324,13 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
       htpl_2D[t].push_back(htmp);
     }
     if (nKDs==1) finalTemplates_2D[t] = new TH2F(
-      templatename, "",
+      templatename, templatename,
       binning_mass_offshell.getNbins(), binning_mass_offshell.getBinning(),
       (KDset.at(0).Contains("int") ? binning_KDint.getNbins() : binning_KDpure.getNbins()),
       (KDset.at(0).Contains("int") ? binning_KDint.getBinning() : binning_KDpure.getBinning())
     );
     else finalTemplates_3D[t] = new TH3F(
-      templatename, "",
+      templatename, templatename,
       binning_mass_offshell.getNbins(), binning_mass_offshell.getBinning(),
       (KDset.at(0).Contains("int") ? binning_KDint.getNbins() : binning_KDpure.getNbins()),
       (KDset.at(0).Contains("int") ? binning_KDint.getBinning() : binning_KDpure.getBinning()),
@@ -343,29 +352,25 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
       else finalTemplates_3D[t]->Fill(ZZMass, KDvars[KDset.at(0)], KDvars[KDset.at(1)], weight);
     }
 
-    // Scale for cross section units
-    htpl_1D[t]->Scale(1000);
-    for (auto& htmp:htpl_2D[t]) htmp->Scale(1000);
-    if (finalTemplates_2D[t]) finalTemplates_2D[t]->Scale(1000);
-    else finalTemplates_3D[t]->Scale(1000);
+  }
+  MELAout << "Extracting the 1D distributions of various components" << endl;
+  recombineQQBkgHistogramsToTemplates(htpl_1D);
+  MELAout << "Extracting the 2/3D templates" << endl;
+  if (nKDs==1) recombineQQBkgHistogramsToTemplates(finalTemplates_2D);
+  else recombineQQBkgHistogramsToTemplates(finalTemplates_3D);
+  MELAout << "Extracting the 2D distributions of various components" << endl;
+  for (unsigned int iKD=0; iKD<nKDs; iKD++){
+    vector<TH2F*> htmp;
+    for (unsigned int t=0; t<ntpls; t++) htmp.push_back(htpl_2D[t].at(iKD));
+    recombineQQBkgHistogramsToTemplates(htmp);
+  }
+  MELAout << "Extracted all components" << endl;
+  for (unsigned int t=0; t<ntpls; t++){
+    if (nKDs==1) MELAout << "Template " << finalTemplates_2D[t]->GetName() << " integral: " << HelperFunctions::computeIntegral(finalTemplates_2D[t], true) << endl;
+    else MELAout << "Template " << finalTemplates_3D[t]->GetName() << " integral: " << HelperFunctions::computeIntegral(finalTemplates_3D[t], true) << endl;
+  }
 
-    HelperFunctions::wipeOverUnderFlows(htpl_1D[t]);
-    for (auto& htmp:htpl_2D[t]) HelperFunctions::wipeOverUnderFlows(htmp);
-    if (finalTemplates_2D[t]) HelperFunctions::wipeOverUnderFlows(finalTemplates_2D[t]);
-    else HelperFunctions::wipeOverUnderFlows(finalTemplates_3D[t]);
-  }
-  for (int t=QQBkgTpl; t<(int)nQQBkgTplTypes; t++){
-    HelperFunctions::divideBinWidth(htpl_1D[t]);
-    for (auto& htmp:htpl_2D[t]) HelperFunctions::conditionalizeHistogram(htmp, 0);
-    if (finalTemplates_2D[t]){
-      HelperFunctions::divideBinWidth(finalTemplates_2D[t]);
-      MELAout << "Template " << finalTemplates_2D[t]->GetName() << " integral: " << HelperFunctions::computeIntegral(finalTemplates_2D[t], true) << endl;
-    }
-    else{
-      HelperFunctions::divideBinWidth(finalTemplates_3D[t]);
-      MELAout << "Template " << finalTemplates_3D[t]->GetName() << " integral: " << HelperFunctions::computeIntegral(finalTemplates_3D[t], true) << endl;
-    }
-  }
+  for (unsigned int iKD=0; iKD<nKDs; iKD++){ for (unsigned int t=0; t<ntpls; t++) HelperFunctions::conditionalizeHistogram(htpl_2D[t].at(iKD), 0); }
   for (int t=QQBkgTpl; t<(int)nQQBkgTplTypes; t++){
     foutput->WriteTObject(htpl_1D[t]);
     delete htpl_1D[t];

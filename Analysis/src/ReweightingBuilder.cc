@@ -286,13 +286,14 @@ float ReweightingBuilder::getNormComponent(int bin) const{
     // sum_wgts_tj * N_tj / N_t
     float numerator_pertree = 0;
     if (nSumNonZeroWgt!=0) numerator_pertree = sumwgts * static_cast<float>(nevtsnonzerowgt*nSample)/static_cast<float>(nSumNonZeroWgt);
+    /*
     if (divideByNSample && fabs(static_cast<float>(nSample)/static_cast<float>(nSumNonZeroWgt)-1.)>0.01)
       MELAerr
       << "ReweightingBuilder::getNormComponent: WARNING! N events with non-zero weights (" << nSumNonZeroWgt
       << ") is more than 1% different from N of sample (" << nSample
       << ") in reweighting bin " << bin << " of tree " << tree->sampleIdentifier
       << endl;
-
+    */
     /*
     MELAout << "- Tree " << tree->sampleIdentifier << " bin " << bin << " norm: \n"
       << "- sum_wgts_tj: " << sumwgts << '\n'

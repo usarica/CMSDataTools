@@ -89,6 +89,16 @@ namespace HelperFunctions{
   template<> float computeIntegral<TH2F>(TH2F* histo, bool useWidth);
   template<> float computeIntegral<TH3F>(TH3F* histo, bool useWidth);
 
+  template <typename T> void symmetrizeHistogram(T* histo, unsigned int const axis=0);
+  template <> void symmetrizeHistogram<TH1F>(TH1F* histo, unsigned int const axis);
+  template <> void symmetrizeHistogram<TH2F>(TH2F* histo, unsigned int const axis);
+  template <> void symmetrizeHistogram<TH3F>(TH3F* histo, unsigned int const axis);
+
+  template <typename T> void antisymmetrizeHistogram(T* histo, unsigned int const axis=0);
+  template <> void antisymmetrizeHistogram<TH1F>(TH1F* histo, unsigned int const axis);
+  template <> void antisymmetrizeHistogram<TH2F>(TH2F* histo, unsigned int const axis);
+  template <> void antisymmetrizeHistogram<TH3F>(TH3F* histo, unsigned int const axis);
+
   // Spline functions
   template<int N> TF1* getFcn_a0plusa1overXN(TSpline3* sp, double xmin, double xmax, bool useLowBound);
   template<int N> TF1* getFcn_a0plusa1timesXN(TSpline3* sp, double xmin, double xmax, bool useLowBound);

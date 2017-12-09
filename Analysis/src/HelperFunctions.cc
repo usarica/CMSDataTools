@@ -791,6 +791,116 @@ template<> float HelperFunctions::computeIntegral<TH3F>(TH3F* histo, bool useWid
   return sum;
 }
 
+template <> void HelperFunctions::symmetrizeHistogram<TH1F>(TH1F* histo, unsigned int const axis){
+  if (!histo) return;
+  const int nbinsx = histo->GetNbinsX();
+  const int ixlast = nbinsx/2;
+  for (int ix=1; ix<=ixlast; ix++){
+    int jx = nbinsx-ix+1;
+    float cfirst = histo->GetBinContent(ix);
+    float csecond = histo->GetBinContent(jx);
+    float c = (cfirst+csecond)/2.;
+    histo->SetBinContent(ix, c);
+    histo->SetBinContent(jx, c);
+  }
+}
+template <> void HelperFunctions::symmetrizeHistogram<TH2F>(TH2F* histo, unsigned int const axis){
+  if (!histo || axis>1) return;
+  const int nbinsx = histo->GetNbinsX();
+  const int ixlast = (axis==0 ? nbinsx/2 : nbinsx);
+  const int nbinsy = histo->GetNbinsY();
+  const int iylast = (axis==1 ? nbinsy/2 : nbinsy);
+  for (int ix=1; ix<=ixlast; ix++){
+    int jx = (axis==0 ? nbinsx-ix+1 : ix);
+    for (int iy=1; iy<=iylast; iy++){
+      int jy = (axis==1 ? nbinsy-iy+1 : iy);
+      float cfirst = histo->GetBinContent(ix, iy);
+      float csecond = histo->GetBinContent(jx, jy);
+      float c = (cfirst+csecond)/2.;
+      histo->SetBinContent(ix, iy, c);
+      histo->SetBinContent(jx, jy, c);
+    }
+  }
+}
+template <> void HelperFunctions::symmetrizeHistogram<TH3F>(TH3F* histo, unsigned int const axis){
+  if (!histo || axis>2) return;
+  const int nbinsx = histo->GetNbinsX();
+  const int ixlast = (axis==0 ? nbinsx/2 : nbinsx);
+  const int nbinsy = histo->GetNbinsY();
+  const int iylast = (axis==1 ? nbinsy/2 : nbinsy);
+  const int nbinsz = histo->GetNbinsZ();
+  const int izlast = (axis==2 ? nbinsz/2 : nbinsz);
+  for (int ix=1; ix<=ixlast; ix++){
+    int jx = (axis==0 ? nbinsx-ix+1 : ix);
+    for (int iy=1; iy<=iylast; iy++){
+      int jy = (axis==1 ? nbinsy-iy+1 : iy);
+      for (int iz=1; iz<=izlast; iz++){
+        int jz = (axis==2 ? nbinsz-iz+1 : iz);
+        float cfirst = histo->GetBinContent(ix, iy, iz);
+        float csecond = histo->GetBinContent(jx, jy, jz);
+        float c = (cfirst+csecond)/2.;
+        histo->SetBinContent(ix, iy, iz, c);
+        histo->SetBinContent(jx, jy, jz, c);
+      }
+    }
+  }
+}
+
+template <> void HelperFunctions::antisymmetrizeHistogram<TH1F>(TH1F* histo, unsigned int const axis){
+  if (!histo) return;
+  const int nbinsx = histo->GetNbinsX();
+  const int ixlast = nbinsx/2;
+  for (int ix=1; ix<=ixlast; ix++){
+    int jx = nbinsx-ix+1;
+    float cfirst = histo->GetBinContent(ix);
+    float csecond = histo->GetBinContent(jx);
+    float c = (cfirst-csecond)/2.;
+    histo->SetBinContent(ix, c);
+    histo->SetBinContent(jx, -c);
+  }
+}
+template <> void HelperFunctions::antisymmetrizeHistogram<TH2F>(TH2F* histo, unsigned int const axis){
+  if (!histo || axis>1) return;
+  const int nbinsx = histo->GetNbinsX();
+  const int ixlast = (axis==0 ? nbinsx/2 : nbinsx);
+  const int nbinsy = histo->GetNbinsY();
+  const int iylast = (axis==1 ? nbinsy/2 : nbinsy);
+  for (int ix=1; ix<=ixlast; ix++){
+    int jx = (axis==0 ? nbinsx-ix+1 : ix);
+    for (int iy=1; iy<=iylast; iy++){
+      int jy = (axis==1 ? nbinsy-iy+1 : iy);
+      float cfirst = histo->GetBinContent(ix, iy);
+      float csecond = histo->GetBinContent(jx, jy);
+      float c = (cfirst-csecond)/2.;
+      histo->SetBinContent(ix, iy, c);
+      histo->SetBinContent(jx, jy, -c);
+    }
+  }
+}
+template <> void HelperFunctions::antisymmetrizeHistogram<TH3F>(TH3F* histo, unsigned int const axis){
+  if (!histo || axis>2) return;
+  const int nbinsx = histo->GetNbinsX();
+  const int ixlast = (axis==0 ? nbinsx/2 : nbinsx);
+  const int nbinsy = histo->GetNbinsY();
+  const int iylast = (axis==1 ? nbinsy/2 : nbinsy);
+  const int nbinsz = histo->GetNbinsZ();
+  const int izlast = (axis==2 ? nbinsz/2 : nbinsz);
+  for (int ix=1; ix<=ixlast; ix++){
+    int jx = (axis==0 ? nbinsx-ix+1 : ix);
+    for (int iy=1; iy<=iylast; iy++){
+      int jy = (axis==1 ? nbinsy-iy+1 : iy);
+      for (int iz=1; iz<=izlast; iz++){
+        int jz = (axis==2 ? nbinsz-iz+1 : iz);
+        float cfirst = histo->GetBinContent(ix, iy, iz);
+        float csecond = histo->GetBinContent(jx, jy, jz);
+        float c = (cfirst-csecond)/2.;
+        histo->SetBinContent(ix, iy, iz, c);
+        histo->SetBinContent(jx, jy, jz, -c);
+      }
+    }
+  }
+}
+
 void HelperFunctions::CopyFile(TString fname, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*)){
   // Copy all objects and subdirs of file fname as a subdir of the current directory
   TDirectory* target = gDirectory;

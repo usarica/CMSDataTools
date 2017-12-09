@@ -284,7 +284,7 @@ void makeGGTemplatesFromMCFM_two(const Channel channel, const Category category,
 }
 
 void makeGGTemplatesFromMCFM_checkstage(
-  const Channel channel, const Category category, TString strSystematics, ACHypothesisHelpers::ACHypothesis whichKDset,
+  const Channel channel, const Category category, ACHypothesisHelpers::ACHypothesis hypo, TString strSystematics,
   const unsigned int istage,
   const TString fixedDate=""
 ){
@@ -292,9 +292,15 @@ void makeGGTemplatesFromMCFM_checkstage(
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
+  std::vector<TemplateHelpers::GGHypothesisType> tplset = getGGHypothesesForACHypothesis(kSM);
+  if (hypo!=kSM){
+    std::vector<TemplateHelpers::GGHypothesisType> tplset_tmp = getGGHypothesesForACHypothesis(hypo);
+    for (TemplateHelpers::GGHypothesisType& v:tplset_tmp) tplset.push_back(v);
+  }
+  const unsigned int ntpls = tplset.size();
 
   // Get the KDs needed for the AC hypothesis
-  vector<TString> KDset = ACHypothesisHelpers::getACHypothesisKDNameSet(whichKDset, category);
+  vector<TString> KDset = ACHypothesisHelpers::getACHypothesisKDNameSet(hypo, category);
   const unsigned int nKDs = KDset.size();
   unordered_map<TString, float> KDvars;
   for (auto& KDname:KDset) KDvars[KDname]=0;
@@ -306,18 +312,35 @@ void makeGGTemplatesFromMCFM_checkstage(
   cout << "Today's date: " << strdate << endl;
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
 
-  TString INPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_MCFM_Stage%i", strChannel.Data(), strCategory.Data(), getGGProcessName(true).Data(), strSystematics.Data(), istage);
-  INPUT_NAME += ".root";
-  TString cinput = coutput_common + INPUT_NAME;
-  if (gSystem->AccessPathName(cinput)){
-    if (istage==1) makeGGTemplatesFromMCFM_one(channel, category, kSM, strSystematics);
-    else if (istage==2) makeGGTemplatesFromMCFM_two(channel, category, strSystematics);
-    else return;
+  vector<TFile*> finputList;
+  for (unsigned int f=0; f<2; f++){
+    if (f==1 && hypo==kSM) break;
+    ACHypothesis fhypo = (f==1 ? hypo : kSM);
+    TString INPUT_NAME = Form(
+      "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_MCFM_Stage%i",
+      strChannel.Data(), strCategory.Data(),
+      getACHypothesisName(fhypo).Data(), getGGProcessName(true).Data(),
+      strSystematics.Data(), istage
+    );
+    INPUT_NAME += ".root";
+    TString cinput = coutput_common + INPUT_NAME;
+    if (gSystem->AccessPathName(cinput)){
+      if (istage==1) makeGGTemplatesFromMCFM_one(channel, category, fhypo, strSystematics, fixedDate);
+      else if (istage==2) makeGGTemplatesFromMCFM_two(channel, category, fhypo, strSystematics, fixedDate);
+      else return;
+    }
+    TFile* ftmp = TFile::Open(cinput, "read");
+    finputList.push_back(ftmp);
   }
-  TFile* finput = TFile::Open(cinput, "read");
 
   gSystem->Exec("mkdir -p " + coutput_common);
-  TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_MCFM_Check%sDiscriminants_Stage%i", strChannel.Data(), strCategory.Data(), getGGProcessName(true).Data(), strSystematics.Data(), getACHypothesisName(whichKDset).Data(), istage);
+  TString OUTPUT_NAME = Form(
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_MCFM_Check%sDiscriminants_Stage%i",
+    strChannel.Data(), strCategory.Data(),
+    getGGProcessName(true).Data(),
+    strSystematics.Data(),
+    getACHypothesisName(hypo).Data(), istage
+  );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -338,10 +361,10 @@ void makeGGTemplatesFromMCFM_checkstage(
   const int offshellMassBegin=220;
   const int offshellMassWidth=20;
   const int supMass=1000;
-  TH2F* finalTemplates_2D[nGGSMTypes]={ 0 };
-  TH3F* finalTemplates_3D[nGGSMTypes]={ 0 };
-  TH1F* htpl_1D[nGGSMTypes]={ 0 };
-  vector<TH2F*> htpl_2D[nGGSMTypes];
+  vector<TH2F*> finalTemplates_2D; finalTemplates_2D.assign(ntpls, nullptr);
+  vector<TH3F*> finalTemplates_3D; finalTemplates_3D.assign(ntpls, nullptr);
+  vector<TH1F*> htpl_1D; htpl_1D.assign(ntpls, nullptr);
+  vector<vector<TH2F*>> htpl_2D; htpl_2D.assign(ntpls, vector<TH2F*>());
   ExtendedBinning binning_KDpure(30, 0, 1, "KDpure");
   ExtendedBinning binning_KDint(30, -1, 1, "KDint");
   ExtendedBinning binning_mass_offshell((supMass-offshellMassBegin)/offshellMassWidth, offshellMassBegin, supMass, "m_{4l}");
@@ -350,14 +373,18 @@ void makeGGTemplatesFromMCFM_checkstage(
   for (unsigned int bin=0; bin<=(140-105)/1; bin++) binning_mass.addBinBoundary(105 + bin*1);
   binning_mass.addBinBoundary(180);
   for (unsigned int bin=0; bin<=(supMass-offshellMassBegin)/offshellMassWidth; bin++) binning_mass.addBinBoundary(offshellMassBegin + bin*offshellMassWidth);
-  for (int t=GGBkg; t<nGGSMTypes; t++){
+  for (unsigned int t=0; t<ntpls; t++){
+    GGHypothesisType const& treetype = tplset.at(t);
+    GGTemplateType tpltype = castIntToGGTemplateType(castGGHypothesisTypeToInt(treetype));
+    TString templatename = getGGTemplateName(tpltype, true);
+    TString treename = getGGOutputTreeName(treetype, true);
+    MELAout << "Setting up tree " << treename << " and template " << templatename << endl;
+
+    TFile*& finput = finputList.at(castGGHypothesisTypeToInt(treetype)>=castGGHypothesisTypeToInt(nGGSMTypes));
     finput->cd();
-
-    TString templatename = getGGTemplateName((GGTemplateType)t, true);
-    TString treename = getGGOutputTreeName((GGHypothesisType)t, true);
     TTree* tree = (TTree*) finput->Get(treename);
-
     foutput->cd();
+
     float ZZMass, weight;
     tree->SetBranchAddress("ZZMass", &ZZMass);
     tree->SetBranchAddress("weight", &weight);
@@ -403,6 +430,7 @@ void makeGGTemplatesFromMCFM_checkstage(
       tree->GetEntry(ev);
 
       for (auto& KD:KDvars){ if (KD.second==1.) KD.second -= 0.001*float(ev)/float(tree->GetEntries()); }
+      htpl_1D[t]->Fill(ZZMass, weight);
       unsigned int iKD=0;
       for (auto& KDname:KDset){
         htpl_2D[t].at(iKD)->Fill(ZZMass, KDvars[KDname], weight);
@@ -411,72 +439,34 @@ void makeGGTemplatesFromMCFM_checkstage(
       if (nKDs==1) finalTemplates_2D[t]->Fill(ZZMass, KDvars[KDset.at(0)], weight);
       else finalTemplates_3D[t]->Fill(ZZMass, KDvars[KDset.at(0)], KDvars[KDset.at(1)], weight);
     }
-
-    // Scale for cross section units
-    htpl_1D[t]->Scale(1000);
-    for (auto& htmp:htpl_2D[t]) htmp->Scale(1000);
-    if (finalTemplates_2D[t]) finalTemplates_2D[t]->Scale(1000);
-    else finalTemplates_3D[t]->Scale(1000);
-
-    HelperFunctions::wipeOverUnderFlows(htpl_1D[t]);
-    for (auto& htmp:htpl_2D[t]) HelperFunctions::wipeOverUnderFlows(htmp);
-    if (finalTemplates_2D[t]) HelperFunctions::wipeOverUnderFlows(finalTemplates_2D[t]);
-    else HelperFunctions::wipeOverUnderFlows(finalTemplates_3D[t]);
-
-    if (t==(int)GGBSI){
-      htpl_1D[t]->Add(htpl_1D[GGTplBkg], -1);
-      htpl_1D[t]->Add(htpl_1D[GGTplSig], -1);
-      for (unsigned int iKD=0; iKD<nKDs; iKD++){
-        htpl_2D[t].at(iKD)->Add(htpl_2D[GGTplBkg].at(iKD), -1);
-        htpl_2D[t].at(iKD)->Add(htpl_2D[GGTplSig].at(iKD), -1);
-      }
-      if (finalTemplates_2D[t]){
-        finalTemplates_2D[t]->Add(finalTemplates_2D[GGTplBkg], -1);
-        finalTemplates_2D[t]->Add(finalTemplates_2D[GGTplSig], -1);
-      }
-      else{
-        finalTemplates_3D[t]->Add(finalTemplates_3D[GGTplBkg], -1);
-        finalTemplates_3D[t]->Add(finalTemplates_3D[GGTplSig], -1);
-      }
-    }
   }
 
-  for (int t=GGTplBkg; t<nGGTplSMTypes; t++){
-    if (finalTemplates_2D[t]){
-      HelperFunctions::divideBinWidth(finalTemplates_2D[t]);
-      MELAout << "Template " << finalTemplates_2D[t]->GetName() << " integral: " << HelperFunctions::computeIntegral(finalTemplates_2D[t], true) << endl;
-    }
-    else{
-      HelperFunctions::divideBinWidth(finalTemplates_3D[t]);
-      MELAout << "Template " << finalTemplates_3D[t]->GetName() << " integral: " << HelperFunctions::computeIntegral(finalTemplates_3D[t], true) << endl;
-    }
-    HelperFunctions::divideBinWidth(htpl_1D[t]);
+  MELAout << "Extracting the 1D distributions of various components" << endl;
+  recombineGGHistogramsToTemplates(htpl_1D, hypo);
+  MELAout << "Extracting the 2/3D templates" << endl;
+  if (nKDs==1) recombineGGHistogramsToTemplates(finalTemplates_2D, hypo);
+  else recombineGGHistogramsToTemplates(finalTemplates_3D, hypo);
+  MELAout << "Extracting the 2D distributions of various components" << endl;
+  for (unsigned int iKD=0;iKD<nKDs;iKD++){
+    vector<TH2F*> htmp;
+    for (unsigned int t=0; t<ntpls; t++) htmp.push_back(htpl_2D[t].at(iKD));
+    recombineGGHistogramsToTemplates(htmp, hypo);
+  }
+  MELAout << "Extracted all components" << endl;
+  for (unsigned int t=0; t<ntpls; t++){
+    if (nKDs==1) MELAout << "Template " << finalTemplates_2D[t]->GetName() << " integral: " << HelperFunctions::computeIntegral(finalTemplates_2D[t], true) << endl;
+    else MELAout << "Template " << finalTemplates_3D[t]->GetName() << " integral: " << HelperFunctions::computeIntegral(finalTemplates_3D[t], true) << endl;
   }
 
-  for (unsigned int iKD=0; iKD<nKDs; iKD++){
-    TH2F*& hbkg = htpl_2D[GGTplBkg].at(iKD);
-    TH2F*& hsig = htpl_2D[GGTplSig].at(iKD);
-    TH2F*& hint_re = htpl_2D[GGTplInt_Re].at(iKD);
-    for (int ix=1; ix<=hbkg->GetNbinsX(); ix++){
-      for (int iy=1; iy<=hbkg->GetNbinsY(); iy++){
-        float bincontent2D = hint_re->GetBinContent(ix, iy);
-        float binintegral2D_sig = hsig->GetBinContent(ix, iy);
-        float binintegral2D_bkg = hbkg->GetBinContent(ix, iy);
-        float binintegral2D = 2.*std::sqrt(binintegral2D_sig*binintegral2D_bkg);
-        if (binintegral2D!=0.) hint_re->SetBinContent(ix, iy, bincontent2D/binintegral2D);
-      }
-    }
-    HelperFunctions::conditionalizeHistogram(hbkg, 0);
-    HelperFunctions::conditionalizeHistogram(hsig, 0);
-  }
-  for (int t=GGTplBkg; t<nGGTplSMTypes; t++){
+  for (unsigned int iKD=0; iKD<nKDs; iKD++){ for (unsigned int t=0; t<ntpls; t++) HelperFunctions::conditionalizeHistogram(htpl_2D[t].at(iKD), 0); }
+  for (unsigned int t=0; t<ntpls; t++){
     foutput->WriteTObject(htpl_1D[t]);
     delete htpl_1D[t];
     for (auto& htmp:htpl_2D[t]){
       foutput->WriteTObject(htmp);
       delete htmp;
     }
-    if (finalTemplates_2D[t]){
+    if (nKDs==1){
       foutput->WriteTObject(finalTemplates_2D[t]);
       delete finalTemplates_2D[t];
     }
@@ -486,7 +476,7 @@ void makeGGTemplatesFromMCFM_checkstage(
     }
   }
   foutput->Close();
-  finput->Close();
+  for (TFile*& finput:finputList)finput->Close();
   MELAout.close();
 }
 

@@ -53,6 +53,8 @@ namespace DiscriminantClasses{
   std::unordered_map<TString, DiscriminantClasses::Type> getKDNameTypeMap();
   DiscriminantClasses::Type getKDType(const TString name);
   TString getKDName(DiscriminantClasses::Type type);
+  TString getKDLabel(DiscriminantClasses::Type type);
+  TString getKDLabel(const TString name);
 
   Discriminant* constructKDFromType(
     const Type type,
@@ -67,6 +69,9 @@ namespace DiscriminantClasses{
 
   std::vector<TString> getKDVars(const Type type);
   std::vector<TString> getKDVars(const TString name);
+
+  bool isCPSensitive(const Type type);
+  bool isCPSensitive(const TString name);
 
 };
 

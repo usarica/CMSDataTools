@@ -109,7 +109,7 @@ bool EventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEn
 }
 
 
-void constructSigSamples(TString sampleType, float sqrts, const std::vector<TString>& KDvars, CJLSTSet*& theSampleSet){
+void constructSamples(TString sampleType, float sqrts, const std::vector<TString>& KDvars, CJLSTSet*& theSampleSet){
   vector<TString> samples;
   if (sampleType=="ggHPowheg" || sampleType=="Sig") samples.push_back("gg_Sig_POWHEG");
   if (sampleType=="VBFPowheg" || sampleType=="Sig") samples.push_back("VBF_Sig_POWHEG");
@@ -118,7 +118,14 @@ void constructSigSamples(TString sampleType, float sqrts, const std::vector<TStr
   if (sampleType=="WplusHPowheg" || sampleType=="Sig") samples.push_back("WplusH_Sig_POWHEG");
   if (sampleType=="WminusHPowheg" || sampleType=="Sig") samples.push_back("WminusH_Sig_POWHEG");
   if (sampleType=="ggHMCFM" || sampleType=="Sig") samples.push_back("gg_Sig_SM_MCFM");
-
+  if (sampleType=="qqBkg" || sampleType=="Bkg") samples.push_back("qq_Bkg_Combined");
+  if (sampleType=="ggBkg" || sampleType=="Bkg") samples.push_back("gg_Bkg_MCFM");
+  if (samples.empty()){
+    string rawSampleSet = sampleType.Data();
+    vector<string> sampleSetProcessed;
+    HelperFunctions::splitOptionRecursive(rawSampleSet, sampleSetProcessed, '+');
+    for (string& str:sampleSetProcessed) samples.push_back(str.c_str()); // This means there is a compound request
+  }
   vector<TString> samplesList;
   SampleHelpers::getSamplesList(sqrts, samples, samplesList);
   theSampleSet = new CJLSTSet(samplesList);
@@ -135,35 +142,9 @@ void constructSigSamples(TString sampleType, float sqrts, const std::vector<TStr
     for (auto& v:KDvars) tree->bookBranch<float>(v, 0);
     // Variables for reweighting on a case-by-case basis
     tree->bookBranch<float>("KFactor_QCD_ggZZ_Nominal", 1);
-  }
-}
-void constructBkgSamples(TString sampleType, float sqrts, const std::vector<TString>& KDvars, CJLSTSet*& theSampleSet){
-  vector<TString> samples;
-  if (sampleType=="qqBkg" || sampleType=="Bkg") samples.push_back("qq_Bkg_Combined");
-  if (sampleType=="ggBkg" || sampleType=="Bkg") samples.push_back("gg_Bkg_MCFM");
-
-  vector<TString> samplesList;
-  SampleHelpers::getSamplesList(sqrts, samples, samplesList);
-  theSampleSet = new CJLSTSet(samplesList);
-
-  theSampleSet->bookXS(); // "xsec"
-  theSampleSet->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
-  for (auto& tree:theSampleSet->getCJLSTTreeList()){
-    // Book common variables needed for analysis
-    tree->bookBranch<float>("GenHMass", 0);
-    tree->bookBranch<float>("ZZMass", -1);
-    tree->bookBranch<short>("Z1Flav", 0);
-    tree->bookBranch<short>("Z2Flav", 0);
-    // Variables for KDs
-    for (auto& v:KDvars) tree->bookBranch<float>(v, 0);
-    tree->bookBranch<float>("KFactor_QCD_ggZZ_Nominal", 1);
     tree->bookBranch<float>("KFactor_EW_qqZZ", 1);
     tree->bookBranch<float>("KFactor_QCD_qqZZ_M", 1);
   }
-}
-void constructSamples(TString sampleType, float sqrts, const std::vector<TString>& KDvars, CJLSTSet*& theSampleSet){
-  if (sampleType=="qqBkg" || sampleType=="ggBkg" || sampleType=="Bkg") return constructBkgSamples(sampleType, sqrts, KDvars, theSampleSet);
-  else return constructSigSamples(sampleType, sqrts, KDvars, theSampleSet);
 }
 
 class KDConstantByMass{
@@ -193,6 +174,8 @@ public:
     SampleHelpers::Channel channel, CategorizationHelpers::Category category,
     unsigned int divisor, const bool writeFinalTree, vector<pair<vector<float>, pair<float, float>>>* manualboundary_validity_pairs=0
   );
+
+  static void fixWeights(std::vector<SimpleEntry>& index);
 
 };
 
@@ -254,9 +237,7 @@ void KDConstantByMass::LoopForConstant(
     float centralConstant = (avgKD[0]+avgKD[1])*0.5; centralConstant = 1./(1./centralConstant-1.);
     unsigned int it=0;
     while (true){
-      cout << " - Iteration " << it << " with margins = " << marginlow << ", " << marginhigh << endl;
-      cout << "   - Checking c = [ " << centralConstant*(1.-marginlow) << " , " << centralConstant*(1.+marginhigh) << " ]" << endl;
-      float mindiff=1;
+      float mindiff=2;
       short sgnMinDiff=0;
       float finalFraction[2]={ 2, 2 };
       unsigned int nsteps = nstepsiter;
@@ -264,10 +245,18 @@ void KDConstantByMass::LoopForConstant(
       else if (it==1) nsteps*=100;
       else if (it==2) nsteps*=10;
 
+      MELAout << " - Iteration " << it << " with margins = " << marginlow << ", " << marginhigh << endl;
+      MELAout << "   - Checking c = [ " << centralConstant*(1.-marginlow) << " , " << centralConstant*(1.+marginhigh) << " ] in " << nsteps << " steps." << endl;
+      //if (it>0) break;
+
       for (unsigned int step=0; step<=nsteps; step++){
         HelperFunctions::progressbar(step, nsteps);
         float testC = centralConstant*((1.-marginlow) + (marginhigh+marginlow)*(float(step))/((float) nsteps));
-        if (testC<=0.) continue;
+        //MELAout << testC << endl;
+        if (testC<=0.){
+          //MELAerr << "Cannot test " << testC << " (iteration " << it << ", step " << step << " / " << nsteps << endl;
+          continue;
+        }
 
         float sumWgtAll[2]={ 0 };
         float sumWgtHalf[2]={ 0 };
@@ -386,22 +375,46 @@ void KDConstantByMass::run(
       if (!melawgtcollit->empty()){
         // Binning for MELARewgt
         ExtendedBinning GenHMassBinning("GenHMass");
-        for (unsigned int is=0; is<theSet->getCJLSTTreeList().size()-1; is++){
-          if (theSet->getCJLSTTreeList().at(is)->MHVal>0. && theSet->getCJLSTTreeList().at(is+1)->MHVal>0.){
-            GenHMassBinning.addBinBoundary(
-              0.5*(theSet->getCJLSTTreeList().at(is)->MHVal + theSet->getCJLSTTreeList().at(is+1)->MHVal)
-            );
+        float MHValfirst=theSet->getCJLSTTreeList().at(0)->MHVal; bool MHsame=false;
+        for (unsigned int is=1; is<theSet->getCJLSTTreeList().size(); is++){
+          if (theSet->getCJLSTTreeList().at(is)->MHVal==MHValfirst){
+            MHsame=true;
+            break;
+          }
+          else MHValfirst=theSet->getCJLSTTreeList().at(is)->MHVal;
+        }
+        if (MHsame && MHValfirst>0.){
+          GenHMassBinning.addBinBoundary(100);
+          GenHMassBinning.addBinBoundary(MHValfirst-5);
+          GenHMassBinning.addBinBoundary(MHValfirst+5);
+          GenHMassBinning.addBinBoundary(160);
+          GenHMassBinning.addBinBoundary(220);
+          GenHMassBinning.addBinBoundary(1000);
+        }
+        else{
+          for (unsigned int is=0; is<theSet->getCJLSTTreeList().size()-1; is++){
+            if (theSet->getCJLSTTreeList().at(is)->MHVal>0. && theSet->getCJLSTTreeList().at(is+1)->MHVal>0.){
+              float boundary = (theSet->getCJLSTTreeList().at(is)->MHVal + theSet->getCJLSTTreeList().at(is+1)->MHVal)/2.;
+              GenHMassBinning.addBinBoundary(boundary);
+            }
           }
         }
         if (GenHMassBinning.isValid()){
           GenHMassBinning.addBinBoundary(0);
           GenHMassBinning.addBinBoundary(sqrts*1000.);
         }
-        ReweightingBuilder* melarewgtBuilder = new ReweightingBuilder(*melawgtcollit, ReweightingFunctions::getSimpleWeight);
+        else{
+          GenHMassBinning.addBinBoundary(0);
+          GenHMassBinning.addBinBoundary(100);
+          GenHMassBinning.addBinBoundary(160);
+          GenHMassBinning.addBinBoundary(220);
+          GenHMassBinning.addBinBoundary(sqrts*1000.);
+        }
+        melarewgtBuilder = new ReweightingBuilder(*melawgtcollit, ReweightingFunctions::getSimpleWeight);
         melarewgtBuilder->rejectNegativeWeights(true);
         melarewgtBuilder->setDivideByNSample(true);
         melarewgtBuilder->setWeightBinning(GenHMassBinning);
-        for (auto& tree:theSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.999, 10);
+        for (auto& tree:theSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.999, 50);
       }
 
       EventAnalyzer theAnalyzer(theSet, channel, category);
@@ -416,6 +429,10 @@ void KDConstantByMass::run(
       theAnalyzer.addConsumed<float>("ZZMass");
       theAnalyzer.addConsumed<short>("Z1Flav");
       theAnalyzer.addConsumed<short>("Z2Flav");
+      // Add K factors
+      theAnalyzer.addConsumed<float>("KFactor_QCD_ggZZ_Nominal");
+      theAnalyzer.addConsumed<float>("KFactor_EW_qqZZ");
+      theAnalyzer.addConsumed<float>("KFactor_QCD_qqZZ_M");
       // Add discriminant builders
       theAnalyzer.addDiscriminantBuilder("KD", KDbuilder, KDvars);
       // Add reweighting builders
@@ -579,6 +596,11 @@ void KDConstantByMass::run(
   TProfile* p_varTrack = new TProfile("avg_varReco", "", nbins, binning); p_varTrack->Sumw2();
   delete[] binning;
 
+  for (unsigned int ih=0; ih<2; ih++){
+    bool hasMELARewgt=false;
+    for (vector<TString> const& v:strMelaWgts[ih]){ if (!v.empty()) hasMELARewgt=true; break; }
+    if (hasMELARewgt) KDConstantByMass::fixWeights(index[ih]);
+  }
   if (writeFinalTree){
     for (unsigned int bin=0; bin<nbins; bin++){
       for (unsigned int ih=0; ih<2; ih++){
@@ -611,6 +633,97 @@ void KDConstantByMass::run(
   NormSchemeB.clear();
   cout << "End KDConstantByMass::run" << endl;
 }
+void KDConstantByMass::fixWeights(std::vector<SimpleEntry>& index){
+  const unsigned int nMarginalMax = 100;
+  const unsigned int nMarginalMaxMult = 1000;
+  const float nMarginalMaxFrac = 1./static_cast<float const>(nMarginalMaxMult);
+  const unsigned int countThreshold=nMarginalMaxMult*nMarginalMax;
+
+  int const nbinsraw = (1000*theSqrts-70)/5;
+  TH1F* hmass = new TH1F("hmass", "", nbinsraw, 70, 13000);
+  // Initial loop over the tree to count the events in each bin
+  for (SimpleEntry const& product:index) hmass->Fill(product.trackingval); // Do not use weight; just count
+
+  // Determine the final binning to set the weight thresholds
+  MELAout
+    << "KDConstantByMass::fixWeights: "
+    << "Determining the final binning to set the weight thresholds"
+    << endl;
+  ExtendedBinning binning;
+  binning.addBinBoundary(hmass->GetXaxis()->GetBinLowEdge(hmass->GetNbinsX()+1));
+  vector<unsigned int> counts;
+  unsigned int count=0;
+  for (int bin=hmass->GetNbinsX(); bin>=0; bin--){
+    count += hmass->GetBinContent(bin);
+    if (count>countThreshold || bin==0){
+      counts.push_back(count);
+      binning.addBinBoundary(hmass->GetXaxis()->GetBinLowEdge(bin));
+      count=0;
+    }
+  }
+  delete hmass;
+  std::reverse(counts.begin(), counts.end());
+  MELAout
+    << "KDConstantByMass::fixWeights: "
+    << "counts.size()=" << counts.size() << "=?" << "nbins=" << binning.getNbins()
+    << endl;
+  // These lines guarantee count>countThreshold in every bin
+  if (counts.at(0)<countThreshold){
+    counts.at(1) += counts.at(0);
+    counts.erase(counts.begin());
+    binning.removeBinLowEdge(1);
+  }
+  MELAout
+    << "KDConstantByMass::fixWeights: "
+    << "counts.size()=" << counts.size() << "=?" << "nbins=" << binning.getNbins()
+    << endl;
+
+  // Collect the count*nMarginalMaxFrac events with highest weights
+  MELAout
+    << "KDConstantByMass::fixWeights: "
+    << "Collecting the count*" << nMarginalMaxFrac << " events with highest weights in " << binning.getNbins() << " bins"
+    << endl;
+  vector<vector<float>> wgtcollList;
+  wgtcollList.assign(binning.getNbins(), vector<float>());
+  for (SimpleEntry const& product:index){
+    float const& trackingval = product.trackingval;
+    float const& weight = product.weight;
+    int bin = binning.getBin(trackingval);
+    if (bin>=0 && bin<(int) binning.getNbins()){
+      vector<float>& wgtcoll=wgtcollList.at(bin);
+      const unsigned int maxPrunedSize = std::ceil(float(counts.at(bin))*nMarginalMaxFrac);
+      if (wgtcoll.size()<maxPrunedSize) addByHighest(wgtcoll, fabs(weight), false);
+      else if (wgtcoll.back()<fabs(weight)){
+        addByHighest(wgtcoll, fabs(weight), false);
+        wgtcoll.pop_back();
+      }
+    }
+  }
+  MELAout
+    << "KDConstantByMass::fixWeights: "
+    << "Determining the weight thresholds"
+    << endl;
+  vector<float> wgtThresholds; wgtThresholds.reserve(binning.getNbins());
+  for (auto const& wgtcoll:wgtcollList){
+    unsigned int ns=wgtcoll.size();
+    float threshold=0.5*(wgtcoll.at(ns-1)+wgtcoll.at(ns-2));
+    if (wgtcoll.front()*5.<threshold) threshold=wgtcoll.front();
+    else MELAout
+      << "KDConstantByMass::fixWeights: "
+      << "Threshold " << threshold << " is different from max. weight " << wgtcoll.front()
+      << endl;
+    wgtThresholds.push_back(threshold);
+  }
+
+  // Fix the weights
+  for (SimpleEntry& product:index){
+    float const& trackingval = product.trackingval;
+    float& weight = product.weight;
+    int bin = binning.getBin(trackingval);
+    if (bin>=0 && bin<(int) binning.getNbins() && fabs(weight)>wgtThresholds.at(bin)) weight = pow(wgtThresholds.at(bin), 2)/weight;
+  }
+}
+
 
 /*
 SPECIFIC COMMENT:
@@ -789,8 +902,8 @@ void getKDConstant_Dbkgkin(TString const strchannel, float sqrts=13, const bool 
   strSamples[1].push_back("ggBkg");
   vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
   // Reweight ggBkg decay kinematics to qqBkg
-  strMelaWgts[1].at(0).push_back("xsec");
-  strMelaWgts[1].at(0).push_back("p_Gen_QQB_BKG_MCFM");
+  strMelaWgts[1].at(1).push_back("xsec");
+  strMelaWgts[1].at(1).push_back("p_Gen_QQB_BKG_MCFM");
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
   {
@@ -812,7 +925,7 @@ void getKDConstant_Dbkgkin(TString const strchannel, float sqrts=13, const bool 
   KDConstantByMass constProducer(sqrts, strKD);
   {
     std::vector<CJLSTSet::NormScheme> NormSchemeB;
-    NormSchemeB.assign(strSamples[1].size(), CJLSTSet::NormScheme_None);
+    NormSchemeB.assign(strSamples[1].size(), CJLSTSet::NormScheme_NgenOverNgenWPU);
     NormSchemeB.at(0)=CJLSTSet::NormScheme_XsecOverNgen;
     constProducer.setNormSchemeB(NormSchemeB);
   }
@@ -827,17 +940,48 @@ void getKDConstant_Dbkgkin(TString const strchannel, float sqrts=13, const bool 
 void getKDConstant_Dggbkgkin(TString const strchannel, float sqrts=13, const bool writeFinalTree=false){
   if (strchannel!="2e2mu" && strchannel!="4e" && strchannel!="4mu") return;
 
-  float divisor=21000;
+  float divisor=50000;
   if (strchannel=="2l2l" || strchannel=="2e2mu") divisor = 50000;
   TString strKD="Dggbkgkin";
 
   vector<TString> strSamples[2];
-  strSamples[0].push_back("ggHPowheg");
-  strSamples[0].push_back("ggHMCFM");
-  strSamples[1].push_back("ggBkg");
+  //strSamples[0].push_back("ggHPowheg");
+  //strSamples[0].push_back("ggHMCFM");
+  //strSamples[1].push_back("ggBkg");
+  strSamples[0].push_back(
+    Form("gg_Bkg_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_Sig_SM_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI_SM_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_SM_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0M_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0M_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0M_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0PH_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0PH_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0PH_MCFM_%s", strchannel.Data())
+  );
+  strSamples[1]=strSamples[0];
   vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
+  for (unsigned int is=0; is<strSamples[0].size(); is++){
+    strMelaWgts[0].at(is).push_back("xsec");
+    strMelaWgts[0].at(is).push_back(getMELAGGHypothesisWeight(TemplateHelpers::GGSig, ACHypothesisHelpers::kSM));
+  }
+  for (unsigned int is=0; is<strSamples[1].size(); is++){
+    strMelaWgts[1].at(is).push_back("xsec");
+    strMelaWgts[1].at(is).push_back(getMELAGGHypothesisWeight(TemplateHelpers::GGBkg, ACHypothesisHelpers::kSM));
+  }
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
+  /*
   {
     pair<float, float> valrange(70, 142);
     vector<float> manualboundaries;
@@ -853,8 +997,18 @@ void getKDConstant_Dggbkgkin(TString const strchannel, float sqrts=13, const boo
     manualboundaries.push_back(700); manualboundaries.push_back(900); manualboundaries.push_back(1100); manualboundaries.push_back(1400); manualboundaries.push_back(1900);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
   }
+  */
 
   KDConstantByMass constProducer(sqrts, strKD);
+  {
+    std::vector<CJLSTSet::NormScheme> NormSchemeA;
+    NormSchemeA.assign(strSamples[0].size(), CJLSTSet::NormScheme_NgenOverNgenWPU);
+    constProducer.setNormSchemeA(NormSchemeA);
+
+    std::vector<CJLSTSet::NormScheme> NormSchemeB;
+    NormSchemeB.assign(strSamples[1].size(), CJLSTSet::NormScheme_NgenOverNgenWPU);
+    constProducer.setNormSchemeB(NormSchemeB);
+  }
   constProducer.run(
     strSamples, strMelaWgts,
     SampleHelpers::getChannelFromName(strchannel), CategorizationHelpers::Inclusive,

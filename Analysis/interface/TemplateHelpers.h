@@ -10,6 +10,13 @@
 
 
 namespace TemplateHelpers{
+
+  /*********************/
+  /* General functions */
+  /*********************/
+  template<typename T> void setTemplateAxisLabels(T* histo);
+
+
   /****************/
   /* Gluon fusion */
   /****************/
@@ -31,7 +38,7 @@ namespace TemplateHelpers{
     nGGTplSMTypes=3, // fai=0 int.
 
     GGTplSigBSM=3, // fai=1 sig.
-    GGTplSigBSMSMInt=4, // fai=0.5 sig.
+    GGTplSigBSMSMInt_Re=4, // fai=0.5 sig.
     GGTplIntBSM_Re=5, // fai=1 int.
     nGGTplTypes=6
   };
@@ -41,6 +48,13 @@ namespace TemplateHelpers{
   TString getGGTemplateName(TemplateHelpers::GGTemplateType type, bool useOffshell);
   TString getMELAGGHypothesisWeight(TemplateHelpers::GGHypothesisType type, ACHypothesisHelpers::ACHypothesis hypo);
   std::vector<TemplateHelpers::GGHypothesisType> getGGHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo);
+  TString getGGProcessLabel(TemplateHelpers::GGHypothesisType type, ACHypothesisHelpers::ACHypothesis hypo);
+  TString getGGProcessLabel(TemplateHelpers::GGTemplateType type, ACHypothesisHelpers::ACHypothesis hypo);
+
+  int castGGHypothesisTypeToInt(TemplateHelpers::GGHypothesisType type);
+  int castGGTemplateTypeToInt(TemplateHelpers::GGTemplateType type);
+  GGHypothesisType castIntToGGHypothesisType(int type, bool useN=false);
+  GGTemplateType castIntToGGTemplateType(int type, bool useN=false);
 
   template<typename T> void recombineGGHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo);
   template<> void recombineGGHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo);
@@ -64,6 +78,14 @@ namespace TemplateHelpers{
   TString getQQBkgProcessName(bool useOffshell);
   TString getQQBkgOutputTreeName(bool useOffshell);
   TString getQQBkgTemplateName(bool useOffshell);
+  TString getQQBkgProcessLabel();
+
+  int castQQBkgHypothesisTypeToInt(TemplateHelpers::QQBkgHypothesisType type);
+  int castQQBkgTemplateTypeToInt(TemplateHelpers::QQBkgTemplateType type);
+  QQBkgHypothesisType castIntToQQBkgHypothesisType(int type);
+  QQBkgTemplateType castIntToQQBkgTemplateType(int type);
+
+  template<typename T> void recombineQQBkgHistogramsToTemplates(std::vector<T*>& vals);
 
 }
 

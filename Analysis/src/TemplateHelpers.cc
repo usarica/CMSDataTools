@@ -1,7 +1,10 @@
 #include "TemplateHelpers.h"
-#include <cassert>
+#include "TemplateHelpers.hpp"
 
 
+/****************/
+/* Gluon fusion */
+/****************/
 TString TemplateHelpers::getGGProcessName(bool useOffshell){ return (useOffshell ? "ggZZ_offshell" : "ggH"); }
 TString TemplateHelpers::getGGOutputTreeName(TemplateHelpers::GGHypothesisType type, bool useOffshell){
   TString res;
@@ -44,10 +47,13 @@ TString TemplateHelpers::getGGTemplateName(TemplateHelpers::GGTemplateType type,
     break;
   case GGTplSigBSM:
     res="Sig_ai1_2";
-  case GGTplSigBSMSMInt:
+    break;
+  case GGTplSigBSMSMInt_Re:
     res="Sig_ai1_1_Re";
+    break;
   case GGTplIntBSM_Re:
     res="Int_ai1_1_Re";
+    break;
   default:
     break;
   };
@@ -106,7 +112,6 @@ TString TemplateHelpers::getMELAGGHypothesisWeight(TemplateHelpers::GGHypothesis
   }
   return strWeight;
 }
-
 std::vector<TemplateHelpers::GGHypothesisType> TemplateHelpers::getGGHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo){
   std::vector<TemplateHelpers::GGHypothesisType> res;
   // Order matters!
@@ -122,10 +127,114 @@ std::vector<TemplateHelpers::GGHypothesisType> TemplateHelpers::getGGHypothesesF
   }
   return res;
 }
+TString TemplateHelpers::getGGProcessLabel(TemplateHelpers::GGHypothesisType type, ACHypothesisHelpers::ACHypothesis hypo){
+  TString acname;
+  switch (hypo){
+  case ACHypothesisHelpers::kL1:
+    acname="f_{#Lambda1}";
+    break;
+  case ACHypothesisHelpers::kA2:
+    acname="f_{a2}";
+    break;
+  case ACHypothesisHelpers::kA3:
+    acname="f_{a3}";
+    break;
+  default:
+    break;
+  };
+  switch (type){
+  case GGBkg:
+    return "gg #rightarrow 4l bkg.";
+  case GGSig:
+    return "gg #rightarrow 4l SM sig.";
+  case GGBSI:
+    return "gg #rightarrow 4l SM sig.+bkg.";
+  case GGSigBSM:
+    return Form("gg #rightarrow 4l %s%s sig.", acname.Data(), "=1");
+  case GGSigBSMSMInt:
+    return Form("gg #rightarrow 4l %s%s sig.", acname.Data(), "=0.5");
+  case GGBBI:
+    return Form("gg #rightarrow 4l %s%s sig.+bkg.", acname.Data(), "=1");
+  default:
+    return "";
+  };
+}
+TString TemplateHelpers::getGGProcessLabel(TemplateHelpers::GGTemplateType type, ACHypothesisHelpers::ACHypothesis hypo){
+  TString acname;
+  switch (hypo){
+  case ACHypothesisHelpers::kL1:
+    acname="f_{#Lambda1}";
+    break;
+  case ACHypothesisHelpers::kA2:
+    acname="f_{a2}";
+    break;
+  case ACHypothesisHelpers::kA3:
+    acname="f_{a3}";
+    break;
+  default:
+    break;
+  };
+  switch (type){
+  case GGTplBkg:
+    return "gg #rightarrow 4l bkg.";
+  case GGTplSig:
+    return "gg #rightarrow 4l SM sig.";
+  case GGTplInt_Re:
+    return "gg #rightarrow 4l SM sig.-bkg. interference";
+  case GGTplSigBSM:
+    return Form("gg #rightarrow 4l %s%s sig.", acname.Data(), "=1");
+  case GGTplSigBSMSMInt_Re:
+    return Form("gg #rightarrow 4l %s%s interference", acname.Data(), "=0.5");
+  case GGTplIntBSM_Re:
+    return Form("gg #rightarrow 4l %s%s sig.-bkg. interference", acname.Data(), "=1");
+  default:
+    return "";
+  };
+}
+
+int TemplateHelpers::castGGHypothesisTypeToInt(TemplateHelpers::GGHypothesisType type){ return (int)type; }
+int TemplateHelpers::castGGTemplateTypeToInt(TemplateHelpers::GGTemplateType type){ return (int) type; }
+TemplateHelpers::GGHypothesisType TemplateHelpers::castIntToGGHypothesisType(int type, bool useN){
+  switch (type){
+  case 0:
+    return GGBkg;
+  case 1:
+    return GGSig;
+  case 2:
+    return GGBSI;
+  case 3:
+    return (!useN ? GGSigBSM : nGGSMTypes);
+  case 4:
+    return GGSigBSMSMInt;
+  case 5:
+    return GGBBI;
+  default:
+    return nGGTypes;
+  };
+}
+TemplateHelpers::GGTemplateType TemplateHelpers::castIntToGGTemplateType(int type, bool useN){
+  switch (type){
+  case 0:
+    return GGTplBkg;
+  case 1:
+    return GGTplSig;
+  case 2:
+    return GGTplInt_Re;
+  case 3:
+    return (!useN ? GGTplSigBSM : nGGTplSMTypes);
+  case 4:
+    return GGTplSigBSMSMInt_Re;
+  case 5:
+    return GGTplIntBSM_Re;
+  default:
+    return nGGTplTypes;
+  };
+}
 
 template<> void TemplateHelpers::recombineGGHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo){
   if (vals.empty()) return;
   std::vector<float> res; 
+  res.assign(vals.size(), 0);
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nGGSMTypes);
     const float invA[nGGSMTypes][nGGSMTypes]={
@@ -133,7 +242,6 @@ template<> void TemplateHelpers::recombineGGHistogramsToTemplates<float>(std::ve
       { 0, 1, 0 },
       { -1, -1, 1 }
     };
-    res.assign(vals.size(), 0);
     for (int ix=0; ix<(int)nGGSMTypes; ix++){ for (int iy=0; iy<(int) nGGSMTypes; iy++) res.at(ix) += invA[ix][iy]*vals.at(iy); }
   }
   else{
@@ -166,6 +274,29 @@ template<> void TemplateHelpers::recombineGGHistogramsToTemplates<TH1F*>(std::ve
     ih=binvals.begin();
     for (htype_t*& hh:vals){ hh->SetBinContent(ix, *ih); ih++; }
   }
+  for (int t=0; t<(int) vals.size(); t++){
+    htype_t*& hh=vals.at(t);
+    GGTemplateType type = castIntToGGTemplateType(t);
+    std::vector<unsigned int> symAxes;
+    std::vector<unsigned int> asymAxes;
+    if (hypo==ACHypothesisHelpers::kA3){
+      if (type==GGTplInt_Re || type==GGTplSigBSMSMInt_Re || type==GGTplIntBSM_Re){
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
+        if (asymAxes.empty()) hh->Reset("ICESM"); // If no asymmetrix axes found, histogram has to be 0 itself.
+      }
+      else{
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) symAxes.push_back(0);
+      }
+    }
+    for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
+    for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
+
+    HelperFunctions::wipeOverUnderFlows(hh);
+    HelperFunctions::divideBinWidth(hh);
+    hh->Scale(xsecScale);
+    hh->SetTitle(getGGProcessLabel(type, hypo));
+    setTemplateAxisLabels(hh);
+  }
 }
 template<> void TemplateHelpers::recombineGGHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo){
   if (vals.empty()) return;
@@ -182,8 +313,32 @@ template<> void TemplateHelpers::recombineGGHistogramsToTemplates<TH2F*>(std::ve
       for (htype_t*& hh:vals){ hh->SetBinContent(ix, iy, *ih); ih++; }
     }
   }
-}
+  for (int t=0; t<(int) vals.size(); t++){
+    htype_t*& hh=vals.at(t);
+    GGTemplateType type = castIntToGGTemplateType(t);
+    std::vector<unsigned int> symAxes;
+    std::vector<unsigned int> asymAxes;
+    if (hypo==ACHypothesisHelpers::kA3){
+      if (type==GGTplInt_Re || type==GGTplSigBSMSMInt_Re || type==GGTplIntBSM_Re){
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
+        if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) asymAxes.push_back(1);
+        if (asymAxes.empty()) hh->Reset("ICESM"); // If no asymmetrix axes found, histogram has to be 0 itself.
+      }
+      else{
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) symAxes.push_back(0);
+        if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) symAxes.push_back(1);
+      }
+    }
+    for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
+    for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
 
+    HelperFunctions::wipeOverUnderFlows(hh);
+    HelperFunctions::divideBinWidth(hh);
+    hh->Scale(xsecScale);
+    hh->SetTitle(getGGProcessLabel(type, hypo));
+    setTemplateAxisLabels(hh);
+  }
+}
 template<> void TemplateHelpers::recombineGGHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo){
   if (vals.empty()) return;
   typedef TH3F htype_t;
@@ -202,18 +357,52 @@ template<> void TemplateHelpers::recombineGGHistogramsToTemplates<TH3F*>(std::ve
       }
     }
   }
+  for (int t=0; t<(int) vals.size(); t++){
+    htype_t*& hh=vals.at(t);
+    GGTemplateType type = castIntToGGTemplateType(t);
+    std::vector<unsigned int> symAxes;
+    std::vector<unsigned int> asymAxes;
+    if (hypo==ACHypothesisHelpers::kA3){
+      if (type==GGTplInt_Re || type==GGTplSigBSMSMInt_Re || type==GGTplIntBSM_Re){
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
+        if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) asymAxes.push_back(1);
+        if (DiscriminantClasses::isCPSensitive(hh->GetZaxis()->GetTitle())) asymAxes.push_back(2);
+        if (asymAxes.empty()) hh->Reset("ICESM"); // If no asymmetrix axes found, histogram has to be 0 itself.
+      }
+      else{
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) symAxes.push_back(0);
+        if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) symAxes.push_back(1);
+        if (DiscriminantClasses::isCPSensitive(hh->GetZaxis()->GetTitle())) symAxes.push_back(2);
+      }
+    }
+    for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
+    for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
+
+    HelperFunctions::wipeOverUnderFlows(hh);
+    HelperFunctions::divideBinWidth(hh);
+    hh->Scale(xsecScale);
+    hh->SetTitle(getGGProcessLabel(type, hypo));
+    setTemplateAxisLabels(hh);
+  }
 }
 
 
-
-
+/*****************/
+/* QQ background */
+/*****************/
 TString TemplateHelpers::getQQBkgProcessName(bool useOffshell){ return (useOffshell ? "qqZZ" : "bkg_qqzz"); }
 TString TemplateHelpers::getQQBkgOutputTreeName(bool useOffshell){
   TString res = Form("T_%s_Tree", TemplateHelpers::getQQBkgProcessName(useOffshell).Data());
   return res;
 }
-
 TString TemplateHelpers::getQQBkgTemplateName(bool useOffshell){
   TString res = Form("T_%s", TemplateHelpers::getQQBkgProcessName(useOffshell).Data());
   return res;
 }
+TString TemplateHelpers::getQQBkgProcessLabel(){ return "q#bar{q} #rightarrow 4l"; }
+
+int TemplateHelpers::castQQBkgHypothesisTypeToInt(TemplateHelpers::QQBkgHypothesisType type){ return (int) type; }
+int TemplateHelpers::castQQBkgTemplateTypeToInt(TemplateHelpers::QQBkgTemplateType type){ return (int) type; }
+TemplateHelpers::QQBkgHypothesisType TemplateHelpers::castIntToQQBkgHypothesisType(int type){ return (QQBkgHypothesisType) type; }
+TemplateHelpers::QQBkgTemplateType TemplateHelpers::castIntToQQBkgTemplateType(int type){ return (QQBkgTemplateType) type; }
+

@@ -6,16 +6,22 @@ FCNARGS=$3
 
 mkdir -p ./output/Logs
 
-extLog=""
+extLog=$FCN
 if [[ "$FCNARGS" != "" ]];then
   fcnargname=${FCNARGS//\"}
-  fcnargname=${FCNARGS//(}
-  fcnargname=${FCNARGS//)}
-  fcnargname=${FCNARGS//,/_}
+  fcnargname=${fcnargname//"("}
+  fcnargname=${fcnargname//")"}
+  fcnargname=${fcnargname//","/"_"}
   extLog=$FCN"_"$fcnargname
-else
-  extLog=$FCN
 fi
 
-bsub -q 2nd -C 0 -o ./output/Logs/lsflog_"$extLog".txt" -e ./output/Logs/lsferr_"$extLog".err submit.lsf.sh $FCN $FCNARGS
+if [[ -f $FCN".c" ]]; then
+  echo "File "$FCN".c"" already exists."
+else
+  cp $FILE $FCN".c"
+fi
+
+root -l -b -q -e "gROOT->ProcessLine(\".x loadLib.C\"); gROOT->ProcessLine(\".L "$FCN".c+\");"
+
+bsub -q 2nd -C 0 -o "./output/Logs/lsflog_"$extLog".txt" -e "./output/Logs/lsferr_"$extLog".err" submit.lsf.sh $FCN $FCNARGS
 

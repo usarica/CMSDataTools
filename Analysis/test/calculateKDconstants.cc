@@ -152,6 +152,7 @@ protected:
   float sqrts;
   TString strKD;
   unsigned int nstepsiter;
+  int maxNEventsPerBin;
   std::vector<CJLSTSet::NormScheme> NormSchemeA;
   std::vector<CJLSTSet::NormScheme> NormSchemeB;
 
@@ -166,6 +167,7 @@ public:
   KDConstantByMass(float sqrts_, TString strKD_);
 
   void setNStepsIter(unsigned int nsteps){ nstepsiter=nsteps; }
+  void setMaxNEventsPerBin(unsigned int nevents){ maxNEventsPerBin=nevents; }
   void setNormSchemeA(std::vector<CJLSTSet::NormScheme> scheme){ NormSchemeA=scheme; }
   void setNormSchemeB(std::vector<CJLSTSet::NormScheme> scheme){ NormSchemeB=scheme; }
 
@@ -181,7 +183,8 @@ public:
 
 KDConstantByMass::KDConstantByMass(float sqrts_, TString strKD_) :
   sqrts(sqrts_), strKD(strKD_),
-  nstepsiter(100)
+  nstepsiter(100),
+  maxNEventsPerBin(-1)
 {}
 
 
@@ -207,9 +210,19 @@ void KDConstantByMass::LoopForConstant(
     for (unsigned int ih=0; ih<2; ih++){
       unsigned int const& evlow = indexboundaries[ih].at(bin);
       unsigned int const& evhigh = indexboundaries[ih].at(bin+1);
-      it_begin[ih] = index[ih].begin()+evlow;
-      it_end[ih] = index[ih].begin()+evhigh;
-      cout << " - Scanning events [ " << evlow << " , " << evhigh << " ) for sample set " << ih << endl;
+      unsigned int offsetlow=0;
+      unsigned int offsethigh=0;
+      if (maxNEventsPerBin>=0){
+        unsigned int evdiff=evhigh-evlow;
+        if ((int)evdiff>maxNEventsPerBin){
+          evdiff -= maxNEventsPerBin;
+          offsetlow = evdiff/2;
+          offsethigh = evdiff-offsetlow;
+        }
+      }
+      it_begin[ih] = index[ih].begin()+evlow+offsetlow;
+      it_end[ih] = index[ih].begin()+evhigh-offsethigh;
+      cout << " - Scanning events [ " << evlow+offsetlow << " , " << evhigh-offsethigh << " ) for sample set " << ih << endl;
     }
     for (unsigned int ih=0; ih<2; ih++){
       for (std::vector<SimpleEntry>::iterator it_inst=it_begin[ih]; it_inst!=it_end[ih]; it_inst++){
@@ -325,9 +338,7 @@ void KDConstantByMass::run(
   if (strKD=="") return;
 
   cout << "Begin KDConstantByMass::run" << endl;
-  for (unsigned int ih=0; ih<2; ih++){
-    assert(strSamples[ih].size()==strMelaWgts[ih].size());
-  }
+  for (unsigned int ih=0; ih<2; ih++){ assert(strSamples[ih].size()==strMelaWgts[ih].size()); }
 
   DiscriminantClasses::Type KDtype = DiscriminantClasses::getKDType(strKD);
   vector<TString> KDvars = DiscriminantClasses::getKDVars(KDtype);
@@ -605,7 +616,19 @@ void KDConstantByMass::run(
     for (unsigned int bin=0; bin<nbins; bin++){
       for (unsigned int ih=0; ih<2; ih++){
         TTree* theFinalTree = new TTree(Form("Sample%i_Bin%i", ih, bin), "");
-        SimpleEntry::writeToTree(index[ih].cbegin()+indexboundaries[ih].at(bin), index[ih].cbegin()+indexboundaries[ih].at(bin+1), theFinalTree);
+        unsigned int const& evlow = indexboundaries[ih].at(bin);
+        unsigned int const& evhigh = indexboundaries[ih].at(bin+1);
+        unsigned int offsetlow=0;
+        unsigned int offsethigh=0;
+        if (maxNEventsPerBin>=0){
+          unsigned int evdiff=evhigh-evlow;
+          if ((int)evdiff>maxNEventsPerBin){
+            evdiff -= maxNEventsPerBin;
+            offsetlow = evdiff/2;
+            offsethigh = evdiff-offsetlow;
+          }
+        }
+        SimpleEntry::writeToTree(index[ih].cbegin()+evlow+offsetlow, index[ih].cbegin()+evhigh-offsethigh, theFinalTree);
         foutput->WriteTObject(theFinalTree);
         delete theFinalTree;
       }
@@ -981,25 +1004,55 @@ void getKDConstant_Dggbkgkin(TString const strchannel, float sqrts=13, const boo
   }
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
-  /*
   {
-    pair<float, float> valrange(70, 142);
+    pair<float, float> valrange(70, 170);
     vector<float> manualboundaries;
-    manualboundaries.push_back(75); manualboundaries.push_back(85);
-    manualboundaries.push_back(89); manualboundaries.push_back(93); manualboundaries.push_back(96);
-    manualboundaries.push_back(100); manualboundaries.push_back(105); manualboundaries.push_back(110); manualboundaries.push_back(115);
-    manualboundaries.push_back(120); manualboundaries.push_back(123); manualboundaries.push_back(135);
+    manualboundaries.push_back(100);
+    manualboundaries.push_back(110);
+    manualboundaries.push_back(115);
+    manualboundaries.push_back(119);
+    manualboundaries.push_back(120.9);
+    manualboundaries.push_back(121.8);
+    manualboundaries.push_back(122.8);
+    manualboundaries.push_back(123.6);
+    manualboundaries.push_back(124.3);
+    manualboundaries.push_back(125.06);
+    manualboundaries.push_back(125.9);
+    manualboundaries.push_back(127.3);
+    manualboundaries.push_back(136.1);
+    manualboundaries.push_back(146);
+    manualboundaries.push_back(157);
+    manualboundaries.push_back(165);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
   }
   {
-    pair<float, float> valrange(600, 2500);
+    pair<float, float> valrange(200.2, 3100);
     vector<float> manualboundaries;
-    manualboundaries.push_back(700); manualboundaries.push_back(900); manualboundaries.push_back(1100); manualboundaries.push_back(1400); manualboundaries.push_back(1900);
+    manualboundaries.push_back(203);
+    manualboundaries.push_back(207);
+    manualboundaries.push_back(211);
+    manualboundaries.push_back(216);
+    manualboundaries.push_back(223);
+    manualboundaries.push_back(232);
+    manualboundaries.push_back(236);
+    manualboundaries.push_back(250);
+    manualboundaries.push_back(270);
+    manualboundaries.push_back(290);
+    manualboundaries.push_back(310);
+    manualboundaries.push_back(400);
+    manualboundaries.push_back(500);
+    manualboundaries.push_back(600);
+    manualboundaries.push_back(700);
+    manualboundaries.push_back(900);
+    manualboundaries.push_back(1300);
+    manualboundaries.push_back(1800);
+    manualboundaries.push_back(2400);
+    manualboundaries.push_back(3000);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
   }
-  */
 
   KDConstantByMass constProducer(sqrts, strKD);
+  constProducer.setMaxNEventsPerBin(divisor);
   {
     std::vector<CJLSTSet::NormScheme> NormSchemeA;
     NormSchemeA.assign(strSamples[0].size(), CJLSTSet::NormScheme_NgenOverNgenWPU);

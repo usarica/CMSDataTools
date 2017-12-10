@@ -5,7 +5,7 @@ HostHelpers::Hosts HostHelpers::GetHostLocation(){
   char hostname[HOST_NAME_MAX];
   gethostname(hostname, HOST_NAME_MAX);
   TString strhost = hostname;
-  if (strhost.Contains("lxplus")) return kLXPLUS;
+  if (strhost.Contains("lxplus") || strhost.Contains("cern")) return kLXPLUS;
   else if (strhost.Contains("login-node") || strhost.Contains("gateway")) return kMARCC;
   else return kUNKNOWN;
 }

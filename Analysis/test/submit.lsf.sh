@@ -8,19 +8,12 @@ eval `scram runtime -sh`
 
 echo $CMSSW_VERSION
 
-infile=$1
-runfile=$2
+runfile=$1
 extcmd="()"
-if [[ "$3" != "" ]];then
-  extcmd=$3
+if [[ "$2" != "" ]];then
+  extcmd=$2
 fi
 
-#rm -rf $runfile".c"
-if [[ -f $runfile".c" ]]; then
-  echo "File "$runfile".c"" already exists."
-else
-  cp $infile $runfile".c"
-fi
 cmd=$runfile".c+"$extcmd
 
 root -b -l -q loadLib.C $cmd

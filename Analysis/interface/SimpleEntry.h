@@ -52,7 +52,7 @@ struct SimpleEntry{
   template<typename T> void getNamedVal(TString strname, T& val) const;
 
   static void cropByTrueVal(std::vector<SimpleEntry>& vec, float minval, float maxval);
-  static void writeToTree(std::vector<SimpleEntry>::const_iterator const& vecBegin, std::vector<SimpleEntry>::const_iterator const& vecEnd, TTree* const tree);
+  static void writeToTree(std::vector<SimpleEntry>::const_iterator const& vecBegin, std::vector<SimpleEntry>::const_iterator const& vecEnd, TTree* const& tree);
   void print();
 
 };

@@ -10,12 +10,14 @@
 class BaseTree{
 public:
   enum BranchType{
+    BranchType_bool_t,
     BranchType_short_t,
     BranchType_uint_t,
     BranchType_int_t,
     BranchType_float_t,
     BranchType_double_t,
 
+    BranchType_vbool_t,
     BranchType_vshort_t,
     BranchType_vuint_t,
     BranchType_vint_t,
@@ -36,12 +38,14 @@ protected:
   int currentEvent;
   TTree* currentTree;
 
+  std::unordered_map<TString, std::pair<bool, bool>*> valbools;
   std::unordered_map<TString, std::pair<short, short>*> valshorts;
   std::unordered_map<TString, std::pair<unsigned int, unsigned int>*> valuints;
   std::unordered_map<TString, std::pair<int, int>*> valints;
   std::unordered_map<TString, std::pair<float, float>*> valfloats;
   std::unordered_map<TString, std::pair<double, double>*> valdoubles;
 
+  std::unordered_map<TString, std::vector<bool>*> valVbools;
   std::unordered_map<TString, std::vector<short>*> valVshorts;
   std::unordered_map<TString, std::vector<unsigned int>*> valVuints;
   std::unordered_map<TString, std::vector<int>*> valVints;
@@ -90,6 +94,11 @@ public:
   bool branchExists(TString branchname, BranchType* type=nullptr);
 
   virtual bool isValidEvent() const;
+
+  void fill();
+  void writeToFile(TFile* file);
+
+  static void writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecBegin, std::vector<SimpleEntry>::iterator const& vecEnd, BaseTree* const& tree);
 
 };
 

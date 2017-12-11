@@ -71,7 +71,7 @@ void SimpleEntry::cropByTrueVal(std::vector<SimpleEntry>& vec, float minval, flo
   }
   for (std::vector<unsigned int>::reverse_iterator ipos=erasepos.rbegin(); ipos!=erasepos.rend(); ipos++) vec.erase(vec.begin()+(*ipos));
 }
-void SimpleEntry::writeToTree(std::vector<SimpleEntry>::const_iterator const& vecBegin, std::vector<SimpleEntry>::const_iterator const& vecEnd, TTree* const tree){
+void SimpleEntry::writeToTree(std::vector<SimpleEntry>::const_iterator const& vecBegin, std::vector<SimpleEntry>::const_iterator const& vecEnd, TTree* const& tree){
   if (!tree) return;
   SimpleEntry commonEntry;
   for (std::vector<SimpleEntry>::const_iterator it=vecBegin; it!=vecEnd; it++){

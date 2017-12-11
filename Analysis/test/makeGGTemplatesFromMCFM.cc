@@ -77,29 +77,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   else if (strSystematics == "PDFReplicaUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFReplicaUp");
 
   // Register the discriminants
-  vector<KDspecs> KDlist;
-  if (category==Inclusive || category==Untagged){
-    KDspecs KDbkg("Dbkgkin");
-    KDbkg.KD = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
-    KDbkg.KDvars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDbkgkin);
-    KDlist.push_back(KDbkg);
-    KDspecs KDbkgint("Dggint");
-    //KDbkgint.KD = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
-    //KDbkgint.KDvars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDggint);
-    KDlist.push_back(KDbkgint);
-    KDspecs KDL1("DL1dec");
-    KDL1.KD = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDL1dec, "", "", "../data/gConstant_HZZ2e2mu_L1.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_L1", 1e-4);
-    KDL1.KDvars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDL1dec);
-    KDlist.push_back(KDL1);
-    KDspecs KDa2("Da2dec");
-    KDa2.KD = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDa2dec, "", "", "../data/gConstant_HZZ2e2mu_g2.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_g2");
-    KDa2.KDvars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDa2dec);
-    KDlist.push_back(KDa2);
-    KDspecs KDa3("Da3dec");
-    KDa3.KD = DiscriminantClasses::constructKDFromType(DiscriminantClasses::kDa3dec, "", "", "../data/gConstant_HZZ2e2mu_g4.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_g4");
-    KDa3.KDvars = DiscriminantClasses::getKDVars(DiscriminantClasses::kDa3dec);
-    KDlist.push_back(KDa3);
-  }
+  vector<KDspecs> KDlist; getLikelihoodDiscriminants(channel, category, KDlist);
 
   // Get the CJLST set
   //vector<TString> newlist; newlist.push_back(strSamples.back()); newlist.push_back(strSamples.front());
@@ -157,9 +135,8 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
     strReweightingWeights.push_back("xsec");
 
     TString treename = getGGOutputTreeName(gghypotype, true);
-    TTree* theFinalTree = new TTree(treename, ""); // The tree to record into the ROOT file
+    BaseTree* theFinalTree = new BaseTree(treename); // The tree to record into the ROOT file
 
-    std::vector<SimpleEntry> products;
     // Build the analyzer and loop over the events
     unsigned int ich=0;
     for (auto& theSampleSet:theSets){
@@ -198,7 +175,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
       foutput->cd();
 
       TemplatesEventAnalyzer theAnalyzer(theSampleSet, channel, category);
-      theAnalyzer.setExternalProductList(&products);
+      theAnalyzer.setExternalProductTree(theFinalTree);
       // Book common variables needed for analysis
       theAnalyzer.addConsumed<float>("PUWeight");
       theAnalyzer.addConsumed<float>("genHEPMCweight");
@@ -218,10 +195,8 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
       delete melarewgtBuilder;
       ich++;
     }
-    MELAout << "There are " << products.size() << " products" << endl;
-    SimpleEntry::writeToTree(products.cbegin(), products.cend(), theFinalTree);
-
-    foutput->WriteTObject(theFinalTree);
+    MELAout << "There are " << theFinalTree->getNEvents() << " products" << endl;
+    theFinalTree->writeToFile(foutput);
     delete theFinalTree;
   }
 
@@ -278,8 +253,13 @@ void makeGGTemplatesFromMCFM_two(const Channel channel, const Category category,
 
   HelperFunctions::CopyFile(cinput, fixTreeWeights, nullptr);
   foutput->ls();
-
   foutput->Close();
+
+  MELAout << "===============================" << endl;
+  MELAout << "Stage 1 file " << cinput << " is no longer needed. Removing the file..." << endl;
+  gSystem->Exec("rm -f " + cinput);
+  MELAout << "===============================" << endl;
+
   MELAout.close();
 }
 

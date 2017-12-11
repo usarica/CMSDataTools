@@ -90,6 +90,21 @@ TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
 }
 TString DiscriminantClasses::getKDLabel(TString name){ return getKDLabel(getKDType(name)); }
 
+float DiscriminantClasses::getKDWP(DiscriminantClasses::Type type){
+  switch (type){
+  case kDjVBF:
+    return 0.370614;
+  case kDjjVBF:
+    return 0.474421;
+  case kDjjZH:
+  case kDjjWH:
+    return 0.879954;
+  default:
+    return 0.5;
+  };
+}
+float DiscriminantClasses::getKDWP(const TString name){ return getKDWP(getKDType(name)); }
+
 Discriminant* DiscriminantClasses::constructKDFromType(
   const DiscriminantClasses::Type type,
   const TString cfilename, const TString splinename,

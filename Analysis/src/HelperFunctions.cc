@@ -26,15 +26,15 @@ void HelperFunctions::progressbar(unsigned int val, unsigned int tot){
   if (val%percent==0 || val==tot){
     unsigned int percent_done = val/percent;
     if (val==tot) percent_done=100;
-    MELAout << "[ " << setw(3) << percent_done << "% | ";
-    for (unsigned int k=0; k<percent_done; k++) MELAout << '=';
-    if (percent_done<100) MELAout << '>';
-    else MELAout << ' ';
-    for (unsigned int k=percent_done; k<100; k++) MELAout << ' ';
-    MELAout << "| ]";
-    MELAout << flush;
-    if (val==tot) MELAout << endl;
-    else MELAout << '\r';
+    cout << "[ " << setw(3) << percent_done << "% | ";
+    for (unsigned int k=0; k<percent_done; k++) cout << '=';
+    if (percent_done<100) cout << '>';
+    else cout << ' ';
+    for (unsigned int k=percent_done; k<100; k++) cout << ' ';
+    cout << "| ]";
+    cout << flush;
+    if (val==tot) cout << endl;
+    else cout << '\r';
   }
 }
 

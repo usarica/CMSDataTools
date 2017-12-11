@@ -23,13 +23,13 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
   bool validProducts=(tree!=nullptr);
   if (validProducts){
     // Get tree and binning information
-    product.setNamedVal("MH", tree->MHVal);
+    //product.setNamedVal("MH", tree->MHVal);
 
     // Get main observables
     float& ZZMass = *(valfloats["ZZMass"]);
     float& GenHMass = *(valfloats["GenHMass"]);
     product.setNamedVal("ZZMass", ZZMass);
-    product.setNamedVal("GenHMass", GenHMass);
+    //product.setNamedVal("GenHMass", GenHMass);
 
     // Construct the weights
     float wgt = externalWgt;
@@ -45,7 +45,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
         mela_wgt *= rewgtBuilder->getNormComponent(tree);
         wgt *= mela_wgt;
         //product.setNamedVal("MELARewgtWeight", mela_wgt);
-        product.setNamedVal("MELARewgtBin", rewgtBuilder->findBin(tree));
+        //product.setNamedVal("MELARewgtBin", rewgtBuilder->findBin(tree));
       }
       else wgt *= rewgtBuilder->getPostThresholdWeight(tree);
     }

@@ -5,6 +5,7 @@
 #include "TH2F.h"
 #include "TH3F.h"
 #include "DiscriminantClasses.h"
+#include "SampleHelpers.h"
 #include "CategorizationHelpers.h"
 #include "ACHypothesisHelpers.h"
 
@@ -15,7 +16,7 @@ namespace TemplateHelpers{
   /* General functions */
   /*********************/
   template<typename T> void setTemplateAxisLabels(T* histo);
-
+  void getLikelihoodDiscriminants(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, std::vector<DiscriminantClasses::KDspecs>& KDlist);
 
   /****************/
   /* Gluon fusion */

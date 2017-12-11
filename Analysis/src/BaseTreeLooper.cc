@@ -8,17 +8,19 @@
 using namespace std;
 
 
-BaseTreeLooper::BaseTreeLooper(){ setExternalProductList(); }
-BaseTreeLooper::BaseTreeLooper(CJLSTTree* inTree){ this->addTree(inTree); setExternalProductList(); }
+BaseTreeLooper::BaseTreeLooper(){ setExternalProductList(); setExternalProductTree(); }
+BaseTreeLooper::BaseTreeLooper(CJLSTTree* inTree){ this->addTree(inTree); setExternalProductList(); setExternalProductTree(); }
 BaseTreeLooper::BaseTreeLooper(std::vector<CJLSTTree*> const& inTreeList) :
   treeList(inTreeList)
 {
   setExternalProductList();
+  setExternalProductTree();
 }
 BaseTreeLooper::BaseTreeLooper(CJLSTSet const* inTreeSet) :
   treeList(inTreeSet->getCJLSTTreeList())
 {
   setExternalProductList();
+  setExternalProductTree();
 }
 BaseTreeLooper::~BaseTreeLooper(){}
 
@@ -48,7 +50,21 @@ void BaseTreeLooper::setExternalProductList(std::vector<SimpleEntry>* extProduct
   else this->productListRef=&(this->productList);
 }
 
-void BaseTreeLooper::addProduct(SimpleEntry& product){ this->productListRef->push_back(product); }
+void BaseTreeLooper::setExternalProductTree(BaseTree* extTree){
+  this->productTree=extTree;
+  this->productListRef=&(this->productList); // To make sure product list collects some events before flushing
+}
+
+void BaseTreeLooper::addProduct(SimpleEntry& product, unsigned int* ev_rec){
+  this->productListRef->push_back(product);
+  if (ev_rec) (*ev_rec)++;
+}
+
+void BaseTreeLooper::recordProductsToTree(){
+  if (!this->productTree) return;
+  BaseTree::writeSimpleEntries(this->productListRef->begin(), this->productListRef->end(), this->productTree);
+  this->clearProducts();
+}
 
 bool BaseTreeLooper::linkConsumes(CJLSTTree* tree){
   bool process = tree->isValid();
@@ -73,6 +89,7 @@ bool BaseTreeLooper::linkConsumes(CJLSTTree* tree){
 void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts){
   // Loop over the trees
   unsigned int ev_acc=0;
+  unsigned int ev_rec=0;
   for (CJLSTTree*& tree:treeList){
     // Skip the tree if it cannot be linked
     if (!(this->linkConsumes(tree))) continue;
@@ -80,12 +97,12 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
     float wgtExternal = 1;
     CJLSTSet const* associatedSet = tree->getAssociatedSet();
     if (associatedSet) wgtExternal *= associatedSet->getPermanentWeight(tree);
-
-    // Loop over selected events
     if (wgtExternal==0.){
       MELAerr << "BaseTreeLooper::loop: External weights are 0 for the " << tree->sampleIdentifier << " sample. Skipping..." << endl;
       continue;
     }
+
+    // Loop over selected events
     if (loopSelected){
       MELAout << "BaseTreeLooper::loop: Looping over " << tree->sampleIdentifier << " selected events" << endl;
       int ev=0;
@@ -94,7 +111,7 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
         SimpleEntry product;
         if (tree->isValidEvent()){
           if (this->runEvent(tree, wgtExternal, product)){
-            if (keepProducts) this->addProduct(product);
+            if (keepProducts) this->addProduct(product, &ev_rec);
           }
         }
         HelperFunctions::progressbar(ev, nevents);
@@ -110,7 +127,7 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
         SimpleEntry product;
         if (tree->isValidEvent()){
           if (this->runEvent(tree, wgtExternal, product)){
-            if (keepProducts) this->addProduct(product);
+            if (keepProducts) this->addProduct(product, &ev_rec);
           }
         }
         HelperFunctions::progressbar(ev, nevents);
@@ -118,8 +135,11 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
       }
     }
 
+    // Record products to external tree
+    this->recordProductsToTree();
+
   } // End loop over the trees
-  MELAout << "BaseTreeLooper::loop: Total number of products accumulated over " << ev_acc << " events considered: " << productListRef->size() << endl;
+  MELAout << "BaseTreeLooper::loop: Total number of products: " << ev_rec << " / " << ev_acc << endl;
 }
 
 std::vector<SimpleEntry> const& BaseTreeLooper::getProducts() const{ return *productListRef; }

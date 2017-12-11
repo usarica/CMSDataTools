@@ -35,7 +35,11 @@ protected:
   // List of products
   std::vector<SimpleEntry> productList;
   std::vector<SimpleEntry>* productListRef;
-  void addProduct(SimpleEntry& product);
+  BaseTree* productTree;
+  void addProduct(SimpleEntry& product, unsigned int* ev_rec=nullptr);
+
+  // Flush product list into tree
+  void recordProductsToTree();
 
   // Abstract function to loop over a single event
   virtual bool runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEntry& product)=0;
@@ -57,6 +61,7 @@ public:
   void addReweightingBuilder(TString rewgtname, ReweightingBuilder* Rewgtbuilder);
   void addExternalFunction(TString fcnname, void(*fcn)(BaseTreeLooper*, SimpleEntry&));
   void setExternalProductList(std::vector<SimpleEntry>* extProductListRef=nullptr);
+  void setExternalProductTree(BaseTree* extTree=nullptr);
 
   // Function to loop over the tree list
   virtual void loop(bool loopSelected, bool loopFailed, bool keepProducts);

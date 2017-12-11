@@ -49,12 +49,14 @@ namespace DiscriminantClasses{
   };
 
   extern const std::unordered_map<TString, DiscriminantClasses::Type> mapKDNameType;
-
   std::unordered_map<TString, DiscriminantClasses::Type> getKDNameTypeMap();
+
   DiscriminantClasses::Type getKDType(const TString name);
   TString getKDName(DiscriminantClasses::Type type);
   TString getKDLabel(DiscriminantClasses::Type type);
   TString getKDLabel(const TString name);
+  float getKDWP(DiscriminantClasses::Type type);
+  float getKDWP(const TString name);
 
   Discriminant* constructKDFromType(
     const Type type,

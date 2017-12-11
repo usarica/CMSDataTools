@@ -2,6 +2,38 @@
 #include "TemplateHelpers.hpp"
 
 
+/*********************/
+/* General functions */
+/*********************/
+void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, std::vector<DiscriminantClasses::KDspecs>& KDlist){
+  using namespace SampleHelpers;
+  using namespace DiscriminantClasses;
+  const TString strChannel = getChannelName(channel);
+  const TString strCategory = getCategoryName(category);
+  if (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged){
+    KDspecs KDbkg("Dbkgkin");
+    KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+    KDbkg.KDvars = getKDVars(kDbkgkin);
+    KDlist.push_back(KDbkg);
+    KDspecs KDggint("Dggint");
+    //KDggint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "13TeV.root"), "sp_gr_varReco_Constant_Smooth");
+    //KDggint.KDvars = getKDVars(kDggint);
+    KDlist.push_back(KDggint);
+    KDspecs KDL1("DL1dec");
+    KDL1.KD = constructKDFromType(kDL1dec, "", "", "../data/gConstant_HZZ2e2mu_L1.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_L1", 1e-4);
+    KDL1.KDvars = getKDVars(kDL1dec);
+    KDlist.push_back(KDL1);
+    KDspecs KDa2("Da2dec");
+    KDa2.KD = constructKDFromType(kDa2dec, "", "", "../data/gConstant_HZZ2e2mu_g2.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_g2");
+    KDa2.KDvars = getKDVars(kDa2dec);
+    KDlist.push_back(KDa2);
+    KDspecs KDa3("Da3dec");
+    KDa3.KD = constructKDFromType(kDa3dec, "", "", "../data/gConstant_HZZ2e2mu_g4.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_g4");
+    KDa3.KDvars = getKDVars(kDa3dec);
+    KDlist.push_back(KDa3);
+  }
+}
+
 /****************/
 /* Gluon fusion */
 /****************/

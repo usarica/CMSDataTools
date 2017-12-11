@@ -11,6 +11,7 @@ class Discriminant{
 protected:
   TFile* theCFile;
   TSpline3* theC;
+  float WPCshift;
 
   TFile* theGFile;
   TSpline3* theG;
@@ -43,6 +44,8 @@ public:
 
   float update(const std::vector<float>& vars, const float valReco);
   float applyAdditionalC(const float cval);
+
+  void setWP(float WPval=0.5);
 
 };
 

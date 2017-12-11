@@ -351,7 +351,7 @@ void KDConstantByMass::run(
   TString coutput = Form("KDConstant_m4l_%s", strKD.Data());
   if (channel!=SampleHelpers::NChannels) coutput += Form("_%s", SampleHelpers::getChannelName(channel).Data());
   if (category!=CategorizationHelpers::Inclusive) coutput += Form("_%s", CategorizationHelpers::getCategoryName(category).Data());
-  if (sqrts>0.) coutput += Form("%.0fTeV", sqrts);
+  if (sqrts>0.) coutput += Form("_%.0fTeV", sqrts);
   TFile* foutput = TFile::Open(Form("./output/KDConstants/%s%s", coutput.Data(), ".root"), "recreate");
 
   int nEntries[2]={ 0 };
@@ -1083,7 +1083,7 @@ void generic_SmoothKDConstantProducer(
   gSystem->Exec("mkdir -p ./output/KDConstants");
   TString cinput = Form("KDConstant_m4l_%s", strname.Data());
   if (strcustomselection!="") cinput += Form("_%s", strcustomselection.Data());
-  if (sqrts>0.) cinput += Form("%.0fTeV", sqrts);
+  if (sqrts>0.) cinput += Form("_%.0fTeV", sqrts);
 
   TFile* finput = TFile::Open(Form("./output/KDConstants/%s%s", cinput.Data(), ".root"), "read");
   TFile* foutput = TFile::Open(Form("./output/KDConstants/Smooth%s%s", cinput.Data(), ".root"), "recreate");

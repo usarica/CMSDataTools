@@ -12,8 +12,7 @@ Discriminant::Discriminant(
   const float gscale_
 ) :
   theCFile(nullptr), theC(nullptr), WPCshift(1),
-  theGFile(nullptr), theG(nullptr),
-  gscale(gscale_)
+  theGFile(nullptr), theG(nullptr), gscale(gscale_), invertG(false)
 {
   if (cfilename!=""){
     MELAout << "Discriminant::Discriminant: Opening " << cfilename << endl;
@@ -87,7 +86,7 @@ float Discriminant::update(const std::vector<float>& vars, const float valReco){
 float Discriminant::getCval(const float valReco) const{
   float res=WPCshift;
   if (theC) res*=theC->Eval(valReco);
-  if (theG) res*=pow(theG->Eval(valReco)*gscale, 2);
+  if (theG) res*=pow(theG->Eval(valReco)*gscale, (!invertG ? 1 : -1)*2);
   return res;
 }
 float Discriminant::applyAdditionalC(const float cval){ val = val/(val+(1.-val)*cval); return val; }
@@ -95,3 +94,4 @@ void Discriminant::setWP(float WPval){
   if (WPval<=0. || WPval>=1.) return;
   WPCshift = WPval/(1.-WPval);
 }
+void Discriminant::setInvertG(bool flag){ invertG=flag; }

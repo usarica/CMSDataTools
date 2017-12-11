@@ -55,8 +55,7 @@ std::vector<TString> ACHypothesisHelpers::getACHypothesisKDNameSet(ACHypothesisH
 
 float ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::ACHypothesis hypo){
   if (hypo==kL1) return 1e4;
-  else if (hypo!=kSM) return 1;
-  else return 0;
+  else return 1;
 }
 float ACHypothesisHelpers::getACHypothesisHZZGVal(ACHypothesisHelpers::ACHypothesis hypo){
   switch (hypo){
@@ -67,6 +66,6 @@ float ACHypothesisHelpers::getACHypothesisHZZGVal(ACHypothesisHelpers::ACHypothe
   case kA3:
     return 2.55502;
   default:
-    return 0;
+    return 1;
   };
 }

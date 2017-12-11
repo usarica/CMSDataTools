@@ -60,9 +60,14 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
 
     // Compute the KDs
     // Reserve the special DjjVBF, DjjZH and DjjWH discriminants
-    float DjjVBF=-1;
-    float DjjWH=-1;
-    float DjjZH=-1;
+    float DjjVBF[nACHypotheses];
+    float DjjWH[nACHypotheses];
+    float DjjZH[nACHypotheses];
+    for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
+      DjjVBF[iac]=-1;
+      DjjZH[iac]=-1;
+      DjjWH[iac]=-1;
+    }
     for (auto it=KDbuilders.cbegin(); it!=KDbuilders.cend(); it++){
       auto& KDbuilderpair = it->second;
       auto& KDbuilder = KDbuilderpair.first;
@@ -72,9 +77,36 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
       float KD = KDbuilder->update(KDBuildVals, ZZMass);
       validProducts &= !(std::isnan(KD) || std::isinf(KD));
 
-      if (it->first=="DjjVBF" || it->first=="DjjVBFBSM") DjjVBF=std::max(KD, DjjVBF);
-      else if (it->first=="DjjZH" || it->first=="DjjZHBSM") DjjZH=std::max(KD, DjjZH);
-      else if (it->first=="DjjWH" || it->first=="DjjWHBSM") DjjWH=std::max(KD, DjjWH);
+      if (it->first.Contains("DjjVBF")){
+        ACHypothesisHelpers::ACHypothesis hypo=kSM;
+        for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
+          if (it->first.Contains(ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac))){
+            hypo=(ACHypothesisHelpers::ACHypothesis)iac;
+            break;
+          }
+        }
+        DjjVBF[hypo]=KD;
+      }
+      else if (it->first=="DjjZH"){
+        ACHypothesisHelpers::ACHypothesis hypo=kSM;
+        for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
+          if (it->first.Contains(ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac))){
+            hypo=(ACHypothesisHelpers::ACHypothesis)iac;
+            break;
+          }
+        }
+        DjjZH[hypo]=KD;
+      }
+      else if (it->first=="DjjWH"){
+        ACHypothesisHelpers::ACHypothesis hypo=kSM;
+        for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
+          if (it->first.Contains(ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac))){
+            hypo=(ACHypothesisHelpers::ACHypothesis)iac;
+            break;
+          }
+        }
+        DjjWH[hypo]=KD;
+      }
       else{
         product.setNamedVal(it->first, KD);
         validProducts &= (KD != float(-999.));
@@ -82,8 +114,23 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
     }
 
     // Category check
-    Category catFound = CategorizationHelpers::getCategory(DjjVBF, DjjZH, DjjWH, false);
-    validProducts &= (category==Inclusive || category==catFound);
+    bool fitsAtLeastOneCategory=(category==Inclusive);
+    if (!fitsAtLeastOneCategory){
+      bool isRequestedCategory[ACHypothesisHelpers::nACHypotheses]={ false };
+      for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
+        if (iac!=(int) ACHypothesisHelpers::kSM){
+          DjjVBF[iac]=std::max(DjjVBF[iac], DjjVBF[kSM]);
+          DjjZH[iac]=std::max(DjjZH[iac], DjjZH[kSM]);
+          DjjWH[iac]=std::max(DjjWH[iac], DjjWH[kSM]);
+        }
+        Category catFound = CategorizationHelpers::getCategory(DjjVBF[iac], DjjZH[iac], DjjWH[iac], false);
+        isRequestedCategory[iac] = (category==catFound);
+        TString catFlagName = getCategoryName(category) + TString("_") + ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac);
+        product.setNamedVal(catFlagName, isRequestedCategory[iac]);
+        fitsAtLeastOneCategory |= isRequestedCategory[iac];
+      }
+    }
+    validProducts &= fitsAtLeastOneCategory;
 
     // Channel check
     validProducts &= SampleHelpers::testChannel(channel, *(valshorts["Z1Flav"]), *(valshorts["Z2Flav"]));

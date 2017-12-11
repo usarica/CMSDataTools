@@ -16,6 +16,7 @@ protected:
   TFile* theGFile;
   TSpline3* theG;
   const float gscale;
+  bool invertG;
 
   float val;
 
@@ -46,6 +47,7 @@ public:
   float applyAdditionalC(const float cval);
 
   void setWP(float WPval=0.5);
+  void setInvertG(bool flag);
 
 };
 

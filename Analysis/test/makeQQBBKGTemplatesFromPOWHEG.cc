@@ -65,7 +65,9 @@ void makeQQBKGTemplatesFromPOWHEG_one(const Channel channel, const Category cate
   */
 
   // Register the discriminants
-  vector<KDspecs> KDlist; getLikelihoodDiscriminants(channel, category, KDlist);
+  vector<KDspecs> KDlist;
+  getLikelihoodDiscriminants(channel, category, KDlist);
+  if (category!=Inclusive) getCategorizationDiscriminants(KDlist);
 
   // Get the CJLST set
   CJLSTSet* theSampleSet = new CJLSTSet(strSamples);

@@ -77,7 +77,9 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   else if (strSystematics == "PDFReplicaUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFReplicaUp");
 
   // Register the discriminants
-  vector<KDspecs> KDlist; getLikelihoodDiscriminants(channel, category, KDlist);
+  vector<KDspecs> KDlist;
+  getLikelihoodDiscriminants(channel, category, KDlist);
+  if (category!=Inclusive) getCategorizationDiscriminants(KDlist);
 
   // Get the CJLST set
   //vector<TString> newlist; newlist.push_back(strSamples.back()); newlist.push_back(strSamples.front());

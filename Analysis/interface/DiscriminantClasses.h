@@ -24,7 +24,7 @@ namespace DiscriminantClasses{
   };
 
   enum Type{
-    kDbkgkin=0,
+    kDbkgkin,
     kDbkgdec,
 
     kDggbkgkin,
@@ -32,9 +32,20 @@ namespace DiscriminantClasses{
 
     kDjVBF,
     kDjjVBF,
-
     kDjjZH,
     kDjjWH,
+
+    kDjjVBFL1,
+    kDjjZHL1,
+    kDjjWHL1,
+
+    kDjjVBFa2,
+    kDjjZHa2,
+    kDjjWHa2,
+
+    kDjjVBFa3,
+    kDjjZHa3,
+    kDjjWHa3,
 
     kDbkgjjEWQCD,
 

@@ -2,6 +2,7 @@
 #define CATEGORIZATIONHELPERS_H
 
 #include "TString.h"
+#include "DiscriminantClasses.h"
 
 
 namespace CategorizationHelpers{

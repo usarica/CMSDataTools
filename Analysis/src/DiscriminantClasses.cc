@@ -20,9 +20,17 @@ std::unordered_map<TString, DiscriminantClasses::Type> DiscriminantClasses::getK
 
   res["DjVBF"] = kDjVBF;
   res["DjjVBF"] = kDjjVBF;
-
   res["DjjZH"] = kDjjZH;
   res["DjjWH"] = kDjjWH;
+  res["DjjVBFL1"] = kDjjVBFL1;
+  res["DjjZHL1"] = kDjjZHL1;
+  res["DjjWHL1"] = kDjjWHL1;
+  res["DjjVBFa2"] = kDjjVBFa2;
+  res["DjjZHa2"] = kDjjZHa2;
+  res["DjjWHa2"] = kDjjWHa2;
+  res["DjjVBFa3"] = kDjjVBFa3;
+  res["DjjZHa3"] = kDjjZHa3;
+  res["DjjWHa3"] = kDjjWHa3;
 
   res["DbkgjjEWQCD"] = kDbkgjjEWQCD;
 
@@ -62,11 +70,28 @@ TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
     return "D^{VBF}_{j}";
   case kDjjVBF:
     return "D^{VBF}_{jj}";
-
   case kDjjZH:
     return "D^{ZH}_{jj}";
   case kDjjWH:
     return "D^{WH}_{jj}";
+  case kDjjVBFL1:
+    return "D^{VBF, #Lambda1}_{jj}";
+  case kDjjZHL1:
+    return "D^{ZH, #Lambda1}_{jj}";
+  case kDjjWHL1:
+    return "D^{WH, #Lambda1}_{jj}";
+  case kDjjVBFa2:
+    return "D^{VBF, a2}_{jj}";
+  case kDjjZHa2:
+    return "D^{ZH, a2}_{jj}";
+  case kDjjWHa2:
+    return "D^{WH, a2}_{jj}";
+  case kDjjVBFa3:
+    return "D^{VBF, a3}_{jj}";
+  case kDjjZHa3:
+    return "D^{ZH, a3}_{jj}";
+  case kDjjWHa3:
+    return "D^{WH, a3}_{jj}";
 
   case kDbkgjjEWQCD:
     return "D^{jj+dec}_{bkg}";
@@ -95,9 +120,18 @@ float DiscriminantClasses::getKDWP(DiscriminantClasses::Type type){
   case kDjVBF:
     return 0.370614;
   case kDjjVBF:
+  case kDjjVBFL1:
+  case kDjjVBFa2:
+  case kDjjVBFa3:
     return 0.474421;
   case kDjjZH:
+  case kDjjZHL1:
+  case kDjjZHa2:
+  case kDjjZHa3:
   case kDjjWH:
+  case kDjjWHL1:
+  case kDjjWHa2:
+  case kDjjWHa3:
     return 0.879954;
   default:
     return 0.5;
@@ -125,10 +159,18 @@ Discriminant* DiscriminantClasses::constructKDFromType(
   case kDjVBF:
     return new DjVBF_t(cfilename, splinename, gfilename, gsplinename, gscale);
   case kDjjVBF:
+  case kDjjVBFL1:
+  case kDjjVBFa2:
+  case kDjjVBFa3:
     return new DjjVBF_t(cfilename, splinename, gfilename, gsplinename, gscale);
-
   case kDjjZH:
+  case kDjjZHL1:
+  case kDjjZHa2:
+  case kDjjZHa3:
   case kDjjWH:
+  case kDjjWHL1:
+  case kDjjWHa2:
+  case kDjjWHa3:
     return new DjjVH_t(cfilename, splinename, gfilename, gsplinename, gscale);
 
   case kDbkgjjEWQCD:
@@ -190,6 +232,18 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     res.push_back("p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal");
     res.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
     break;
+  case kDjjVBFL1:
+    res.push_back("p_JJVBF_SIG_ghv1prime2_1E4_JHUGen_JECNominal");
+    res.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
+    break;
+  case kDjjVBFa2:
+    res.push_back("p_JJVBF_SIG_ghv2_1_JHUGen_JECNominal");
+    res.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
+    break;
+  case kDjjVBFa3:
+    res.push_back("p_JJVBF_SIG_ghv4_1_JHUGen_JECNominal");
+    res.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
+    break;
 
   case kDjjZH:
     res.push_back("p_HadZH_SIG_ghz1_1_JHUGen_JECNominal");
@@ -197,8 +251,45 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     res.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
     res.push_back("p_HadZH_mavjj_true_JECNominal");
     break;
+  case kDjjZHL1:
+    res.push_back("p_HadZH_SIG_ghz1prime2_1E4_JHUGen_JECNominal");
+    res.push_back("p_HadZH_mavjj_JECNominal");
+    res.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
+    res.push_back("p_HadZH_mavjj_true_JECNominal");
+    break;
+  case kDjjZHa2:
+    res.push_back("p_HadZH_SIG_ghz2_1_JHUGen_JECNominal");
+    res.push_back("p_HadZH_mavjj_JECNominal");
+    res.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
+    res.push_back("p_HadZH_mavjj_true_JECNominal");
+    break;
+  case kDjjZHa3:
+    res.push_back("p_HadZH_SIG_ghz4_1_JHUGen_JECNominal");
+    res.push_back("p_HadZH_mavjj_JECNominal");
+    res.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
+    res.push_back("p_HadZH_mavjj_true_JECNominal");
+    break;
+
   case kDjjWH:
     res.push_back("p_HadWH_SIG_ghw1_1_JHUGen_JECNominal");
+    res.push_back("p_HadWH_mavjj_JECNominal");
+    res.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
+    res.push_back("p_HadWH_mavjj_true_JECNominal");
+    break;
+  case kDjjWHL1:
+    res.push_back("p_HadWH_SIG_ghw1prime2_1E4_JHUGen_JECNominal");
+    res.push_back("p_HadWH_mavjj_JECNominal");
+    res.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
+    res.push_back("p_HadWH_mavjj_true_JECNominal");
+    break;
+  case kDjjWHa2:
+    res.push_back("p_HadWH_SIG_ghw2_1_JHUGen_JECNominal");
+    res.push_back("p_HadWH_mavjj_JECNominal");
+    res.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
+    res.push_back("p_HadWH_mavjj_true_JECNominal");
+    break;
+  case kDjjWHa3:
+    res.push_back("p_HadWH_SIG_ghw4_1_JHUGen_JECNominal");
     res.push_back("p_HadWH_mavjj_JECNominal");
     res.push_back("p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal");
     res.push_back("p_HadWH_mavjj_true_JECNominal");

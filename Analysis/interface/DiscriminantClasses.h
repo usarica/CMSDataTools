@@ -7,6 +7,7 @@
 #include "PA2PB2Discriminant.h"
 #include "PA1PB1PBp1Discriminant.h"
 #include "PA1PB2PBp2Discriminant.h"
+#include "VHProdDecACDiscriminant.h"
 #include "JJEWQCDBkgDiscriminant.h"
 #include "SimpleInterferenceDiscriminant.h"
 
@@ -55,6 +56,20 @@ namespace DiscriminantClasses{
     kDa2decint,
     kDa3dec,
     kDa3decint,
+
+    kDL1jjVBFdec,
+    kDL1jjVBFint,
+    kDa2jjVBFdec,
+    kDa2jjVBFint,
+    kDa3jjVBFdec,
+    kDa3jjVBFint,
+
+    kDL1jjVHdec,
+    kDL1jjVHint,
+    kDa2jjVHdec,
+    kDa2jjVHint,
+    kDa3jjVHdec,
+    kDa3jjVHint,
 
     kNTypes
   };

@@ -244,6 +244,26 @@ TGraphErrors* HelperFunctions::makeGraphFromTH1(TH1* hx, TH1* hy, TString name){
   return tg;
 }
 
+TGraph* HelperFunctions::addTGraphs(TGraph* tgfirst, TGraph* tgsecond){
+  TSpline3* spfirst = convertGraphToSpline3(tgfirst);
+  TSpline3* spsecond = convertGraphToSpline3(tgsecond);
+
+  vector<pair<double, double>> xy;
+  double* xx = tgfirst->GetX();
+  for (int ip=0; ip<tgfirst->GetN(); ip++) addByLowest<double, double>(xy, xx[ip], 0);
+  xx = tgsecond->GetX();
+  for (int ip=0; ip<tgsecond->GetN(); ip++) addByLowest<double, double>(xy, xx[ip], 0);
+
+  vector<pair<double, double>> xynew;
+  for (unsigned int ip=0; ip<xy.size(); ip++){
+    double xval = xy.at(ip).first;
+    double yval = spfirst->Eval(xval);
+    yval += spsecond->Eval(xval);
+    xynew.push_back(pair<double, double>(xval, yval));
+  }
+
+  return makeGraphFromPair(xynew, Form("%s_plus_%s", tgfirst->GetName(), tgsecond->GetName()));
+}
 TGraph* HelperFunctions::multiplyTGraphs(TGraph* tgfirst, TGraph* tgsecond){
   TSpline3* spfirst = convertGraphToSpline3(tgfirst);
   TSpline3* spsecond = convertGraphToSpline3(tgsecond);

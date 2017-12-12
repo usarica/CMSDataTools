@@ -9,20 +9,18 @@
 
 class Discriminant{
 protected:
-  TFile* theCFile;
-  TSpline3* theC;
-  float WPCshift;
+  std::vector<std::pair<TFile*, TSpline3*>> theC;
+  std::vector<std::pair<TFile*, TSpline3*>> theG;
 
-  TFile* theGFile;
-  TSpline3* theG;
-  const float gscale;
+  float WPCshift;
+  float gscale;
   bool invertG;
 
   float val;
 
   void resetVal();
   virtual void eval(const std::vector<float>& vars, const float& valReco)=0;
-  float getCval(const float valReco) const;
+  virtual float getCval(const float valReco) const;
 
 public:
   Discriminant(
@@ -46,8 +44,12 @@ public:
   float update(const std::vector<float>& vars, const float valReco);
   float applyAdditionalC(const float cval);
 
-  void setWP(float WPval=0.5);
+  void setWP(float inval=0.5);
+  void setGScale(float inval=1);
   void setInvertG(bool flag);
+
+  bool addAdditionalC(const TString filename, const TString splinename);
+  bool addAdditionalG(const TString filename, const TString splinename);
 
 };
 

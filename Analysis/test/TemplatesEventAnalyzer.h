@@ -87,7 +87,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
         }
         DjjVBF[hypo]=KD;
       }
-      else if (it->first=="DjjZH"){
+      else if (it->first.Contains("DjjZH")){
         ACHypothesisHelpers::ACHypothesis hypo=kSM;
         for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
           if (it->first.Contains(ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac))){
@@ -97,7 +97,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
         }
         DjjZH[hypo]=KD;
       }
-      else if (it->first=="DjjWH"){
+      else if (it->first.Contains("DjjWH")){
         ACHypothesisHelpers::ACHypothesis hypo=kSM;
         for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
           if (it->first.Contains(ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac))){
@@ -111,6 +111,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
         product.setNamedVal(it->first, KD);
         validProducts &= (KD != float(-999.));
       }
+      //product.setNamedVal(it->first, KD);
     }
 
     // Category check
@@ -125,7 +126,10 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
         }
         Category catFound = CategorizationHelpers::getCategory(DjjVBF[iac], DjjZH[iac], DjjWH[iac], false);
         isRequestedCategory[iac] = (category==catFound);
-        TString catFlagName = getCategoryName(category) + TString("_") + ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac);
+        TString catFlagName = TString("is_")
+          + CategorizationHelpers::getCategoryName(category)
+          + TString("_")
+          + ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac);
         product.setNamedVal(catFlagName, isRequestedCategory[iac]);
         fitsAtLeastOneCategory |= isRequestedCategory[iac];
       }

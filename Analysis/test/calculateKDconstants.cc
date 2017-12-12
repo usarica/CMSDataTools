@@ -1276,7 +1276,8 @@ TGraph* getSingleTGraph(TString fname){
 
   cout << "Opening file " << fname << endl;
 
-  TFile* finput = TFile::Open(Form("JHUGenXsec/%s%s", fname.Data(), ".root"), "read");
+  TFile* finput = TFile::Open(Form("../data/JHUGenXsec/%s%s", fname.Data(), ".root"), "read");
+  if (!finput) return nullptr;
   TGraph* tgold = (TGraph*) finput->Get("Graph");
   double* xx = tgold->GetX();
   double* yy = tgold->GetY();
@@ -1297,6 +1298,7 @@ TGraph* getSingleTGraph(TString fname){
     if (std::isnan(yy[ip]) || std::isinf(yy[ip])) yy[ip] = spinterm->Eval(xx[ip]);
     xyfinal.push_back(pair<double, double>(xx[ip], yy[ip]));
   }
+  delete spinterm;
 
   curdir->cd();
   TGraph* result = makeGraphFromPair(xyfinal, Form("tgfinal_%s", fname.Data()));
@@ -1307,12 +1309,32 @@ TGraph* getSingleTGraph(TString fname){
 
 void generic_gConstantProducer(TString strprod, TString strhypo, bool useproddec=false){
   TString strSM = "SM";
+  TString strSMbare = strSM;
   if (strhypo=="L1Zgs") strSM += "_photoncut";
 
   TFile* foutput = TFile::Open(Form("gConstant_%s%s_%s%s", strprod.Data(), (useproddec ? "_ProdDec" : ""), strhypo.Data(), ".root"), "recreate");
-  TGraph* tgSMhypo = getSingleTGraph(Form("%s_%s", strprod.Data(), strSM.Data()));
-  TGraph* tgBSMhypo = getSingleTGraph(Form("%s_%s", strprod.Data(), strhypo.Data()));
-
+  TGraph* tgSMhypo=nullptr;
+  TGraph* tgBSMhypo=nullptr;
+  if (strprod!="VH"){
+    tgSMhypo = getSingleTGraph(Form("%s_%s", strprod.Data(), strSM.Data()));
+    tgBSMhypo = getSingleTGraph(Form("%s_%s", strprod.Data(), strhypo.Data()));
+  }
+  else{
+    TGraph* tgSMhypoZH = getSingleTGraph(Form("%s_%s", "ZH", strSM.Data()));
+    TGraph* tgBSMhypoZH = getSingleTGraph(Form("%s_%s", "ZH", strhypo.Data()));
+    TGraph* tgSMhypoWH = getSingleTGraph(Form("%s_%s", "WH", strSMbare.Data()));
+    TGraph* tgBSMhypoWH = getSingleTGraph(Form("%s_%s", "WH", strhypo.Data()));
+    if (tgSMhypoZH && tgSMhypoWH) tgSMhypo = addTGraphs(tgSMhypoZH, tgSMhypoWH);
+    else if (tgSMhypoZH) tgSMhypo = new TGraph(*tgSMhypoZH);
+    else if (tgSMhypoWH) tgSMhypo = new TGraph(*tgSMhypoWH);
+    if (tgBSMhypoZH && tgBSMhypoWH) tgBSMhypo = addTGraphs(tgBSMhypoZH, tgBSMhypoWH);
+    else if (tgBSMhypoZH) tgBSMhypo = new TGraph(*tgBSMhypoZH);
+    else if (tgBSMhypoWH) tgBSMhypo = new TGraph(*tgBSMhypoWH);
+    delete tgSMhypoZH;
+    delete tgSMhypoWH;
+    delete tgBSMhypoZH;
+    delete tgBSMhypoWH;
+  }
   if (useproddec){
     TGraph* tgSMhypodec = getSingleTGraph(Form("HZZ2e2mu_%s", strSM.Data()));
     TGraph* tgBSMhypodec = getSingleTGraph(Form("HZZ2e2mu_%s", strhypo.Data()));
@@ -1325,22 +1347,29 @@ void generic_gConstantProducer(TString strprod, TString strhypo, bool useproddec
   }
 
   TGraph* result = divideTGraphs(tgSMhypo, tgBSMhypo, 0.5, 0.5);
+  delete tgSMhypo;
+  delete tgBSMhypo;
   foutput->WriteTObject(result);
   TSpline3* spresult = convertGraphToSpline3(result);
   foutput->WriteTObject(spresult);
   cout << "Result of spline at 125 GeV = " << spresult->Eval(125) << endl;
-  delete spresult; delete result;
+  delete spresult;
+  delete result;
   foutput->Close();
 }
 
 void gConstantProducer(){
-  generic_gConstantProducer("WH_Sig_POWHEG", "g2");
-  generic_gConstantProducer("WH_Sig_POWHEG", "g4");
-  generic_gConstantProducer("WH_Sig_POWHEG", "L1");
-  generic_gConstantProducer("ZH_Sig_POWHEG", "g2");
-  generic_gConstantProducer("ZH_Sig_POWHEG", "g4");
-  generic_gConstantProducer("ZH_Sig_POWHEG", "L1");
-  generic_gConstantProducer("ZH_Sig_POWHEG", "L1Zgs");
+  generic_gConstantProducer("WH", "g2");
+  generic_gConstantProducer("WH", "g4");
+  generic_gConstantProducer("WH", "L1");
+  generic_gConstantProducer("ZH", "g2");
+  generic_gConstantProducer("ZH", "g4");
+  generic_gConstantProducer("ZH", "L1");
+  generic_gConstantProducer("ZH", "L1Zgs");
+  generic_gConstantProducer("VH", "g2");
+  generic_gConstantProducer("VH", "g4");
+  generic_gConstantProducer("VH", "L1");
+  generic_gConstantProducer("VH", "L1Zgs");
   generic_gConstantProducer("VBF", "g2");
   generic_gConstantProducer("VBF", "g4");
   generic_gConstantProducer("VBF", "L1");

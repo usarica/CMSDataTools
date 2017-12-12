@@ -17,5 +17,6 @@ public:
 };
 
 typedef PA2PB2Discriminant DjjVH_t;
+typedef PA2PB2Discriminant DaiVBFdec_t;
 
 #endif

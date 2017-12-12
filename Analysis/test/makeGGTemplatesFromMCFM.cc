@@ -367,12 +367,17 @@ void makeGGTemplatesFromMCFM_checkstage(
     TTree* tree = (TTree*) finput->Get(treename);
     foutput->cd();
 
+    bool isCategory=(category==Inclusive);
     float ZZMass, weight;
     tree->SetBranchAddress("ZZMass", &ZZMass);
     tree->SetBranchAddress("weight", &weight);
     for (auto const& KDname:KDset){
       MELAout << "Setting up KD " << KDname << " tree variable" << endl;
       tree->SetBranchAddress(KDname, &(KDvars[KDname]));
+    }
+    if (!isCategory){
+      TString catFlagName = TString("is_") + strCategory + TString("_") + getACHypothesisName(hypo);
+      tree->SetBranchAddress(catFlagName, &isCategory);
     }
 
     htpl_1D[t] = new TH1F(Form("h1D_%s", templatename.Data()), templatename, binning_mass.getNbins(), binning_mass.getBinning());
@@ -411,8 +416,11 @@ void makeGGTemplatesFromMCFM_checkstage(
     for (int ev=0; ev<tree->GetEntries(); ev++){
       tree->GetEntry(ev);
 
-      for (auto& KD:KDvars){ if (KD.second==1.) KD.second -= 0.001*float(ev)/float(tree->GetEntries()); }
+      if (!isCategory) continue;
+
       htpl_1D[t]->Fill(ZZMass, weight);
+
+      for (auto& KD:KDvars){ if (KD.second==1.) KD.second -= 0.001*float(ev)/float(tree->GetEntries()); }
       unsigned int iKD=0;
       for (auto& KDname:KDset){
         htpl_2D[t].at(iKD)->Fill(ZZMass, KDvars[KDname], weight);

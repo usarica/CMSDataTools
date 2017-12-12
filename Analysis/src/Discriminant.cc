@@ -1,5 +1,6 @@
 #include "Discriminant.h"
 #include "MELAStreamHelpers.hh"
+#include "TDirectory.h"
 
 
 using namespace std;
@@ -11,60 +12,14 @@ Discriminant::Discriminant(
   const TString gfilename, const TString gsplinename,
   const float gscale_
 ) :
-  theCFile(nullptr), theC(nullptr), WPCshift(1),
-  theGFile(nullptr), theG(nullptr), gscale(gscale_), invertG(false)
+  WPCshift(1), gscale(gscale_), invertG(false), val(-999)
 {
-  if (cfilename!=""){
-    MELAout << "Discriminant::Discriminant: Opening " << cfilename << endl;
-    theCFile = TFile::Open(cfilename);
-    if (theCFile){
-      if (theCFile->IsOpen() && !theCFile->IsZombie()){
-        theC = (TSpline3*) theCFile->Get(splinename);
-        if (!theC){
-          MELAerr << "Discriminant::Discriminant: Spline " << splinename << " does not exist!" << endl;
-          theC=nullptr;
-          theCFile->Close();
-          theCFile=nullptr;
-        }
-        else MELAout << "Discriminant::Discriminant: Acquired " << splinename << endl;
-      }
-      else if (theCFile->IsOpen()){
-        MELAerr << "Discriminant::Discriminant: File " << splinename << " is zombie!" << endl;
-        theCFile->Close();
-        theCFile=nullptr;
-      }
-    }
-    else MELAerr << "Discriminant::Discriminant: File " << splinename << " could not be opened!" << endl;
-  }
-  else MELAout << "Discriminant::Discriminant: No c-constants file is specified, defaulting to c=1." << endl;
-  if (gfilename!=""){
-    MELAout << "Discriminant::Discriminant: Opening " << gfilename << endl;
-    theGFile = TFile::Open(gfilename);
-    if (theGFile){
-      if (theGFile->IsOpen() && !theGFile->IsZombie()){
-        theG = (TSpline3*) theGFile->Get(gsplinename);
-        if (!theG){
-          MELAerr << "Discriminant::Discriminant: Spline " << gsplinename << " does not exist!" << endl;
-          theG=nullptr;
-          theGFile->Close();
-          theGFile=nullptr;
-        }
-        else MELAout << "Discriminant::Discriminant: Acquired " << gsplinename << endl;
-      }
-      else if (theGFile->IsOpen()){
-        MELAerr << "Discriminant::Discriminant: File " << gsplinename << " is zombie!" << endl;
-        theGFile->Close();
-        theGFile=nullptr;
-      }
-    }
-    else MELAerr << "Discriminant::Discriminant: File " << gsplinename << " could not be opened!" << endl;
-  }
-  else MELAout << "Discriminant::Discriminant: No g-constants file is specified, defaulting to g=1." << endl;
-  val=-1;
+  if (!addAdditionalC(cfilename, splinename)) MELAout << "Discriminant::Discriminant: No c-constants file is specified, defaulting to c=1." << endl;
+  if (!addAdditionalG(gfilename, gsplinename)) MELAout << "Discriminant::Discriminant: No g-constants file is specified, defaulting to g=1." << endl;
 }
 Discriminant::~Discriminant(){
-  if (theCFile) theCFile->Close();
-  if (theGFile) theGFile->Close();
+  for (std::pair<TFile*, TSpline3*>& fspair:theC) fspair.first->Close();
+  for (std::pair<TFile*, TSpline3*>& fspair:theG) fspair.first->Close();
 }
 
 Discriminant::operator float() const{ return val; }
@@ -85,13 +40,80 @@ float Discriminant::update(const std::vector<float>& vars, const float valReco){
 }
 float Discriminant::getCval(const float valReco) const{
   float res=WPCshift;
-  if (theC) res*=theC->Eval(valReco);
-  if (theG) res*=pow(theG->Eval(valReco)*gscale, (!invertG ? 1 : -1)*2);
+  int gpow=1;
+  if (!theG.empty()){
+    gpow = (!invertG ? 1 : -1)*2;
+    res *= pow(gscale, gpow);
+  }
+  for (std::pair<TFile*, TSpline3*> const& fspair:theC) res *= fspair.second->Eval(valReco);
+  for (std::pair<TFile*, TSpline3*> const& fspair:theG) res *= pow(fspair.second->Eval(valReco), gpow);
   return res;
 }
 float Discriminant::applyAdditionalC(const float cval){ val = val/(val+(1.-val)*cval); return val; }
-void Discriminant::setWP(float WPval){
-  if (WPval<=0. || WPval>=1.) return;
-  WPCshift = WPval/(1.-WPval);
+void Discriminant::setWP(float inval){
+  if (inval<=0. || inval>=1.) return;
+  WPCshift = inval/(1.-inval);
 }
+void Discriminant::setGScale(float inval){ gscale=inval; }
 void Discriminant::setInvertG(bool flag){ invertG=flag; }
+
+bool Discriminant::addAdditionalC(const TString filename, const TString splinename){
+  bool success=false;
+  if (filename!="" && splinename!=""){
+    MELAout << "Discriminant::addAdditionalC: Opening " << filename << endl;
+    TFile* theFile = TFile::Open(filename);
+    if (theFile){
+      if (theFile->IsOpen() && !theFile->IsZombie()){
+        TSpline3* theSpline = (TSpline3*) theFile->Get(splinename);
+        if (!theSpline){
+          MELAerr << "Discriminant::addAdditionalC: Spline " << splinename << " does not exist!" << endl;
+          theSpline=nullptr;
+          theFile->Close();
+          theFile=nullptr;
+        }
+        else{
+          MELAout << "Discriminant::addAdditionalC: Acquired " << splinename << endl;
+          theC.push_back(std::pair<TFile*, TSpline3*>(theFile, theSpline));
+          success=true;
+        }
+      }
+      else if (theFile->IsOpen()){
+        MELAerr << "Discriminant::addAdditionalC: File " << splinename << " is zombie!" << endl;
+        theFile->Close();
+        theFile=nullptr;
+      }
+    }
+    else MELAerr << "Discriminant::addAdditionalC: File " << splinename << " could not be opened!" << endl;
+  }
+  return success;
+}
+bool Discriminant::addAdditionalG(const TString filename, const TString splinename){
+  bool success=false;
+  if (filename!="" && splinename!=""){
+    MELAout << "Discriminant::addAdditionalG: Opening " << filename << endl;
+    TFile* theFile = TFile::Open(filename);
+    if (theFile){
+      if (theFile->IsOpen() && !theFile->IsZombie()){
+        TSpline3* theSpline = (TSpline3*) theFile->Get(splinename);
+        if (!theSpline){
+          MELAerr << "Discriminant::addAdditionalG: Spline " << splinename << " does not exist!" << endl;
+          theSpline=nullptr;
+          theFile->Close();
+          theFile=nullptr;
+        }
+        else{
+          MELAout << "Discriminant::addAdditionalG: Acquired " << splinename << endl;
+          theG.push_back(std::pair<TFile*, TSpline3*>(theFile, theSpline));
+          success=true;
+        }
+      }
+      else if (theFile->IsOpen()){
+        MELAerr << "Discriminant::addAdditionalG: File " << splinename << " is zombie!" << endl;
+        theFile->Close();
+        theFile=nullptr;
+      }
+    }
+    else MELAerr << "Discriminant::addAdditionalG: File " << splinename << " could not be opened!" << endl;
+  }
+  return success;
+}

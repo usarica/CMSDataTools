@@ -16,10 +16,10 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
     KDbkg.KDvars = getKDVars(kDbkgkin);
     KDlist.push_back(KDbkg);
-    KDspecs KDggint("Dggint");
-    //KDggint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
-    //KDggint.KDvars = getKDVars(kDggint);
-    KDlist.push_back(KDggint);
+    KDspecs KDbkgsigint("Dggint");
+    //KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
+    //KDbkgsigint.KDvars = getKDVars(kDggint);
+    KDlist.push_back(KDbkgsigint);
     KDspecs KDL1("DL1dec");
     KDL1.KD = constructKDFromType(kDL1dec, "", "", "../data/gConstant_HZZ2e2mu_L1.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_L1", 1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1));
     KDL1.KDvars = getKDVars(kDL1dec);
@@ -31,6 +31,62 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDspecs KDa3("Da3dec");
     KDa3.KD = constructKDFromType(kDa3dec, "", "", "../data/gConstant_HZZ2e2mu_g4.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_g4");
     KDa3.KDvars = getKDVars(kDa3dec);
+    KDlist.push_back(KDa3);
+  }
+  else if (category==CategorizationHelpers::JJVBFTagged){
+    KDspecs KDbkg("Dbkgkin"); // REPLACE ME
+    KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+    KDbkg.KDvars = getKDVars(kDbkgkin);
+    KDlist.push_back(KDbkg);
+    KDspecs KDbkgsigint("Dggint");
+    //KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
+    //KDbkgsigint.KDvars = getKDVars(kDggint);
+    KDlist.push_back(KDbkgsigint);
+    KDspecs KDL1("DL1jjVBFdec");
+    KDL1.KD = constructKDFromType(kDL1jjVBFdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1), 2));
+    KDL1.KD->addAdditionalG("../data/gConstant_VBF_L1.root", "sp_tgfinal_VBF_SM_over_tgfinal_VBF_L1");
+    KDL1.KD->addAdditionalG("../data/gConstant_HZZ2e2mu_L1.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_L1");
+    KDL1.KDvars = getKDVars(kDL1jjVBFdec);
+    KDlist.push_back(KDL1);
+    KDspecs KDa2("Da2jjVBFdec");
+    KDa2.KD = constructKDFromType(kDa2jjVBFdec, "", "", "", "");
+    KDa2.KD->addAdditionalG("../data/gConstant_VBF_g2.root", "sp_tgfinal_VBF_SM_over_tgfinal_VBF_g2");
+    KDa2.KD->addAdditionalG("../data/gConstant_HZZ2e2mu_g2.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_g2");
+    KDa2.KDvars = getKDVars(kDa2jjVBFdec);
+    KDlist.push_back(KDa2);
+    KDspecs KDa3("Da3jjVBFdec");
+    KDa3.KD = constructKDFromType(kDa3jjVBFdec, "", "", "", "");
+    KDa3.KD->addAdditionalG("../data/gConstant_VBF_g4.root", "sp_tgfinal_VBF_SM_over_tgfinal_VBF_g4");
+    KDa3.KD->addAdditionalG("../data/gConstant_HZZ2e2mu_g4.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_g4");
+    KDa3.KDvars = getKDVars(kDa3jjVBFdec);
+    KDlist.push_back(KDa3);
+  }
+  else if (category==CategorizationHelpers::HadVHTagged){
+    KDspecs KDbkg("Dbkgkin"); // REPLACE ME
+    KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+    KDbkg.KDvars = getKDVars(kDbkgkin);
+    KDlist.push_back(KDbkg);
+    KDspecs KDbkgsigint("Dggint");
+    //KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
+    //KDbkgsigint.KDvars = getKDVars(kDggint);
+    KDlist.push_back(KDbkgsigint);
+    KDspecs KDL1("DL1jjVHdec");
+    KDL1.KD = constructKDFromType(kDL1jjVHdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1), 2));
+    KDL1.KD->addAdditionalG("../data/gConstant_VH_L1.root", "sp_tgfinal_ZH_SM_plus_tgfinal_WH_SM_over_tgfinal_ZH_L1_plus_tgfinal_WH_L1");
+    KDL1.KD->addAdditionalG("../data/gConstant_HZZ2e2mu_L1.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_L1");
+    KDL1.KDvars = getKDVars(kDL1jjVHdec);
+    KDlist.push_back(KDL1);
+    KDspecs KDa2("Da2jjVHdec");
+    KDa2.KD = constructKDFromType(kDa2jjVHdec, "", "", "", "");
+    KDa2.KD->addAdditionalG("../data/gConstant_VH_g2.root", "sp_tgfinal_ZH_SM_plus_tgfinal_WH_SM_over_tgfinal_ZH_g2_plus_tgfinal_WH_g2");
+    KDa2.KD->addAdditionalG("../data/gConstant_HZZ2e2mu_g2.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_g2");
+    KDa2.KDvars = getKDVars(kDa2jjVHdec);
+    KDlist.push_back(KDa2);
+    KDspecs KDa3("Da3jjVHdec");
+    KDa3.KD = constructKDFromType(kDa3jjVHdec, "", "", "", "");
+    KDa3.KD->addAdditionalG("../data/gConstant_VH_g4.root", "sp_tgfinal_ZH_SM_plus_tgfinal_WH_SM_over_tgfinal_ZH_g4_plus_tgfinal_WH_g4");
+    KDa3.KD->addAdditionalG("../data/gConstant_HZZ2e2mu_g4.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_g4");
+    KDa3.KDvars = getKDVars(kDa3jjVHdec);
     KDlist.push_back(KDa3);
   }
 }

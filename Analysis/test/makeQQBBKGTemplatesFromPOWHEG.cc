@@ -279,12 +279,17 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
     TTree* tree = (TTree*)finput->Get(treename);
     foutput->cd();
 
+    bool isCategory=(category==Inclusive);
     float ZZMass, weight;
     tree->SetBranchAddress("ZZMass", &ZZMass);
     tree->SetBranchAddress("weight", &weight);
     for(auto const& KDname:KDset){
       MELAout << "Setting up KD " << KDname << " tree variable" << endl;
       tree->SetBranchAddress(KDname, &(KDvars[KDname]));
+    }
+    if (!isCategory){
+      TString catFlagName = TString("is_") + strCategory + TString("_") + getACHypothesisName(hypo);
+      tree->SetBranchAddress(catFlagName, &isCategory);
     }
 
     htpl_1D[t] = new TH1F(Form("h1D_%s", treename.Data()), templatename, binning_mass.getNbins(), binning_mass.getBinning());
@@ -322,6 +327,9 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
 
     for (int ev=0; ev<tree->GetEntries(); ev++){
       tree->GetEntry(ev);
+
+      if (!isCategory) continue;
+
       htpl_1D[t]->Fill(ZZMass, weight);
       
       for (auto& KD:KDvars){ if (KD.second==1.) KD.second -= 0.001*float(ev)/float(tree->GetEntries()); }
@@ -333,8 +341,8 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
       if (nKDs==1) finalTemplates_2D[t]->Fill(ZZMass, KDvars[KDset.at(0)], weight);
       else finalTemplates_3D[t]->Fill(ZZMass, KDvars[KDset.at(0)], KDvars[KDset.at(1)], weight);
     }
-
   }
+
   MELAout << "Extracting the 1D distributions of various components" << endl;
   recombineQQBkgHistogramsToTemplates(htpl_1D);
   MELAout << "Extracting the 2/3D templates" << endl;

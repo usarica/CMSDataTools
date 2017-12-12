@@ -124,6 +124,8 @@ namespace HelperFunctions{
 
   TGraphErrors* makeGraphFromTH1(TH1* hx, TH1* hy, TString name);
 
+  TGraph* addTGraphs(TGraph* tgfirst, TGraph* tgsecond);
+
   TGraph* multiplyTGraphs(TGraph* tgfirst, TGraph* tgsecond);
 
   TGraph* divideTGraphs(TGraph* tgnum, TGraph* tgdenom, double powernum=1, double powerdenom=1);
@@ -349,7 +351,7 @@ template<typename T> bool HelperFunctions::checkNanInf(std::vector<T> const& var
 
 // TGraph functions
 template<typename T> TGraph* HelperFunctions::makeGraphFromPair(std::vector<std::pair<T, T>> points, TString name){
-  if (points.size()==0) return 0;
+  if (points.empty()) return nullptr;
   unsigned int nbins = points.size();
   double* xy[2];
   for (unsigned int ix=0; ix<2; ix++) xy[ix] = new double[nbins];

@@ -22,22 +22,37 @@ TString ACHypothesisHelpers::getACHypothesisName(ACHypothesisHelpers::ACHypothes
 std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet(ACHypothesisHelpers::ACHypothesis hypo, CategorizationHelpers::Category category){
   std::vector<DiscriminantClasses::Type> res;
   if (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged){
+    res.push_back(DiscriminantClasses::kDbkgkin);
     switch (hypo){
     case kSM:
-      res.push_back(DiscriminantClasses::kDbkgkin);
       //res.push_back(DiscriminantClasses::kDggint);
       break;
     case kL1:
-      res.push_back(DiscriminantClasses::kDbkgkin);
       res.push_back(DiscriminantClasses::kDL1dec);
       break;
     case kA2:
-      res.push_back(DiscriminantClasses::kDbkgkin);
       res.push_back(DiscriminantClasses::kDa2dec);
       break;
     case kA3:
-      res.push_back(DiscriminantClasses::kDbkgkin);
       res.push_back(DiscriminantClasses::kDa3dec);
+      break;
+    default:
+      break;
+    };
+  }
+  else if (category==CategorizationHelpers::JJVBFTagged){
+    res.push_back(DiscriminantClasses::kDbkgkin); // Replace with JJEWQCD and int
+    switch (hypo){
+    case kSM:
+      break;
+    case kL1:
+      res.push_back(DiscriminantClasses::kDL1jjVBFdec);
+      break;
+    case kA2:
+      res.push_back(DiscriminantClasses::kDa2jjVBFdec);
+      break;
+    case kA3:
+      res.push_back(DiscriminantClasses::kDa3jjVBFdec);
       break;
     default:
       break;

@@ -78,8 +78,8 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
 
   // Register the discriminants
   vector<KDspecs> KDlist;
-  getLikelihoodDiscriminants(channel, category, KDlist);
-  if (category!=Inclusive) getCategorizationDiscriminants(KDlist);
+  getLikelihoodDiscriminants(channel, category, strSystematics, KDlist);
+  if (category!=Inclusive) getCategorizationDiscriminants(strSystematics, KDlist);
 
   // Get the CJLST set
   //vector<TString> newlist; newlist.push_back(strSamples.back()); newlist.push_back(strSamples.front());

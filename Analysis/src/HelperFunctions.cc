@@ -507,6 +507,15 @@ void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixe
   for (unsigned int ix=0; ix<2; ix++) delete[] xy_mod[ix];
 }
 
+template<> void HelperFunctions::replaceString<TString>(TString& strinput, const TString strTakeOut, const TString strPutIn){
+  Ssiz_t ipos=strinput.Index(strTakeOut);
+  if (ipos!=-1) strinput.Replace(ipos, strTakeOut.Length(), strPutIn);
+}
+template<> void HelperFunctions::replaceString<std::string>(std::string& strinput, const std::string strTakeOut, const std::string strPutIn){
+  std::string::size_type ipos=strinput.find(strTakeOut);
+  if (ipos!=std::string::npos) strinput.replace(ipos, strTakeOut.length(), strPutIn);
+}
+
 template<> void HelperFunctions::addPointsBetween<TGraph>(TGraph*& tgOriginal, double xmin, double xmax, unsigned int nadd){
   const unsigned int np = tgOriginal->GetN();
   double* xy[2]={

@@ -1,6 +1,7 @@
 #ifndef HELPERFUNCTIONSCORE_H
 #define HELPERFUNCTIONSCORE_H
 
+#include <string>
 #include <vector>
 #include <utility>
 #include <algorithm>
@@ -12,6 +13,10 @@ namespace HelperFunctions{
 
   template<typename T> bool getUnorderedMapIterator(TString name, const std::unordered_map<TString, T>& theMap, typename std::unordered_map<TString, T>::const_iterator& it);
   template<typename T> bool getUnorderedMapIterator(TString name, std::unordered_map<TString, T>& theMap, typename std::unordered_map<TString, T>::iterator& it);
+
+  template<typename T> void replaceString(T& strinput, const T strTakeOut, const T strPutIn);
+  template<> void replaceString<TString>(TString& strinput, const TString strTakeOut, const TString strPutIn);
+  template<> void replaceString<std::string>(std::string& strinput, const std::string strTakeOut, const std::string strPutIn);
 
 }
 

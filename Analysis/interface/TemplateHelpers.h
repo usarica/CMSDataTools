@@ -16,8 +16,9 @@ namespace TemplateHelpers{
   /* General functions */
   /*********************/
   template<typename T> void setTemplateAxisLabels(T* histo);
-  void getLikelihoodDiscriminants(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, std::vector<DiscriminantClasses::KDspecs>& KDlist);
-  void getCategorizationDiscriminants(std::vector<DiscriminantClasses::KDspecs>& KDlist);
+  void getLikelihoodDiscriminants(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, const TString strSystematics, std::vector<DiscriminantClasses::KDspecs>& KDlist);
+  void getCategorizationDiscriminants(const TString strSystematics, std::vector<DiscriminantClasses::KDspecs>& KDlist);
+  void adjustDiscriminantJECVariables(const TString strSystematics, std::vector<DiscriminantClasses::KDspecs>& KDlist);
 
   /****************/
   /* Gluon fusion */

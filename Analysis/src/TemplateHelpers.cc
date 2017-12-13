@@ -5,7 +5,7 @@
 /*********************/
 /* General functions */
 /*********************/
-void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, std::vector<DiscriminantClasses::KDspecs>& KDlist){
+void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, const TString strSystematics, std::vector<DiscriminantClasses::KDspecs>& KDlist){
   using namespace SampleHelpers;
   using namespace DiscriminantClasses;
 
@@ -89,8 +89,10 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDa3.KDvars = getKDVars(kDa3jjVHdec);
     KDlist.push_back(KDa3);
   }
+
+  adjustDiscriminantJECVariables(strSystematics, KDlist);
 }
-void TemplateHelpers::getCategorizationDiscriminants(std::vector<DiscriminantClasses::KDspecs>& KDlist){
+void TemplateHelpers::getCategorizationDiscriminants(const TString strSystematics, std::vector<DiscriminantClasses::KDspecs>& KDlist){
   using namespace DiscriminantClasses;
 
   KDspecs KDjjVBF("DjjVBF");
@@ -153,6 +155,15 @@ void TemplateHelpers::getCategorizationDiscriminants(std::vector<DiscriminantCla
   KDjjWHa3.KD->setInvertG(true);
   KDjjWHa3.KDvars = getKDVars(kDjjWHa3);
   KDlist.push_back(KDjjWHa3);
+
+  adjustDiscriminantJECVariables(strSystematics, KDlist);
+}
+void TemplateHelpers::adjustDiscriminantJECVariables(const TString strSystematics, std::vector<DiscriminantClasses::KDspecs>& KDlist){
+  if (strSystematics=="JECUp" || strSystematics=="JECDn"){
+    for (DiscriminantClasses::KDspecs& KD:KDlist){
+      for (TString& var:KD.KDvars) HelperFunctions::replaceString(var, TString("JECNominal"), strSystematics);
+    }
+  }
 }
 
 /****************/

@@ -58,6 +58,24 @@ std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet
       break;
     };
   }
+  else if (category==CategorizationHelpers::HadVHTagged){
+    res.push_back(DiscriminantClasses::kDbkgkin); // Replace with JJEWQCD and int
+    switch (hypo){
+    case kSM:
+      break;
+    case kL1:
+      res.push_back(DiscriminantClasses::kDL1jjVHdec);
+      break;
+    case kA2:
+      res.push_back(DiscriminantClasses::kDa2jjVHdec);
+      break;
+    case kA3:
+      res.push_back(DiscriminantClasses::kDa3jjVHdec);
+      break;
+    default:
+      break;
+    };
+  }
   return res;
 }
 

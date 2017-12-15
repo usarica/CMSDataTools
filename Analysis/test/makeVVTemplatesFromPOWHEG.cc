@@ -10,13 +10,13 @@ TTree* fixTreeWeights(TTree* tree);
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category category, ACHypothesis hypo, TString strSystematics, const TString fixedDate=""){
+void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category category, ACHypothesis hypo, TString strSystematics, const TString fixedDate=""){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
-  const std::vector<TemplateHelpers::GGHypothesisType> tplset = getGGHypothesesForACHypothesis(hypo);
-  std::vector<TString> melawgtvars; for (auto& gghypotype:tplset) melawgtvars.push_back(getMELAGGHypothesisWeight(gghypotype, hypo));
+  const std::vector<TemplateHelpers::VVHypothesisType> tplset = getVVHypothesesForACHypothesis(hypo);
+  std::vector<TString> melawgtvars; for (auto& hypotype:tplset) melawgtvars.push_back(getMELAVVHypothesisWeight(hypotype, hypo));
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -29,7 +29,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   TString OUTPUT_NAME = Form(
     "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1",
     strChannel.Data(), strCategory.Data(),
-    getACHypothesisName(hypo).Data(), getGGProcessName(true).Data(),
+    getACHypothesisName(hypo).Data(), getVVProcessName(true).Data(),
     strSystematics.Data()
   );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
@@ -49,12 +49,13 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
   // Get list of samples
   vector<TString> strSampleIdentifiers;
-  strSampleIdentifiers.push_back("gg_Sig_POWHEG");
+  strSampleIdentifiers.push_back("VBF_Sig_POWHEG");
   vector<TString> strSamples;
   getSamplesList(theSqrts, strSampleIdentifiers, strSamples);
 
   // Kfactor variable names
   vector<TString> strKfactorVars;
+  /*
   if (strSystematics == "Nominal") strKfactorVars.push_back("KFactor_QCD_ggZZ_Nominal");
   else if (strSystematics == "PDFScaleDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFScaleDn");
   else if (strSystematics == "PDFScaleUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFScaleUp");
@@ -64,6 +65,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   else if (strSystematics == "AsUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_AsUp");
   else if (strSystematics == "PDFReplicaDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFReplicaDn");
   else if (strSystematics == "PDFReplicaUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFReplicaUp");
+  */
 
   // Register the discriminants
   vector<KDspecs> KDlist;
@@ -107,7 +109,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
   // Construct reweighting variables vector
   for (unsigned int t=0; t<tplset.size(); t++){
-    auto& gghypotype = tplset.at(t);
+    auto& hypotype = tplset.at(t);
     foutput->cd();
 
     /************* Reweighting setup *************/
@@ -120,7 +122,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     for (auto& s:strKfactorVars) strReweightingWeights.push_back(s);
     strReweightingWeights.push_back("xsec");
 
-    TString treename = getGGOutputTreeName(gghypotype, true);
+    TString treename = getVVOutputTreeName(hypotype, true);
     BaseTree* theFinalTree = new BaseTree(treename); // The tree to record into the ROOT file
 
     // Build the analyzer and loop over the events
@@ -188,7 +190,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   MELAout.close();
 }
 
-void makeGGTemplatesFromPOWHEG_two(const Channel channel, const Category category, ACHypothesis hypo, TString strSystematics, const TString fixedDate=""){
+void makeVVTemplatesFromPOWHEG_two(const Channel channel, const Category category, ACHypothesis hypo, TString strSystematics, const TString fixedDate=""){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);
@@ -204,18 +206,18 @@ void makeGGTemplatesFromPOWHEG_two(const Channel channel, const Category categor
   TString INPUT_NAME = Form(
     "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1",
     strChannel.Data(), strCategory.Data(),
-    getACHypothesisName(hypo).Data(), getGGProcessName(true).Data(),
+    getACHypothesisName(hypo).Data(), getVVProcessName(true).Data(),
     strSystematics.Data()
   );
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
-  if (gSystem->AccessPathName(cinput)) makeGGTemplatesFromPOWHEG_one(channel, category, hypo, strSystematics, fixedDate);
+  if (gSystem->AccessPathName(cinput)) makeVVTemplatesFromPOWHEG_one(channel, category, hypo, strSystematics, fixedDate);
 
   gSystem->Exec("mkdir -p " + coutput_common);
   TString OUTPUT_NAME = Form(
     "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG_Stage2",
     strChannel.Data(), strCategory.Data(),
-    getACHypothesisName(hypo).Data(), getGGProcessName(true).Data(),
+    getACHypothesisName(hypo).Data(), getVVProcessName(true).Data(),
     strSystematics.Data()
   );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
@@ -245,7 +247,7 @@ void makeGGTemplatesFromPOWHEG_two(const Channel channel, const Category categor
   MELAout.close();
 }
 
-void makeGGTemplatesFromPOWHEG_checkstage(
+void makeVVTemplatesFromPOWHEG_checkstage(
   const Channel channel, const Category category, ACHypothesisHelpers::ACHypothesis hypo, TString strSystematics,
   const unsigned int istage,
   const TString fixedDate=""
@@ -254,10 +256,10 @@ void makeGGTemplatesFromPOWHEG_checkstage(
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
-  std::vector<TemplateHelpers::GGHypothesisType> tplset = getGGHypothesesForACHypothesis(kSM);
+  std::vector<TemplateHelpers::VVHypothesisType> tplset = getVVHypothesesForACHypothesis(kSM);
   if (hypo!=kSM){
-    std::vector<TemplateHelpers::GGHypothesisType> tplset_tmp = getGGHypothesesForACHypothesis(hypo);
-    for (TemplateHelpers::GGHypothesisType& v:tplset_tmp) tplset.push_back(v);
+    std::vector<TemplateHelpers::VVHypothesisType> tplset_tmp = getVVHypothesesForACHypothesis(hypo);
+    for (TemplateHelpers::VVHypothesisType& v:tplset_tmp) tplset.push_back(v);
   }
   const unsigned int ntpls = tplset.size();
 
@@ -281,14 +283,14 @@ void makeGGTemplatesFromPOWHEG_checkstage(
     TString INPUT_NAME = Form(
       "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG_Stage%i",
       strChannel.Data(), strCategory.Data(),
-      getACHypothesisName(fhypo).Data(), getGGProcessName(true).Data(),
+      getACHypothesisName(fhypo).Data(), getVVProcessName(true).Data(),
       strSystematics.Data(), istage
     );
     INPUT_NAME += ".root";
     TString cinput = coutput_common + INPUT_NAME;
     if (gSystem->AccessPathName(cinput)){
-      if (istage==1) makeGGTemplatesFromPOWHEG_one(channel, category, fhypo, strSystematics, fixedDate);
-      else if (istage==2) makeGGTemplatesFromPOWHEG_two(channel, category, fhypo, strSystematics, fixedDate);
+      if (istage==1) makeVVTemplatesFromPOWHEG_one(channel, category, fhypo, strSystematics, fixedDate);
+      else if (istage==2) makeVVTemplatesFromPOWHEG_two(channel, category, fhypo, strSystematics, fixedDate);
       else return;
     }
     TFile* ftmp = TFile::Open(cinput, "read");
@@ -299,7 +301,7 @@ void makeGGTemplatesFromPOWHEG_checkstage(
   TString OUTPUT_NAME = Form(
     "HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Check%sDiscriminants_Stage%i",
     strChannel.Data(), strCategory.Data(),
-    getGGProcessName(true).Data(),
+    getVVProcessName(true).Data(),
     strSystematics.Data(),
     getACHypothesisName(hypo).Data(), istage
   );
@@ -336,13 +338,13 @@ void makeGGTemplatesFromPOWHEG_checkstage(
   binning_mass.addBinBoundary(180);
   for (unsigned int bin=0; bin<=(supMass-offshellMassBegin)/offshellMassWidth; bin++) binning_mass.addBinBoundary(offshellMassBegin + bin*offshellMassWidth);
   for (unsigned int t=0; t<ntpls; t++){
-    GGHypothesisType const& treetype = tplset.at(t);
-    GGTemplateType tpltype = castIntToGGTemplateType(castGGHypothesisTypeToInt(treetype));
-    TString templatename = getGGTemplateName(tpltype, true);
-    TString treename = getGGOutputTreeName(treetype, true);
+    VVHypothesisType const& treetype = tplset.at(t);
+    VVTemplateType tpltype = castIntToVVTemplateType(castVVHypothesisTypeToInt(treetype));
+    TString templatename = getVVTemplateName(tpltype, true);
+    TString treename = getVVOutputTreeName(treetype, true);
     MELAout << "Setting up tree " << treename << " and template " << templatename << endl;
 
-    TFile*& finput = finputList.at(castGGHypothesisTypeToInt(treetype)>=castGGHypothesisTypeToInt(nGGSMTypes));
+    TFile*& finput = finputList.at(castVVHypothesisTypeToInt(treetype)>=castVVHypothesisTypeToInt(nVVSMTypes));
     finput->cd();
     TTree* tree = (TTree*) finput->Get(treename);
     foutput->cd();
@@ -412,15 +414,15 @@ void makeGGTemplatesFromPOWHEG_checkstage(
   }
 
   MELAout << "Extracting the 1D distributions of various components" << endl;
-  recombineGGHistogramsToTemplates(htpl_1D, hypo);
+  recombineVVHistogramsToTemplates(htpl_1D, hypo);
   MELAout << "Extracting the 2/3D templates" << endl;
-  if (nKDs==1) recombineGGHistogramsToTemplates(finalTemplates_2D, hypo);
-  else recombineGGHistogramsToTemplates(finalTemplates_3D, hypo);
+  if (nKDs==1) recombineVVHistogramsToTemplates(finalTemplates_2D, hypo);
+  else recombineVVHistogramsToTemplates(finalTemplates_3D, hypo);
   MELAout << "Extracting the 2D distributions of various components" << endl;
   for (unsigned int iKD=0;iKD<nKDs;iKD++){
     vector<TH2F*> htmp;
     for (unsigned int t=0; t<ntpls; t++) htmp.push_back(htpl_2D[t].at(iKD));
-    recombineGGHistogramsToTemplates(htmp, hypo);
+    recombineVVHistogramsToTemplates(htmp, hypo);
   }
   MELAout << "Extracted all components" << endl;
   for (unsigned int t=0; t<ntpls; t++){

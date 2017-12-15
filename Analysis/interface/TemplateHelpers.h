@@ -66,6 +66,58 @@ namespace TemplateHelpers{
   template<> void recombineGGHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo);
 
 
+  /****************/
+  /* Gluon fusion */
+  /****************/
+  enum VVHypothesisType{
+    VVBkg=0,
+    VVSig=1, // fai=0
+    VVBSI=2, // fai=0
+    nVVSMTypes=3,
+
+    VVSigBSM=3, // fai=1 sig.
+    VVSigBSMSMInt0p25=4, // fai=0.25 sig.
+    VVSigBSMSMInt0p5=5, // fai=0.5 sig.
+    VVSigBSMSMInt0p75=6, // fai=0.75 sig.
+    VVBBI=7, // fai=1 BSI
+    VVBMI=8, // fai=0.5 BSI
+    nVVTypes=9
+  };
+  enum VVTemplateType{
+    VVTplBkg=0, // ai**0 a1**0 B**2
+    VVTplSig=1, // ai**0 a1**4 B**0
+    VVTplInt_Re=2, // ai**0 a1**2 B**1
+    nVVTplSMTypes=3,
+
+    VVTplSigBSM=3, // ai**4 a1**0 B**0
+    VVTplSigBSMSMInt_ai1_1_Re=4, // ai**1 a1**3 B**0
+    VVTplSigBSMSMInt_ai1_2_PosDef=5, // ai**2 a1**2 B**0
+    VVTplSigBSMSMInt_ai1_3_Re=6, // ai**3 a1**1 B**0
+    VVTplIntBSM_ai1_1_Re=7, // ai**1 a1**1 B**1
+    VVTplIntBSM_ai1_2_Re=8, // ai**2 a1**0 B**1
+    nVVTplTypes=9
+  };
+
+  TString getVVProcessName(bool useOffshell);
+  TString getVVOutputTreeName(TemplateHelpers::VVHypothesisType type, bool useOffshell);
+  TString getVVTemplateName(TemplateHelpers::VVTemplateType type, bool useOffshell);
+  TString getMELAVVHypothesisWeight(TemplateHelpers::VVHypothesisType type, ACHypothesisHelpers::ACHypothesis hypo);
+  std::vector<TemplateHelpers::VVHypothesisType> getVVHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo);
+  TString getVVProcessLabel(TemplateHelpers::VVHypothesisType type, ACHypothesisHelpers::ACHypothesis hypo);
+  TString getVVProcessLabel(TemplateHelpers::VVTemplateType type, ACHypothesisHelpers::ACHypothesis hypo);
+
+  int castVVHypothesisTypeToInt(TemplateHelpers::VVHypothesisType type);
+  int castVVTemplateTypeToInt(TemplateHelpers::VVTemplateType type);
+  VVHypothesisType castIntToVVHypothesisType(int type, bool useN=false);
+  VVTemplateType castIntToVVTemplateType(int type, bool useN=false);
+
+  template<typename T> void recombineVVHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo);
+  template<> void recombineVVHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo);
+  template<> void recombineVVHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo);
+  template<> void recombineVVHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo);
+  template<> void recombineVVHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo);
+
+
   /*****************/
   /* QQ background */
   /*****************/

@@ -127,7 +127,7 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
 
   for (unsigned int ibin=0; ibin<ns; ibin++){
     vector<SimpleEntry>& index = indexList.at(ibin);
-    if (minimumNevents>sumNonZeroWgtEvents[theTree].at(ibin)){
+    if (minimumNevents>sumNonZeroWgtEvents[theTree].at(ibin) && sumEvents[theTree].at(ibin)>0){
       MELAout << "\t- Bin " << ibin << " has less number of events with non-zero weight than the requested number " << minimumNevents << ". Resetting the bin..." << endl;
       index.clear();
       sumNonZeroWgtEvents[theTree].at(ibin)=0;
@@ -172,7 +172,7 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
     }
     // Assign the sum
     sumPostThrWeights[theTree].at(ibin)=sum;
-    MELAout << "\t- Threshold at bin " << ibin << ": " << threshold
+    if (sumEvents[theTree].at(ibin)>0) MELAout << "\t- Threshold at bin " << ibin << ": " << threshold
       << ", sum of post-threshold weights: " << sumPostThrWeights[theTree].at(ibin)
       << ", Nevents: " << sumNonZeroWgtEvents[theTree].at(ibin) << " / " << sumEvents[theTree].at(ibin)
       << endl;

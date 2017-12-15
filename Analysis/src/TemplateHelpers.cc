@@ -444,7 +444,7 @@ template<> void TemplateHelpers::recombineGGHistogramsToTemplates<TH1F*>(std::ve
     std::vector<unsigned int> symAxes;
     std::vector<unsigned int> asymAxes;
     if (hypo==ACHypothesisHelpers::kA3){
-      if (type==GGTplInt_Re || type==GGTplSigBSMSMInt_Re || type==GGTplIntBSM_Re){
+      if (type==GGTplSigBSMSMInt_Re || type==GGTplIntBSM_Re){
         if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
         if (asymAxes.empty()) hh->Reset("ICESM"); // If no asymmetrix axes found, histogram has to be 0 itself.
       }
@@ -483,7 +483,7 @@ template<> void TemplateHelpers::recombineGGHistogramsToTemplates<TH2F*>(std::ve
     std::vector<unsigned int> symAxes;
     std::vector<unsigned int> asymAxes;
     if (hypo==ACHypothesisHelpers::kA3){
-      if (type==GGTplInt_Re || type==GGTplSigBSMSMInt_Re || type==GGTplIntBSM_Re){
+      if (type==GGTplSigBSMSMInt_Re || type==GGTplIntBSM_Re){
         if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
         if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) asymAxes.push_back(1);
         if (asymAxes.empty()) hh->Reset("ICESM"); // If no asymmetrix axes found, histogram has to be 0 itself.
@@ -527,7 +527,7 @@ template<> void TemplateHelpers::recombineGGHistogramsToTemplates<TH3F*>(std::ve
     std::vector<unsigned int> symAxes;
     std::vector<unsigned int> asymAxes;
     if (hypo==ACHypothesisHelpers::kA3){
-      if (type==GGTplInt_Re || type==GGTplSigBSMSMInt_Re || type==GGTplIntBSM_Re){
+      if (type==GGTplSigBSMSMInt_Re || type==GGTplIntBSM_Re){
         if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
         if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) asymAxes.push_back(1);
         if (DiscriminantClasses::isCPSensitive(hh->GetZaxis()->GetTitle())) asymAxes.push_back(2);
@@ -546,6 +546,484 @@ template<> void TemplateHelpers::recombineGGHistogramsToTemplates<TH3F*>(std::ve
     HelperFunctions::divideBinWidth(hh);
     hh->Scale(xsecScale);
     hh->SetTitle(getGGProcessLabel(type, hypo));
+    setTemplateAxisLabels(hh);
+  }
+}
+
+
+/****************/
+/* EW VV fusion */
+/****************/
+TString TemplateHelpers::getVVProcessName(bool useOffshell){ return (useOffshell ? "VVZZ_offshell" : "VBF"); }
+TString TemplateHelpers::getVVOutputTreeName(TemplateHelpers::VVHypothesisType type, bool useOffshell){
+  TString res;
+  switch (type){
+  case VVBkg:
+    res="Bkg";
+    break;
+  case VVSig:
+    res="Sig";
+    break;
+  case VVBSI:
+    res="BSI";
+    break;
+  case VVSigBSM:
+    res="SigBSM";
+    break;
+  case VVSigBSMSMInt0p25:
+    res="SigBSMSMInt0p25";
+    break;
+  case VVSigBSMSMInt0p5:
+    res="SigBSMSMInt0p5";
+    break;
+  case VVSigBSMSMInt0p75:
+    res="SigBSMSMInt0p75";
+    break;
+  case VVBBI:
+    res="BBI";
+    break;
+  case VVBMI:
+    res="BMI";
+    break;
+  default:
+    break;
+  };
+  if (res!="") res = Form("T_%s_%s_Tree", TemplateHelpers::getVVProcessName(useOffshell).Data(), res.Data());
+  return res;
+}
+TString TemplateHelpers::getVVTemplateName(TemplateHelpers::VVTemplateType type, bool useOffshell){
+  TString res;
+  switch (type){
+  case VVTplBkg:
+    res="Bkg";
+    break;
+  case VVTplSig:
+    res="Sig";
+    break;
+  case VVTplInt_Re:
+    res="Int_Re";
+    break;
+  case VVTplSigBSM:
+    res="Sig_ai1_4";
+    break;
+  case VVTplSigBSMSMInt_ai1_1_Re:
+    res="Sig_ai1_1_Re";
+    break;
+  case VVTplSigBSMSMInt_ai1_2_PosDef:
+    res="Sig_ai1_2_PosDef";
+    break;
+  case VVTplSigBSMSMInt_ai1_3_Re:
+    res="Sig_ai1_3_Re";
+    break;
+  case VVTplIntBSM_ai1_1_Re:
+    res="Int_ai1_1_Re";
+    break;
+  case VVTplIntBSM_ai1_2_Re:
+    res="Int_ai1_2_Re";
+    break;
+  default:
+    break;
+  };
+  if (res!="") res = Form("T_%s_%s", TemplateHelpers::getVVProcessName(useOffshell).Data(), res.Data());
+  return res;
+}
+TString TemplateHelpers::getMELAVVHypothesisWeight(TemplateHelpers::VVHypothesisType type, ACHypothesisHelpers::ACHypothesis hypo){
+  TString strWeight;
+  if (type==VVBkg) strWeight = "p_Gen_JJEW_BKG_MCFM";
+  else if (type==VVSig) strWeight = "p_Gen_JJEW_SIG_ghv1_1_MCFM";
+  else if (type==VVBSI) strWeight = "p_Gen_JJEW_BSI_ghv1_1_MCFM";
+  else if (type==VVSigBSM){
+    switch (hypo){
+    case ACHypothesisHelpers::kL1:
+      strWeight = "p_Gen_JJEW_SIG_ghv1prime2_1E4_MCFM";
+      break;
+    case ACHypothesisHelpers::kA2:
+      strWeight = "p_Gen_JJEW_SIG_ghv2_1_MCFM";
+      break;
+    case ACHypothesisHelpers::kA3:
+      strWeight = "p_Gen_JJEW_SIG_ghv4_1_MCFM";
+      break;
+    default:
+      break;
+    };
+  }
+  else if (type==VVSigBSMSMInt0p25){
+    switch (hypo){
+    case ACHypothesisHelpers::kL1:
+      strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghv1prime2_25E2_MCFM";
+      break;
+    case ACHypothesisHelpers::kA2:
+      //strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghv2_0p25_MCFM";
+      strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghv2_0p251_MCFM";
+      break;
+    case ACHypothesisHelpers::kA3:
+      strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghv4_0p25_MCFM";
+      break;
+    default:
+      break;
+    };
+  }
+  else if (type==VVSigBSMSMInt0p5){
+    switch (hypo){
+    case ACHypothesisHelpers::kL1:
+      strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghv1prime2_50E2_MCFM";
+      break;
+    case ACHypothesisHelpers::kA2:
+      strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghv2_0p5_MCFM";
+      break;
+    case ACHypothesisHelpers::kA3:
+      strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghv4_0p5_MCFM";
+      break;
+    default:
+      break;
+    };
+  }
+  else if (type==VVSigBSMSMInt0p75){
+    switch (hypo){
+    case ACHypothesisHelpers::kL1:
+      strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghv1prime2_75E2_MCFM";
+      break;
+    case ACHypothesisHelpers::kA2:
+      strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghv2_0p75_MCFM";
+      break;
+    case ACHypothesisHelpers::kA3:
+      strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghv4_0p75_MCFM";
+      break;
+    default:
+      break;
+    };
+  }
+  else if (type==VVBBI){
+    switch (hypo){
+    case ACHypothesisHelpers::kL1:
+      strWeight = "p_Gen_JJEW_BSI_ghv1prime2_1E4_MCFM";
+      break;
+    case ACHypothesisHelpers::kA2:
+      strWeight = "p_Gen_JJEW_BSI_ghv2_1_MCFM";
+      break;
+    case ACHypothesisHelpers::kA3:
+      strWeight = "p_Gen_JJEW_BSI_ghv4_1_MCFM";
+      break;
+    default:
+      break;
+    };
+  }
+  else if (type==VVBMI){
+    switch (hypo){
+    case ACHypothesisHelpers::kL1:
+      strWeight = "p_Gen_JJEW_BSI_ghv1_1_ghv1prime2_1E4_MCFM";
+      break;
+    case ACHypothesisHelpers::kA2:
+      strWeight = "p_Gen_JJEW_BSI_ghv1_1_ghv2_1_MCFM";
+      break;
+    case ACHypothesisHelpers::kA3:
+      strWeight = "p_Gen_JJEW_BSI_ghv1_1_ghv4_1_MCFM";
+      break;
+    default:
+      break;
+    };
+  }
+  return strWeight;
+}
+std::vector<TemplateHelpers::VVHypothesisType> TemplateHelpers::getVVHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo){
+  std::vector<TemplateHelpers::VVHypothesisType> res;
+  // Order matters!
+  if (hypo==ACHypothesisHelpers::kSM){
+    for (int i=0; i<castVVHypothesisTypeToInt(nVVSMTypes); i++){
+      res.push_back(castIntToVVHypothesisType(i, false));
+    }
+  }
+  else{
+    for (int i=castVVHypothesisTypeToInt(nVVSMTypes); i<castVVHypothesisTypeToInt(nVVTypes); i++){
+      res.push_back(castIntToVVHypothesisType(i, false));
+    }
+  }
+  return res;
+}
+TString TemplateHelpers::getVVProcessLabel(TemplateHelpers::VVHypothesisType type, ACHypothesisHelpers::ACHypothesis hypo){
+  TString acname;
+  switch (hypo){
+  case ACHypothesisHelpers::kL1:
+    acname="f_{#Lambda1}";
+    break;
+  case ACHypothesisHelpers::kA2:
+    acname="f_{a2}";
+    break;
+  case ACHypothesisHelpers::kA3:
+    acname="f_{a3}";
+    break;
+  default:
+    break;
+  };
+  switch (type){
+  case VVBkg:
+    return "VV #rightarrow 4l bkg.";
+  case VVSig:
+    return "VV #rightarrow 4l SM sig.";
+  case VVBSI:
+    return "VV #rightarrow 4l SM sig.+bkg.";
+  case VVSigBSM:
+    return Form("VV #rightarrow 4l %s%s sig.", acname.Data(), "=1");
+  case VVSigBSMSMInt0p25:
+    return Form("VV #rightarrow 4l %s%s sig.", acname.Data(), "=0.059");
+  case VVSigBSMSMInt0p5:
+    return Form("VV #rightarrow 4l %s%s sig.", acname.Data(), "=0.2");
+  case VVSigBSMSMInt0p75:
+    return Form("VV #rightarrow 4l %s%s sig.", acname.Data(), "=0.36");
+  case VVBBI:
+    return Form("VV #rightarrow 4l %s%s sig.+bkg.", acname.Data(), "=1");
+  case VVBMI:
+    return Form("VV #rightarrow 4l %s%s sig.+bkg.", acname.Data(), "=0.5");
+  default:
+    return "";
+  };
+}
+TString TemplateHelpers::getVVProcessLabel(TemplateHelpers::VVTemplateType type, ACHypothesisHelpers::ACHypothesis hypo){
+  TString acname;
+  switch (hypo){
+  case ACHypothesisHelpers::kL1:
+    acname="#Lambda_{1}";
+    break;
+  case ACHypothesisHelpers::kA2:
+    acname="a_{2}";
+    break;
+  case ACHypothesisHelpers::kA3:
+    acname="a_{3}";
+    break;
+  default:
+    break;
+  };
+  switch (type){
+  case VVTplBkg:
+    return "VV #rightarrow 4l bkg.";
+  case VVTplSig:
+    return "VV #rightarrow 4l SM sig.";
+  case VVTplInt_Re:
+    return "VV #rightarrow 4l SM sig.-bkg. interference";
+  case VVTplSigBSM:
+    return Form("VV #rightarrow 4l %s sig.", acname.Data());
+  case VVTplSigBSMSMInt_ai1_1_Re:
+    return Form("VV #rightarrow 4l %s%s interference", acname.Data(), "^{1}");
+  case VVTplSigBSMSMInt_ai1_2_PosDef:
+    return Form("VV #rightarrow 4l %s%s interference", acname.Data(), "^{2}");
+  case VVTplSigBSMSMInt_ai1_3_Re:
+    return Form("VV #rightarrow 4l %s%s interference", acname.Data(), "^{3}");
+  case VVTplIntBSM_ai1_1_Re:
+    return Form("VV #rightarrow 4l %s%s sig.-bkg. interference", acname.Data(), "^{1}");
+  case VVTplIntBSM_ai1_2_Re:
+    return Form("VV #rightarrow 4l %s%s sig.-bkg. interference", acname.Data(), "^{2}");
+  default:
+    return "";
+  };
+}
+
+int TemplateHelpers::castVVHypothesisTypeToInt(TemplateHelpers::VVHypothesisType type){ return (int) type; }
+int TemplateHelpers::castVVTemplateTypeToInt(TemplateHelpers::VVTemplateType type){ return (int) type; }
+TemplateHelpers::VVHypothesisType TemplateHelpers::castIntToVVHypothesisType(int type, bool useN){
+  switch (type){
+  case 0:
+    return VVBkg;
+  case 1:
+    return VVSig;
+  case 2:
+    return VVBSI;
+  case 3:
+    return (!useN ? VVSigBSM : nVVSMTypes);
+  case 4:
+    return VVSigBSMSMInt0p25;
+  case 5:
+    return VVSigBSMSMInt0p5;
+  case 6:
+    return VVSigBSMSMInt0p75;
+  case 7:
+    return VVBBI;
+  case 8:
+    return VVBMI;
+  default:
+    return nVVTypes;
+  };
+}
+TemplateHelpers::VVTemplateType TemplateHelpers::castIntToVVTemplateType(int type, bool useN){
+  switch (type){
+  case 0:
+    return VVTplBkg;
+  case 1:
+    return VVTplSig;
+  case 2:
+    return VVTplInt_Re;
+  case 3:
+    return (!useN ? VVTplSigBSM : nVVTplSMTypes);
+  case 4:
+    return VVTplSigBSMSMInt_ai1_1_Re;
+  case 5:
+    return VVTplSigBSMSMInt_ai1_2_PosDef;
+  case 6:
+    return VVTplSigBSMSMInt_ai1_3_Re;
+  case 7:
+    return VVTplIntBSM_ai1_1_Re;
+  case 8:
+    return VVTplIntBSM_ai1_2_Re;
+  default:
+    return nVVTplTypes;
+  };
+}
+
+template<> void TemplateHelpers::recombineVVHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo){
+  if (vals.empty()) return;
+  std::vector<float> res;
+  res.assign(vals.size(), 0);
+  if (hypo==ACHypothesisHelpers::kSM){
+    assert(vals.size()==nVVSMTypes);
+    const float invA[nVVSMTypes][nVVSMTypes]={
+      { 1, 0, 0 },
+      { 0, 1, 0 },
+      { -1, -1, 1 }
+    };
+    for (int ix=0; ix<(int) nVVSMTypes; ix++){ for (int iy=0; iy<(int) nVVSMTypes; iy++) res.at(ix) += invA[ix][iy]*vals.at(iy); }
+  }
+  else{
+    assert(vals.size()==nVVTypes);
+    const float couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
+    const float couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
+    const float c = couplA/couplM;
+    const float c2 = pow(c, 2);
+    const float c3 = pow(c, 3);
+    const float c4 = pow(c, 4);
+    const float invA[nVVTypes][nVVTypes]={
+      { 1, 0, 0, 0, 0, 0, 0, 0, 0 },
+      { 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+      { -1, -1, 1, 0, 0, 0, 0, 0, 0 },
+      { 0, 0, 0, c4, 0, 0, 0, 0, 0 },
+      { 0, float(-22./3.)*c, 0, float(-3./32.)*c, float(12.)*c, float(-6.)*c, float(4./3.)*c, 0, 0 },
+      { 0, float(16.)*c2, 0, float(11./16.)*c2, float(-40.)*c2, float(32.)*c2, float(-8.)*c2, 0, 0 },
+      { 0, float(-32./3.)*c3, 0, float(-3./2.)*c3, float(32.)*c3, float(-32.)*c3, float(32./3.)*c3, 0, 0 },
+      { c, float(2.)*c, -c, float(29./32.)*c, float(-4.)*c, float(6.)*c, float(-4.)*c, -c, c },
+      { -c2, 0, 0, -c2, 0, 0, 0, c2, 0 }
+    };
+    for (int ix=0; ix<(int) nVVTypes; ix++){ for (int iy=0; iy<(int) nVVTypes; iy++) res.at(ix) += invA[ix][iy]*vals.at(iy); }
+  }
+  std::swap(vals, res);
+}
+template<> void TemplateHelpers::recombineVVHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo){
+  if (vals.empty()) return;
+  typedef TH1F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+  for (int ix=1; ix<=nx; ix++){
+    std::vector<float> binvals; binvals.assign(vals.size(), 0);
+    std::vector<float>::iterator ih=binvals.begin();
+    for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix); ih++; }
+    TemplateHelpers::recombineVVHistogramsToTemplates<float>(binvals, hypo);
+    ih=binvals.begin();
+    for (htype_t*& hh:vals){ hh->SetBinContent(ix, *ih); ih++; }
+  }
+  for (int t=0; t<(int) vals.size(); t++){
+    htype_t*& hh=vals.at(t);
+    VVTemplateType type = castIntToVVTemplateType(t);
+    std::vector<unsigned int> symAxes;
+    std::vector<unsigned int> asymAxes;
+    if (hypo==ACHypothesisHelpers::kA3){
+      if (type==VVTplSigBSMSMInt_ai1_1_Re || type==VVTplSigBSMSMInt_ai1_3_Re || type==VVTplIntBSM_ai1_1_Re){
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
+        if (asymAxes.empty()) hh->Reset("ICESM"); // If no asymmetrix axes found, histogram has to be 0 itself.
+      }
+      else{
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) symAxes.push_back(0);
+      }
+    }
+    for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
+    for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
+
+    HelperFunctions::wipeOverUnderFlows(hh);
+    HelperFunctions::divideBinWidth(hh);
+    hh->Scale(xsecScale);
+    hh->SetTitle(getVVProcessLabel(type, hypo));
+    setTemplateAxisLabels(hh);
+  }
+}
+template<> void TemplateHelpers::recombineVVHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo){
+  if (vals.empty()) return;
+  typedef TH2F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+  int const ny = vals.at(0)->GetNbinsY();
+  for (int ix=1; ix<=nx; ix++){
+    for (int iy=1; iy<=ny; iy++){
+      std::vector<float> binvals; binvals.assign(vals.size(), 0);
+      std::vector<float>::iterator ih=binvals.begin();
+      for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix, iy); ih++; }
+      TemplateHelpers::recombineVVHistogramsToTemplates<float>(binvals, hypo);
+      ih=binvals.begin();
+      for (htype_t*& hh:vals){ hh->SetBinContent(ix, iy, *ih); ih++; }
+    }
+  }
+  for (int t=0; t<(int) vals.size(); t++){
+    htype_t*& hh=vals.at(t);
+    VVTemplateType type = castIntToVVTemplateType(t);
+    std::vector<unsigned int> symAxes;
+    std::vector<unsigned int> asymAxes;
+    if (hypo==ACHypothesisHelpers::kA3){
+      if (type==VVTplSigBSMSMInt_ai1_1_Re || type==VVTplSigBSMSMInt_ai1_3_Re || type==VVTplIntBSM_ai1_1_Re){
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
+        if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) asymAxes.push_back(1);
+        if (asymAxes.empty()) hh->Reset("ICESM"); // If no asymmetrix axes found, histogram has to be 0 itself.
+      }
+      else{
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) symAxes.push_back(0);
+        if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) symAxes.push_back(1);
+      }
+    }
+    for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
+    for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
+
+    HelperFunctions::wipeOverUnderFlows(hh);
+    HelperFunctions::divideBinWidth(hh);
+    hh->Scale(xsecScale);
+    hh->SetTitle(getVVProcessLabel(type, hypo));
+    setTemplateAxisLabels(hh);
+  }
+}
+template<> void TemplateHelpers::recombineVVHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo){
+  if (vals.empty()) return;
+  typedef TH3F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+  int const ny = vals.at(0)->GetNbinsY();
+  int const nz = vals.at(0)->GetNbinsZ();
+  for (int ix=1; ix<=nx; ix++){
+    for (int iy=1; iy<=ny; iy++){
+      for (int iz=1; iz<=nz; iz++){
+        std::vector<float> binvals; binvals.assign(vals.size(), 0);
+        std::vector<float>::iterator ih=binvals.begin();
+        for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix, iy, iz); ih++; }
+        TemplateHelpers::recombineVVHistogramsToTemplates<float>(binvals, hypo);
+        ih=binvals.begin();
+        for (htype_t*& hh:vals){ hh->SetBinContent(ix, iy, iz, *ih); ih++; }
+      }
+    }
+  }
+  for (int t=0; t<(int) vals.size(); t++){
+    htype_t*& hh=vals.at(t);
+    VVTemplateType type = castIntToVVTemplateType(t);
+    std::vector<unsigned int> symAxes;
+    std::vector<unsigned int> asymAxes;
+    if (hypo==ACHypothesisHelpers::kA3){
+      if (type==VVTplSigBSMSMInt_ai1_1_Re || type==VVTplSigBSMSMInt_ai1_3_Re || type==VVTplIntBSM_ai1_1_Re){
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
+        if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) asymAxes.push_back(1);
+        if (DiscriminantClasses::isCPSensitive(hh->GetZaxis()->GetTitle())) asymAxes.push_back(2);
+        if (asymAxes.empty()) hh->Reset("ICESM"); // If no asymmetrix axes found, histogram has to be 0 itself.
+      }
+      else{
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) symAxes.push_back(0);
+        if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) symAxes.push_back(1);
+        if (DiscriminantClasses::isCPSensitive(hh->GetZaxis()->GetTitle())) symAxes.push_back(2);
+      }
+    }
+    for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
+    for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
+
+    HelperFunctions::wipeOverUnderFlows(hh);
+    HelperFunctions::divideBinWidth(hh);
+    hh->Scale(xsecScale);
+    hh->SetTitle(getVVProcessLabel(type, hypo));
     setTemplateAxisLabels(hh);
   }
 }

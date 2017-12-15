@@ -55,6 +55,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
   // Kfactor variable names
   vector<TString> strKfactorVars;
+  strKfactorVars.push_back("p_Gen_CPStoBWPropRewgt");
   if (strSystematics == "Nominal") strKfactorVars.push_back("KFactor_QCD_ggZZ_Nominal");
   else if (strSystematics == "PDFScaleDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFScaleDn");
   else if (strSystematics == "PDFScaleUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFScaleUp");

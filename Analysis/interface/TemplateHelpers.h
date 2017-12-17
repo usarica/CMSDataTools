@@ -25,22 +25,22 @@ namespace TemplateHelpers{
   /****************/
   /* Gluon fusion */
   /****************/
-  const GGProcessHandler OnshellGGProcessHandle(true);
-  const GGProcessHandler OffshellGGProcessHandle(false);
+  const GGProcessHandler OnshellGGProcessHandle(false);
+  const GGProcessHandler OffshellGGProcessHandle(true);
 
 
   /****************/
   /* EW VV fusion */
   /****************/
-  const VVProcessHandler OnshellVVProcessHandle(true);
-  const VVProcessHandler OffshellVVProcessHandle(false);
+  const VVProcessHandler OnshellVVProcessHandle(false);
+  const VVProcessHandler OffshellVVProcessHandle(true);
 
 
   /*****************/
   /* QQ background */
   /*****************/
-  const QQBkgProcessHandler OnshellQQBkgProcessHandle(true);
-  const QQBkgProcessHandler OffshellQQBkgProcessHandle(false);
+  const QQBkgProcessHandler OnshellQQBkgProcessHandle(false);
+  const QQBkgProcessHandler OffshellQQBkgProcessHandle(true);
 
 }
 

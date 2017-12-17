@@ -36,6 +36,7 @@
 #include "ExtendedBinning.h"
 #include "ACHypothesisHelpers.h"
 #include "TemplateHelpers.h"
+#include "QuantFuncMathCore.h"
 #include "MELAStreamHelpers.hh"
 #include "Mela.h"
 

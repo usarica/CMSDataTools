@@ -20,7 +20,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
   const std::vector<ProcessHandleType::HypothesisType> tplset = theProcess.getHypothesesForACHypothesis(hypo);
-  std::vector<TString> melawgtvars; for (auto& gghypotype:tplset) melawgtvars.push_back(theProcess.getMELAHypothesisWeight(gghypotype, hypo));
+  std::vector<TString> melawgtvars; for (auto& hypotype:tplset) melawgtvars.push_back(theProcess.getMELAHypothesisWeight(hypotype, hypo));
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);

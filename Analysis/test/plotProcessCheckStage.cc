@@ -120,6 +120,7 @@ void plotTH2Fs(TString coutdir, std::vector<TH2F*>& histolist){
     legend->SetFillStyle(0);
     */
 
+    hh->GetXaxis()->SetRangeUser(220, hh->GetXaxis()->GetBinUpEdge(hh->GetNbinsX()));
     hh->GetXaxis()->SetNdivisions(505);
     hh->GetXaxis()->SetLabelFont(42);
     hh->GetXaxis()->SetLabelOffset(0.007);

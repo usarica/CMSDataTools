@@ -7,6 +7,8 @@ fi
 
 script="makeGGTemplatesFromMCFM"
 
+rm -f $script".cc"
+
 . submit.sh $script".cc" $script"_one" "(k4e,Inclusive,kSM,\"Nominal\",\""$fixedDate"\")"
 . submit.sh $script".cc" $script"_one" "(k4mu,Inclusive,kSM,\"Nominal\",\""$fixedDate"\")"
 . submit.sh $script".cc" $script"_one" "(k2e2mu,Inclusive,kSM,\"Nominal\",\""$fixedDate"\")"

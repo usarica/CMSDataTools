@@ -7,6 +7,8 @@ fi
 
 script="makeQQBkgTemplatesFromPOWHEG"
 
+rm -f $script".cc"
+
 . submit.sh $script".cc" $script"_checkstage" "(k4e,Inclusive,kSM,\"Nominal\",2,\""$fixedDate"\")"
 . submit.sh $script".cc" $script"_checkstage" "(k4mu,Inclusive,kSM,\"Nominal\",2,\""$fixedDate"\")"
 . submit.sh $script".cc" $script"_checkstage" "(k2e2mu,Inclusive,kSM,\"Nominal\",2,\""$fixedDate"\")"

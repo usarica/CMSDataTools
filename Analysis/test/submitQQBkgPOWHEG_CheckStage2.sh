@@ -5,7 +5,7 @@ if [[ "$1" != "" ]];then
   fixedDate=$1
 fi
 
-script="makeQQBBKGTemplatesFromPOWHEG"
+script="makeQQBkgTemplatesFromPOWHEG"
 
 . submit.sh $script".cc" $script"_checkstage" "(k4e,Inclusive,kSM,\"Nominal\",2,\""$fixedDate"\")"
 . submit.sh $script".cc" $script"_checkstage" "(k4mu,Inclusive,kSM,\"Nominal\",2,\""$fixedDate"\")"

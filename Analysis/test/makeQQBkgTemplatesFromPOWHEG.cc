@@ -15,7 +15,7 @@ TTree* fixTreeWeights(TTree* tree);
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeQQBKGTemplatesFromPOWHEG_one(const Channel channel, const Category category, TString strSystematics, const TString fixedDate=""){
+void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category category, TString strSystematics, const TString fixedDate=""){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);
@@ -151,7 +151,7 @@ void makeQQBKGTemplatesFromPOWHEG_one(const Channel channel, const Category cate
   MELAout.close();
 }
 
-void makeQQBKGTemplatesFromPOWHEG_two(const Channel channel, const Category category, TString strSystematics, const TString fixedDate=""){
+void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category category, TString strSystematics, const TString fixedDate=""){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);
@@ -167,7 +167,7 @@ void makeQQBKGTemplatesFromPOWHEG_two(const Channel channel, const Category cate
   TString INPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1", strChannel.Data(), strCategory.Data(), theProcess.getProcessName().Data(), strSystematics.Data());
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
-  if (gSystem->AccessPathName(cinput)) makeQQBKGTemplatesFromPOWHEG_one(channel, category, strSystematics);
+  if (gSystem->AccessPathName(cinput)) makeQQBkgTemplatesFromPOWHEG_one(channel, category, strSystematics);
 
   gSystem->Exec("mkdir -p " + coutput_common);
   TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage2", strChannel.Data(), strCategory.Data(), theProcess.getProcessName().Data(), strSystematics.Data());
@@ -199,7 +199,7 @@ void makeQQBKGTemplatesFromPOWHEG_two(const Channel channel, const Category cate
   MELAout.close();
 }
 
-void makeQQBKGTemplatesFromPOWHEG_checkstage(
+void makeQQBkgTemplatesFromPOWHEG_checkstage(
   const Channel channel, const Category category, ACHypothesisHelpers::ACHypothesis hypo, TString strSystematics,
   const unsigned int istage,
   const TString fixedDate=""
@@ -228,8 +228,8 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
   if (gSystem->AccessPathName(cinput)){
-    if (istage==1) makeQQBKGTemplatesFromPOWHEG_one(channel, category, strSystematics, fixedDate);
-    else if (istage==2) makeQQBKGTemplatesFromPOWHEG_two(channel, category, strSystematics, fixedDate);
+    if (istage==1) makeQQBkgTemplatesFromPOWHEG_one(channel, category, strSystematics, fixedDate);
+    else if (istage==2) makeQQBkgTemplatesFromPOWHEG_two(channel, category, strSystematics, fixedDate);
     else return;
   }
   TFile* finput = TFile::Open(cinput, "read");

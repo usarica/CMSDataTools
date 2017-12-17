@@ -33,23 +33,4 @@ template void TemplateHelpers::setTemplateAxisLabels<TH2F>(TH2F* histo);
 template void TemplateHelpers::setTemplateAxisLabels<TH3F>(TH3F* histo);
 
 
-/*****************/
-/* QQ background */
-/*****************/
-template<typename T> void TemplateHelpers::recombineQQBkgHistogramsToTemplates(std::vector<T*>& vals){
-  assert(castQQBkgHypothesisTypeToInt(nQQBkgTypes)==castQQBkgTemplateTypeToInt(nQQBkgTplTypes));
-  if ((int) vals.size()!=castQQBkgHypothesisTypeToInt(nQQBkgTypes)) return;
-  for (T*& hh:vals){
-    HelperFunctions::wipeOverUnderFlows<T>(hh);
-    HelperFunctions::divideBinWidth<T>(hh);
-    hh->Scale(xsecScale);
-    hh->SetTitle(getQQBkgProcessLabel());
-    setTemplateAxisLabels<T>(hh);
-  }
-}
-template void TemplateHelpers::recombineQQBkgHistogramsToTemplates<TH1F>(std::vector<TH1F*>& vals);
-template void TemplateHelpers::recombineQQBkgHistogramsToTemplates<TH2F>(std::vector<TH2F*>& vals);
-template void TemplateHelpers::recombineQQBkgHistogramsToTemplates<TH3F>(std::vector<TH3F*>& vals);
-
-
 #endif

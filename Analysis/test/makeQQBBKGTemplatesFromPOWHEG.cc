@@ -3,6 +3,10 @@
 #define doSmoothing true
 
 
+// Process handle
+typedef QQBkgProcessHandler ProcessHandleType;
+const ProcessHandleType& theProcess = TemplateHelpers::OffshellQQBkgProcessHandle;
+
 // Constants to affect the template code
 const TString user_output_dir = "output/";
 
@@ -25,7 +29,7 @@ void makeQQBKGTemplatesFromPOWHEG_one(const Channel channel, const Category cate
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
   gSystem->Exec("mkdir -p " + coutput_common);
 
-  TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1", strChannel.Data(), strCategory.Data(), getQQBkgProcessName(true).Data(), strSystematics.Data());
+  TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1", strChannel.Data(), strCategory.Data(), theProcess.getProcessName().Data(), strSystematics.Data());
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -93,10 +97,10 @@ void makeQQBKGTemplatesFromPOWHEG_one(const Channel channel, const Category cate
   ExtendedBinning GenHMassInclusiveBinning("GenHMass");
 
   // Construct reweighting variables vector
-  for (int t=QQBkg; t<(int) nQQBkgTypes; t++){
+  for (int t=ProcessHandleType::QQBkg; t<(int) ProcessHandleType::nQQBkgTypes; t++){
     foutput->cd();
 
-    TString treename = getQQBkgOutputTreeName(true);
+    TString treename = theProcess.getOutputTreeName();
     BaseTree* theFinalTree = new BaseTree(treename); // The tree to record into the ROOT file
 
     /************* Reweighting setup *************/
@@ -160,13 +164,13 @@ void makeQQBKGTemplatesFromPOWHEG_two(const Channel channel, const Category cate
   cout << "Today's date: " << strdate << endl;
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
 
-  TString INPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1", strChannel.Data(), strCategory.Data(), getQQBkgProcessName(true).Data(), strSystematics.Data());
+  TString INPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1", strChannel.Data(), strCategory.Data(), theProcess.getProcessName().Data(), strSystematics.Data());
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
   if (gSystem->AccessPathName(cinput)) makeQQBKGTemplatesFromPOWHEG_one(channel, category, strSystematics);
 
   gSystem->Exec("mkdir -p " + coutput_common);
-  TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage2", strChannel.Data(), strCategory.Data(), getQQBkgProcessName(true).Data(), strSystematics.Data());
+  TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage2", strChannel.Data(), strCategory.Data(), theProcess.getProcessName().Data(), strSystematics.Data());
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -204,7 +208,7 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
-  std::vector<TemplateHelpers::QQBkgHypothesisType> tplset; tplset.push_back(TemplateHelpers::QQBkg);
+  std::vector<ProcessHandleType::HypothesisType> tplset; tplset.push_back(ProcessHandleType::QQBkg);
   const unsigned int ntpls = tplset.size();
 
   // Get the KDs needed for the AC hypothesis
@@ -220,7 +224,7 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
   cout << "Today's date: " << strdate << endl;
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
 
-  TString INPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage%i", strChannel.Data(), strCategory.Data(), getQQBkgProcessName(true).Data(), strSystematics.Data(), istage);
+  TString INPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage%i", strChannel.Data(), strCategory.Data(), theProcess.getProcessName().Data(), strSystematics.Data(), istage);
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
   if (gSystem->AccessPathName(cinput)){
@@ -234,7 +238,7 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
   TString OUTPUT_NAME = Form(
     "HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Check%sDiscriminants_Stage%i",
     strChannel.Data(), strCategory.Data(),
-    getQQBkgProcessName(true).Data(),
+    theProcess.getProcessName().Data(),
     strSystematics.Data(),
     ACHypothesisHelpers::getACHypothesisName(hypo).Data(), istage
   );
@@ -271,8 +275,8 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
   binning_mass.addBinBoundary(180);
   for (unsigned int bin=0; bin<=(supMass-offshellMassBegin)/offshellMassWidth; bin++) binning_mass.addBinBoundary(offshellMassBegin + bin*offshellMassWidth);
   for (unsigned int t=0; t<ntpls; t++){
-    TString templatename = getQQBkgTemplateName(true);
-    TString treename = getQQBkgOutputTreeName(true);
+    TString templatename = theProcess.getTemplateName();
+    TString treename = theProcess.getOutputTreeName();
     MELAout << "Setting up tree " << treename << " and template " << templatename << endl;
 
     finput->cd();
@@ -344,15 +348,15 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
   }
 
   MELAout << "Extracting the 1D distributions of various components" << endl;
-  recombineQQBkgHistogramsToTemplates(htpl_1D);
+  theProcess.recombineHistogramsToTemplates(htpl_1D);
   MELAout << "Extracting the 2/3D templates" << endl;
-  if (nKDs==1) recombineQQBkgHistogramsToTemplates(finalTemplates_2D);
-  else recombineQQBkgHistogramsToTemplates(finalTemplates_3D);
+  if (nKDs==1) theProcess.recombineHistogramsToTemplates(finalTemplates_2D);
+  else theProcess.recombineHistogramsToTemplates(finalTemplates_3D);
   MELAout << "Extracting the 2D distributions of various components" << endl;
   for (unsigned int iKD=0; iKD<nKDs; iKD++){
     vector<TH2F*> htmp;
     for (unsigned int t=0; t<ntpls; t++) htmp.push_back(htpl_2D[t].at(iKD));
-    recombineQQBkgHistogramsToTemplates(htmp);
+    theProcess.recombineHistogramsToTemplates(htmp);
   }
   MELAout << "Extracted all components" << endl;
   for (unsigned int t=0; t<ntpls; t++){
@@ -361,7 +365,7 @@ void makeQQBKGTemplatesFromPOWHEG_checkstage(
   }
 
   for (unsigned int iKD=0; iKD<nKDs; iKD++){ for (unsigned int t=0; t<ntpls; t++) HelperFunctions::conditionalizeHistogram(htpl_2D[t].at(iKD), 0); }
-  for (int t=QQBkgTpl; t<(int)nQQBkgTplTypes; t++){
+  for (int t=ProcessHandleType::QQBkgTpl; t<(int) ProcessHandleType::nQQBkgTplTypes; t++){
     foutput->WriteTObject(htpl_1D[t]);
     delete htpl_1D[t];
     for (auto& htmp:htpl_2D[t]){

@@ -146,6 +146,9 @@ namespace HelperFunctions{
   void CopyFile(TString fname, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*));
   void CopyDirectory(TDirectory* source, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*));
 
+  // Function to extract all histograms from file
+  template<typename T> void extractHistogramsFromDirectory(TDirectory* source, std::vector<T*>& histolist);
+
 }
 
 template<typename T> void HelperFunctions::addPointsBetween(T*& tgOriginal, double xmin, double xmax, unsigned int nadd){} // Dummy definition for generic types
@@ -389,6 +392,54 @@ template<int N> TF1* HelperFunctions::getFcn_a0plusa1overXN(TSpline3* sp, double
   return fcn;
 }
 template<int N> TF1* HelperFunctions::getFcn_a0plusa1timesXN(TSpline3* sp, double xmin, double xmax, bool useLowBound){ return getFcn_a0plusa1overXN<-N>(sp, xmin, xmax, useLowBound); }
+
+// Function to extract all histograms from file
+template<typename T> void HelperFunctions::extractHistogramsFromDirectory(TDirectory* source, std::vector<T*>& histolist){
+  // Copy all objects and subdirs of directory source as a subdir of the current directory
+  source->ls();
+  TDirectory* savdir = gDirectory;
+  TDirectory* adir;
+  if (dynamic_cast<TFile*>(source)==nullptr) adir = savdir->mkdir(source->GetName());
+  else adir=savdir;
+  adir->cd();
+  // Loop on all entries of this directory
+  TKey* key;
+  TIter nextkey(source->GetListOfKeys());
+  vector<TString> copiedKeys;
+  while ((key = (TKey*) nextkey())){
+    const char* classname = key->GetClassName();
+    TClass* cl = gROOT->GetClass(classname);
+    if (!cl) continue;
+    if (cl->InheritsFrom(TDirectory::Class())){
+      source->cd(key->GetName());
+      TDirectory* subdir = gDirectory;
+      adir->cd();
+      extractHistogramsFromDirectory<T>(subdir, histolist);
+      adir->cd();
+    }
+    else if (cl->InheritsFrom(T::Class())){
+      T* hist = (T*)source->Get(key->GetName());
+      bool alreadyCopied=false;
+      for (auto& k:copiedKeys){
+        if (k==key->GetName()){
+          alreadyCopied=true;
+          break;
+        }
+      }
+      adir->cd();
+      if (!alreadyCopied){
+        if (hist){
+          copiedKeys.push_back(key->GetName());
+          histolist.push_back(hist);
+        }
+      }
+    }
+  }
+  savdir->cd();
+}
+template void HelperFunctions::extractHistogramsFromDirectory<TH1F>(TDirectory* source, std::vector<TH1F*>& histolist);
+template void HelperFunctions::extractHistogramsFromDirectory<TH2F>(TDirectory* source, std::vector<TH2F*>& histolist);
+template void HelperFunctions::extractHistogramsFromDirectory<TH3F>(TDirectory* source, std::vector<TH3F*>& histolist);
 
 /****************************************************************/
 // Explicit instantiations

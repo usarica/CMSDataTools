@@ -2,6 +2,10 @@
 #include "TemplatesEventAnalyzer.h"
 
 
+// Process handle
+typedef GGProcessHandler ProcessHandleType;
+const ProcessHandleType& theProcess = TemplateHelpers::OffshellGGProcessHandle;
+
 // Constants to affect the template code
 const TString user_output_dir = "output/";
 
@@ -15,8 +19,8 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
-  const std::vector<TemplateHelpers::GGHypothesisType> tplset = getGGHypothesesForACHypothesis(hypo);
-  std::vector<TString> melawgtvars; for (auto& gghypotype:tplset) melawgtvars.push_back(getMELAGGHypothesisWeight(gghypotype, hypo));
+  const std::vector<ProcessHandleType::HypothesisType> tplset = theProcess.getHypothesesForACHypothesis(hypo);
+  std::vector<TString> melawgtvars; for (auto& gghypotype:tplset) melawgtvars.push_back(theProcess.getMELAHypothesisWeight(gghypotype, hypo));
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -29,7 +33,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   TString OUTPUT_NAME = Form(
     "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_MCFM_Stage1",
     strChannel.Data(), strCategory.Data(),
-    getACHypothesisName(hypo).Data(), getGGProcessName(true).Data(),
+    getACHypothesisName(hypo).Data(), theProcess.getProcessName().Data(),
     strSystematics.Data()
   );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
@@ -123,7 +127,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
 
   // Construct reweighting variables vector
   for (unsigned int t=0; t<tplset.size();t++){
-    auto& gghypotype = tplset.at(t);
+    auto& hypotype = tplset.at(t);
     foutput->cd();
 
     /************* Reweighting setup *************/
@@ -136,7 +140,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
     for (auto& s:strKfactorVars) strReweightingWeights.push_back(s);
     strReweightingWeights.push_back("xsec");
 
-    TString treename = getGGOutputTreeName(gghypotype, true);
+    TString treename = theProcess.getOutputTreeName(hypotype);
     BaseTree* theFinalTree = new BaseTree(treename); // The tree to record into the ROOT file
 
     // Build the analyzer and loop over the events
@@ -224,7 +228,7 @@ void makeGGTemplatesFromMCFM_two(const Channel channel, const Category category,
   TString INPUT_NAME = Form(
     "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_MCFM_Stage1",
     strChannel.Data(), strCategory.Data(),
-    getACHypothesisName(hypo).Data(), getGGProcessName(true).Data(),
+    getACHypothesisName(hypo).Data(), theProcess.getProcessName().Data(),
     strSystematics.Data()
   );
   INPUT_NAME += ".root";
@@ -235,7 +239,7 @@ void makeGGTemplatesFromMCFM_two(const Channel channel, const Category category,
   TString OUTPUT_NAME = Form(
     "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_MCFM_Stage2",
     strChannel.Data(), strCategory.Data(),
-    getACHypothesisName(hypo).Data(), getGGProcessName(true).Data(),
+    getACHypothesisName(hypo).Data(), theProcess.getProcessName().Data(),
     strSystematics.Data()
   );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
@@ -274,10 +278,10 @@ void makeGGTemplatesFromMCFM_checkstage(
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
-  std::vector<TemplateHelpers::GGHypothesisType> tplset = getGGHypothesesForACHypothesis(kSM);
+  std::vector<ProcessHandleType::HypothesisType> tplset = theProcess.getHypothesesForACHypothesis(kSM);
   if (hypo!=kSM){
-    std::vector<TemplateHelpers::GGHypothesisType> tplset_tmp = getGGHypothesesForACHypothesis(hypo);
-    for (TemplateHelpers::GGHypothesisType& v:tplset_tmp) tplset.push_back(v);
+    std::vector<ProcessHandleType::HypothesisType> tplset_tmp = theProcess.getHypothesesForACHypothesis(hypo);
+    for (ProcessHandleType::HypothesisType& v:tplset_tmp) tplset.push_back(v);
   }
   const unsigned int ntpls = tplset.size();
 
@@ -301,7 +305,7 @@ void makeGGTemplatesFromMCFM_checkstage(
     TString INPUT_NAME = Form(
       "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_MCFM_Stage%i",
       strChannel.Data(), strCategory.Data(),
-      getACHypothesisName(fhypo).Data(), getGGProcessName(true).Data(),
+      getACHypothesisName(fhypo).Data(), theProcess.getProcessName().Data(),
       strSystematics.Data(), istage
     );
     INPUT_NAME += ".root";
@@ -319,7 +323,7 @@ void makeGGTemplatesFromMCFM_checkstage(
   TString OUTPUT_NAME = Form(
     "HtoZZ%s_%s_FinalTemplates_%s_%s_MCFM_Check%sDiscriminants_Stage%i",
     strChannel.Data(), strCategory.Data(),
-    getGGProcessName(true).Data(),
+    theProcess.getProcessName().Data(),
     strSystematics.Data(),
     getACHypothesisName(hypo).Data(), istage
   );
@@ -356,13 +360,13 @@ void makeGGTemplatesFromMCFM_checkstage(
   binning_mass.addBinBoundary(180);
   for (unsigned int bin=0; bin<=(supMass-offshellMassBegin)/offshellMassWidth; bin++) binning_mass.addBinBoundary(offshellMassBegin + bin*offshellMassWidth);
   for (unsigned int t=0; t<ntpls; t++){
-    GGHypothesisType const& treetype = tplset.at(t);
-    GGTemplateType tpltype = castIntToGGTemplateType(castGGHypothesisTypeToInt(treetype));
-    TString templatename = getGGTemplateName(tpltype, true);
-    TString treename = getGGOutputTreeName(treetype, true);
+    ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
+    ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
+    TString templatename = theProcess.getTemplateName(tpltype);
+    TString treename = theProcess.getOutputTreeName(treetype);
     MELAout << "Setting up tree " << treename << " and template " << templatename << endl;
 
-    TFile*& finput = finputList.at(castGGHypothesisTypeToInt(treetype)>=castGGHypothesisTypeToInt(nGGSMTypes));
+    TFile*& finput = finputList.at(ProcessHandleType::castHypothesisTypeToInt(treetype)>=ProcessHandleType::castHypothesisTypeToInt(ProcessHandleType::nGGSMTypes));
     finput->cd();
     TTree* tree = (TTree*) finput->Get(treename);
     foutput->cd();
@@ -432,15 +436,15 @@ void makeGGTemplatesFromMCFM_checkstage(
   }
 
   MELAout << "Extracting the 1D distributions of various components" << endl;
-  recombineGGHistogramsToTemplates(htpl_1D, hypo);
+  theProcess.recombineHistogramsToTemplates(htpl_1D, hypo);
   MELAout << "Extracting the 2/3D templates" << endl;
-  if (nKDs==1) recombineGGHistogramsToTemplates(finalTemplates_2D, hypo);
-  else recombineGGHistogramsToTemplates(finalTemplates_3D, hypo);
+  if (nKDs==1) theProcess.recombineHistogramsToTemplates(finalTemplates_2D, hypo);
+  else theProcess.recombineHistogramsToTemplates(finalTemplates_3D, hypo);
   MELAout << "Extracting the 2D distributions of various components" << endl;
   for (unsigned int iKD=0;iKD<nKDs;iKD++){
     vector<TH2F*> htmp;
     for (unsigned int t=0; t<ntpls; t++) htmp.push_back(htpl_2D[t].at(iKD));
-    recombineGGHistogramsToTemplates(htmp, hypo);
+    theProcess.recombineHistogramsToTemplates(htmp, hypo);
   }
   MELAout << "Extracted all components" << endl;
   for (unsigned int t=0; t<ntpls; t++){

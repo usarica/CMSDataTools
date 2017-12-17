@@ -2,6 +2,10 @@
 #include "TemplatesEventAnalyzer.h"
 
 
+// Process handle
+typedef VVProcessHandler ProcessHandleType;
+const ProcessHandleType& theProcess = TemplateHelpers::OffshellVVProcessHandle;
+
 // Constants to affect the template code
 const TString user_output_dir = "output/";
 
@@ -15,8 +19,8 @@ void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
-  const std::vector<TemplateHelpers::VVHypothesisType> tplset = getVVHypothesesForACHypothesis(hypo);
-  std::vector<TString> melawgtvars; for (auto& hypotype:tplset) melawgtvars.push_back(getMELAVVHypothesisWeight(hypotype, hypo));
+  const std::vector<ProcessHandleType::HypothesisType> tplset = theProcess.getHypothesesForACHypothesis(hypo);
+  std::vector<TString> melawgtvars; for (auto& hypotype:tplset) melawgtvars.push_back(theProcess.getMELAHypothesisWeight(hypotype, hypo));
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -29,7 +33,7 @@ void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   TString OUTPUT_NAME = Form(
     "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1",
     strChannel.Data(), strCategory.Data(),
-    getACHypothesisName(hypo).Data(), getVVProcessName(true).Data(),
+    getACHypothesisName(hypo).Data(), theProcess.getProcessName().Data(),
     strSystematics.Data()
   );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
@@ -55,6 +59,7 @@ void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
   // Kfactor variable names
   vector<TString> strKfactorVars;
+  strKfactorVars.push_back("p_Gen_CPStoBWPropRewgt");
   /*
   if (strSystematics == "Nominal") strKfactorVars.push_back("KFactor_QCD_ggZZ_Nominal");
   else if (strSystematics == "PDFScaleDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFScaleDn");
@@ -122,7 +127,7 @@ void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     for (auto& s:strKfactorVars) strReweightingWeights.push_back(s);
     strReweightingWeights.push_back("xsec");
 
-    TString treename = getVVOutputTreeName(hypotype, true);
+    TString treename = theProcess.getOutputTreeName(hypotype);
     BaseTree* theFinalTree = new BaseTree(treename); // The tree to record into the ROOT file
 
     // Build the analyzer and loop over the events
@@ -206,7 +211,7 @@ void makeVVTemplatesFromPOWHEG_two(const Channel channel, const Category categor
   TString INPUT_NAME = Form(
     "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1",
     strChannel.Data(), strCategory.Data(),
-    getACHypothesisName(hypo).Data(), getVVProcessName(true).Data(),
+    getACHypothesisName(hypo).Data(), theProcess.getProcessName().Data(),
     strSystematics.Data()
   );
   INPUT_NAME += ".root";
@@ -217,7 +222,7 @@ void makeVVTemplatesFromPOWHEG_two(const Channel channel, const Category categor
   TString OUTPUT_NAME = Form(
     "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG_Stage2",
     strChannel.Data(), strCategory.Data(),
-    getACHypothesisName(hypo).Data(), getVVProcessName(true).Data(),
+    getACHypothesisName(hypo).Data(), theProcess.getProcessName().Data(),
     strSystematics.Data()
   );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
@@ -256,10 +261,10 @@ void makeVVTemplatesFromPOWHEG_checkstage(
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
-  std::vector<TemplateHelpers::VVHypothesisType> tplset = getVVHypothesesForACHypothesis(kSM);
+  std::vector<ProcessHandleType::HypothesisType> tplset = theProcess.getHypothesesForACHypothesis(kSM);
   if (hypo!=kSM){
-    std::vector<TemplateHelpers::VVHypothesisType> tplset_tmp = getVVHypothesesForACHypothesis(hypo);
-    for (TemplateHelpers::VVHypothesisType& v:tplset_tmp) tplset.push_back(v);
+    std::vector<ProcessHandleType::HypothesisType> tplset_tmp = theProcess.getHypothesesForACHypothesis(hypo);
+    for (ProcessHandleType::HypothesisType& v:tplset_tmp) tplset.push_back(v);
   }
   const unsigned int ntpls = tplset.size();
 
@@ -283,7 +288,7 @@ void makeVVTemplatesFromPOWHEG_checkstage(
     TString INPUT_NAME = Form(
       "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG_Stage%i",
       strChannel.Data(), strCategory.Data(),
-      getACHypothesisName(fhypo).Data(), getVVProcessName(true).Data(),
+      getACHypothesisName(fhypo).Data(), theProcess.getProcessName().Data(),
       strSystematics.Data(), istage
     );
     INPUT_NAME += ".root";
@@ -301,7 +306,7 @@ void makeVVTemplatesFromPOWHEG_checkstage(
   TString OUTPUT_NAME = Form(
     "HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Check%sDiscriminants_Stage%i",
     strChannel.Data(), strCategory.Data(),
-    getVVProcessName(true).Data(),
+    theProcess.getProcessName().Data(),
     strSystematics.Data(),
     getACHypothesisName(hypo).Data(), istage
   );
@@ -338,13 +343,13 @@ void makeVVTemplatesFromPOWHEG_checkstage(
   binning_mass.addBinBoundary(180);
   for (unsigned int bin=0; bin<=(supMass-offshellMassBegin)/offshellMassWidth; bin++) binning_mass.addBinBoundary(offshellMassBegin + bin*offshellMassWidth);
   for (unsigned int t=0; t<ntpls; t++){
-    VVHypothesisType const& treetype = tplset.at(t);
-    VVTemplateType tpltype = castIntToVVTemplateType(castVVHypothesisTypeToInt(treetype));
-    TString templatename = getVVTemplateName(tpltype, true);
-    TString treename = getVVOutputTreeName(treetype, true);
+    ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
+    ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
+    TString templatename = theProcess.getTemplateName(tpltype);
+    TString treename = theProcess.getOutputTreeName(treetype);
     MELAout << "Setting up tree " << treename << " and template " << templatename << endl;
 
-    TFile*& finput = finputList.at(castVVHypothesisTypeToInt(treetype)>=castVVHypothesisTypeToInt(nVVSMTypes));
+    TFile*& finput = finputList.at(ProcessHandleType::castHypothesisTypeToInt(treetype)>=ProcessHandleType::castHypothesisTypeToInt(ProcessHandleType::nVVSMTypes));
     finput->cd();
     TTree* tree = (TTree*) finput->Get(treename);
     foutput->cd();
@@ -414,15 +419,15 @@ void makeVVTemplatesFromPOWHEG_checkstage(
   }
 
   MELAout << "Extracting the 1D distributions of various components" << endl;
-  recombineVVHistogramsToTemplates(htpl_1D, hypo);
+  theProcess.recombineHistogramsToTemplates(htpl_1D, hypo);
   MELAout << "Extracting the 2/3D templates" << endl;
-  if (nKDs==1) recombineVVHistogramsToTemplates(finalTemplates_2D, hypo);
-  else recombineVVHistogramsToTemplates(finalTemplates_3D, hypo);
+  if (nKDs==1) theProcess.recombineHistogramsToTemplates(finalTemplates_2D, hypo);
+  else theProcess.recombineHistogramsToTemplates(finalTemplates_3D, hypo);
   MELAout << "Extracting the 2D distributions of various components" << endl;
   for (unsigned int iKD=0;iKD<nKDs;iKD++){
     vector<TH2F*> htmp;
     for (unsigned int t=0; t<ntpls; t++) htmp.push_back(htpl_2D[t].at(iKD));
-    recombineVVHistogramsToTemplates(htmp, hypo);
+    theProcess.recombineHistogramsToTemplates(htmp, hypo);
   }
   MELAout << "Extracted all components" << endl;
   for (unsigned int t=0; t<ntpls; t++){

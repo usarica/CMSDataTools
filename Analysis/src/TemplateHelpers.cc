@@ -161,7 +161,7 @@ void TemplateHelpers::getCategorizationDiscriminants(const TString strSystematic
 void TemplateHelpers::adjustDiscriminantJECVariables(const TString strSystematics, std::vector<DiscriminantClasses::KDspecs>& KDlist){
   if (strSystematics=="JECUp" || strSystematics=="JECDn"){
     for (DiscriminantClasses::KDspecs& KD:KDlist){
-      for (TString& var:KD.KDvars) HelperFunctions::replaceString(var, TString("JECNominal"), strSystematics);
+      for (TString& var:KD.KDvars) HelperFunctions::replaceString<TString, const TString>(var, TString("JECNominal"), strSystematics);
     }
   }
 }

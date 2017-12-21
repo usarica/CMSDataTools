@@ -1,9 +1,14 @@
 #include "common_includes.h"
+#include "TText.h"
+#include "TPaveText.h"
+#include "TColor.h"
+#include "TArrayI.h"
 
 
 // Constants to affect the template code
 const TString user_output_dir = "output/";
 
+void plotTH1Fs(TString coutdir, TString canvasname, std::vector<TH1F*>& histolist);
 void plotTH2Fs(TString coutdir, std::vector<TH2F*>& histolist);
 
 void plotProcessCheckStage(
@@ -32,6 +37,7 @@ void plotProcessCheckStage(
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
+  const TString strACHypo = getACHypothesisName(hypo);
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -39,7 +45,7 @@ void plotProcessCheckStage(
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
   TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
-  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Plots/";
+  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Plots/" + strACHypo + "/" + strChannel + "/" + strCategory + "/" + strGenerator + "/";
 
   gSystem->Exec("mkdir -p " + coutput_common);
   TString INPUT_NAME = Form(
@@ -69,6 +75,21 @@ void plotProcessCheckStage(
   MELAout << endl;
 
   gStyle->SetOptStat(0);
+  {
+    int colors[100];
+    Double_t Red[]    ={ 0.3, 0.4, 1.0 };
+    Double_t Green[]  ={ 0.0, 1.0, 0.8 };
+    Double_t Blue[]   ={ 1.0, 0.0, 0.3 };
+    Double_t Length[] ={ 0.00, 0.50, 1.00 };
+    int FI = TColor::CreateGradientColorTable(3, Length, Red, Green, Blue, 100);
+    const unsigned int ncolors = gStyle->GetNumberOfColors();
+    if (FI<0) MELAout << "Failed to set color palette" << endl;
+    else{
+      for (unsigned int ic=0; ic<100; ic++) colors[ic] = FI+ic;
+      gStyle->SetPalette(100, colors);
+    }
+    MELAout << "Ncolors: " << ncolors << endl;
+  }
 
   finput->ls();
 
@@ -81,17 +102,19 @@ void plotProcessCheckStage(
   HelperFunctions::extractHistogramsFromDirectory(finput, h2dlist);
   MELAout << "N(2D histograms) = " << h2dlist.size() << endl;
   plotTH2Fs(coutput_common, h2dlist);
+  plotTH1Fs(coutput_common, Form("c_M4lDistribution_%s", theProcess->getProcessName().Data()), h1dlist);
 
   finput->Close();
   MELAout.close();
 }
 
 void plotTH2Fs(TString coutdir, std::vector<TH2F*>& histolist){
-  gStyle->SetOptStat(0);
-
   for (TH2F*& hh:histolist){
+    if (hh->GetName()[0]=='T') continue;
+
     TString canvasname = Form("c_%s", hh->GetName());
-    TCanvas* canvas = new TCanvas(canvasname, "", 8, 30, 800, 800);
+    HelperFunctions::replaceString(canvasname, "h2D_T_", "");
+    TCanvas* canvas = new TCanvas(canvasname, "", 8, 30, 900, 800);
     canvas->cd();
     gStyle->SetOptStat(0);
     canvas->SetFillColor(0);
@@ -99,8 +122,8 @@ void plotTH2Fs(TString coutdir, std::vector<TH2F*>& histolist){
     canvas->SetBorderSize(2);
     canvas->SetTickx(1);
     canvas->SetTicky(1);
-    canvas->SetLeftMargin(0.17);
-    canvas->SetRightMargin(0.05);
+    canvas->SetLeftMargin(0.14);
+    canvas->SetRightMargin(0.12);
     canvas->SetTopMargin(0.07);
     canvas->SetBottomMargin(0.13);
     canvas->SetFrameFillStyle(0);
@@ -108,17 +131,111 @@ void plotTH2Fs(TString coutdir, std::vector<TH2F*>& histolist){
     canvas->SetFrameFillStyle(0);
     canvas->SetFrameBorderMode(0);
 
-    /*
-    TLegend *legend = new TLegend(0.20, 0.80, 0.58, 0.90);
-    legend->SetBorderSize(0);
-    legend->SetTextFont(42);
-    legend->SetTextSize(0.03);
-    legend->SetLineColor(1);
-    legend->SetLineStyle(1);
-    legend->SetLineWidth(1);
-    legend->SetFillColor(0);
-    legend->SetFillStyle(0);
-    */
+    TPaveText* pt = new TPaveText(0.12, 0.93, 0.85, 1, "brNDC");
+    pt->SetBorderSize(0);
+    pt->SetFillStyle(0);
+    pt->SetTextAlign(12);
+    pt->SetTextFont(42);
+    pt->SetTextSize(0.045);
+    TText* text = pt->AddText(0.025, 0.45, "#font[61]{CMS}");
+    text->SetTextSize(0.044);
+    text = pt->AddText(0.155, 0.42, Form("#font[52]{Simulation %s}", hh->GetTitle()));
+    text->SetTextSize(0.0315);
+    TString strTitle;
+    strTitle = Form("#font[42]{%i TeV}", theSqrts);
+    text = pt->AddText(0.92, 0.45, strTitle);
+    text->SetTextSize(0.0315);
+
+    hh->SetTitle("");
+    hh->GetXaxis()->SetRangeUser(220, hh->GetXaxis()->GetBinUpEdge(hh->GetNbinsX()));
+    hh->GetXaxis()->SetNdivisions(505);
+    hh->GetXaxis()->SetLabelFont(42);
+    hh->GetXaxis()->SetLabelOffset(0.007);
+    hh->GetXaxis()->SetLabelSize(0.04);
+    hh->GetXaxis()->SetTitleSize(0.06);
+    hh->GetXaxis()->SetTitleOffset(0.9);
+    hh->GetXaxis()->SetTitleFont(42);
+    hh->GetYaxis()->SetNdivisions(505);
+    hh->GetYaxis()->SetLabelFont(42);
+    hh->GetYaxis()->SetLabelOffset(0.007);
+    hh->GetYaxis()->SetLabelSize(0.04);
+    hh->GetYaxis()->SetTitleSize(0.06);
+    hh->GetYaxis()->SetTitleOffset(1);
+    hh->GetYaxis()->SetTitleFont(42);
+
+    hh->Draw("colz");
+    pt->Draw();
+
+    canvas->RedrawAxis();
+    canvas->Modified();
+    canvas->Update();
+    canvas->SaveAs(Form("%s/%s%s", coutdir.Data(), canvasname.Data(), ".png"));
+    canvas->SaveAs(Form("%s/%s%s", coutdir.Data(), canvasname.Data(), ".pdf"));
+    delete pt;
+    canvas->Close();
+  }
+
+}
+
+void plotTH1Fs(TString coutdir, TString canvasname,  std::vector<TH1F*>& histolist){
+  HelperFunctions::replaceString(canvasname, "h1D_T_", "");
+  {
+    const unsigned int ncolors = gStyle->GetNumberOfColors();
+    const unsigned int stepsize = ncolors/histolist.size();
+    MELAout << "plotTH1Fs: Ncolors: " << ncolors << ", step size " << stepsize << endl;
+    for (unsigned int ih=0; ih<histolist.size(); ih++){
+      int colorToUse = gStyle->GetColorPalette(ih*stepsize);
+      histolist.at(ih)->SetMarkerColor(colorToUse);
+      histolist.at(ih)->SetLineColor(colorToUse);
+      histolist.at(ih)->SetLineWidth(2);
+    }
+  }
+
+  TCanvas* canvas = new TCanvas(canvasname, "", 8, 30, 800, 800);
+  canvas->cd();
+  gStyle->SetOptStat(0);
+  canvas->SetFillColor(0);
+  canvas->SetBorderMode(0);
+  canvas->SetBorderSize(2);
+  canvas->SetTickx(1);
+  canvas->SetTicky(1);
+  canvas->SetLeftMargin(0.17);
+  canvas->SetRightMargin(0.05);
+  canvas->SetTopMargin(0.07);
+  canvas->SetBottomMargin(0.13);
+  canvas->SetFrameFillStyle(0);
+  canvas->SetFrameBorderMode(0);
+  canvas->SetFrameFillStyle(0);
+  canvas->SetFrameBorderMode(0);
+
+  TLegend* legend = new TLegend(0.38, 0.90-0.10/3.*float(histolist.size()), 0.75, 0.90);
+  legend->SetBorderSize(0);
+  legend->SetTextFont(42);
+  legend->SetTextSize(0.03);
+  legend->SetLineColor(1);
+  legend->SetLineStyle(1);
+  legend->SetLineWidth(1);
+  legend->SetFillColor(0);
+  legend->SetFillStyle(0);
+
+  TPaveText* pt = new TPaveText(0.15, 0.93, 0.85, 1, "brNDC");
+  pt->SetBorderSize(0);
+  pt->SetFillStyle(0);
+  pt->SetTextAlign(12);
+  pt->SetTextFont(42);
+  pt->SetTextSize(0.045);
+  TText* text = pt->AddText(0.025, 0.45, "#font[61]{CMS}");
+  text->SetTextSize(0.044);
+  text = pt->AddText(0.165, 0.42, "#font[52]{Simulation}");
+  text->SetTextSize(0.0315);
+  TString cErgTev = Form("#font[42]{1 fb^{-1} %i TeV}", theSqrts);
+  text = pt->AddText(0.9, 0.45, cErgTev);
+  text->SetTextSize(0.0315);
+
+  bool first=true;
+  float minY=9e9, maxY=-9e9;
+  for (TH1F*& hh:histolist){
+    if (hh->GetName()[0]=='T') continue;
 
     hh->GetXaxis()->SetRangeUser(220, hh->GetXaxis()->GetBinUpEdge(hh->GetNbinsX()));
     hh->GetXaxis()->SetNdivisions(505);
@@ -135,16 +252,30 @@ void plotTH2Fs(TString coutdir, std::vector<TH2F*>& histolist){
     hh->GetYaxis()->SetTitleSize(0.06);
     hh->GetYaxis()->SetTitleOffset(1.1);
     hh->GetYaxis()->SetTitleFont(42);
-
-    hh->Draw("colz");
-
-    canvas->RedrawAxis();
-    canvas->Modified();
-    canvas->Update();
-    canvas->SaveAs(Form("%s/%s%s", coutdir.Data(), canvasname.Data(), ".png"));
-    canvas->SaveAs(Form("%s/%s%s", coutdir.Data(), canvasname.Data(), ".pdf"));
-    //delete legend;
-    canvas->Close();
+    hh->GetYaxis()->SetTitle("# events");
+    minY = std::min(float(hh->GetMinimum()), minY);
+    maxY = std::max(float(hh->GetMaximum()), maxY);
+    legend->AddEntry(hh, hh->GetTitle(), "l");
+    hh->SetTitle("");
   }
-
+  for (TH1F*& hh:histolist){
+    if (hh->GetName()[0]=='T') continue;
+    hh->GetYaxis()->SetRangeUser((minY<0. ? minY*1.2 : minY*0.8), maxY*1.2);
+    if (first){
+      hh->Draw("hist");
+      first=false;
+    }
+    else{
+      hh->Draw("histsame");
+    }
+  }
+  legend->Draw("same");
+  pt->Draw();
+  canvas->RedrawAxis();
+  canvas->Modified();
+  canvas->Update();
+  canvas->SaveAs(Form("%s/%s%s", coutdir.Data(), canvasname.Data(), ".png"));
+  canvas->SaveAs(Form("%s/%s%s", coutdir.Data(), canvasname.Data(), ".pdf"));
+  delete legend;
+  canvas->Close();
 }

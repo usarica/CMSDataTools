@@ -15,7 +15,7 @@ ProcessHandler::ProcessHandler(ProcessType proctype_, bool useOffshell_) : proct
 void ProcessHandler::assignProcessName(){
   switch (proctype){
   case kGG:
-    procname=(useOffshell ? "ggZZ_offshell" : "ggH");
+    procname=(useOffshell ? "ggZZ_offshell" : "gg");
     break;
   case kVV:
     procname= (useOffshell ? "VVZZ_offshell" : "VBF");

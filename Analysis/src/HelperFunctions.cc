@@ -1,3 +1,4 @@
+#include <cstring>
 #include "HelperFunctions.h"
 #include "MELAStreamHelpers.hh"
 
@@ -507,13 +508,21 @@ void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixe
   for (unsigned int ix=0; ix<2; ix++) delete[] xy_mod[ix];
 }
 
-template<> void HelperFunctions::replaceString<TString>(TString& strinput, const TString strTakeOut, const TString strPutIn){
+template<> void HelperFunctions::replaceString<TString, const TString>(TString& strinput, const TString strTakeOut, const TString strPutIn){
   Ssiz_t ipos=strinput.Index(strTakeOut);
   if (ipos!=-1) strinput.Replace(ipos, strTakeOut.Length(), strPutIn);
 }
-template<> void HelperFunctions::replaceString<std::string>(std::string& strinput, const std::string strTakeOut, const std::string strPutIn){
+template<> void HelperFunctions::replaceString<TString, const char*>(TString& strinput, const char* strTakeOut, const char* strPutIn){
+  Ssiz_t ipos=strinput.Index(strTakeOut);
+  if (ipos!=-1) strinput.Replace(ipos, strlen(strTakeOut), strPutIn);
+}
+template<> void HelperFunctions::replaceString<std::string, const std::string>(std::string& strinput, const std::string strTakeOut, const std::string strPutIn){
   std::string::size_type ipos=strinput.find(strTakeOut);
   if (ipos!=std::string::npos) strinput.replace(ipos, strTakeOut.length(), strPutIn);
+}
+template<> void HelperFunctions::replaceString<std::string, const char*>(std::string& strinput, const char* strTakeOut, const char* strPutIn){
+  std::string::size_type ipos=strinput.find(strTakeOut);
+  if (ipos!=std::string::npos) strinput.replace(ipos, strlen(strTakeOut), strPutIn);
 }
 
 template<> void HelperFunctions::addPointsBetween<TGraph>(TGraph*& tgOriginal, double xmin, double xmax, unsigned int nadd){

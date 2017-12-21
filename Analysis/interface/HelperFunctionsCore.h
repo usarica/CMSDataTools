@@ -14,9 +14,11 @@ namespace HelperFunctions{
   template<typename T> bool getUnorderedMapIterator(TString name, const std::unordered_map<TString, T>& theMap, typename std::unordered_map<TString, T>::const_iterator& it);
   template<typename T> bool getUnorderedMapIterator(TString name, std::unordered_map<TString, T>& theMap, typename std::unordered_map<TString, T>::iterator& it);
 
-  template<typename T> void replaceString(T& strinput, const T strTakeOut, const T strPutIn);
-  template<> void replaceString<TString>(TString& strinput, const TString strTakeOut, const TString strPutIn);
-  template<> void replaceString<std::string>(std::string& strinput, const std::string strTakeOut, const std::string strPutIn);
+  template<typename T, typename U> void replaceString(T& strinput, U strTakeOut, U strPutIn);
+  template<> void replaceString<TString, const TString>(TString& strinput, const TString strTakeOut, const TString strPutIn);
+  template<> void replaceString<TString, const char*>(TString& strinput, const char* strTakeOut, const char* strPutIn);
+  template<> void replaceString<std::string, const std::string>(std::string& strinput, const std::string strTakeOut, const std::string strPutIn);
+  template<> void replaceString<std::string, const char*>(std::string& strinput, const char* strTakeOut, const char* strPutIn);
 
 }
 

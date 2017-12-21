@@ -16,7 +16,7 @@ ReweightingBuilder::ReweightingBuilder(TString inStrWeight, float(*infcn)(CJLSTT
   divideByNSample(false),
   rule(infcn)
 {
-  strWeights.push_back(inStrWeight);
+  if (inStrWeight!="") strWeights.push_back(inStrWeight);
 }
 ReweightingBuilder::ReweightingBuilder(std::vector<TString> inStrWeights, float(*infcn)(CJLSTTree*, const std::vector<float*>&)) :
   allowNegativeWeights(true),

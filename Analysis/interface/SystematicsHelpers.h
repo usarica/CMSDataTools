@@ -9,6 +9,7 @@ namespace SystematicsHelpers{
   class SystematicsClass{
   public:
     SystematicsClass(){}
+    virtual ~SystematicsClass(){}
     virtual float eval(CJLSTTree* theTree) const=0;
   };
 
@@ -19,6 +20,7 @@ namespace SystematicsHelpers{
 
   public:
     YieldSystematic(const std::vector<ReweightingBuilder*>& inEvaluators, float(*infcn)(CJLSTTree*, const std::vector<ReweightingBuilder*>&));
+    virtual ~YieldSystematic(){}
     virtual float eval(CJLSTTree* theTree) const;
   };
 
@@ -38,6 +40,7 @@ namespace SystematicsHelpers{
     > componentRefs;
   public:
     PerLeptonSystematic(const TString inStrLepId, const std::vector<TString>& inStrVars, float(*infcn)(std::vector<short>* const&, std::vector<std::vector<float>*> const&));
+    virtual ~PerLeptonSystematic(){}
     virtual float eval(CJLSTTree* theTree) const;
     virtual void setup(CJLSTTree* theTree);
   };

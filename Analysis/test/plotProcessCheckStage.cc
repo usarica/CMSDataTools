@@ -10,7 +10,7 @@ const TString user_output_dir = "output/";
 
 void plotTH1Fs(TString coutdir, TString canvasname, std::vector<TH1F*>& histolist);
 void plotTH2Fs(TString coutdir, std::vector<TH2F*>& histolist);
-
+ 
 void plotProcessCheckStage(
   ProcessHandler::ProcessType proctype,
   const Channel channel, const Category category, ACHypothesisHelpers::ACHypothesis hypo, TString strSystematics,

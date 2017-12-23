@@ -44,6 +44,11 @@ void BaseTreeLooper::addExternalFunction(TString fcnname, void(*fcn)(BaseTreeLoo
   if (externalFunctions.find(fcnname)!=externalFunctions.end()) MELAerr << "BaseTreeLooper::addExternalFunction: " << fcnname << " already exists but will override it regardless." << endl;
   externalFunctions[fcnname] = fcn;
 }
+void BaseTreeLooper::addSystematic(TString systname, SystematicsHelpers::SystematicsClass* syst){
+  if (!syst) return;
+  if (SystVariations.find(systname)!=SystVariations.end()) MELAerr << "BaseTreeLooper::addSystematic: " << systname << " already exists." << endl;
+  else SystVariations[systname] = syst;
+}
 
 void BaseTreeLooper::setExternalProductList(std::vector<SimpleEntry>* extProductListRef){
   if (extProductListRef) this->productListRef=extProductListRef;

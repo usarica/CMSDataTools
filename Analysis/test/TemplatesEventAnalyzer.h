@@ -49,6 +49,10 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
       }
       else wgt *= rewgtBuilder->getPostThresholdWeight(tree);
     }
+    for (auto syst_it=SystVariations.cbegin(); syst_it!=SystVariations.cend(); syst_it++){
+      auto& systVar = syst_it->second;
+      wgt *= systVar->eval(tree);
+    }
     product.setNamedVal("weight", wgt);
     if (std::isnan(wgt) || std::isinf(wgt) || wgt==0.){
       if (wgt!=0.){

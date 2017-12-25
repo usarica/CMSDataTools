@@ -15,11 +15,13 @@ TTree* fixTreeWeights(TTree* tree);
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category category, TString strSystematics, const TString fixedDate=""){
+void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate=""){
   if (channel==NChannels) return;
+  if (!systematicAllowed(category, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
+  const TString strSystematics = getSystematicsName(syst);
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -55,23 +57,11 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
   vector<TString> strKfactorVars;
   strKfactorVars.push_back("KFactor_QCD_qqZZ_M");
   strKfactorVars.push_back("KFactor_EW_qqZZ");
-  if (strSystematics == "Nominal"){}
-  // Revise below
-  /*
-  else if (strSystematics == "PDFScaleDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFScaleDn");
-  else if (strSystematics == "PDFScaleUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFScaleUp");
-  else if (strSystematics == "QCDScaleDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_QCDScaleDn");
-  else if (strSystematics == "QCDScaleUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_QCDScaleUp");
-  else if (strSystematics == "AsDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_AsDn");
-  else if (strSystematics == "AsUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_AsUp");
-  else if (strSystematics == "PDFReplicaDn") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFReplicaDn");
-  else if (strSystematics == "PDFReplicaUp") strKfactorVars.push_back("KFactor_QCD_ggZZ_PDFReplicaUp");
-  */
 
   // Register the discriminants
   vector<KDspecs> KDlist;
-  getLikelihoodDiscriminants(channel, category, strSystematics, KDlist);
-  if (category!=Inclusive) getCategorizationDiscriminants(strSystematics, KDlist);
+  getLikelihoodDiscriminants(channel, category, syst, KDlist);
+  if (category!=Inclusive) getCategorizationDiscriminants(syst, KDlist);
 
   // Get the CJLST set
   CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
@@ -91,6 +81,9 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
     tree->silenceUnused(); // Will no longer book another branch
   }
   theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_OneOverNgen, false, true);
+
+  std::vector<ReweightingBuilder*> extraEvaluators;
+  SystematicsClass* systhandle = constructSystematic(category, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators);
 
 // Setup GenHMass binning
 // Binning for inclusive reweighting
@@ -135,6 +128,8 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
     for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
     // Add reweighting builders
     theAnalyzer.addReweightingBuilder("RegularRewgt", regularewgtBuilder);
+    // Add systematics handle
+    theAnalyzer.addSystematic(strSystematics, systhandle);
     // Loop
     theAnalyzer.loop(true, false, true);
 
@@ -145,17 +140,20 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
     delete theFinalTree;
   }
 
+  delete systhandle;
+  for (auto& rb:extraEvaluators) delete rb;
   for (auto& KD:KDlist) delete KD.KD;
   delete theSampleSet;
   foutput->Close();
   MELAout.close();
 }
 
-void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category category, TString strSystematics, const TString fixedDate=""){
+void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate=""){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
+  const TString strSystematics = getSystematicsName(syst);
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -167,7 +165,7 @@ void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category cate
   TString INPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1", strChannel.Data(), strCategory.Data(), theProcess.getProcessName().Data(), strSystematics.Data());
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
-  if (gSystem->AccessPathName(cinput)) makeQQBkgTemplatesFromPOWHEG_one(channel, category, strSystematics);
+  if (gSystem->AccessPathName(cinput)) makeQQBkgTemplatesFromPOWHEG_one(channel, category, syst);
 
   gSystem->Exec("mkdir -p " + coutput_common);
   TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage2", strChannel.Data(), strCategory.Data(), theProcess.getProcessName().Data(), strSystematics.Data());
@@ -200,7 +198,7 @@ void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category cate
 }
 
 void makeQQBkgTemplatesFromPOWHEG_checkstage(
-  const Channel channel, const Category category, ACHypothesisHelpers::ACHypothesis hypo, TString strSystematics,
+  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
   const unsigned int istage,
   const TString fixedDate=""
 ){
@@ -208,6 +206,7 @@ void makeQQBkgTemplatesFromPOWHEG_checkstage(
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
+  const TString strSystematics = getSystematicsName(syst);
   std::vector<ProcessHandleType::HypothesisType> tplset; tplset.push_back(ProcessHandleType::QQBkg);
   const unsigned int ntpls = tplset.size();
 
@@ -228,8 +227,8 @@ void makeQQBkgTemplatesFromPOWHEG_checkstage(
   INPUT_NAME += ".root";
   TString cinput = coutput_common + INPUT_NAME;
   if (gSystem->AccessPathName(cinput)){
-    if (istage==1) makeQQBkgTemplatesFromPOWHEG_one(channel, category, strSystematics, fixedDate);
-    else if (istage==2) makeQQBkgTemplatesFromPOWHEG_two(channel, category, strSystematics, fixedDate);
+    if (istage==1) makeQQBkgTemplatesFromPOWHEG_one(channel, category, syst, fixedDate);
+    else if (istage==2) makeQQBkgTemplatesFromPOWHEG_two(channel, category, syst, fixedDate);
     else return;
   }
   TFile* finput = TFile::Open(cinput, "read");

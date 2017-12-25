@@ -33,6 +33,7 @@
 #include "CategorizationHelpers.h"
 #include "ReweightingBuilder.h"
 #include "ReweightingFunctions.h"
+#include "SystematicsHelpers.h"
 #include "ExtendedBinning.h"
 #include "ACHypothesisHelpers.h"
 #include "TemplateHelpers.h"
@@ -46,6 +47,7 @@ using namespace SampleHelpers;
 using namespace CategorizationHelpers;
 using namespace DiscriminantClasses;
 using namespace ReweightingFunctions;
+using namespace SystematicsHelpers;
 using namespace ACHypothesisHelpers;
 using namespace TemplateHelpers;
 using namespace MELAStreamHelpers;

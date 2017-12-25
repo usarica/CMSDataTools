@@ -2,7 +2,9 @@
 #define SYSTEMATICSHELPERS_H
 
 #include "ReweightingBuilder.h"
+#include "DiscriminantClasses.h"
 #include "ProcessHandler.h"
+#include "CategorizationHelpers.h"
 
 
 namespace SystematicsHelpers{
@@ -50,22 +52,36 @@ namespace SystematicsHelpers{
 
 
   enum SystematicVariationTypes{
+    sNominal,
     tPDFScaleDn, tPDFScaleUp,
     tQCDScaleDn, tQCDScaleUp,
     tAsMZDn, tAsMZUp,
     tPDFReplicaDn, tPDFReplicaUp,
     tQQBkgEWCorrDn, tQQBkgEWCorrUp,
     eLepSFDn, eLepSFUp,
+    eJECDn, eJECUp,
     eZJetsStatsDn, eZJetsStatsUp
   };
 
-  std::vector<SystematicsHelpers::SystematicVariationTypes> getProcessSystematicVariations(ProcessHandler::ProcessType type);
+  std::vector<SystematicsHelpers::SystematicVariationTypes> getProcessSystematicVariations(CategorizationHelpers::Category const category, ProcessHandler::ProcessType const type);
+
+  bool systematicAllowed(
+    CategorizationHelpers::Category const category,
+    ProcessHandler::ProcessType const proc,
+    SystematicsHelpers::SystematicVariationTypes const syst
+  );
+
   SystematicsClass* constructSystematic(
+    CategorizationHelpers::Category const category,
     ProcessHandler::ProcessType const proc,
     SystematicsHelpers::SystematicVariationTypes const syst,
     std::vector<CJLSTTree*> trees,
     std::vector<ReweightingBuilder*>& extraEvaluators
   );
+
+  void adjustDiscriminantJECVariables(SystematicsHelpers::SystematicVariationTypes const syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);
+
+  TString getSystematicsName(SystematicsHelpers::SystematicVariationTypes const syst);
 
 }
 

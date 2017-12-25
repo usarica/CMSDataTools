@@ -7,6 +7,7 @@
 #include "DiscriminantClasses.h"
 #include "SampleHelpers.h"
 #include "CategorizationHelpers.h"
+#include "SystematicsHelpers.h"
 #include "ACHypothesisHelpers.h"
 #include "ProcessHandler.h"
 
@@ -17,9 +18,8 @@ namespace TemplateHelpers{
   /* General functions */
   /*********************/
   template<typename T> void setTemplateAxisLabels(T* histo);
-  void getLikelihoodDiscriminants(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, const TString strSystematics, std::vector<DiscriminantClasses::KDspecs>& KDlist);
-  void getCategorizationDiscriminants(const TString strSystematics, std::vector<DiscriminantClasses::KDspecs>& KDlist);
-  void adjustDiscriminantJECVariables(const TString strSystematics, std::vector<DiscriminantClasses::KDspecs>& KDlist);
+  void getLikelihoodDiscriminants(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, const SystematicsHelpers::SystematicVariationTypes syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);
+  void getCategorizationDiscriminants(const SystematicsHelpers::SystematicVariationTypes syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);
 
 
   /****************/

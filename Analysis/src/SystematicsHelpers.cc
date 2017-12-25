@@ -105,7 +105,7 @@ std::pair<float, float> SystematicsHelpers::getLeptonSFSystematic(short const& Z
 }
 
 
-std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::getProcessSystematicVariations(ProcessHandler::ProcessType type){
+std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::getProcessSystematicVariations(CategorizationHelpers::Category const category, ProcessHandler::ProcessType const type){
   std::vector<SystematicVariationTypes> res;
 
   //res.push_back(eZJetsStatsDn);
@@ -129,21 +129,33 @@ std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::ge
     res.push_back(tQQBkgEWCorrUp);
   }
 
+  if (category==CategorizationHelpers::JJVBFTagged || category==CategorizationHelpers::HadVHTagged){
+    res.push_back(eJECDn);
+    res.push_back(eJECUp);
+  }
+
   return res;
 }
+bool SystematicsHelpers::systematicAllowed(
+  CategorizationHelpers::Category const category,
+  ProcessHandler::ProcessType const proc,
+  SystematicsHelpers::SystematicVariationTypes const syst
+){
+  std::vector<SystematicsHelpers::SystematicVariationTypes> allowedTypes = SystematicsHelpers::getProcessSystematicVariations(category, proc);
+  for (SystematicVariationTypes& st:allowedTypes){ if (st==syst) return true; }
+  return false;
+}
 SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
+  CategorizationHelpers::Category const category,
   ProcessHandler::ProcessType const proc,
   SystematicsHelpers::SystematicVariationTypes const syst,
   std::vector<CJLSTTree*> trees,
   std::vector<ReweightingBuilder*>& extraEvaluators
 ){
   SystematicsClass* res=nullptr;
-  bool isAllowed=false;
-  std::vector<SystematicsHelpers::SystematicVariationTypes> allowedTypes = SystematicsHelpers::getProcessSystematicVariations(proc);
-  for (SystematicVariationTypes& st:allowedTypes){ if (st==syst){ isAllowed=true; break; } }
-  if (!isAllowed) return res;
+  if (!systematicAllowed(category, proc, syst)) return res;
 
-  ExtendedBinning binning((theSqrts*1000.-70)/10., 70., theSqrts*1000., "GenHMass");
+  ExtendedBinning binning((theSqrts*1000.-70.)/10., 70., theSqrts*1000., "GenHMass");
   ReweightingBuilder* rewgtbuilder=nullptr;
   ReweightingBuilder* normbuilder=nullptr;
   std::vector<TString> strVars, strVarsNorm;
@@ -239,4 +251,51 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
 
   std::copy(evaluators.begin(), evaluators.end(), std::back_inserter(extraEvaluators));
   return res;
+}
+void SystematicsHelpers::adjustDiscriminantJECVariables(SystematicsHelpers::SystematicVariationTypes const syst, std::vector<DiscriminantClasses::KDspecs>& KDlist){
+  if (syst==eJECDn || syst==eJECUp){
+    for (DiscriminantClasses::KDspecs& KD:KDlist){
+      for (TString& var:KD.KDvars) HelperFunctions::replaceString<TString, const TString>(var, TString("JECNominal"), TString((syst==eJECDn ? "JECDn" : "JECUp")));
+    }
+  }
+}
+TString SystematicsHelpers::getSystematicsName(SystematicsHelpers::SystematicVariationTypes const syst){
+  switch (syst){
+  case sNominal:
+    return "Nominal";
+  case tPDFScaleDn:
+    return "PDFScaleDn";
+  case tPDFScaleUp:
+    return "PDFScaleUp";
+  case tQCDScaleDn:
+    return "QCDScaleDn";
+  case tQCDScaleUp:
+    return "QCDScaleUp";
+  case tAsMZDn:
+    return "AsMZDn";
+  case tAsMZUp:
+    return "AsMZUp";
+  case tPDFReplicaDn:
+    return "PDFReplicaDn";
+  case tPDFReplicaUp:
+    return "PDFReplicaUp";
+  case tQQBkgEWCorrDn:
+    return "EWCorrDn";
+  case tQQBkgEWCorrUp:
+    return "EWCorrUp";
+  case eLepSFDn:
+    return "LepEffDn";
+  case eLepSFUp:
+    return "LepEffUp";
+  case eJECDn:
+    return "JECDn";
+  case eJECUp:
+    return "JECUp";
+  case eZJetsStatsDn:
+    return "ZJetsStatsDn";
+  case eZJetsStatsUp:
+    return "ZJetsStatsUp";
+  default:
+    return "";
+  }
 }

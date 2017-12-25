@@ -34,6 +34,34 @@ float ReweightingFunctions::getSimpleWeight(CJLSTTree* tree, const std::vector<f
   for (auto const& v:vals){ if (v) res *= *v; }
   return res;
 }
+float ReweightingFunctions::getA1PlusB1Weight(CJLSTTree* tree, const std::vector<float*>& vals){
+  float res=0;
+  if (!tree) return res;
+  assert(vals.size()==2);
+  res = *(vals.at(0)) + *(vals.at(1));
+  return res;
+}
+float ReweightingFunctions::getA1MinusB1Weight(CJLSTTree* tree, const std::vector<float*>& vals){
+  float res=0;
+  if (!tree) return res;
+  assert(vals.size()==2);
+  res = *(vals.at(0)) - *(vals.at(1));
+  return res;
+}
+float ReweightingFunctions::getOnePlusB1OverA1Weight(CJLSTTree* tree, const std::vector<float*>& vals){
+  float res=0;
+  if (!tree) return res;
+  assert(vals.size()==2);
+  res = 1. + *(vals.at(1)) / *(vals.at(0));
+  return res;
+}
+float ReweightingFunctions::getOneMinusB1OverA1Weight(CJLSTTree* tree, const std::vector<float*>& vals){
+  float res=0;
+  if (!tree) return res;
+  assert(vals.size()==2);
+  res = 1. - *(vals.at(1)) / *(vals.at(0));
+  return res;
+}
 float ReweightingFunctions::getA1OverB1Weight(CJLSTTree* tree, const std::vector<float*>& vals){
   float res=0;
   if (!tree) return res;
@@ -45,4 +73,3 @@ float ReweightingFunctions::getA1OverB1Weight(CJLSTTree* tree, const std::vector
   res = (*(vals.at(0)))/(*(vals.at(1)));
   return res;
 }
-

@@ -2,6 +2,7 @@
 #define SYSTEMATICSHELPERS_H
 
 #include "ReweightingBuilder.h"
+#include "ProcessHandler.h"
 
 
 namespace SystematicsHelpers{
@@ -47,6 +48,24 @@ namespace SystematicsHelpers{
 
   std::pair<float, float> getLeptonSFSystematic(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>*> const& LepVars);
 
+
+  enum SystematicVariationTypes{
+    tPDFScaleDn, tPDFScaleUp,
+    tQCDScaleDn, tQCDScaleUp,
+    tAsMZDn, tAsMZUp,
+    tPDFReplicaDn, tPDFReplicaUp,
+    tQQBkgEWCorrDn, tQQBkgEWCorrUp,
+    eLepSFDn, eLepSFUp,
+    eZJetsStatsDn, eZJetsStatsUp
+  };
+
+  std::vector<SystematicsHelpers::SystematicVariationTypes> getProcessSystematicVariations(ProcessHandler::ProcessType type);
+  SystematicsClass* constructSystematic(
+    ProcessHandler::ProcessType const proc,
+    SystematicsHelpers::SystematicVariationTypes const syst,
+    std::vector<CJLSTTree*> trees,
+    std::vector<ReweightingBuilder*>& extraEvaluators
+  );
 
 }
 

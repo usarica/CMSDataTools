@@ -3,13 +3,14 @@
 
 #include "CJLSTTree.h"
 #include "ExtendedBinning.h"
+#include "ReweightingFunctions.h"
 
 
 class ReweightingBuilder{
 protected:
   bool allowNegativeWeights;
   bool divideByNSample;
-  float(*rule)(CJLSTTree*, const std::vector<float*>&);
+  ReweightingFunctions::ReweightingFunction_t rule;
   std::vector<TString> strWeights;
 
   ExtendedBinning weightBinning;
@@ -21,8 +22,8 @@ protected:
   std::unordered_map<CJLSTTree*, std::vector<unsigned int>> sumNonZeroWgtEvents;
 
 public:
-  ReweightingBuilder(TString inStrWeight, float(*infcn)(CJLSTTree*, const std::vector<float*>&));
-  ReweightingBuilder(std::vector<TString> inStrWeights, float(*infcn)(CJLSTTree*, const std::vector<float*>&));
+  ReweightingBuilder(TString inStrWeight, ReweightingFunctions::ReweightingFunction_t infcn);
+  ReweightingBuilder(std::vector<TString> inStrWeights, ReweightingFunctions::ReweightingFunction_t infcn);
 
   std::vector<TString> const& getWeightVariables() const;
 

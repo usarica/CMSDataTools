@@ -1,5 +1,4 @@
 #include "ReweightingBuilder.h"
-#include "ReweightingFunctions.h"
 #include "SimpleEntry.h"
 #include "MELAAccumulators.h"
 #include "MELAStreamHelpers.hh"
@@ -11,14 +10,14 @@ using namespace MELAStreamHelpers;
 using namespace HelperFunctions;
 
 
-ReweightingBuilder::ReweightingBuilder(TString inStrWeight, float(*infcn)(CJLSTTree*, const std::vector<float*>&)) :
+ReweightingBuilder::ReweightingBuilder(TString inStrWeight, ReweightingFunctions::ReweightingFunction_t infcn) :
   allowNegativeWeights(true),
   divideByNSample(false),
   rule(infcn)
 {
   if (inStrWeight!="") strWeights.push_back(inStrWeight);
 }
-ReweightingBuilder::ReweightingBuilder(std::vector<TString> inStrWeights, float(*infcn)(CJLSTTree*, const std::vector<float*>&)) :
+ReweightingBuilder::ReweightingBuilder(std::vector<TString> inStrWeights, ReweightingFunctions::ReweightingFunction_t infcn) :
   allowNegativeWeights(true),
   divideByNSample(false),
   rule(infcn),

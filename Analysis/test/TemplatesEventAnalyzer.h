@@ -51,7 +51,9 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
     }
     for (auto syst_it=SystVariations.cbegin(); syst_it!=SystVariations.cend(); syst_it++){
       auto& systVar = syst_it->second;
-      wgt *= systVar->eval(tree);
+      float systWgt = systVar->eval(tree);
+      wgt *= systWgt;
+      product.setNamedVal(syst_it->first, systWgt);
     }
     product.setNamedVal("weight", wgt);
     if (std::isnan(wgt) || std::isinf(wgt) || wgt==0.){

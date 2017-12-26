@@ -67,7 +67,7 @@ float ReweightingFunctions::getA1OverB1Weight(CJLSTTree* tree, const std::vector
   if (!tree) return res;
   res=1;
   if (vals.size()!=2 || !(vals.at(0) && vals.at(1))){
-    MELAerr << "ReweightingFunctions::getA1OverB1Weight: (vals.size()=" << vals.size() << "!=2) || !(vals.at(0) && vals.at(1)). Returning " << res << "..." << endl;
+    MELAerr << "ReweightingFunctions::getA1OverB1Weight: (vals.size()=" << vals.size() << "!=2) || !(vals.at(0)=" << vals.at(0) << " && vals.at(1)=" << vals.at(1) << "). Returning " << res << "..." << endl;
     return res;
   }
   res = (*(vals.at(0)))/(*(vals.at(1)));

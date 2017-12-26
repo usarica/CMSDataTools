@@ -71,9 +71,6 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   // Get the CJLST set
   CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
 
-  std::vector<ReweightingBuilder*> extraEvaluators;
-  SystematicsClass* systhandle = constructSystematic(category, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators);
-
   // Book common variables
   theSampleSet->bookXS(); // "xsec"
   theSampleSet->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
@@ -92,6 +89,9 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     tree->silenceUnused(); // Will no longer book another branch
   }
   theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_NgenOverNgenWPU, false, true);
+
+  std::vector<ReweightingBuilder*> extraEvaluators;
+  SystematicsClass* systhandle = constructSystematic(category, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators);
 
   // Setup GenHMass binning
   // Binning for inclusive reweighting

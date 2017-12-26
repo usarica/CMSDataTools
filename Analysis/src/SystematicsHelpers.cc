@@ -25,8 +25,8 @@ float SystematicsHelpers::getNormalizedSystematic(CJLSTTree* theTree, const std:
 
   float weight=0;
   assert(builders.size()==2 && builders.at(0) && builders.at(1));
-  float sumWeights = builders.at(0)->getSumPostThresholdWeights(theTree);
-  if (sumWeights!=0.) weight = builders.at(0)->getPostThresholdWeight(theTree)*builders.at(1)->getSumPostThresholdWeights(theTree)/sumWeights;
+  float sumWeights = builders.at(0)->getSumAllPostThresholdWeights(theTree);
+  if (sumWeights!=0.) weight = builders.at(0)->getPostThresholdWeight(theTree)*builders.at(1)->getSumAllPostThresholdWeights(theTree)/sumWeights;
   return weight;
 }
 
@@ -108,6 +108,8 @@ std::pair<float, float> SystematicsHelpers::getLeptonSFSystematic(short const& Z
 std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::getProcessSystematicVariations(CategorizationHelpers::Category const category, ProcessHandler::ProcessType const type){
   std::vector<SystematicVariationTypes> res;
 
+  res.push_back(sNominal);
+
   //res.push_back(eZJetsStatsDn);
   //res.push_back(eZJetsStatsUp);
 
@@ -174,14 +176,19 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
       for (TString const& s:strVars) tree->bookBranch<vector<float>*>(s, nullptr);
     }
     res = new PerLeptonSystematic(strVars, SystematicsHelpers::getLeptonSFSystematic, (syst==eLepSFUp));
+    for (CJLSTTree*& tree:trees) ((PerLeptonSystematic*) res)->setup(tree);
   }
   else if (syst==tQQBkgEWCorrDn || syst==tQQBkgEWCorrUp){
     strVars.push_back("KFactor_EW_qqZZ");
     strVars.push_back("KFactor_EW_qqZZ_unc");
     computeFcn = (syst==tQQBkgEWCorrUp ? ReweightingFunctions::getOnePlusB1OverA1Weight : ReweightingFunctions::getOneMinusB1OverA1Weight);
+    for (CJLSTTree*& tree:trees){ for (TString const& s:strVars) tree->bookBranch<float>(s, 1); for (TString const& s:strVarsNorm) tree->bookBranch<float>(s, 1); }
     rewgtbuilder = new ReweightingBuilder(strVars, computeFcn);
     evaluators.push_back(rewgtbuilder);
-    for (CJLSTTree*& tree:trees) rewgtbuilder->setupWeightVariables(tree, -1, 0);
+    for (ReweightingBuilder*& rb:evaluators){
+      rb->setWeightBinning(binning);
+      for (CJLSTTree*& tree:trees) rb->setupWeightVariables(tree, (normbuilder ? 1 : -1), 0);
+    }
     res = new YieldSystematic(evaluators, SystematicsHelpers::getRawSystematic);
   }
   else if (syst==tPDFScaleDn || syst==tPDFScaleUp){
@@ -192,6 +199,7 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
       strVarsNorm.push_back((syst==tPDFScaleDn ? "KFactor_QCD_ggZZ_PDFScaleDn" : "KFactor_QCD_ggZZ_PDFScaleUp"));
       strVarsNorm.push_back("KFactor_QCD_ggZZ_Nominal");
     }
+    for (CJLSTTree*& tree:trees){ for (TString const& s:strVars) tree->bookBranch<float>(s, 1); for (TString const& s:strVarsNorm) tree->bookBranch<float>(s, 1); }
     rewgtbuilder = new ReweightingBuilder(strVars, computeFcn); evaluators.push_back(rewgtbuilder);
     if (!strVarsNorm.empty()){ normbuilder = new ReweightingBuilder(strVarsNorm, computeFcn); evaluators.push_back(normbuilder); }
     for (ReweightingBuilder*& rb:evaluators){
@@ -208,6 +216,7 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
       strVarsNorm.push_back((syst==tQCDScaleDn ? "KFactor_QCD_ggZZ_QCDScaleDn" : "KFactor_QCD_ggZZ_QCDScaleUp"));
       strVarsNorm.push_back("KFactor_QCD_ggZZ_Nominal");
     }
+    for (CJLSTTree*& tree:trees){ for (TString const& s:strVars) tree->bookBranch<float>(s, 1); for (TString const& s:strVarsNorm) tree->bookBranch<float>(s, 1); }
     rewgtbuilder = new ReweightingBuilder(strVars, computeFcn); evaluators.push_back(rewgtbuilder);
     if (!strVarsNorm.empty()){ normbuilder = new ReweightingBuilder(strVarsNorm, computeFcn); evaluators.push_back(normbuilder); }
     for (ReweightingBuilder*& rb:evaluators){
@@ -224,6 +233,7 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
       strVarsNorm.push_back((syst==tAsMZDn ? "KFactor_QCD_ggZZ_AsDn" : "KFactor_QCD_ggZZ_AsUp"));
       strVarsNorm.push_back("KFactor_QCD_ggZZ_Nominal");
     }
+    for (CJLSTTree*& tree:trees){ for (TString const& s:strVars) tree->bookBranch<float>(s, 1); for (TString const& s:strVarsNorm) tree->bookBranch<float>(s, 1); }
     rewgtbuilder = new ReweightingBuilder(strVars, computeFcn); evaluators.push_back(rewgtbuilder);
     if (!strVarsNorm.empty()){ normbuilder = new ReweightingBuilder(strVarsNorm, computeFcn); evaluators.push_back(normbuilder); }
     for (ReweightingBuilder*& rb:evaluators){
@@ -240,6 +250,7 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
       strVarsNorm.push_back((syst==tPDFReplicaDn ? "KFactor_QCD_ggZZ_PDFReplicaDn" : "KFactor_QCD_ggZZ_PDFReplicaUp"));
       strVarsNorm.push_back("KFactor_QCD_ggZZ_Nominal");
     }
+    for (CJLSTTree*& tree:trees){ for (TString const& s:strVars) tree->bookBranch<float>(s, 1); for (TString const& s:strVarsNorm) tree->bookBranch<float>(s, 1); }
     rewgtbuilder = new ReweightingBuilder(strVars, computeFcn); evaluators.push_back(rewgtbuilder);
     if (!strVarsNorm.empty()){ normbuilder = new ReweightingBuilder(strVarsNorm, computeFcn); evaluators.push_back(normbuilder); }
     for (ReweightingBuilder*& rb:evaluators){
@@ -249,6 +260,10 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
     res = new YieldSystematic(evaluators, (normbuilder ? SystematicsHelpers::getNormalizedSystematic : SystematicsHelpers::getRawSystematic));
   }
 
+  MELAout << "SystematicsHelpers::constructSystematic: Systematics constructed with:\n"
+    << "\t- Vars: " << strVars
+    << "\t- Norm: " << strVarsNorm
+    << endl;
   std::copy(evaluators.begin(), evaluators.end(), std::back_inserter(extraEvaluators));
   return res;
 }

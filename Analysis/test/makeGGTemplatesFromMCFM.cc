@@ -62,11 +62,13 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   vector<TString> strSamples[nMCFMChannels];
   for (unsigned int ich=0; ich<nMCFMChannels; ich++){
     vector<TString> strSampleIdentifiers;
-    //strSampleIdentifiers.push_back(Form("gg_BSI_MCFM_%s", strMCFMChannels[ich].Data()));
+    strSampleIdentifiers.push_back(Form("gg_MCFM_%s", strMCFMChannels[ich].Data()));
+    /*
     strSampleIdentifiers.push_back(Form("gg_Bkg_MCFM_%s", strMCFMChannels[ich].Data()));
     strSampleIdentifiers.push_back(Form("gg_Sig_SM_MCFM_%s", strMCFMChannels[ich].Data()));
     strSampleIdentifiers.push_back(Form("gg_BSI_SM_MCFM_%s", strMCFMChannels[ich].Data()));
     strSampleIdentifiers.push_back(Form("gg_BSI10_SM_MCFM_%s", strMCFMChannels[ich].Data()));
+    */
     getSamplesList(theSqrts, strSampleIdentifiers, strSamples[ich]);
   }
 

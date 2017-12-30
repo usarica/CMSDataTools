@@ -22,7 +22,7 @@ class StageXBatchManager:
       self.parser.add_option("--fixedDate", dest="fixedDate", type="string", help="Fixed output directory", default="")
       self.parser.add_option("--process", dest="process", type="string", help="Name of the process")
       self.parser.add_option("--generator", dest="generator", type="string", help="Name of the generator", default="POWHEG")
-      self.parser.add_option("--stage", dest="stage", type="int", default=2, help="Stsge 1, 2 (default=2)")
+      self.parser.add_option("--stage", dest="stage", type="int", default=2, help="Stage 1, 2 or checkstage (x-1) (default=2)")
       self.parser.add_option("--dry", dest="dryRun", type="int", default=0, help="Do not submit jobs, just set up the files")
       self.parser.add_option("--customsyst", dest="customSysts", type="string", action="append", help="Systematics to run (default=all turned on)")
 

@@ -1,3 +1,6 @@
+#ifndef PLOTPROCESSCHECKSTAGE_H
+#define PLOTPROCESSCHECKSTAGE_H
+
 #include "common_includes.h"
 #include "TText.h"
 #include "TPaveText.h"
@@ -6,37 +9,41 @@
 
 
 // Constants to affect the template code
+#ifndef outputdir_def
+#define outputdir_def
 const TString user_output_dir = "output/";
+#endif
 
 void plotTH1Fs(TString coutdir, TString canvasname, std::vector<TH1F*>& histolist);
 void plotTH2Fs(TString coutdir, std::vector<TH2F*>& histolist);
  
 void plotProcessCheckStage(
-  ProcessHandler::ProcessType proctype,
-  const Channel channel, const Category category, ACHypothesisHelpers::ACHypothesis hypo, TString strSystematics,
+  const Channel channel, const Category category, ACHypothesisHelpers::ACHypothesis hypo, const SystematicVariationTypes syst,
   const unsigned int istage,
-  const TString strGenerator="POWHEG",
-  const TString fixedDate=""
+  const TString fixedDate,
+  ProcessHandler::ProcessType proctype,
+  const TString strGenerator
 ){
   if (channel==NChannels) return;
-  ProcessHandler const* theProcess=nullptr;
+  ProcessHandler const* thePerProcessHandle=nullptr;
   switch (proctype){
   case ProcessHandler::kGG:
-    theProcess = &TemplateHelpers::OffshellGGProcessHandle;
+    thePerProcessHandle = &TemplateHelpers::OffshellGGProcessHandle;
     break;
   case ProcessHandler::kVV:
-    theProcess = &TemplateHelpers::OffshellVVProcessHandle;
+    thePerProcessHandle = &TemplateHelpers::OffshellVVProcessHandle;
     break;
   case ProcessHandler::kQQBkg:
-    theProcess = &TemplateHelpers::OffshellQQBkgProcessHandle;
+    thePerProcessHandle = &TemplateHelpers::OffshellQQBkgProcessHandle;
     break;
   default:
     break;
   };
-  if (!theProcess) return;
+  if (!thePerProcessHandle) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
+  const TString strSystematics = getSystematicsName(syst);
   const TString strACHypo = getACHypothesisName(hypo);
 
   // Setup the output directories
@@ -51,7 +58,7 @@ void plotProcessCheckStage(
   TString INPUT_NAME = Form(
     "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Check%sDiscriminants_Stage%i",
     strChannel.Data(), strCategory.Data(),
-    theProcess->getProcessName().Data(),
+    thePerProcessHandle->getProcessName().Data(),
     strSystematics.Data(),
     strGenerator.Data(),
     getACHypothesisName(hypo).Data(),
@@ -73,6 +80,22 @@ void plotProcessCheckStage(
   MELAout << "Decay Channel: " << strChannel << endl;
   MELAout << "===============================" << endl;
   MELAout << endl;
+
+  TFile* finputNominal=nullptr;
+  if (syst!=sNominal){
+    TString INPUT_NOMINAL_NAME = Form(
+      "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Check%sDiscriminants_Stage%i%s",
+      strChannel.Data(), strCategory.Data(),
+      thePerProcessHandle->getProcessName().Data(),
+      getSystematicsName(sNominal).Data(),
+      strGenerator.Data(),
+      getACHypothesisName(hypo).Data(),
+      istage,
+      ".root"
+    );
+    TString cinputNominal = cinput_common + INPUT_NOMINAL_NAME;
+    finputNominal = TFile::Open(cinputNominal, "read");
+  }
 
   gStyle->SetOptStat(0);
   {
@@ -102,8 +125,22 @@ void plotProcessCheckStage(
   HelperFunctions::extractHistogramsFromDirectory(finput, h2dlist);
   MELAout << "N(2D histograms) = " << h2dlist.size() << endl;
   plotTH2Fs(coutput_common, h2dlist);
-  plotTH1Fs(coutput_common, Form("c_M4lDistribution_%s", theProcess->getProcessName().Data()), h1dlist);
+  plotTH1Fs(coutput_common, Form("c_M4lDistribution_%s", thePerProcessHandle->getProcessName().Data()), h1dlist);
 
+  if (finputNominal){
+    vector<TH1F*> h1dnomlist;
+    vector<TH2F*> h2dnomlist;
+    MELAout << "Extracting nominal 1D histograms..." << endl;
+    HelperFunctions::extractHistogramsFromDirectory(finput, h1dnomlist);
+    MELAout << "N(Nom. 1D histograms) = " << h1dnomlist.size() << endl;
+    MELAout << "Extracting nominal 2D histograms..." << endl;
+    HelperFunctions::extractHistogramsFromDirectory(finput, h2dnomlist);
+    MELAout << "N(Nom. 2D histograms) = " << h2dnomlist.size() << endl;
+
+
+
+    finputNominal->Close();
+  }
   finput->Close();
   MELAout.close();
 }
@@ -279,3 +316,6 @@ void plotTH1Fs(TString coutdir, TString canvasname,  std::vector<TH1F*>& histoli
   delete legend;
   canvas->Close();
 }
+
+
+#endif

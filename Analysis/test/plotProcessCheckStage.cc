@@ -52,7 +52,7 @@ void plotProcessCheckStage(
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
   TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
-  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Plots/" + strACHypo + "/" + strChannel + "/" + strCategory + "/" + strGenerator + "/";
+  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Plots/" + strACHypo + "/" + strChannel + "/" + strCategory + "/" + strGenerator + "/" + strSystematics + "/";
 
   gSystem->Exec("mkdir -p " + coutput_common);
   TString INPUT_NAME = Form(
@@ -94,6 +94,9 @@ void plotProcessCheckStage(
       ".root"
     );
     TString cinputNominal = cinput_common + INPUT_NOMINAL_NAME;
+#ifdef checkstage_def
+    if (gSystem->AccessPathName(cinputNominal)) checkstagefcn(channel, category, hypo, sNominal, istage, fixedDate);
+#endif
     finputNominal = TFile::Open(cinputNominal, "read");
   }
 
@@ -137,7 +140,19 @@ void plotProcessCheckStage(
     HelperFunctions::extractHistogramsFromDirectory(finput, h2dnomlist);
     MELAout << "N(Nom. 2D histograms) = " << h2dnomlist.size() << endl;
 
+    if (h1dnomlist.size()==h1dlist.size()){
+      for (unsigned int ih=0; ih<h1dlist.size(); ih++){
+        h1dlist.at(ih)->Divide(h1dnomlist.at(ih));
+        h1dlist.at(ih)->SetName(Form("%s%s", h1dlist.at(ih)->GetName(), "_RatioToNominal"));
+      }
+      for (unsigned int ih=0; ih<h2dlist.size(); ih++){
+        h2dlist.at(ih)->Divide(h2dnomlist.at(ih));
+        h2dlist.at(ih)->SetName(Form("%s%s", h2dlist.at(ih)->GetName(), "_RatioToNominal"));
+      }
 
+      plotTH2Fs(coutput_common, h2dlist);
+      plotTH1Fs(coutput_common, Form("c_M4lDistribution_%s_RatioToNominal", thePerProcessHandle->getProcessName().Data()), h1dlist);
+    }
 
     finputNominal->Close();
   }

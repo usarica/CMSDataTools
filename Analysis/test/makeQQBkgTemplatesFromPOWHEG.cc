@@ -7,10 +7,20 @@
 typedef QQBkgProcessHandler ProcessHandleType;
 const ProcessHandleType& theProcess = TemplateHelpers::OffshellQQBkgProcessHandle;
 
+// Process-specific functions
+void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate="");
+void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate="");
+void makeQQBkgTemplatesFromPOWHEG_checkstage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate="");
+
 // Constants to affect the template code
 #ifndef outputdir_def
 #define outputdir_def
 const TString user_output_dir = "output/";
+#endif
+#ifndef checkstage_def
+#define checkstage_def
+typedef void(*CheckStageFcn)(const Channel, const Category, const ACHypothesis, const SystematicVariationTypes, const unsigned int, const TString);
+CheckStageFcn checkstagefcn = &makeQQBkgTemplatesFromPOWHEG_checkstage;
 #endif
 
 TTree* fixTreeWeights(TTree* tree);
@@ -25,7 +35,7 @@ void plotProcessCheckStage(
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate=""){
+void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
   if (!systematicAllowed(category, theProcess.getProcessType(), syst)) return;
 
@@ -158,7 +168,7 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
   MELAout.close();
 }
 
-void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate=""){
+void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);
@@ -207,11 +217,7 @@ void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category cate
   MELAout.close();
 }
 
-void makeQQBkgTemplatesFromPOWHEG_checkstage(
-  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
-  const unsigned int istage,
-  const TString fixedDate=""
-){
+void makeQQBkgTemplatesFromPOWHEG_checkstage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate){
   if (channel==NChannels) return;
 
   const TString strChannel = getChannelName(channel);

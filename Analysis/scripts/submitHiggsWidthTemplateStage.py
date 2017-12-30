@@ -24,6 +24,7 @@ class StageXBatchManager:
       self.parser.add_option("--generator", dest="generator", type="string", help="Name of the generator", default="POWHEG")
       self.parser.add_option("--stage", dest="stage", type="int", default=2, help="Stsge 1, 2 (default=2)")
       self.parser.add_option("--dry", dest="dryRun", type="int", default=0, help="Do not submit jobs, just set up the files")
+      self.parser.add_option("--customsyst", dest="customSysts", type="string", action="append", help="Systematics to run (default=all turned on)")
 
       (self.opt,self.args) = self.parser.parse_args()
 
@@ -40,6 +41,8 @@ class StageXBatchManager:
          self.fcnname="{}_one".format(strscript)
       elif self.opt.stage==2:
          self.fcnname="{}_two".format(strscript)
+      elif (self.opt.stage==-1 or self.opt.stage==-2):
+         self.fcnname="{}_checkstage".format(strscript)
       if not self.fcnname:
          sys.exit("The function name could not be generated. Exiting...")
 
@@ -89,10 +92,15 @@ class StageXBatchManager:
                if self.opt.process == "QQBkg" and hypo != "kSM": # QQbkg is only kSM
                   break
                for syst in systematics:
+                  if self.opt.customSysts is not None:
+                     if not syst in self.opt.customSysts:
+                        continue
                   strscrcmd = "{}, {}".format(channel, cat)
                   if self.opt.process != "QQBkg":
                     strscrcmd = "{}, {}".format(strscrcmd, hypo)
                   strscrcmd = "{}, {}".format(strscrcmd, syst)
+                  if "checkstage" in self.fcnname:
+                     strscrcmd = "{}, {}".format(strscrcmd, -self.opt.stage)
                   if self.opt.fixedDate:
                      strscrcmd = "{}, \\\"{}\\\"".format(strscrcmd, self.opt.fixedDate)
                   strscrcmd = strscrcmd.replace(' ','') # The command passed to bash script should not contain whitespace itself

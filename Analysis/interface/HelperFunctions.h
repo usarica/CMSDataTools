@@ -70,9 +70,9 @@ namespace HelperFunctions{
   template<> void regularizeHistogram<TH2F>(TH2F* histo, int nIter_, double threshold_);
   template<> void regularizeHistogram<TH3F>(TH3F* histo, int nIter_, double threshold_);
 
-  template <typename T> void conditionalizeHistogram(T* histo, unsigned int axis);
-  template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis);
-  template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int axis);
+  template <typename T> void conditionalizeHistogram(T* histo, unsigned int axis, std::vector<std::pair<T*, float>> const* conditionalsReference=nullptr);
+  template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference);
+  template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int axis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference);
 
   template <typename T> void wipeOverUnderFlows(T* hwipe, bool rescale=false);
   template<> void wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool rescale);

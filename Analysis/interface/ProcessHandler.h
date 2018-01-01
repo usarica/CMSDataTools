@@ -70,11 +70,50 @@ public:
 
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 
+  template<typename T> void conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+
 };
 template<> void GGProcessHandler::recombineHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 template<> void GGProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 template<> void GGProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 template<> void GGProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+
+template<typename T> void GGProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const{
+  if (vals.empty()) return;
+
+  if (hypo==ACHypothesisHelpers::kSM) assert(vals.size()==nGGSMTypes);
+  else assert(vals.size()==nGGTypes);
+
+  vector<vector<unsigned int>> divideByTpl;
+  divideByTpl.assign(vals.size(), vector<unsigned int>());
+  for (unsigned int t=0; t<vals.size(); t++){
+    if ((int) t==GGProcessHandler::castTemplateTypeToInt(GGTplInt_Re)){
+      divideByTpl.at(t).push_back(GGProcessHandler::castTemplateTypeToInt(GGTplBkg));
+      divideByTpl.at(t).push_back(GGProcessHandler::castTemplateTypeToInt(GGTplSig));
+    }
+    else if ((int) t==GGProcessHandler::castTemplateTypeToInt(GGTplSigBSMSMInt_Re)){
+      divideByTpl.at(t).push_back(GGProcessHandler::castTemplateTypeToInt(GGTplSig));
+      divideByTpl.at(t).push_back(GGProcessHandler::castTemplateTypeToInt(GGTplSigBSM));
+    }
+    else if ((int) t==GGProcessHandler::castTemplateTypeToInt(GGTplIntBSM_Re)){
+      divideByTpl.at(t).push_back(GGProcessHandler::castTemplateTypeToInt(GGTplBkg));
+      divideByTpl.at(t).push_back(GGProcessHandler::castTemplateTypeToInt(GGTplSigBSM));
+    }
+    else divideByTpl.at(t).push_back(t);
+  }
+  for (unsigned int t=0; t<vals.size(); t++){
+    if (divideByTpl.at(t).size()==1) continue;
+    vector<std::pair<T, float>> ctpls; ctpls.reserve(divideByTpl.at(t).size());
+    for (unsigned int& ht:divideByTpl.at(t)) ctpls.push_back(std::pair<T, float>(vals.at(ht), 0.5));
+    HelperFunctions::conditionalizeHistogram(vals.at(t), iaxis, &ctpls);
+  }
+  for (unsigned int t=0; t<vals.size(); t++){
+    if (divideByTpl.at(t).size()!=1) continue;
+    HelperFunctions::conditionalizeHistogram(vals.at(t), iaxis);
+  }
+}
+template void GGProcessHandler::conditionalizeTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+template void GGProcessHandler::conditionalizeTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
 
 
 class VVProcessHandler : public ProcessHandler{
@@ -124,11 +163,61 @@ public:
 
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 
+  template<typename T> void conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+
 };
 template<> void VVProcessHandler::recombineHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 template<> void VVProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 template<> void VVProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 template<> void VVProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+
+template<typename T> void VVProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const{
+  if (vals.empty()) return;
+
+  if (hypo==ACHypothesisHelpers::kSM) assert(vals.size()==nVVSMTypes);
+  else assert(vals.size()==nVVTypes);
+
+  vector<vector<std::pair<T, float>>> divideByTpl;
+  divideByTpl.assign(vals.size(), vector<std::pair<T, float>>());
+  for (unsigned int t=0; t<vals.size(); t++){
+    if ((int) t==VVProcessHandler::castTemplateTypeToInt(VVTplInt_Re)){
+      divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplBkg)), 0.5));
+      divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplSig)), 0.5));
+    }
+    else if ((int) t==VVProcessHandler::castTemplateTypeToInt(VVTplSigBSMSMInt_ai1_1_Re)){
+      divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplSig)), 0.75));
+      divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplSigBSM)), 0.25));
+    }
+    else if ((int) t==VVProcessHandler::castTemplateTypeToInt(VVTplSigBSMSMInt_ai1_2_PosDef)){
+      divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplSig)), 0.5));
+      divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplSigBSM)), 0.5));
+    }
+    else if ((int) t==VVProcessHandler::castTemplateTypeToInt(VVTplSigBSMSMInt_ai1_3_Re)){
+      divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplSig)), 0.25));
+      divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplSigBSM)), 0.75));
+    }
+    else if ((int) t==VVProcessHandler::castTemplateTypeToInt(VVTplIntBSM_ai1_1_Re)){
+      divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplBkg)), 0.5));
+      divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplSig)), 0.25));
+      divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplSigBSM)), 0.25));
+    }
+    else if ((int) t==VVProcessHandler::castTemplateTypeToInt(VVTplIntBSM_ai1_2_Re)){
+      divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplBkg)), 0.5));
+      divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplSigBSM)), 0.5));
+    }
+    else divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(t), 1));
+  }
+  for (unsigned int t=0; t<vals.size(); t++){
+    if (divideByTpl.at(t).size()==1) continue;
+    HelperFunctions::conditionalizeHistogram(vals.at(t), iaxis, &(divideByTpl.at(t)));
+  }
+  for (unsigned int t=0; t<vals.size(); t++){
+    if (divideByTpl.at(t).size()!=1) continue;
+    HelperFunctions::conditionalizeHistogram(vals.at(t), iaxis);
+  }
+}
+template void VVProcessHandler::conditionalizeTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+template void VVProcessHandler::conditionalizeTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
 
 
 class QQBkgProcessHandler : public ProcessHandler{
@@ -156,9 +245,18 @@ public:
 
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals) const;
 
+  template<typename T> void conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+
 };
 template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals) const;
 template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals) const;
 template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals) const;
+
+template<typename T> void QQBkgProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const{
+  if (vals.empty()) return;
+  for (T& hh:vals) HelperFunctions::conditionalizeHistogram(hh, iaxis);
+}
+template void QQBkgProcessHandler::conditionalizeTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+template void QQBkgProcessHandler::conditionalizeTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
 
 #endif

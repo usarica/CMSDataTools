@@ -19,12 +19,20 @@ class StageXBatchManager:
       self.parser = OptionParser()
 
       self.parser.add_option("--outdir", dest="outdir", type="string", help="Name of the local output directory for your jobs. This directory will be created automatically.", default="./")
-      self.parser.add_option("--fixedDate", dest="fixedDate", type="string", help="Fixed output directory", default="")
+
       self.parser.add_option("--process", dest="process", type="string", help="Name of the process")
       self.parser.add_option("--generator", dest="generator", type="string", help="Name of the generator", default="POWHEG")
-      self.parser.add_option("--stage", dest="stage", type="int", default=2, help="Stage 1, 2 or checkstage (x-1) (default=2)")
-      self.parser.add_option("--dry", dest="dryRun", type="int", default=0, help="Do not submit jobs, just set up the files")
-      self.parser.add_option("--customsyst", dest="customSysts", type="string", action="append", help="Systematics to run (default=all turned on)")
+      self.parser.add_option("--stage", dest="stage", type="int", default=2, help="Stage 1, 2 (default=2)")
+      self.parser.add_option("--fixedDate", dest="fixedDate", type="string", help="Fixed output directory", default="")
+
+      self.parser.add_option("--syst", dest="customSysts", type="string", action="append", help="Systematics to run (default=all turned on)")
+      self.parser.add_option("--channel", dest="customChannels", type="string", action="append", help="Channels to run (default=all turned on)")
+      self.parser.add_option("--category", dest="customCategories", type="string", action="append", help="Categories to run (default=all turned on)")
+      self.parser.add_option("--AChypo", dest="customACHypos", type="string", action="append", help="Anomalous couplings hypotheses to run (default=all turned on)")
+
+      self.parser.add_option("--dry", dest="dryRun", action="store_true", default=False, help="Do not submit jobs, just set up the files")
+      self.parser.add_option("--interactive", dest="interactive", action="store_true", default=False, help="Do not submit jobs; run them interactively")
+      self.parser.add_option("--checkstage", dest="checkstage", action="store_true", default=False, help="Submit checkstage functions instead of stage functions themselves")
 
       (self.opt,self.args) = self.parser.parse_args()
 
@@ -37,12 +45,12 @@ class StageXBatchManager:
          sys.exit("Script {} does not exist. Exiting...".format(self.scriptname))
 
       self.fcnname=""
-      if self.opt.stage==1:
+      if self.opt.checkstage:
+         self.fcnname="{}_checkstage".format(strscript)
+      elif self.opt.stage==1:
          self.fcnname="{}_one".format(strscript)
       elif self.opt.stage==2:
          self.fcnname="{}_two".format(strscript)
-      elif (self.opt.stage==-1 or self.opt.stage==-2):
-         self.fcnname="{}_checkstage".format(strscript)
       if not self.fcnname:
          sys.exit("The function name could not be generated. Exiting...")
 
@@ -83,29 +91,49 @@ class StageXBatchManager:
    def submitJobs(self):
       channels = [ "k2e2mu", "k4e", "k4mu" ]
       categories = [ "Inclusive" ] # Not yet ready for tagged categories
-      hypos = [ "kSM", "kL!", "kA2", "kA3" ]
+      hypos = [ "kSM", "kL1", "kA2", "kA3" ]
       systematics = [ "sNominal", "eLepSFDn", "eLepSFUp", "tPDFScaleDn", "tPDFScaleUp", "tQCDScaleDn", "tQCDScaleUp", "tAsMZDn", "tAsMZUp", "tPDFReplicaDn", "tPDFReplicaUp", "tQQBkgEWCorrDn", "tQQBkgEWCorrUp", "eJECDn", "eJECUp" ]
 
       for channel in channels:
+         if self.opt.customChannels is not None:
+            if not channel in self.opt.customChannels:
+               continue
+
          for cat in categories:
+            if self.opt.customCategories is not None:
+               if not cat in self.opt.customCategories:
+                  continue
+
             for hypo in hypos:
-               if self.opt.process == "QQBkg" and hypo != "kSM": # QQbkg is only kSM
+               if self.opt.customACHypos is not None:
+                  if not hypo in self.opt.customACHypos:
+                     continue
+
+               if (self.opt.process == "QQBkg" and hypo != "kSM" and not self.opt.checkstage): # QQbkg is only kSM
                   break
+
                for syst in systematics:
                   if self.opt.customSysts is not None:
                      if not syst in self.opt.customSysts:
                         continue
                   strscrcmd = "{}, {}".format(channel, cat)
-                  if self.opt.process != "QQBkg":
-                    strscrcmd = "{}, {}".format(strscrcmd, hypo)
+                  if self.opt.process!="QQBkg" or self.opt.checkstage:
+                     strscrcmd = "{}, {}".format(strscrcmd, hypo)
                   strscrcmd = "{}, {}".format(strscrcmd, syst)
-                  if "checkstage" in self.fcnname:
-                     strscrcmd = "{}, {}".format(strscrcmd, -self.opt.stage)
+                  if self.opt.checkstage:
+                     strscrcmd = "{}, {}".format(strscrcmd, self.opt.stage)
                   if self.opt.fixedDate:
-                     strscrcmd = "{}, \\\"{}\\\"".format(strscrcmd, self.opt.fixedDate)
+                     strfixedDate=""
+                     if not self.opt.interactive:
+                        strfixedDate="\\\"{}\\\"".format(self.opt.fixedDate)
+                     else:
+                        strfixedDate=r"\\\"{}\\\"".format(self.opt.fixedDate)
+                     strscrcmd = "{}, {}".format(strscrcmd, strfixedDate)
                   strscrcmd = strscrcmd.replace(' ','') # The command passed to bash script should not contain whitespace itself
                   jobcmd = "submitHiggsWidthTemplateStageGeneric.sh {} \({}\)".format(self.fcnname, strscrcmd)
-                  if self.opt.dryRun>0:
+                  if self.opt.interactive:
+                     jobcmd = "root -l -b -q -e \"gROOT->ProcessLine(\\\".x loadLib.C\\\");gROOT->ProcessLine(\\\".x {}.c+({})\\\");\"".format(self.fcnname, strscrcmd)
+                  if self.opt.dryRun:
                      jobcmd = "echo " + jobcmd
                   ret = os.system( jobcmd )
 

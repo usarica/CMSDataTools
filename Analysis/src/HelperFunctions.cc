@@ -638,10 +638,12 @@ template<> void HelperFunctions::regularizeHistogram<TH3F>(TH3F* histo, int nIte
   conditionalizeHistogram(histo, 0);
 }
 
-template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis){
+template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference){
   if (axis==0){
     for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
-      double integral = histo->Integral(ix, ix, 0, histo->GetNbinsY()+1);
+      double integral=1;
+      if (!conditionalsReference) integral = histo->Integral(ix, ix, 0, histo->GetNbinsY()+1);
+      else{ for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(ix, ix, 0, hh.first->GetNbinsY()+1), hh.second); }
       if (integral==0.) continue; // All bins across y are 0.
       for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
         histo->SetBinContent(ix, iy, histo->GetBinContent(ix, iy)/integral);
@@ -651,7 +653,9 @@ template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsi
   }
   else{
     for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
-      double integral = histo->Integral(0, histo->GetNbinsX()+1, iy, iy);
+      double integral = 1;
+      if (!conditionalsReference) histo->Integral(0, histo->GetNbinsX()+1, iy, iy);
+      else{ for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(0, hh.first->GetNbinsX()+1, iy, iy), hh.second); }
       if (integral==0.) continue; // All bins across y are 0.
       for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
         histo->SetBinContent(ix, iy, histo->GetBinContent(ix, iy)/integral);
@@ -660,10 +664,12 @@ template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsi
     }
   }
 }
-template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int axis){
+template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int axis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference){
   if (axis==0){
     for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
-      double integral = histo->Integral(ix, ix, 0, histo->GetNbinsY()+1, 0, histo->GetNbinsZ()+1);
+      double integral=1;
+      if (!conditionalsReference) integral = histo->Integral(ix, ix, 0, histo->GetNbinsY()+1, 0, histo->GetNbinsZ()+1);
+      else{ for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(ix, ix, 0, hh.first->GetNbinsY()+1, 0, hh.first->GetNbinsZ()+1), hh.second); }
       if (integral==0.) continue; // All bins across y are 0.
       for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
         for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
@@ -675,7 +681,9 @@ template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsi
   }
   else if (axis==1){
     for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
-      double integral = histo->Integral(0, histo->GetNbinsX()+1, iy, iy, 0, histo->GetNbinsZ()+1);
+      double integral=1;
+      if (!conditionalsReference) integral = histo->Integral(0, histo->GetNbinsX()+1, iy, iy, 0, histo->GetNbinsZ()+1);
+      else{ for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(0, hh.first->GetNbinsX()+1, iy, iy, 0, hh.first->GetNbinsZ()+1), hh.second); }
       if (integral==0.) continue; // All bins across y are 0.
       for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
         for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
@@ -687,7 +695,9 @@ template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsi
   }
   else{
     for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
-      double integral = histo->Integral(0, histo->GetNbinsX()+1, 0, histo->GetNbinsY()+1, iz, iz);
+      double integral=1;
+      if (!conditionalsReference) integral = histo->Integral(0, histo->GetNbinsX()+1, 0, histo->GetNbinsY()+1, iz, iz);
+      else{ for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(0, hh.first->GetNbinsX()+1, 0, hh.first->GetNbinsY()+1, iz, iz), hh.second); }
       if (integral==0.) continue; // All bins across y are 0.
       for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
         for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){

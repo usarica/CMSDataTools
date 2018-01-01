@@ -215,6 +215,7 @@ void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
 void makeVVTemplatesFromPOWHEG_two(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
+  if (!systematicAllowed(category, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -273,6 +274,7 @@ void makeVVTemplatesFromPOWHEG_two(const Channel channel, const Category categor
 
 void makeVVTemplatesFromPOWHEG_checkstage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate){
   if (channel==NChannels) return;
+  if (!systematicAllowed(category, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -451,7 +453,11 @@ void makeVVTemplatesFromPOWHEG_checkstage(const Channel channel, const Category 
     else MELAout << "Template " << finalTemplates_3D[t]->GetName() << " integral: " << HelperFunctions::computeIntegral(finalTemplates_3D[t], true) << endl;
   }
 
-  for (unsigned int iKD=0; iKD<nKDs; iKD++){ for (unsigned int t=0; t<ntpls; t++) HelperFunctions::conditionalizeHistogram(htpl_2D[t].at(iKD), 0); }
+  for (unsigned int iKD=0; iKD<nKDs; iKD++){
+    vector<TH2F*> htmp; htmp.reserve(ntpls);
+    for (unsigned int t=0; t<ntpls; t++) htmp.push_back(htpl_2D[t].at(iKD));
+    theProcess.conditionalizeTemplates(htmp, hypo, 0);
+  }
   for (unsigned int t=0; t<ntpls; t++){
     foutput->WriteTObject(htpl_1D[t]);
     delete htpl_1D[t];

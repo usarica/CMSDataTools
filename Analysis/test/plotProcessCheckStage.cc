@@ -40,6 +40,7 @@ void plotProcessCheckStage(
     break;
   };
   if (!thePerProcessHandle) return;
+  if (!systematicAllowed(category, thePerProcessHandle->getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -72,6 +73,9 @@ void plotProcessCheckStage(
   MELAout.open(coutput_log.Data());
   MELAout << "Opened log file " << coutput_log << endl;
 
+#ifdef checkstage_def
+  if (gSystem->AccessPathName(cinput)) checkstagefcn(channel, category, hypo, syst, istage, fixedDate);
+#endif
   TFile* finput = TFile::Open(cinput, "read");
   if (!finput) return;
   MELAout << "Opened file " << cinput << endl;

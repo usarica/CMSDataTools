@@ -431,7 +431,7 @@ void HelperFunctions::addPoint(TGraphErrors*& tg, double x, double y, double ex,
   for (unsigned int i=0; i<4; i++) delete[] xynew[i];
 }
 
-void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX, double omitbelow, int nIter_, double threshold_){
+void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX, double omitbelow, double omitabove, int nIter_, double threshold_){
   unsigned int nbins_slice = tgSlice->GetN();
   double* xy_slice[2]={
     tgSlice->GetX(),
@@ -456,11 +456,13 @@ void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixe
       //MELAout << "Requested to fix bin " << bin_to_fix << endl;
     }
   }
-  if (omitbelow>0.){
-    for (unsigned int bin=0; bin<nbins_slice; bin++){
-      if (xy_mod[0][bin]<omitbelow) fixedBins.push_back(bin);
-      //MELAout << "Requested to fix bin " << bin << endl;
-    }
+  for (unsigned int bin=0; bin<nbins_slice; bin++){
+    if (xy_mod[0][bin]<omitbelow) fixedBins.push_back(bin);
+    //MELAout << "Requested to fix bin " << bin << endl;
+  }
+  for (unsigned int bin=0; bin<nbins_slice; bin++){
+    if (xy_mod[0][bin]>omitabove) fixedBins.push_back(bin);
+    //MELAout << "Requested to fix bin " << bin << endl;
   }
 
   double* xx_second;
@@ -488,13 +490,14 @@ void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixe
       }
 
       TGraph* interpolator = new TGraph(nbins_second, xx_second, yy_second);
-      double derivative_first = (yy_second[1]-yy_second[0])/(xx_second[1]-xx_second[0]);
-      double derivative_last = (yy_second[nbins_second-1]-yy_second[nbins_second-2])/(xx_second[nbins_second-1]-xx_second[nbins_second-2]);
-      TSpline3* spline = new TSpline3("spline", interpolator, "b1e1", derivative_first, derivative_last);
+      //double derivative_first = (yy_second[1]-yy_second[0])/(xx_second[1]-xx_second[0]);
+      //double derivative_last = (yy_second[nbins_second-1]-yy_second[nbins_second-2])/(xx_second[nbins_second-1]-xx_second[nbins_second-2]);
+      //TSpline3* spline = new TSpline3("spline", interpolator, "b1e1", derivative_first, derivative_last);
+      TSpline3* spline = new TSpline3("spline", interpolator, "b2e2", 0, 0);
 
       double center = xy_mod[0][binIt-1];
       double val = spline->Eval(center);
-      if (fabs(xy_mod[1][binIt-1]-val)>threshold*val && val>0.) xy_mod[1][binIt-1]=val;
+      if (val!=0. && fabs(xy_mod[1][binIt-1]/val-1.)>threshold) xy_mod[1][binIt-1]=val;
 
       delete spline;
       delete interpolator;
@@ -596,46 +599,120 @@ template<> double HelperFunctions::evaluateTObject<TGraph>(TGraph* obj, float va
   return obj->Eval(val);
 }
 
-template<> void HelperFunctions::regularizeHistogram<TH2F>(TH2F* histo, int nIter_, double threshold_){
+template<> void HelperFunctions::regularizeHistogram<TH1F>(TH1F* histo, int nIter_, double threshold_, unsigned int /*iaxis_*/){
+  const int nbinsx = histo->GetNbinsX();
+
+  double xy[2][nbinsx];
+  for (int ix=1; ix<=nbinsx; ix++){
+    xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
+    xy[1][ix-1] = histo->GetBinContent(ix);
+  }
+  TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
+  tg->SetName("tg_tmp");
+  regularizeSlice(tg, 0, xy[0][0]-1., xy[0][nbinsx-1]+1., nIter_, threshold_);
+  for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, tg->Eval(xy[0][ix-1]));
+  delete tg;
+}
+template<> void HelperFunctions::regularizeHistogram<TH2F>(TH2F* histo, int nIter_, double threshold_, unsigned int iaxis_){
   const int nbinsx = histo->GetNbinsX();
   const int nbinsy = histo->GetNbinsY();
 
-  for (int iy=1; iy<=nbinsy; iy++){
-    //MELAout << "regularizeHistogram::Bin " << iy << " being regularized..." << endl;
-    double xy[2][nbinsx];
-    for (int ix=1; ix<=nbinsx; ix++){
-      xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
-      xy[1][ix-1] = histo->GetBinContent(ix, iy);
+  switch (iaxis_){
+  case 0:
+  {
+    for (int iy=1; iy<=nbinsy; iy++){
+      double xy[2][nbinsx];
+      for (int ix=1; ix<=nbinsx; ix++){
+        xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
+        xy[1][ix-1] = histo->GetBinContent(ix, iy);
+      }
+      TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
+      tg->SetName("tg_tmp");
+      regularizeSlice(tg, 0, xy[0][0]-1., xy[0][nbinsx-1]+1., nIter_, threshold_);
+      for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, iy, tg->Eval(xy[0][ix-1]));
+      delete tg;
     }
-
-    TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
-    tg->SetName("tg_tmp");
-    regularizeSlice(tg, 0, 0, nIter_, threshold_);
-    for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, iy, tg->Eval(xy[0][ix-1]));
+    break;
   }
-  conditionalizeHistogram(histo, 0);
+  case 1:
+  {
+    for (int ix=1; ix<=nbinsx; ix++){
+      double xy[2][nbinsy];
+      for (int iy=1; iy<=nbinsy; iy++){
+        xy[0][iy-1] = histo->GetYaxis()->GetBinCenter(iy);
+        xy[1][iy-1] = histo->GetBinContent(ix, iy);
+      }
+      TGraph* tg = new TGraph(nbinsy, xy[0], xy[1]);
+      tg->SetName("tg_tmp");
+      regularizeSlice(tg, 0, xy[0][0]-1., xy[0][nbinsy-1]+1., nIter_, threshold_);
+      for (int iy=1; iy<=nbinsy; iy++) histo->SetBinContent(ix, iy, tg->Eval(xy[0][iy-1]));
+      delete tg;
+    }
+    break;
+  }
+  }
 }
-template<> void HelperFunctions::regularizeHistogram<TH3F>(TH3F* histo, int nIter_, double threshold_){
+template<> void HelperFunctions::regularizeHistogram<TH3F>(TH3F* histo, int nIter_, double threshold_, unsigned int iaxis_){
   const int nbinsx = histo->GetNbinsX();
   const int nbinsy = histo->GetNbinsY();
   const int nbinsz = histo->GetNbinsZ();
 
-  for (int iy=1; iy<=nbinsy; iy++){
-    for (int iz=1; iz<=nbinsz; iz++){
-      //MELAout << "regularizeHistogram::Bin " << iy << ", " << iz << " being regularized..." << endl;
-      double xy[2][nbinsx];
-      for (int ix=1; ix<=nbinsx; ix++){
-        xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
-        xy[1][ix-1] = histo->GetBinContent(ix, iy, iz);
+  switch (iaxis_){
+  case 0:
+  {
+    for (int iy=1; iy<=nbinsy; iy++){
+      for (int iz=1; iz<=nbinsz; iz++){
+        double xy[2][nbinsx];
+        for (int ix=1; ix<=nbinsx; ix++){
+          xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
+          xy[1][ix-1] = histo->GetBinContent(ix, iy, iz);
+        }
+        TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
+        tg->SetName("tg_tmp");
+        regularizeSlice(tg, 0, xy[0][0]-1., xy[0][nbinsx-1]+1., nIter_, threshold_);
+        for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, iy, iz, tg->Eval(xy[0][ix-1]));
+        delete tg;
       }
-
-      TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
-      tg->SetName("tg_tmp");
-      regularizeSlice(tg, 0, 0, nIter_, threshold_);
-      for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, iy, iz, tg->Eval(xy[0][ix-1]));
     }
+    break;
   }
-  conditionalizeHistogram(histo, 0);
+  case 1:
+  {
+    for (int iz=1; iz<=nbinsz; iz++){
+      for (int ix=1; ix<=nbinsx; ix++){
+        double xy[2][nbinsy];
+        for (int iy=1; iy<=nbinsy; iy++){
+          xy[0][iy-1] = histo->GetYaxis()->GetBinCenter(iy);
+          xy[1][iy-1] = histo->GetBinContent(ix, iy);
+        }
+        TGraph* tg = new TGraph(nbinsy, xy[0], xy[1]);
+        tg->SetName("tg_tmp");
+        regularizeSlice(tg, 0, xy[0][0]-1., xy[0][nbinsy-1]+1., nIter_, threshold_);
+        for (int iy=1; iy<=nbinsy; iy++) histo->SetBinContent(ix, iy, tg->Eval(xy[0][iy-1]));
+        delete tg;
+      }
+    }
+    break;
+  }
+  case 2:
+  {
+    for (int ix=1; ix<=nbinsx; ix++){
+      for (int iy=1; iy<=nbinsy; iy++){
+        double xy[2][nbinsz];
+        for (int iz=1; iz<=nbinsz; iz++){
+          xy[0][iz-1] = histo->GetZaxis()->GetBinCenter(iz);
+          xy[1][iz-1] = histo->GetBinContent(ix, iy, iz);
+        }
+        TGraph* tg = new TGraph(nbinsz, xy[0], xy[1]);
+        tg->SetName("tg_tmp");
+        regularizeSlice(tg, 0, xy[0][0]-1., xy[0][nbinsz-1]+1., nIter_, threshold_);
+        for (int iz=1; iz<=nbinsz; iz++) histo->SetBinContent(ix, iy, iz, tg->Eval(xy[0][iz-1]));
+        delete tg;
+      }
+    }
+    break;
+  }
+  }
 }
 
 template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference){

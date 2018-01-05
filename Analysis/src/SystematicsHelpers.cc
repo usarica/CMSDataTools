@@ -105,6 +105,7 @@ std::pair<float, float> SystematicsHelpers::getLeptonSFSystematic(short const& Z
 }
 
 
+int SystematicsHelpers::convertSystematicVariationTypeToInt(SystematicsHelpers::SystematicVariationTypes type){ return (int) type; }
 std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::getProcessSystematicVariations(CategorizationHelpers::Category const category, ProcessHandler::ProcessType const type){
   std::vector<SystematicVariationTypes> res;
 

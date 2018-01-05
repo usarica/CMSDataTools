@@ -60,8 +60,11 @@ namespace SystematicsHelpers{
     tQQBkgEWCorrDn, tQQBkgEWCorrUp,
     eLepSFDn, eLepSFUp,
     eJECDn, eJECUp,
-    eZJetsStatsDn, eZJetsStatsUp
+    eZJetsStatsDn, eZJetsStatsUp,
+    nSystematicVariations
   };
+
+  int convertSystematicVariationTypeToInt(SystematicsHelpers::SystematicVariationTypes type);
 
   std::vector<SystematicsHelpers::SystematicVariationTypes> getProcessSystematicVariations(CategorizationHelpers::Category const category, ProcessHandler::ProcessType const type);
 

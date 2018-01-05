@@ -66,9 +66,10 @@ namespace HelperFunctions{
   template<> double evaluateTObject<TH1F>(TH1F* obj, float val);
   template<> double evaluateTObject<TGraph>(TGraph* obj, float val);
 
-  template <typename T> void regularizeHistogram(T* histo, int nIter_, double threshold_);
-  template<> void regularizeHistogram<TH2F>(TH2F* histo, int nIter_, double threshold_);
-  template<> void regularizeHistogram<TH3F>(TH3F* histo, int nIter_, double threshold_);
+  template <typename T> void regularizeHistogram(T* histo, int nIter_, double threshold_, unsigned int iaxis_);
+  template<> void regularizeHistogram<TH1F>(TH1F* histo, int nIter_, double threshold_, unsigned int iaxis_);
+  template<> void regularizeHistogram<TH2F>(TH2F* histo, int nIter_, double threshold_, unsigned int iaxis_);
+  template<> void regularizeHistogram<TH3F>(TH3F* histo, int nIter_, double threshold_, unsigned int iaxis_);
 
   template <typename T> void conditionalizeHistogram(T* histo, unsigned int axis, std::vector<std::pair<T*, float>> const* conditionalsReference=nullptr);
   template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference);
@@ -139,7 +140,7 @@ namespace HelperFunctions{
   TF1* getFcn_a0plusa1expX(TSpline3* sp, double xmin, double xmax, bool useLowBound);
   TF1* getFcn_a0timesexpa1X(TSpline3* sp, double xmin, double xmax, bool useLowBound);
 
-  void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX=0, double omitbelow=0., int nIter_=-1, double threshold_=-1);
+  void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX=0, double omitbelow=0., double omitabove=0., int nIter_=-1, double threshold_=-1);
 
 
   // Function to copy a file

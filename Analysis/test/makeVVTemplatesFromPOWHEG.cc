@@ -24,7 +24,14 @@ CheckStageFcn checkstagefcn = &makeVVTemplatesFromPOWHEG_checkstage;
 
 TTree* fixTreeWeights(TTree* tree);
 void plotProcessCheckStage(
-  const Channel channel, const Category category, ACHypothesisHelpers::ACHypothesis hypo, const SystematicVariationTypes syst,
+  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
+  const unsigned int istage,
+  const TString fixedDate="",
+  ProcessHandler::ProcessType proctype=theProcess.getProcessType(),
+  const TString strGenerator="POWHEG"
+);
+void plotProcessCheckStage_SystPairs(
+  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
   const unsigned int istage,
   const TString fixedDate="",
   ProcessHandler::ProcessType proctype=theProcess.getProcessType(),

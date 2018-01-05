@@ -33,6 +33,8 @@ class StageXBatchManager:
       self.parser.add_option("--dry", dest="dryRun", action="store_true", default=False, help="Do not submit jobs, just set up the files")
       self.parser.add_option("--interactive", dest="interactive", action="store_true", default=False, help="Do not submit jobs; run them interactively")
       self.parser.add_option("--checkstage", dest="checkstage", action="store_true", default=False, help="Submit checkstage functions instead of stage functions themselves")
+      self.parser.add_option("--plotcheckstage", dest="plotcheckstage", action="store_true", default=False, help="Plot checkstage")
+      self.parser.add_option("--plotcheckstagesystpairs", dest="plotcheckstagesystpairs", action="store_true", default=False, help="Plot checkstage systematics ratiso to nominal")
 
       (self.opt,self.args) = self.parser.parse_args()
 
@@ -44,9 +46,20 @@ class StageXBatchManager:
       if not os.path.isfile(self.scriptname):
          sys.exit("Script {} does not exist. Exiting...".format(self.scriptname))
 
+      if self.opt.plotcheckstage or self.opt.plotcheckstagesystpairs:
+         if self.opt.plotcheckstage and self.opt.plotcheckstagesystpairs:
+            sys.exit("Cannot specify both plotcheckstage and plotcheckstagesystpairs")
+         self.opt.checkstage=True
+         self.opt.interactive=True
+
       self.fcnname=""
       if self.opt.checkstage:
-         self.fcnname="{}_checkstage".format(strscript)
+         if self.opt.plotcheckstage:
+            self.fcnname="plotProcessCheckStage"
+         elif self.opt.plotcheckstagesystpairs:
+            self.fcnname="plotProcessCheckStage_SystPairs"
+         else:
+            self.fcnname="{}_checkstage".format(strscript)
       elif self.opt.stage==1:
          self.fcnname="{}_one".format(strscript)
       elif self.opt.stage==2:

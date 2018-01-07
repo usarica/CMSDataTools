@@ -267,8 +267,8 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     res.push_back("p_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
     res.push_back("p_GG_BKG_MCFM");
     res.push_back("p_QQB_BKG_MCFM");
-    res.push_back("p_Const_GG_BKG_MCFM");
-    res.push_back("p_Const_QQB_BKG_MCFM");
+    res.push_back("pConst_GG_BKG_MCFM");
+    res.push_back("pConst_QQB_BKG_MCFM");
     break;
 
   case kDggbkgkin:
@@ -279,8 +279,8 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     res.push_back("p_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
     res.push_back("p_GG_BKG_MCFM");
     res.push_back("p_GG_BSI_kappaTopBot_1_ghz1_1_MCFM");
-    res.push_back("p_Const_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
-    res.push_back("p_Const_GG_BKG_MCFM");
+    res.push_back("pConst_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
+    res.push_back("pConst_GG_BKG_MCFM");
     break;
 
   case kDjVBF:

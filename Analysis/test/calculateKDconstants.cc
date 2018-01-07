@@ -919,14 +919,61 @@ void getKDConstant_Dbkgkin(TString const strchannel, float sqrts=13, const bool 
 
   vector<TString> strSamples[2];
   strSamples[0].push_back("ggHPowheg");
-  strSamples[0].push_back("ggHMCFM");
+  //strSamples[0].push_back("ggHMCFM");
+  strSamples[0].push_back(
+    Form("gg_Bkg_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_Sig_SM_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI_SM_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_SM_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0M_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0M_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0M_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0PH_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0PH_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0PH_MCFM_%s", strchannel.Data())
+  );
   strSamples[0].push_back("VBFPowheg");
   strSamples[1].push_back("qqBkg");
-  strSamples[1].push_back("ggBkg");
+  strSamples[1].push_back("ggHPowheg");
+  strSamples[1].push_back(
+    Form("gg_Bkg_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_Sig_SM_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI_SM_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_SM_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0M_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0M_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0M_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0PH_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0PH_MCFM_%s", strchannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0PH_MCFM_%s", strchannel.Data())
+  );
   vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
   // Reweight ggBkg decay kinematics to qqBkg
+  strMelaWgts[0].at(1).push_back("xsec");
+  strMelaWgts[0].at(1).push_back("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
   strMelaWgts[1].at(1).push_back("xsec");
   strMelaWgts[1].at(1).push_back("p_Gen_QQB_BKG_MCFM");
+  strMelaWgts[1].at(1).push_back("p_Gen_CPStoBWPropRewgt");
+  strMelaWgts[1].at(2).push_back("xsec");
+  strMelaWgts[1].at(2).push_back("p_Gen_QQB_BKG_MCFM");
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
   {
@@ -996,11 +1043,11 @@ void getKDConstant_Dggbkgkin(TString const strchannel, float sqrts=13, const boo
   vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
   for (unsigned int is=0; is<strSamples[0].size(); is++){
     strMelaWgts[0].at(is).push_back("xsec");
-    strMelaWgts[0].at(is).push_back(getMELAGGHypothesisWeight(TemplateHelpers::GGSig, ACHypothesisHelpers::kSM));
+    strMelaWgts[0].at(is).push_back(TemplateHelpers::OffshellGGProcessHandle.getMELAHypothesisWeight(GGProcessHandler::GGSig, ACHypothesisHelpers::kSM));
   }
   for (unsigned int is=0; is<strSamples[1].size(); is++){
     strMelaWgts[1].at(is).push_back("xsec");
-    strMelaWgts[1].at(is).push_back(getMELAGGHypothesisWeight(TemplateHelpers::GGBkg, ACHypothesisHelpers::kSM));
+    strMelaWgts[1].at(is).push_back(TemplateHelpers::OffshellGGProcessHandle.getMELAHypothesisWeight(GGProcessHandler::GGBkg, ACHypothesisHelpers::kSM));
   }
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
@@ -1203,6 +1250,17 @@ void SmoothKDConstantProducer_Dbkgkin(TString strchannel){
   if (strchannel!="2e2mu" && strchannel!="4e" && strchannel!="4mu") return;
   generic_SmoothKDConstantProducer(
     13, Form("Dbkgkin_%s", strchannel.Data()), "",
+    &getFcn_a0plusa1timesXN<1>,
+    &getFcn_a0timesexpa1X,
+    //&getFcn_a0plusa1overXN<6>,
+    true, false
+  );
+}
+
+void SmoothKDConstantProducer_Dggbkgkin(TString strchannel){
+  if (strchannel!="2e2mu" && strchannel!="4e" && strchannel!="4mu") return;
+  generic_SmoothKDConstantProducer(
+    13, Form("Dggbkgkin_%s", strchannel.Data()), "",
     &getFcn_a0plusa1timesXN<1>,
     &getFcn_a0timesexpa1X,
     //&getFcn_a0plusa1overXN<6>,

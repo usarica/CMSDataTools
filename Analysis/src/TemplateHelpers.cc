@@ -17,8 +17,8 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDbkg.KDvars = getKDVars(kDbkgkin);
     KDlist.push_back(KDbkg);
     KDspecs KDbkgsigint("Dggint");
-    //KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
-    //KDbkgsigint.KDvars = getKDVars(kDggint);
+    KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
+    KDbkgsigint.KDvars = getKDVars(kDggint);
     KDlist.push_back(KDbkgsigint);
     KDspecs KDL1("DL1dec");
     KDL1.KD = constructKDFromType(kDL1dec, "", "", "../data/gConstant_HZZ2e2mu_L1.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_L1", 1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1));

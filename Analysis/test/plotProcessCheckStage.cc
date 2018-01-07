@@ -264,9 +264,11 @@ void plotTH1Fs(TFile* foutput, TString coutdir, TString canvasname, TString ytit
     hh->GetYaxis()->SetTitleFont(42);
     hh->GetYaxis()->SetTitle(ytitle);
     for (int ix=binXlow; ix<binXhigh; ix++){
-      float bc=hh->GetBinContent(ix);
-      minY = std::min(bc, minY);
-      maxY = std::max(bc, maxY);
+      float bc = hh->GetBinContent(ix);
+      if (bc!=0.){
+        minY = std::min(bc, minY);
+        maxY = std::max(bc, maxY);
+      }
     }
     cout << "Min = " << minY << ", max = " << maxY << " after " << hh->GetName() << " (" << hh->GetTitle() << ")" << endl;
     legend->AddEntry(hh, hh->GetTitle(), "l");
@@ -370,7 +372,7 @@ void plotSystRatioTH1Fs(TFile* foutput, TString coutdir, TString canvasname, TSt
     for (TH1F*& hh:*(histolist[is])){
       if (hh->GetName()[0]=='T') continue;
 
-      const float minX=220;
+      const float minX=70;
       const float maxX=hh->GetXaxis()->GetBinUpEdge(hh->GetNbinsX());
       int binXlow = hh->GetXaxis()->FindBin(minX);
       int binXhigh = hh->GetXaxis()->FindBin(maxX);
@@ -392,9 +394,11 @@ void plotSystRatioTH1Fs(TFile* foutput, TString coutdir, TString canvasname, TSt
       hh->GetYaxis()->SetTitleFont(42);
       hh->GetYaxis()->SetTitle(ytitle);
       for (int ix=binXlow; ix<binXhigh; ix++){
-        float bc=hh->GetBinContent(ix);
-        minY = std::min(bc, minY);
-        maxY = std::max(bc, maxY);
+        float bc = hh->GetBinContent(ix);
+        if (bc!=0.){
+          minY = std::min(bc, minY);
+          maxY = std::max(bc, maxY);
+        }
       }
       cout << "Min = " << minY << ", max = " << maxY << " after " << hh->GetName() << " (" << hh->GetTitle() << ")" << endl;
       if (is==0) legend->AddEntry(hh, hh->GetTitle(), "l");
@@ -410,9 +414,7 @@ void plotSystRatioTH1Fs(TFile* foutput, TString coutdir, TString canvasname, TSt
         hh->Draw("hist");
         first=false;
       }
-      else{
-        hh->Draw("histsame");
-      }
+      else hh->Draw("histsame");
     }
   }
   legend->Draw("same");
@@ -427,9 +429,7 @@ void plotSystRatioTH1Fs(TFile* foutput, TString coutdir, TString canvasname, TSt
   canvas->Close();
 
   // Restore titles
-  for (unsigned int is=0; is<2; is++){
-    for (TH1F*& hh:*(histolist[is])) hh->SetTitle(htitles[hh]);
-  }
+  for (unsigned int is=0; is<2; is++){ for (TH1F*& hh:*(histolist[is])) hh->SetTitle(htitles[hh]); }
   curdir->cd();
 }
 void plotTH2Fs(TFile* foutput, TString coutdir, std::vector<TH2F*>& histolist){
@@ -489,6 +489,18 @@ void plotTH2Fs(TFile* foutput, TString coutdir, std::vector<TH2F*>& histolist){
     hh->GetYaxis()->SetTitleSize(0.06);
     hh->GetYaxis()->SetTitleOffset(1);
     hh->GetYaxis()->SetTitleFont(42);
+
+    float minZ=9e9, maxZ=-9e9;
+    for (int ix=1; ix<=hh->GetNbinsX(); ix++){
+      for (int iy=1; iy<=hh->GetNbinsY(); iy++){
+        float bc = hh->GetBinContent(ix, iy);
+        if (bc!=0.){
+          minZ = std::min(minZ, bc);
+          maxZ = std::max(maxZ, bc);
+        }
+      }
+    }
+    hh->GetZaxis()->SetRangeUser(minZ, maxZ);
 
     hh->Draw("colz");
     pt->Draw();

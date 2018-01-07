@@ -910,60 +910,61 @@ void getKDConstant_DjVBF(float sqrts=13, const bool writeFinalTree=false){
 }
 
 /* SPECIFIC COMMENT: NONE */
-void getKDConstant_Dbkgkin(TString const strchannel, float sqrts=13, const bool writeFinalTree=false){
-  if (strchannel!="2e2mu" && strchannel!="4e" && strchannel!="4mu") return;
+void getKDConstant_Dbkgkin(const Channel channel, float sqrts=13, const bool writeFinalTree=false){
+  if (channel!=k2e2mu && channel!=k4e && channel!=k4mu) return;
+  const TString strChannel = getChannelName(channel);
 
   float divisor=21000;
-  if (strchannel=="2l2l" || strchannel=="2e2mu") divisor = 50000;
+  if (channel==k2l2l || channel==k2e2mu) divisor = 50000;
   TString strKD="Dbkgkin";
 
   vector<TString> strSamples[2];
   strSamples[0].push_back("ggHPowheg");
   //strSamples[0].push_back("ggHMCFM");
   strSamples[0].push_back(
-    Form("gg_Bkg_MCFM_%s", strchannel.Data())
+    Form("gg_Bkg_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_Sig_SM_MCFM_%s", strchannel.Data())
+    + Form("gg_Sig_SM_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI_SM_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI_SM_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI10_SM_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI10_SM_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_Sig_0M_MCFM_%s", strchannel.Data())
+    + Form("gg_Sig_0M_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI_0M_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI_0M_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI10_0M_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI10_0M_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_Sig_0PH_MCFM_%s", strchannel.Data())
+    + Form("gg_Sig_0PH_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI_0PH_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI_0PH_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI10_0PH_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI10_0PH_MCFM_%s", strChannel.Data())
   );
   strSamples[0].push_back("VBFPowheg");
   strSamples[1].push_back("qqBkg");
   strSamples[1].push_back("ggHPowheg");
   strSamples[1].push_back(
-    Form("gg_Bkg_MCFM_%s", strchannel.Data())
+    Form("gg_Bkg_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_Sig_SM_MCFM_%s", strchannel.Data())
+    + Form("gg_Sig_SM_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI_SM_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI_SM_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI10_SM_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI10_SM_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_Sig_0M_MCFM_%s", strchannel.Data())
+    + Form("gg_Sig_0M_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI_0M_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI_0M_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI10_0M_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI10_0M_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_Sig_0PH_MCFM_%s", strchannel.Data())
+    + Form("gg_Sig_0PH_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI_0PH_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI_0PH_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI10_0PH_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI10_0PH_MCFM_%s", strChannel.Data())
   );
   vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
   // Reweight ggBkg decay kinematics to qqBkg
@@ -1001,17 +1002,135 @@ void getKDConstant_Dbkgkin(TString const strchannel, float sqrts=13, const bool 
   }
   constProducer.run(
     strSamples, strMelaWgts,
-    SampleHelpers::getChannelFromName(strchannel), CategorizationHelpers::Inclusive,
+    SampleHelpers::getChannelFromName(strChannel), CategorizationHelpers::Inclusive,
+    divisor, writeFinalTree, &manualboundary_validity_pairs
+  );
+}
+
+void getKDConstant_Dbkgdec(const Channel channel, float sqrts=13, const bool writeFinalTree=false){
+  if (channel!=k2e2mu && channel!=k4e && channel!=k4mu) return;
+  const TString strChannel = getChannelName(channel);
+
+  float divisor=21000;
+  if (channel==k2l2l || channel==k2e2mu) divisor = 50000;
+  TString strKD="Dbkgdec";
+
+  vector<TString> strSamples[2];
+  strSamples[0].push_back("ggHPowheg");
+  strSamples[0].push_back(
+    Form("gg_Bkg_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0PH_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0PH_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0PH_MCFM_%s", strChannel.Data())
+  );
+  strSamples[0].push_back("VBFPowheg");
+  strSamples[1].push_back("ggHPowheg");
+  strSamples[1].push_back(
+    Form("gg_Bkg_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0PH_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0PH_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0PH_MCFM_%s", strChannel.Data())
+  );
+  strSamples[1].push_back("ggHPowheg");
+  strSamples[1].push_back(
+    Form("gg_Bkg_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0PH_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0PH_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0PH_MCFM_%s", strChannel.Data())
+  );
+  vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
+  // Reweight ggBkg decay kinematics to qqBkg
+  strMelaWgts[0].at(1).push_back("xsec");
+  strMelaWgts[0].at(1).push_back("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
+  strMelaWgts[1].at(0).push_back("xsec");
+  strMelaWgts[1].at(0).push_back("p_Gen_QQB_BKG_MCFM");
+  strMelaWgts[1].at(0).push_back("p_Gen_CPStoBWPropRewgt");
+  strMelaWgts[1].at(1).push_back("xsec");
+  strMelaWgts[1].at(1).push_back("p_Gen_QQB_BKG_MCFM");
+  strMelaWgts[1].at(2).push_back("xsec");
+  strMelaWgts[1].at(2).push_back("p_Gen_GG_BKG_MCFM");
+  strMelaWgts[1].at(2).push_back("p_Gen_CPStoBWPropRewgt");
+  strMelaWgts[1].at(3).push_back("xsec");
+  strMelaWgts[1].at(3).push_back("p_Gen_GG_BKG_MCFM");
+
+  vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
+  /*
+  {
+    pair<float, float> valrange(70, 142);
+    vector<float> manualboundaries;
+    manualboundaries.push_back(75); manualboundaries.push_back(85);
+    manualboundaries.push_back(89); manualboundaries.push_back(93); manualboundaries.push_back(96);
+    manualboundaries.push_back(100); manualboundaries.push_back(105); manualboundaries.push_back(110); manualboundaries.push_back(115);
+    manualboundaries.push_back(120); manualboundaries.push_back(123); manualboundaries.push_back(135);
+    manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+  }
+  {
+    pair<float, float> valrange(600, 2500);
+    vector<float> manualboundaries;
+    manualboundaries.push_back(700); manualboundaries.push_back(900); manualboundaries.push_back(1100); manualboundaries.push_back(1400); manualboundaries.push_back(1900);
+    manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+  }
+  */
+  KDConstantByMass constProducer(sqrts, strKD);
+  constProducer.run(
+    strSamples, strMelaWgts,
+    SampleHelpers::getChannelFromName(strChannel), CategorizationHelpers::Inclusive,
     divisor, writeFinalTree, &manualboundary_validity_pairs
   );
 }
 
 /* SPECIFIC COMMENT: NONE */
-void getKDConstant_Dggbkgkin(TString const strchannel, float sqrts=13, const bool writeFinalTree=false){
-  if (strchannel!="2e2mu" && strchannel!="4e" && strchannel!="4mu") return;
+void getKDConstant_Dggbkgkin(const Channel channel, float sqrts=13, const bool writeFinalTree=false){
+  if (channel!=k2e2mu && channel!=k4e && channel!=k4mu) return;
+  const TString strChannel = getChannelName(channel);
 
   float divisor=50000;
-  if (strchannel=="2l2l" || strchannel=="2e2mu") divisor = 50000;
+  if (channel==k2l2l || channel==k2e2mu) divisor = 50000;
   TString strKD="Dggbkgkin";
 
   vector<TString> strSamples[2];
@@ -1019,25 +1138,25 @@ void getKDConstant_Dggbkgkin(TString const strchannel, float sqrts=13, const boo
   //strSamples[0].push_back("ggHMCFM");
   //strSamples[1].push_back("ggBkg");
   strSamples[0].push_back(
-    Form("gg_Bkg_MCFM_%s", strchannel.Data())
+    Form("gg_Bkg_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_Sig_SM_MCFM_%s", strchannel.Data())
+    + Form("gg_Sig_SM_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI_SM_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI_SM_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI10_SM_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI10_SM_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_Sig_0M_MCFM_%s", strchannel.Data())
+    + Form("gg_Sig_0M_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI_0M_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI_0M_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI10_0M_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI10_0M_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_Sig_0PH_MCFM_%s", strchannel.Data())
+    + Form("gg_Sig_0PH_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI_0PH_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI_0PH_MCFM_%s", strChannel.Data())
     + TString("+")
-    + Form("gg_BSI10_0PH_MCFM_%s", strchannel.Data())
+    + Form("gg_BSI10_0PH_MCFM_%s", strChannel.Data())
   );
   strSamples[1]=strSamples[0];
   vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
@@ -1111,7 +1230,7 @@ void getKDConstant_Dggbkgkin(TString const strchannel, float sqrts=13, const boo
   }
   constProducer.run(
     strSamples, strMelaWgts,
-    SampleHelpers::getChannelFromName(strchannel), CategorizationHelpers::Inclusive,
+    SampleHelpers::getChannelFromName(strChannel), CategorizationHelpers::Inclusive,
     divisor, writeFinalTree, &manualboundary_validity_pairs
   );
 }
@@ -1246,10 +1365,11 @@ void SmoothKDConstantProducer_DjVBF(){
   );
 }
 
-void SmoothKDConstantProducer_Dbkgkin(TString strchannel){
-  if (strchannel!="2e2mu" && strchannel!="4e" && strchannel!="4mu") return;
+void SmoothKDConstantProducer_Dbkgkin(const Channel channel){
+  if (channel!=k2e2mu && channel!=k4e && channel!=k4mu) return;
+  const TString strChannel = getChannelName(channel);
   generic_SmoothKDConstantProducer(
-    13, Form("Dbkgkin_%s", strchannel.Data()), "",
+    13, Form("Dbkgkin_%s", strChannel.Data()), "",
     &getFcn_a0plusa1timesXN<1>,
     &getFcn_a0timesexpa1X,
     //&getFcn_a0plusa1overXN<6>,
@@ -1257,10 +1377,11 @@ void SmoothKDConstantProducer_Dbkgkin(TString strchannel){
   );
 }
 
-void SmoothKDConstantProducer_Dggbkgkin(TString strchannel){
-  if (strchannel!="2e2mu" && strchannel!="4e" && strchannel!="4mu") return;
+void SmoothKDConstantProducer_Dggbkgkin(const Channel channel){
+  if (channel!=k2e2mu && channel!=k4e && channel!=k4mu) return;
+  const TString strChannel = getChannelName(channel);
   generic_SmoothKDConstantProducer(
-    13, Form("Dggbkgkin_%s", strchannel.Data()), "",
+    13, Form("Dggbkgkin_%s", strChannel.Data()), "",
     &getFcn_a0plusa1timesXN<1>,
     &getFcn_a0timesexpa1X,
     //&getFcn_a0plusa1overXN<6>,

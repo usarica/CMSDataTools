@@ -62,9 +62,11 @@ class StageXBatchManager:
 
    def getFcnArguments( self, fname, fcnname ):
       fcnargs=[]
+      fcnfound=False
       with open(fname) as testfile:
          for line in testfile:
             if fcnname in line:
+               fcnfound=True
                line=line.rstrip()
                line=line.replace(' ','')
                line=line.replace(fcnname,'')
@@ -74,6 +76,8 @@ class StageXBatchManager:
                tmpargs=line.split(',')
                for tmparg in tmpargs:
                   fcnargs.append(tmparg.lower())
+      if not fcnfound:
+         sys.exit("Function {} is not found in file {}!".format(fcnname,fname))
       return fcnargs
 
 
@@ -102,13 +106,12 @@ class StageXBatchManager:
 
 
    def submitJobs(self):
-      channels = [ "kAll", "k2e2mu", "k4e", "k4mu" ]
+      channels = [ "NChannels", "k2e2mu", "k4e", "k4mu" ]
       categories = [ "Inclusive", "JJVBFTagged", "HadVHTagged" ]
 
       fcnargs=self.getFcnArguments(self.scriptname, self.fcnname)
       argstr=""
       for fcnarg in fcnargs:
-         print fcnarg
          tmpargstr=""
          if "channel" in fcnarg:
             tmpargstr = "{channel}"
@@ -125,10 +128,10 @@ class StageXBatchManager:
                argstr=tmpargstr
 
       for ch in channels:
-         if (not "channel" in argstr) and ch!="kAll":
+         if (not "channel" in argstr) and ch!="NChannels":
             break
          elif ("channel" in argstr):
-            if ch=="kAll":
+            if ch=="NChannels":
                continue
             elif self.opt.customChannels is not None:
                if not ch in self.opt.customChannels:

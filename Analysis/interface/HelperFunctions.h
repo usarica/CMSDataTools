@@ -241,11 +241,21 @@ template<typename T, typename U> void HelperFunctions::addByLowest(std::vector<s
 
 template<typename T> void HelperFunctions::addByHighest(std::vector<T>& valArray, T val, bool unique){
   bool inserted = false;
-  for (typename std::vector<T>::iterator it = valArray.begin(); it<valArray.end(); it++){
-    if (*it<val || (!unique && *it==val)){
-      inserted=true;
-      valArray.insert(it, val);
-      break;
+  if (unique){
+    for (typename std::vector<T>::iterator it = valArray.begin(); it<valArray.end(); it++){
+      if (*it==val){
+        inserted=true;
+        break;
+      }
+    }
+  }
+  if (!inserted){
+    for (typename std::vector<T>::iterator it = valArray.begin(); it<valArray.end(); it++){
+      if (*it<=val){
+        inserted=true;
+        valArray.insert(it, val);
+        break;
+      }
     }
   }
   if (!inserted) valArray.push_back(val);

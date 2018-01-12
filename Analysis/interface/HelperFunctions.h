@@ -141,7 +141,7 @@ namespace HelperFunctions{
   TF1* getFcn_a0timesexpa1X(TSpline3* sp, double xmin, double xmax, bool useLowBound);
 
   void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX=0, double omitbelow=0., double omitabove=0., int nIter_=-1, double threshold_=-1);
-
+  void regularizeSlice(TGraphErrors* tgSlice, std::vector<double>* fixedX=0, double omitbelow=0., double omitabove=0., int nIter_=-1, double threshold_=-1, double acceleration_=-1);
 
   // Function to copy a file
   void CopyFile(TString fname, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*));
@@ -158,11 +158,21 @@ template<typename T> void HelperFunctions::appendVector(std::vector<T>& a, std::
 
 template<typename T> void HelperFunctions::addByLowest(std::vector<T>& valArray, T val, bool unique){
   bool inserted = false;
-  for (typename std::vector<T>::iterator it = valArray.begin(); it<valArray.end(); it++){
-    if (*it>val || (!unique && *it==val)){
-      inserted=true;
-      valArray.insert(it, val);
-      break;
+  if (unique){
+    for (typename std::vector<T>::iterator it = valArray.begin(); it<valArray.end(); it++){
+      if (*it==val){
+        inserted=true;
+        break;
+      }
+    }
+  }
+  if (!inserted){
+    for (typename std::vector<T>::iterator it = valArray.begin(); it<valArray.end(); it++){
+      if (*it>=val){
+        inserted=true;
+        valArray.insert(it, val);
+        break;
+      }
     }
   }
   if (!inserted) valArray.push_back(val);

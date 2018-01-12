@@ -510,6 +510,111 @@ void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixe
   for (unsigned int iy=0; iy<nbins_slice; iy++) xy_slice[1][iy] = xy_mod[1][iy];
   for (unsigned int ix=0; ix<2; ix++) delete[] xy_mod[ix];
 }
+void HelperFunctions::regularizeSlice(TGraphErrors* tgSlice, std::vector<double>* fixedX, double omitbelow, double omitabove, int nIter_, double threshold_, double acceleration_){
+  const int ndim=4;
+  unsigned int nbins_slice = tgSlice->GetN();
+  double* xy_slice[ndim]={
+    tgSlice->GetX(),
+    tgSlice->GetY(),
+    tgSlice->GetEX(),
+    tgSlice->GetEY()
+  };
+
+  double* xy_mod[ndim];
+  for (unsigned int ix=0; ix<ndim; ix++){
+    xy_mod[ix] = new double[nbins_slice];
+    for (unsigned int iy=0; iy<nbins_slice; iy++) xy_mod[ix][iy] = xy_slice[ix][iy];
+  }
+  unsigned int bin_first = 0, bin_last = nbins_slice-1;
+
+  std::vector<int> fixedBins;
+  if (fixedX){
+    for (unsigned int ifx=0; ifx<fixedX->size(); ifx++){
+      double requestedVal = fixedX->at(ifx);
+      double distance=1e15;
+      int bin_to_fix=-1;
+      for (unsigned int bin=0; bin<nbins_slice; bin++){ if (distance>fabs(xy_mod[0][bin]-requestedVal)){ bin_to_fix = bin; distance = fabs(xy_mod[0][bin]-requestedVal); } }
+      if (bin_to_fix>=0) fixedBins.push_back(bin_to_fix);
+    }
+  }
+  for (unsigned int bin=0; bin<nbins_slice; bin++){ if (xy_mod[0][bin]<omitbelow) fixedBins.push_back(bin); }
+  for (unsigned int bin=0; bin<nbins_slice; bin++){ if (xy_mod[0][bin]>omitabove) fixedBins.push_back(bin); }
+
+  double* xx_second;
+  double* yy_second;
+
+  int nIter = (nIter_<0 ? 1000 : nIter_);
+  double threshold = (threshold_<0. ? 0.5 : threshold_);
+  double acceleration = (acceleration_<0. ? 0.5 : acceleration_);
+  for (int it=0; it<nIter; it++){
+    vector<double> residuals;
+
+    // First loop: Collect unbiased residuals
+    unsigned int binIt = bin_first;
+    while (binIt<=bin_last){
+      double residual=0;
+      bool doFix=false;
+      for (unsigned int ifx=0; ifx<fixedBins.size(); ifx++){
+        if ((int) binIt==fixedBins.at(ifx)){ doFix=true; break; }
+      }
+      if (!doFix){
+        int ctr = 0;
+        int nbins_second = nbins_slice-1;
+        xx_second = new double[nbins_second];
+        yy_second = new double[nbins_second];
+        for (unsigned int bin = 0; bin<nbins_slice; bin++){
+          if (bin==binIt) continue;
+          xx_second[ctr] = xy_mod[0][bin];
+          yy_second[ctr] = xy_mod[1][bin];
+          ctr++;
+        }
+
+        TGraph* interpolator = new TGraph(nbins_second, xx_second, yy_second);
+        TSpline3* spline = convertGraphToSpline3(interpolator, (binIt!=bin_first), (binIt!=bin_last)); spline->SetName("tmpspline");
+
+        double center = xy_mod[0][binIt];
+        double val;
+        if (binIt!=bin_first && binIt!=bin_last) val = spline->Eval(center);
+        else if (binIt==bin_first){
+          double deriv = spline->Derivative(xx_second[0]);
+          val = spline->Eval(xx_second[0]) + deriv*(center-xx_second[0]);
+        }
+        else{
+          double deriv = spline->Derivative(xx_second[nbins_second-1]);
+          val = spline->Eval(xx_second[nbins_second-1]) + deriv*(center-xx_second[nbins_second-1]);
+        }
+        residual = xy_mod[1][binIt]-val;
+
+        delete spline;
+        delete interpolator;
+        delete[] yy_second;
+        delete[] xx_second;
+      }
+      residuals.push_back(residual);
+      binIt++;
+    }
+
+    // Second loop: Shift values according to the unbiased residuals
+    binIt = bin_first;
+    for (double const& residual:residuals){
+      if (fabs(residual)>threshold*xy_mod[3][binIt]){
+        double valMove = -residual*acceleration;
+        if (fabs(valMove)>xy_mod[3][binIt]) valMove = xy_mod[3][binIt] * (valMove<0. ? double(-1) : double(1)); // Slow down the movement to allow better convergence
+        double newval = xy_mod[1][binIt] + valMove;
+        if (newval<=0.) newval = xy_mod[1][binIt];
+        xy_mod[3][binIt] *= newval / xy_mod[1][binIt];
+        xy_mod[1][binIt] = newval;
+      }
+      binIt++;
+    }
+  }
+
+  for (unsigned int iy=0; iy<nbins_slice; iy++){
+    xy_slice[1][iy] = xy_mod[1][iy];
+    xy_slice[3][iy] = xy_mod[3][iy];
+  }
+  for (unsigned int ix=0; ix<ndim; ix++) delete[] xy_mod[ix];
+}
 
 template<> void HelperFunctions::replaceString<TString, const TString>(TString& strinput, const TString strTakeOut, const TString strPutIn){
   Ssiz_t ipos=strinput.Index(strTakeOut);

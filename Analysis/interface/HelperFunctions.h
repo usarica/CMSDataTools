@@ -66,10 +66,10 @@ namespace HelperFunctions{
   template<> double evaluateTObject<TH1F>(TH1F* obj, float val);
   template<> double evaluateTObject<TGraph>(TGraph* obj, float val);
 
-  template <typename T> void regularizeHistogram(T* histo, int nIter_, double threshold_, unsigned int iaxis_);
-  template<> void regularizeHistogram<TH1F>(TH1F* histo, int nIter_, double threshold_, unsigned int iaxis_);
-  template<> void regularizeHistogram<TH2F>(TH2F* histo, int nIter_, double threshold_, unsigned int iaxis_);
-  template<> void regularizeHistogram<TH3F>(TH3F* histo, int nIter_, double threshold_, unsigned int iaxis_);
+  template <typename T> void regularizeHistogram(T* histo, int nIter_, double threshold_, double acceleration_, unsigned int iaxis_);
+  template<> void regularizeHistogram<TH1F>(TH1F* histo, int nIter_, double threshold_, double acceleration_, unsigned int iaxis_);
+  template<> void regularizeHistogram<TH2F>(TH2F* histo, int nIter_, double threshold_, double acceleration_, unsigned int iaxis_);
+  template<> void regularizeHistogram<TH3F>(TH3F* histo, int nIter_, double threshold_, double acceleration_, unsigned int iaxis_);
 
   template <typename T> void conditionalizeHistogram(T* histo, unsigned int axis, std::vector<std::pair<T*, float>> const* conditionalsReference=nullptr);
   template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference);

@@ -599,7 +599,7 @@ void HelperFunctions::regularizeSlice(TGraphErrors* tgSlice, std::vector<double>
     for (double const& residual:residuals){
       if (fabs(residual)>threshold*xy_mod[3][binIt]){
         double valMove = -residual*acceleration;
-        if (fabs(valMove)>xy_mod[3][binIt]) valMove = xy_mod[3][binIt] * (valMove<0. ? double(-1) : double(1)); // Slow down the movement to allow better convergence
+        if (xy_mod[3][binIt]>0. && fabs(valMove)>xy_mod[3][binIt]) valMove = xy_mod[3][binIt] * (valMove<0. ? double(-1) : double(1)); // Slow down the movement to allow better convergence
         double newval = xy_mod[1][binIt] + valMove;
         if (newval<=0.) newval = xy_mod[1][binIt];
         xy_mod[3][binIt] *= newval / xy_mod[1][binIt];
@@ -704,21 +704,36 @@ template<> double HelperFunctions::evaluateTObject<TGraph>(TGraph* obj, float va
   return obj->Eval(val);
 }
 
-template<> void HelperFunctions::regularizeHistogram<TH1F>(TH1F* histo, int nIter_, double threshold_, unsigned int /*iaxis_*/){
+template<> void HelperFunctions::regularizeHistogram<TH1F>(TH1F* histo, int nIter_, double threshold_, double acceleration_, unsigned int /*iaxis_*/){
   const int nbinsx = histo->GetNbinsX();
 
-  double xy[2][nbinsx];
+  double xy[4][nbinsx]={ { 0 } };
+  double abssumerr=0;
   for (int ix=1; ix<=nbinsx; ix++){
     xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
     xy[1][ix-1] = histo->GetBinContent(ix);
+    xy[3][ix-1] = histo->GetBinError(ix);
+    abssumerr += xy[3][ix-1];
   }
-  TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
-  tg->SetName("tg_tmp");
-  regularizeSlice(tg, 0, xy[0][0]-1., xy[0][nbinsx-1]+1., nIter_, threshold_);
-  for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, tg->Eval(xy[0][ix-1]));
-  delete tg;
+  if (abssumerr==0.){
+    TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
+    tg->SetName("tg_tmp");
+    regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsx-2]+xy[0][nbinsx-1])*0.5, nIter_, threshold_);
+    for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, tg->GetY()[ix-1]);
+    delete tg;
+  }
+  else{
+    TGraphErrors* tg = new TGraphErrors(nbinsx, xy[0], xy[1], xy[2], xy[3]);
+    tg->SetName("tg_tmp");
+    regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsx-2]+xy[0][nbinsx-1])*0.5, nIter_, threshold_, acceleration_);
+    for (int ix=1; ix<=nbinsx; ix++){
+      histo->SetBinContent(ix, tg->GetY()[ix-1]);
+      histo->SetBinError(ix, tg->GetEY()[ix-1]);
+    }
+    delete tg;
+  }
 }
-template<> void HelperFunctions::regularizeHistogram<TH2F>(TH2F* histo, int nIter_, double threshold_, unsigned int iaxis_){
+template<> void HelperFunctions::regularizeHistogram<TH2F>(TH2F* histo, int nIter_, double threshold_, double acceleration_, unsigned int iaxis_){
   const int nbinsx = histo->GetNbinsX();
   const int nbinsy = histo->GetNbinsY();
 
@@ -726,38 +741,68 @@ template<> void HelperFunctions::regularizeHistogram<TH2F>(TH2F* histo, int nIte
   case 0:
   {
     for (int iy=1; iy<=nbinsy; iy++){
-      double xy[2][nbinsx];
+      double xy[4][nbinsx]={ { 0 } };
+      double abssumerr=0;
       for (int ix=1; ix<=nbinsx; ix++){
         xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
         xy[1][ix-1] = histo->GetBinContent(ix, iy);
+        xy[3][ix-1] = histo->GetBinError(ix, iy);
+        abssumerr += xy[3][ix-1];
       }
-      TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
-      tg->SetName("tg_tmp");
-      regularizeSlice(tg, 0, xy[0][0]-1., xy[0][nbinsx-1]+1., nIter_, threshold_);
-      for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, iy, tg->Eval(xy[0][ix-1]));
-      delete tg;
+      if (abssumerr==0.){
+        TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
+        tg->SetName("tg_tmp");
+        regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsx-2]+xy[0][nbinsx-1])*0.5, nIter_, threshold_);
+        for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, iy, tg->GetY()[ix-1]);
+        delete tg;
+      }
+      else{
+        TGraphErrors* tg = new TGraphErrors(nbinsx, xy[0], xy[1], xy[2], xy[3]);
+        tg->SetName("tg_tmp");
+        regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsx-2]+xy[0][nbinsx-1])*0.5, nIter_, threshold_, acceleration_);
+        for (int ix=1; ix<=nbinsx; ix++){
+          histo->SetBinContent(ix, iy, tg->GetY()[ix-1]);
+          histo->SetBinError(ix, iy, tg->GetEY()[ix-1]);
+        }
+        delete tg;
+      }
     }
     break;
   }
   case 1:
   {
     for (int ix=1; ix<=nbinsx; ix++){
-      double xy[2][nbinsy];
+      double xy[4][nbinsy]={ { 0 } };
+      double abssumerr=0;
       for (int iy=1; iy<=nbinsy; iy++){
         xy[0][iy-1] = histo->GetYaxis()->GetBinCenter(iy);
         xy[1][iy-1] = histo->GetBinContent(ix, iy);
+        xy[3][iy-1] = histo->GetBinError(ix, iy);
+        abssumerr += xy[3][iy-1];
       }
-      TGraph* tg = new TGraph(nbinsy, xy[0], xy[1]);
-      tg->SetName("tg_tmp");
-      regularizeSlice(tg, 0, xy[0][0]-1., xy[0][nbinsy-1]+1., nIter_, threshold_);
-      for (int iy=1; iy<=nbinsy; iy++) histo->SetBinContent(ix, iy, tg->Eval(xy[0][iy-1]));
-      delete tg;
+      if (abssumerr==0.){
+        TGraph* tg = new TGraph(nbinsy, xy[0], xy[1]);
+        tg->SetName("tg_tmp");
+        regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsy-2]+xy[0][nbinsy-1])*0.5, nIter_, threshold_);
+        for (int iy=1; iy<=nbinsy; iy++) histo->SetBinContent(ix, iy, tg->GetY()[iy-1]);
+        delete tg;
+      }
+      else{
+        TGraphErrors* tg = new TGraphErrors(nbinsx, xy[0], xy[1], xy[2], xy[3]);
+        tg->SetName("tg_tmp");
+        regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsy-2]+xy[0][nbinsy-1])*0.5, nIter_, threshold_, acceleration_);
+        for (int iy=1; iy<=nbinsy; iy++){
+          histo->SetBinContent(ix, iy, tg->GetY()[iy-1]);
+          histo->SetBinError(ix, iy, tg->GetEY()[iy-1]);
+        }
+        delete tg;
+      }
     }
     break;
   }
   }
 }
-template<> void HelperFunctions::regularizeHistogram<TH3F>(TH3F* histo, int nIter_, double threshold_, unsigned int iaxis_){
+template<> void HelperFunctions::regularizeHistogram<TH3F>(TH3F* histo, int nIter_, double threshold_, double acceleration_, unsigned int iaxis_){
   const int nbinsx = histo->GetNbinsX();
   const int nbinsy = histo->GetNbinsY();
   const int nbinsz = histo->GetNbinsZ();
@@ -767,16 +812,31 @@ template<> void HelperFunctions::regularizeHistogram<TH3F>(TH3F* histo, int nIte
   {
     for (int iy=1; iy<=nbinsy; iy++){
       for (int iz=1; iz<=nbinsz; iz++){
-        double xy[2][nbinsx];
+        double xy[4][nbinsx]={ { 0 } };
+        double abssumerr=0;
         for (int ix=1; ix<=nbinsx; ix++){
           xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
           xy[1][ix-1] = histo->GetBinContent(ix, iy, iz);
+          xy[3][ix-1] = histo->GetBinError(ix, iy, iz);
+          abssumerr += xy[3][ix-1];
         }
-        TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
-        tg->SetName("tg_tmp");
-        regularizeSlice(tg, 0, xy[0][0]-1., xy[0][nbinsx-1]+1., nIter_, threshold_);
-        for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, iy, iz, tg->Eval(xy[0][ix-1]));
-        delete tg;
+        if (abssumerr==0.){
+          TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
+          tg->SetName("tg_tmp");
+          regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsx-2]+xy[0][nbinsx-1])*0.5, nIter_, threshold_);
+          for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, iy, iz, tg->GetY()[ix-1]);
+          delete tg;
+        }
+        else{
+          TGraphErrors* tg = new TGraphErrors(nbinsx, xy[0], xy[1], xy[2], xy[3]);
+          tg->SetName("tg_tmp");
+          regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsx-2]+xy[0][nbinsx-1])*0.5, nIter_, threshold_, acceleration_);
+          for (int ix=1; ix<=nbinsx; ix++){
+            histo->SetBinContent(ix, iy, iz, tg->GetY()[ix-1]);
+            histo->SetBinError(ix, iy, iz, tg->GetEY()[ix-1]);
+          }
+          delete tg;
+        }
       }
     }
     break;
@@ -785,16 +845,31 @@ template<> void HelperFunctions::regularizeHistogram<TH3F>(TH3F* histo, int nIte
   {
     for (int iz=1; iz<=nbinsz; iz++){
       for (int ix=1; ix<=nbinsx; ix++){
-        double xy[2][nbinsy];
+        double xy[4][nbinsy]={ { 0 } };
+        double abssumerr=0;
         for (int iy=1; iy<=nbinsy; iy++){
           xy[0][iy-1] = histo->GetYaxis()->GetBinCenter(iy);
           xy[1][iy-1] = histo->GetBinContent(ix, iy);
+          xy[3][iy-1] = histo->GetBinError(ix, iy, iz);
+          abssumerr += xy[3][iy-1];
         }
-        TGraph* tg = new TGraph(nbinsy, xy[0], xy[1]);
-        tg->SetName("tg_tmp");
-        regularizeSlice(tg, 0, xy[0][0]-1., xy[0][nbinsy-1]+1., nIter_, threshold_);
-        for (int iy=1; iy<=nbinsy; iy++) histo->SetBinContent(ix, iy, tg->Eval(xy[0][iy-1]));
-        delete tg;
+        if (abssumerr==0.){
+          TGraph* tg = new TGraph(nbinsy, xy[0], xy[1]);
+          tg->SetName("tg_tmp");
+          regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsy-2]+xy[0][nbinsy-1])*0.5, nIter_, threshold_);
+          for (int iy=1; iy<=nbinsy; iy++) histo->SetBinContent(ix, iy, tg->GetY()[iy-1]);
+          delete tg;
+        }
+        else{
+          TGraphErrors* tg = new TGraphErrors(nbinsx, xy[0], xy[1], xy[2], xy[3]);
+          tg->SetName("tg_tmp");
+          regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsy-2]+xy[0][nbinsy-1])*0.5, nIter_, threshold_, acceleration_);
+          for (int iy=1; iy<=nbinsy; iy++){
+            histo->SetBinContent(ix, iy, iz, tg->GetY()[iy-1]);
+            histo->SetBinError(ix, iy, iz, tg->GetEY()[iy-1]);
+          }
+          delete tg;
+        }
       }
     }
     break;
@@ -803,16 +878,31 @@ template<> void HelperFunctions::regularizeHistogram<TH3F>(TH3F* histo, int nIte
   {
     for (int ix=1; ix<=nbinsx; ix++){
       for (int iy=1; iy<=nbinsy; iy++){
-        double xy[2][nbinsz];
+        double xy[4][nbinsz]={ { 0 } };
+        double abssumerr=0;
         for (int iz=1; iz<=nbinsz; iz++){
           xy[0][iz-1] = histo->GetZaxis()->GetBinCenter(iz);
           xy[1][iz-1] = histo->GetBinContent(ix, iy, iz);
+          xy[3][iz-1] = histo->GetBinError(ix, iy, iz);
+          abssumerr += xy[3][iz-1];
         }
-        TGraph* tg = new TGraph(nbinsz, xy[0], xy[1]);
-        tg->SetName("tg_tmp");
-        regularizeSlice(tg, 0, xy[0][0]-1., xy[0][nbinsz-1]+1., nIter_, threshold_);
-        for (int iz=1; iz<=nbinsz; iz++) histo->SetBinContent(ix, iy, iz, tg->Eval(xy[0][iz-1]));
-        delete tg;
+        if (abssumerr==0.){
+          TGraph* tg = new TGraph(nbinsz, xy[0], xy[1]);
+          tg->SetName("tg_tmp");
+          regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsz-2]+xy[0][nbinsz-1])*0.5, nIter_, threshold_);
+          for (int iz=1; iz<=nbinsz; iz++) histo->SetBinContent(ix, iy, iz, tg->GetY()[iz-1]);
+          delete tg;
+        }
+        else{
+          TGraphErrors* tg = new TGraphErrors(nbinsx, xy[0], xy[1], xy[2], xy[3]);
+          tg->SetName("tg_tmp");
+          regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsz-2]+xy[0][nbinsz-1])*0.5, nIter_, threshold_, acceleration_);
+          for (int iz=1; iz<=nbinsz; iz++){
+            histo->SetBinContent(ix, iy, iz, tg->GetY()[iz-1]);
+            histo->SetBinError(ix, iy, iz, tg->GetEY()[iz-1]);
+          }
+          delete tg;
+        }
       }
     }
     break;
@@ -824,8 +914,9 @@ template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsi
   if (axis==0){
     for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
       double integral=1;
-      if (!conditionalsReference) integral = histo->Integral(ix, ix, 0, histo->GetNbinsY()+1);
-      else{ for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(ix, ix, 0, hh.first->GetNbinsY()+1), hh.second); }
+      double width = (ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
+      if (!conditionalsReference) integral = histo->Integral(ix, ix, 0, histo->GetNbinsY()+1)/width;
+      else{ for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(ix, ix, 0, hh.first->GetNbinsY()+1)/width, hh.second); }
       if (integral==0.) continue; // All bins across y are 0.
       for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
         histo->SetBinContent(ix, iy, histo->GetBinContent(ix, iy)/integral);
@@ -836,8 +927,9 @@ template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsi
   else{
     for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
       double integral = 1;
-      if (!conditionalsReference) histo->Integral(0, histo->GetNbinsX()+1, iy, iy);
-      else{ for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(0, hh.first->GetNbinsX()+1, iy, iy), hh.second); }
+      double width = (iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
+      if (!conditionalsReference) integral = histo->Integral(0, histo->GetNbinsX()+1, iy, iy)/width;
+      else{ for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(0, hh.first->GetNbinsX()+1, iy, iy)/width, hh.second); }
       if (integral==0.) continue; // All bins across y are 0.
       for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
         histo->SetBinContent(ix, iy, histo->GetBinContent(ix, iy)/integral);
@@ -850,8 +942,9 @@ template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsi
   if (axis==0){
     for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
       double integral=1;
-      if (!conditionalsReference) integral = histo->Integral(ix, ix, 0, histo->GetNbinsY()+1, 0, histo->GetNbinsZ()+1);
-      else{ for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(ix, ix, 0, hh.first->GetNbinsY()+1, 0, hh.first->GetNbinsZ()+1), hh.second); }
+      double width = (ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
+      if (!conditionalsReference) integral = histo->Integral(ix, ix, 0, histo->GetNbinsY()+1, 0, histo->GetNbinsZ()+1)/width;
+      else{ for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(ix, ix, 0, hh.first->GetNbinsY()+1, 0, hh.first->GetNbinsZ()+1)/width, hh.second); }
       if (integral==0.) continue; // All bins across y are 0.
       for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
         for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
@@ -864,8 +957,9 @@ template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsi
   else if (axis==1){
     for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
       double integral=1;
-      if (!conditionalsReference) integral = histo->Integral(0, histo->GetNbinsX()+1, iy, iy, 0, histo->GetNbinsZ()+1);
-      else{ for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(0, hh.first->GetNbinsX()+1, iy, iy, 0, hh.first->GetNbinsZ()+1), hh.second); }
+      double width = (iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
+      if (!conditionalsReference) integral = histo->Integral(0, histo->GetNbinsX()+1, iy, iy, 0, histo->GetNbinsZ()+1)/width;
+      else{ for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(0, hh.first->GetNbinsX()+1, iy, iy, 0, hh.first->GetNbinsZ()+1)/width, hh.second); }
       if (integral==0.) continue; // All bins across y are 0.
       for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
         for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
@@ -878,8 +972,9 @@ template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsi
   else{
     for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
       double integral=1;
-      if (!conditionalsReference) integral = histo->Integral(0, histo->GetNbinsX()+1, 0, histo->GetNbinsY()+1, iz, iz);
-      else{ for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(0, hh.first->GetNbinsX()+1, 0, hh.first->GetNbinsY()+1, iz, iz), hh.second); }
+      double width = (iz>=1 && iz<=histo->GetNbinsZ() ? histo->GetZaxis()->GetBinWidth(iz) : 1.);
+      if (!conditionalsReference) integral = histo->Integral(0, histo->GetNbinsX()+1, 0, histo->GetNbinsY()+1, iz, iz)/width;
+      else{ for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(0, hh.first->GetNbinsX()+1, 0, hh.first->GetNbinsY()+1, iz, iz)/width, hh.second); }
       if (integral==0.) continue; // All bins across y are 0.
       for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
         for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){

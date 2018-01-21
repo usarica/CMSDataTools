@@ -2,6 +2,7 @@
 #define PLOTPROCESSCHECKSTAGE_H
 
 #include "common_includes.h"
+#include "smoothenHistograms.h"
 #include "TText.h"
 #include "TPaveText.h"
 #include "TColor.h"
@@ -409,7 +410,7 @@ void plotSystRatioTH1Fs(TFile* foutput, TString coutdir, TString canvasname, TSt
   for (unsigned int is=0; is<2; is++){
     for (TH1F*& hh:*(histolist[is])){
       if (hh->GetName()[0]=='T') continue;
-      hh->GetYaxis()->SetRangeUser((minY<0. ? minY*1.2 : minY*0.8), maxY*1.2);
+      hh->GetYaxis()->SetRangeUser(0.5, 2.);
       if (first){
         hh->Draw("hist");
         first=false;

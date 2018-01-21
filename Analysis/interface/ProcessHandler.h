@@ -25,6 +25,7 @@ protected:
   TString procname;
 
   void assignProcessName();
+  virtual void imposeTplPhysicality(std::vector<float>& vals) const;
 
 };
 
@@ -68,6 +69,7 @@ public:
   static GGProcessHandler::HypothesisType castIntToHypothesisType(int type, bool useN=false);
   static GGProcessHandler::TemplateType castIntToTemplateType(int type, bool useN=false);
 
+  void imposeTplPhysicality(std::vector<float>& vals) const;
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 
   template<typename T> void conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
@@ -161,6 +163,7 @@ public:
   static VVProcessHandler::HypothesisType castIntToHypothesisType(int type, bool useN=false);
   static VVProcessHandler::TemplateType castIntToTemplateType(int type, bool useN=false);
 
+  void imposeTplPhysicality(std::vector<float>& vals) const;
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 
   template<typename T> void conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;

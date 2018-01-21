@@ -1,5 +1,6 @@
 #include "common_includes.h"
 #include "TemplatesEventAnalyzer.h"
+#include "fixTreeWeights.h"
 
 
 // Process handle
@@ -22,7 +23,6 @@ typedef void(*CheckStageFcn)(const Channel, const Category, const ACHypothesis, 
 CheckStageFcn checkstagefcn = &makeGGTemplatesFromPOWHEG_checkstage;
 #endif
 
-TTree* fixTreeWeights(TTree* tree);
 void plotProcessCheckStage(
   const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
   const unsigned int istage,
@@ -398,6 +398,7 @@ void makeGGTemplatesFromPOWHEG_checkstage(
     }
 
     htpl_1D[t] = new TH1F(Form("h1D_%s", templatename.Data()), templatename, binning_mass.getNbins(), binning_mass.getBinning());
+    htpl_1D[t]->Sumw2();
     htpl_1D[t]->GetXaxis()->SetTitle(Form("%s (GeV)", binning_mass.getLabel().Data()));
     htpl_1D[t]->SetOption("hist");
     for (unsigned int iKD=0; iKD<nKDs; iKD++){
@@ -410,25 +411,32 @@ void makeGGTemplatesFromPOWHEG_checkstage(
         (KDname.Contains("int") ? binning_KDint.getNbins() : binning_KDpure.getNbins()),
         (KDname.Contains("int") ? binning_KDint.getBinning() : binning_KDpure.getBinning())
       );
+      htmp->Sumw2();
       htmp->GetXaxis()->SetTitle(Form("%s (GeV)", binning_mass.getLabel().Data()));
       htmp->GetYaxis()->SetTitle(KDname);
       htmp->SetOption("colz");
       htpl_2D[t].push_back(htmp);
     }
-    if (nKDs==1) finalTemplates_2D[t] = new TH2F(
-      templatename, templatename,
-      binning_mass_offshell.getNbins(), binning_mass_offshell.getBinning(),
-      (KDset.at(0).Contains("int") ? binning_KDint.getNbins() : binning_KDpure.getNbins()),
-      (KDset.at(0).Contains("int") ? binning_KDint.getBinning() : binning_KDpure.getBinning())
-    );
-    else finalTemplates_3D[t] = new TH3F(
-      templatename, templatename,
-      binning_mass_offshell.getNbins(), binning_mass_offshell.getBinning(),
-      (KDset.at(0).Contains("int") ? binning_KDint.getNbins() : binning_KDpure.getNbins()),
-      (KDset.at(0).Contains("int") ? binning_KDint.getBinning() : binning_KDpure.getBinning()),
-      (KDset.at(1).Contains("int") ? binning_KDint.getNbins() : binning_KDpure.getNbins()),
-      (KDset.at(1).Contains("int") ? binning_KDint.getBinning() : binning_KDpure.getBinning())
-    );
+    if (nKDs==1){
+      finalTemplates_2D[t] = new TH2F(
+        templatename, templatename,
+        binning_mass_offshell.getNbins(), binning_mass_offshell.getBinning(),
+        (KDset.at(0).Contains("int") ? binning_KDint.getNbins() : binning_KDpure.getNbins()),
+        (KDset.at(0).Contains("int") ? binning_KDint.getBinning() : binning_KDpure.getBinning())
+      );
+      finalTemplates_2D[t]->Sumw2();
+    }
+    else{
+      finalTemplates_3D[t] = new TH3F(
+        templatename, templatename,
+        binning_mass_offshell.getNbins(), binning_mass_offshell.getBinning(),
+        (KDset.at(0).Contains("int") ? binning_KDint.getNbins() : binning_KDpure.getNbins()),
+        (KDset.at(0).Contains("int") ? binning_KDint.getBinning() : binning_KDpure.getBinning()),
+        (KDset.at(1).Contains("int") ? binning_KDint.getNbins() : binning_KDpure.getNbins()),
+        (KDset.at(1).Contains("int") ? binning_KDint.getBinning() : binning_KDpure.getBinning())
+      );
+      finalTemplates_3D[t]->Sumw2();
+    }
 
     for (int ev=0; ev<tree->GetEntries(); ev++){
       tree->GetEntry(ev);
@@ -492,5 +500,4 @@ void makeGGTemplatesFromPOWHEG_checkstage(
 }
 
 
-#include "fixTreeWeights.h"
 #include "plotProcessCheckStage.cc"

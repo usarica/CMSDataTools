@@ -31,6 +31,7 @@ void ProcessHandler::assignProcessName(){
 }
 const TString& ProcessHandler::getProcessName() const{ return procname; }
 const ProcessHandler::ProcessType& ProcessHandler::getProcessType() const{ return proctype; }
+void ProcessHandler::imposeTplPhysicality(std::vector<float>& /*vals*/) const{}
 
 
 /****************/
@@ -264,6 +265,21 @@ GGProcessHandler::TemplateType GGProcessHandler::castIntToTemplateType(int type,
   };
 }
 
+void GGProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
+  vector<pair<float*, pair<float*, float*>>> pairing;
+  if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes)
+    pairing.push_back(pair<float*, pair<float*, float*>>(&(vals.at(GGTplInt_Re)), pair<float*, float*>(&(vals.at(GGTplBkg)), &(vals.at(GGTplSig)))));
+  if (vals.size()==nGGTplTypes){
+    pairing.push_back(pair<float*, pair<float*, float*>>(&(vals.at(GGTplIntBSM_Re)), pair<float*, float*>(&(vals.at(GGTplBkg)), &(vals.at(GGTplSigBSM)))));
+    pairing.push_back(pair<float*, pair<float*, float*>>(&(vals.at(GGTplSigBSMSMInt_Re)), pair<float*, float*>(&(vals.at(GGTplSig)), &(vals.at(GGTplSigBSM)))));
+  }
+  for (auto& pair:pairing){
+    if (*(pair.second.first)<0.) *(pair.second.first)=0.;
+    if (*(pair.second.second)<0.) *(pair.second.second)=0.;
+    float thr = 2.*sqrt(*(pair.second.first) * *(pair.second.second));
+    if (fabs(*(pair.first))>thr) *(pair.first) *= thr*0.99/fabs(*(pair.first));
+  }
+}
 template<> void GGProcessHandler::recombineHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   if (vals.empty()) return;
   std::vector<float> res;
@@ -294,6 +310,7 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<float>(std::vec
     for (int ix=0; ix<(int) nGGTypes; ix++){ for (int iy=0; iy<(int) nGGTypes; iy++) res.at(ix) += invA[ix][iy]*vals.at(iy); }
   }
   std::swap(vals, res);
+  imposeTplPhysicality(vals);
 }
 template<> void GGProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   if (vals.empty()) return;
@@ -739,6 +756,50 @@ VVProcessHandler::TemplateType VVProcessHandler::castIntToTemplateType(int type,
   };
 }
 
+void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
+  struct pairing{
+    float* PA;
+    float* PB;
+    float* PC;
+    float* Pint;
+    const float multInt;
+    const float coefA;
+    const float coefB;
+    const float coefC;
+
+    pairing(float* pa, float* pb, float* pc, float* pint, const float mult, const float cA, const float cB, const float cC) : PA(pa), PB(pb), PC(pc), Pint(pint), multInt(mult), coefA(cA), coefB(cB), coefC(cC) {}
+
+    void scale(){
+      assert((PA && coefA==0.) || (PB && coefB==0.) || (PC && coefC==0.));
+      float thr=multInt;
+      if (PA && *PA<0.){
+        *PA=0.;
+        thr *= pow(*PA, coefA);
+      }
+      if (PB && *PB<0.){
+        *PB=0.;
+        thr *= pow(*PB, coefB);
+      }
+      if (PC && *PC<0.){
+        *PC=0.;
+        thr *= pow(*PC, coefC);
+      }
+      if (Pint && fabs(*Pint)>thr) *Pint *= thr*0.99/fabs(*Pint);
+    }
+  };
+
+  vector<pairing> pairings;
+  if (vals.size()==nVVTplSMTypes || vals.size()==nVVTplTypes)
+    pairings.push_back(pairing(&vals.at(VVTplBkg), &vals.at(VVTplSig), nullptr, &vals.at(VVTplInt_Re), 2., 0.5, 0.5, 0));
+  if (vals.size()==nVVTplTypes){
+    pairings.push_back(pairing(&vals.at(VVTplSig), &vals.at(VVTplSigBSM), nullptr, &vals.at(VVTplSigBSMSMInt_ai1_1_Re), 4., 0.75, 0.25, 0));
+    pairings.push_back(pairing(&vals.at(VVTplSig), &vals.at(VVTplSigBSM), nullptr, &vals.at(VVTplSigBSMSMInt_ai1_2_PosDef), 6., 0.5, 0.5, 0));
+    pairings.push_back(pairing(&vals.at(VVTplSig), &vals.at(VVTplSigBSM), nullptr, &vals.at(VVTplSigBSMSMInt_ai1_3_Re), 4., 0.25, 0.75, 0));
+    pairings.push_back(pairing(&vals.at(VVTplBkg), &vals.at(VVTplSig), &vals.at(VVTplSigBSM), &vals.at(VVTplIntBSM_ai1_1_Re), 2., 0.5, 0.25, 0.25));
+    pairings.push_back(pairing(&vals.at(VVTplBkg), nullptr, &vals.at(VVTplSigBSM), &vals.at(VVTplIntBSM_ai1_2_Re), 2., 0.5, 0, 0.5));
+  }
+  for (auto& pair:pairings) pair.scale();
+}
 template<> void VVProcessHandler::recombineHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   if (vals.empty()) return;
   std::vector<float> res;
@@ -774,6 +835,7 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<float>(std::vec
     for (int ix=0; ix<(int) nVVTypes; ix++){ for (int iy=0; iy<(int) nVVTypes; iy++) res.at(ix) += invA[ix][iy]*vals.at(iy); }
   }
   std::swap(vals, res);
+  imposeTplPhysicality(vals);
 }
 template<> void VVProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   if (vals.empty()) return;

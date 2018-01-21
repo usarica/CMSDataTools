@@ -4,16 +4,16 @@
 #include "common_includes.h"
 
 
-void smoothenHistograms(TH1F* hist){
+void smoothenHistogram(TH1F* hist){
   float integral_old = hist->Integral(1, hist->GetNbinsX(), "width");
   HelperFunctions::regularizeHistogram(hist, 1000, 0, 0.5, 0);
   float integral_new = hist->Integral(1, hist->GetNbinsX(), "width");
   double scale = 1.;
   if (integral_old!=0.) scale = integral_new/integral_old;
-  for (int ix=1; ix<=histo->GetNbinsX(); ix++) hist->SetBinContent(ix, scale*hist->GetBinContent(ix));
+  for (int ix=1; ix<=hist->GetNbinsX(); ix++) hist->SetBinContent(ix, scale*hist->GetBinContent(ix));
 }
 
-void smoothenHistograms(TH2F* hist, bool normX, bool normY, std::vector<unsigned int>* iorder){
+void smoothenHistogram(TH2F* hist, bool normX, bool normY, std::vector<unsigned int>* iorder){
   if (normX && normY) return;
   else if (!normX && !normY){
     std::vector<unsigned int> axis_order;
@@ -29,7 +29,7 @@ void smoothenHistograms(TH2F* hist, bool normX, bool normY, std::vector<unsigned
     float integral_new = hist->Integral(1, hist->GetNbinsX(), 1, hist->GetNbinsY(), "width");
     double scale = 1.;
     if (integral_old!=0.) scale = integral_new/integral_old;
-    for (int ix=1; ix<=histo->GetNbinsX(); ix++){ for (int iy=1; iy<=histo->GetNbinsY(); iy++) hist->SetBinContent(ix, iy, scale*hist->GetBinContent(ix, iy)); }
+    for (int ix=1; ix<=hist->GetNbinsX(); ix++){ for (int iy=1; iy<=hist->GetNbinsY(); iy++) hist->SetBinContent(ix, iy, scale*hist->GetBinContent(ix, iy)); }
   }
   else if (normX){
     // Smoothen
@@ -43,7 +43,7 @@ void smoothenHistograms(TH2F* hist, bool normX, bool normY, std::vector<unsigned
   }
 }
 
-void smoothenHistograms(TH2F* hist, bool normX, bool normY, bool normZ, std::vector<unsigned int>* iorder){
+void smoothenHistogram(TH2F* hist, bool normX, bool normY, bool normZ, std::vector<unsigned int>* iorder){
   if (
     (normX && normY)
     || (normX && normZ)
@@ -65,7 +65,7 @@ void smoothenHistograms(TH2F* hist, bool normX, bool normY, bool normZ, std::vec
     float integral_new = hist->Integral(1, hist->GetNbinsX(), 1, hist->GetNbinsY(), 1, hist->GetNbinsZ(), "width");
     double scale = 1.;
     if (integral_old!=0.) scale = integral_new/integral_old;
-    for (int ix=1; ix<=histo->GetNbinsX(); ix++){ for (int iy=1; iy<=histo->GetNbinsY(); iy++){ for (int iz=1; iz<=histo->GetNbinsZ(); iz++) hist->SetBinContent(ix, iy, iz, scale*hist->GetBinContent(ix, iy, iz)); } }
+    for (int ix=1; ix<=hist->GetNbinsX(); ix++){ for (int iy=1; iy<=hist->GetNbinsY(); iy++){ for (int iz=1; iz<=hist->GetNbinsZ(); iz++) hist->SetBinContent(ix, iy, iz, scale*hist->GetBinContent(ix, iy, iz)); } }
   }
   else if (normX){
     std::vector<unsigned int> axis_order;

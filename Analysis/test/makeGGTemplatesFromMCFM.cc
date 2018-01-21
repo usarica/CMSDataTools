@@ -1,5 +1,6 @@
 #include "common_includes.h"
 #include "TemplatesEventAnalyzer.h"
+#include "fixTreeWeights.h"
 
 
 // Process handle
@@ -22,7 +23,6 @@ typedef void(*CheckStageFcn)(const Channel, const Category, const ACHypothesis, 
 CheckStageFcn checkstagefcn = &makeGGTemplatesFromMCFM_checkstage;
 #endif
 
-TTree* fixTreeWeights(TTree* tree);
 void plotProcessCheckStage(
   const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
   const unsigned int istage,
@@ -513,6 +513,5 @@ void makeGGTemplatesFromMCFM_checkstage(const Channel channel, const Category ca
   MELAout.close();
 }
 
-#include "fixTreeWeights.h"
 #include "plotProcessCheckStage.cc"
 

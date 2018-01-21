@@ -1,6 +1,5 @@
 #include "common_includes.h"
 #include "TemplatesEventAnalyzer.h"
-#define doSmoothing true
 
 
 // Process handle
@@ -23,7 +22,6 @@ typedef void(*CheckStageFcn)(const Channel, const Category, const ACHypothesis, 
 CheckStageFcn checkstagefcn = &makeQQBkgTemplatesFromPOWHEG_checkstage;
 #endif
 
-TTree* fixTreeWeights(TTree* tree);
 void plotProcessCheckStage(
   const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
   const unsigned int istage,
@@ -212,7 +210,6 @@ void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category cate
   MELAout << "===============================" << endl;
   MELAout << endl;
 
-  //HelperFunctions::CopyFile(cinput, fixTreeWeights, nullptr);
   HelperFunctions::CopyFile(cinput, nullptr, nullptr);
   foutput->ls();
   foutput->Close();
@@ -414,6 +411,5 @@ void makeQQBkgTemplatesFromPOWHEG_checkstage(const Channel channel, const Catego
   MELAout.close();
 }
 
-#include "fixTreeWeights.h"
 #include "plotProcessCheckStage.cc"
 

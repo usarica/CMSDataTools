@@ -128,10 +128,10 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
     // Total weight is (1)x(2)
 
     // Build the possible reweightings
-    vector<TString> strReweightingWeigths;
-    for (auto& s:strKfactorVars) strReweightingWeigths.push_back(s);
-    strReweightingWeigths.push_back("xsec");
-    ReweightingBuilder* regularewgtBuilder = new ReweightingBuilder(strReweightingWeigths, getSimpleWeight);
+    vector<TString> strReweightingWeights;
+    for (auto& s:strKfactorVars) strReweightingWeights.push_back(s);
+    SampleHelpers::addXsecBranchNames(strReweightingWeights);
+    ReweightingBuilder* regularewgtBuilder = new ReweightingBuilder(strReweightingWeights, getSimpleWeight);
     regularewgtBuilder->rejectNegativeWeights(true);
     regularewgtBuilder->setDivideByNSample(false);
     regularewgtBuilder->setWeightBinning(GenHMassInclusiveBinning);

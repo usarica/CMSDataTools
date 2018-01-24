@@ -377,8 +377,6 @@ void KDConstantByMass::run(
 
     // Setup GenHMass inclusive binning
     ExtendedBinning GenHMassInclusiveBinning("GenHMass");
-    vector<TString> strReweightingWeigths;
-
     melawgtcollit=strMelaWgts[ih].begin();
     for (auto& theSet:theSets){
       ReweightingBuilder* melarewgtBuilder = nullptr;
@@ -968,12 +966,12 @@ void getKDConstant_Dbkgkin(const Channel channel, float sqrts=13, const bool wri
   );
   vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
   // Reweight ggBkg decay kinematics to qqBkg
-  strMelaWgts[0].at(1).push_back("xsec");
+  SampleHelpers::addXsecBranchNames(strMelaWgts[0].at(1));
   strMelaWgts[0].at(1).push_back("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
-  strMelaWgts[1].at(1).push_back("xsec");
+  SampleHelpers::addXsecBranchNames(strMelaWgts[1].at(1));
   strMelaWgts[1].at(1).push_back("p_Gen_QQB_BKG_MCFM");
   strMelaWgts[1].at(1).push_back("p_Gen_CPStoBWPropRewgt");
-  strMelaWgts[1].at(2).push_back("xsec");
+  SampleHelpers::addXsecBranchNames(strMelaWgts[1].at(2));
   strMelaWgts[1].at(2).push_back("p_Gen_QQB_BKG_MCFM");
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
@@ -1085,17 +1083,17 @@ void getKDConstant_Dbkgdec(const Channel channel, float sqrts=13, const bool wri
   );
   vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
   // Reweight ggBkg decay kinematics to qqBkg
-  strMelaWgts[0].at(1).push_back("xsec");
+  SampleHelpers::addXsecBranchNames(strMelaWgts[0].at(1));
   strMelaWgts[0].at(1).push_back("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
-  strMelaWgts[1].at(0).push_back("xsec");
+  SampleHelpers::addXsecBranchNames(strMelaWgts[1].at(0));
   strMelaWgts[1].at(0).push_back("p_Gen_QQB_BKG_MCFM");
   strMelaWgts[1].at(0).push_back("p_Gen_CPStoBWPropRewgt");
-  strMelaWgts[1].at(1).push_back("xsec");
+  SampleHelpers::addXsecBranchNames(strMelaWgts[1].at(1));
   strMelaWgts[1].at(1).push_back("p_Gen_QQB_BKG_MCFM");
-  strMelaWgts[1].at(2).push_back("xsec");
+  SampleHelpers::addXsecBranchNames(strMelaWgts[1].at(2));
   strMelaWgts[1].at(2).push_back("p_Gen_GG_BKG_MCFM");
   strMelaWgts[1].at(2).push_back("p_Gen_CPStoBWPropRewgt");
-  strMelaWgts[1].at(3).push_back("xsec");
+  SampleHelpers::addXsecBranchNames(strMelaWgts[1].at(3));
   strMelaWgts[1].at(3).push_back("p_Gen_GG_BKG_MCFM");
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
@@ -1161,11 +1159,11 @@ void getKDConstant_Dggbkgkin(const Channel channel, float sqrts=13, const bool w
   strSamples[1]=strSamples[0];
   vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
   for (unsigned int is=0; is<strSamples[0].size(); is++){
-    strMelaWgts[0].at(is).push_back("xsec");
+    SampleHelpers::addXsecBranchNames(strMelaWgts[0].at(is));
     strMelaWgts[0].at(is).push_back(TemplateHelpers::OffshellGGProcessHandle.getMELAHypothesisWeight(GGProcessHandler::GGSig, ACHypothesisHelpers::kSM));
   }
   for (unsigned int is=0; is<strSamples[1].size(); is++){
-    strMelaWgts[1].at(is).push_back("xsec");
+    SampleHelpers::addXsecBranchNames(strMelaWgts[1].at(is));
     strMelaWgts[1].at(is).push_back(TemplateHelpers::OffshellGGProcessHandle.getMELAHypothesisWeight(GGProcessHandler::GGBkg, ACHypothesisHelpers::kSM));
   }
 

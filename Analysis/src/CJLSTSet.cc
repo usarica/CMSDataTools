@@ -50,7 +50,8 @@ bool CJLSTSet::associateCJLSTTree(CJLSTTree*& tree){
 
 
 void CJLSTSet::bookXS(){
-  for (auto& tree:treeList) tree->bookBranch<float>("xsec", 1);
+  std::vector<TString> xsecvars=SampleHelpers::getXsecBranchNames();
+  for (auto& tree:treeList){ for (auto& v:xsecvars) tree->bookBranch<float>(v, 1); }
 }
 void CJLSTSet::bookOverallEventWgt(){
   for (auto& tree:treeList){
@@ -135,9 +136,12 @@ void CJLSTSet::setPermanentWeights(const CJLSTSet::NormScheme scheme, const bool
     );
   cout << "- CJLSTSet::setPermanentWeights: (renormalizeWeights,useXS,useNgen) = (" << renormalizeWeights << "," << useXS << "," << useNgen << ")" << endl;
 
+  std::vector<TString> xsecvars=SampleHelpers::getXsecBranchNames();
   vector<CJLSTTree*> extraBookXS;
   if (useXS){
-    for (auto& tree:treeList){ if (!tree->branchExists("xsec")) extraBookXS.push_back(tree); }
+    for (auto& tree:treeList){
+      for (auto& v:xsecvars){ if (!tree->branchExists(v)){ extraBookXS.push_back(tree); break; } }
+    }
     bookXS();
   }
 
@@ -168,7 +172,7 @@ void CJLSTSet::setPermanentWeights(const CJLSTSet::NormScheme scheme, const bool
       float xsec=1;
       if (useXS){
         if (!(tree->getSelectedEvent(0) || tree->getFailedEvent(0))) xsec=0; // Kill contribution to sum of weights from this tree
-        tree->getVal("xsec", xsec);
+        else{ for (auto& v:xsecvars){ float xv; tree->getVal(v, xv); xsec *= xv; } }
       }
       if (xsec<=0.){ cerr << "- XSec=" << xsec << " is invalid for sample " << tree->sampleIdentifier << ". Setting to 1" << endl; xsec=1; }
 
@@ -210,7 +214,7 @@ void CJLSTSet::setPermanentWeights(const CJLSTSet::NormScheme scheme, const bool
     }
   }
 
-  for (auto& tree:extraBookXS) tree->releaseBranch("xsec");
+  for (auto& tree:extraBookXS){ for (auto& v:xsecvars) tree->releaseBranch(v); }
 }
 
 CJLSTTree* CJLSTSet::getSelectedEvent(const int evid){

@@ -169,7 +169,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
     vector<TString> strReweightingWeights;
     strReweightingWeights.push_back(melawgtvars.at(t));
     for (auto& s:strKfactorVars) strReweightingWeights.push_back(s);
-    strReweightingWeights.push_back("xsec");
+    SampleHelpers::addXsecBranchNames(strReweightingWeights);
 
     TString treename = theProcess.getOutputTreeName(hypotype);
     BaseTree* theFinalTree = new BaseTree(treename); // The tree to record into the ROOT file

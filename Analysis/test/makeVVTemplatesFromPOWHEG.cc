@@ -146,13 +146,13 @@ void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     vector<TString> strReweightingWeights;
     strReweightingWeights.push_back(melawgtvars.at(t));
     for (auto& s:strKfactorVars) strReweightingWeights.push_back(s);
-    strReweightingWeights.push_back("xsec");
+    SampleHelpers::addXsecBranchNames(strReweightingWeights);
 
     TString treename = theProcess.getOutputTreeName(hypotype);
     BaseTree* theFinalTree = new BaseTree(treename); // The tree to record into the ROOT file
 
     // Build the analyzer and loop over the events
-      // Build the MELA reweightings separately for each POWHEG 2f2f' sample set since NormComponent combines xsec
+    // Build the MELA reweightings separately for each POWHEG 2f2f' sample set since NormComponent combines xsec
     ReweightingBuilder* melarewgtBuilder = new ReweightingBuilder(strReweightingWeights, getSimpleWeight);
     melarewgtBuilder->rejectNegativeWeights(true);
     melarewgtBuilder->setDivideByNSample(true);

@@ -108,6 +108,18 @@ bool SampleHelpers::testChannel(SampleHelpers::Channel const& targetChannel, sho
   return false;
 }
 
+std::vector<TString> SampleHelpers::getXsecBranchNames(){
+  std::vector<TString> res;
+  //res.push_back("xsec");
+  res.push_back("genxsec");
+  res.push_back("genBR");
+  return res;
+}
+void SampleHelpers::addXsecBranchNames(std::vector<TString>& vars){
+  std::vector<TString> xsecvars=getXsecBranchNames();
+  for (auto& v:xsecvars) vars.push_back(v);
+}
+
 void SampleHelpers::getSamplesList(float sqrts, std::vector<TString> const& s, std::vector<TString>& vs){
   for (auto& ss : s){
     vector<TString> dumappend = constructSamplesList(ss, sqrts);

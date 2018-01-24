@@ -49,6 +49,9 @@ namespace SampleHelpers{
   void getSamplesList(float sqrts, std::vector<TString> const& s, std::vector<TString>& vs);
   void getSamplePairs(float sqrts, std::vector<TString> const& s1, std::vector<TString> const& s2, std::vector<TString>& vs1, std::vector<TString>& vs2);
 
+  std::vector<TString> getXsecBranchNames();
+  void addXsecBranchNames(std::vector<TString>& vars);
+
   template <typename T> std::vector<std::pair<T*, T*>> getZXFR_SS();
 
   template<typename T> void bookBranch(TTree* tree, TString strname, T* var);

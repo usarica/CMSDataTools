@@ -5,8 +5,9 @@ namespace DiscriminantClasses{
   const std::unordered_map<TString, DiscriminantClasses::Type> mapKDNameType = DiscriminantClasses::getKDNameTypeMap();
 }
 
-DiscriminantClasses::KDspecs::KDspecs() : KD(nullptr) {}
-DiscriminantClasses::KDspecs::KDspecs(TString strname) : KDname(strname), KD(nullptr) {}
+DiscriminantClasses::KDspecs::KDspecs() : KDtype(DiscriminantClasses::kNTypes), KD(nullptr) {}
+DiscriminantClasses::KDspecs::KDspecs(TString strname) : KDname(strname), KDtype(DiscriminantClasses::getKDType(KDname)), KD(nullptr) {}
+DiscriminantClasses::KDspecs::KDspecs(DiscriminantClasses::Type type) : KDname(DiscriminantClasses::getKDType(type)), KDtype(type), KD(nullptr) {}
 bool DiscriminantClasses::KDspecs::isValid() const{ return (KD!=nullptr); }
 
 std::unordered_map<TString, DiscriminantClasses::Type> DiscriminantClasses::getKDNameTypeMap(){

@@ -9,15 +9,33 @@ protected:
   Channel channel;
   Category category;
 
+  bool recordCategorizationKDs;
+  bool recordKDVariables;
+
   bool runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEntry& product);
 
 public:
-  TemplatesEventAnalyzer(Channel channel_, Category category_) : BaseTreeLooper(), channel(channel_), category(category_){}
-  TemplatesEventAnalyzer(CJLSTTree* inTree, Channel channel_, Category category_) : BaseTreeLooper(inTree), channel(channel_), category(category_){}
-  TemplatesEventAnalyzer(std::vector<CJLSTTree*> const& inTreeList, Channel channel_, Category category_) : BaseTreeLooper(inTreeList), channel(channel_), category(category_){}
-  TemplatesEventAnalyzer(CJLSTSet const* inTreeSet, Channel channel_, Category category_) : BaseTreeLooper(inTreeSet), channel(channel_), category(category_){}
+  TemplatesEventAnalyzer(Channel channel_, Category category_);
+  TemplatesEventAnalyzer(CJLSTTree* inTree, Channel channel_, Category category_);
+  TemplatesEventAnalyzer(std::vector<CJLSTTree*> const& inTreeList, Channel channel_, Category category_);
+  TemplatesEventAnalyzer(CJLSTSet const* inTreeSet, Channel channel_, Category category_);
 
+  void setRecordCategorizationKDs(bool flag){ recordCategorizationKDs=flag; }
+  void setRecordKDVariables(bool flag){ recordKDVariables=flag; }
 };
+
+TemplatesEventAnalyzer::TemplatesEventAnalyzer(Channel channel_, Category category_) :
+  BaseTreeLooper(), channel(channel_), category(category_), recordCategorizationKDs(false), recordKDVariables(false)
+{}
+TemplatesEventAnalyzer::TemplatesEventAnalyzer(CJLSTTree* inTree, Channel channel_, Category category_) :
+  BaseTreeLooper(inTree), channel(channel_), category(category_), recordCategorizationKDs(false), recordKDVariables(false)
+{}
+TemplatesEventAnalyzer::TemplatesEventAnalyzer(std::vector<CJLSTTree*> const& inTreeList, Channel channel_, Category category_) :
+  BaseTreeLooper(inTreeList), channel(channel_), category(category_), recordCategorizationKDs(false), recordKDVariables(false)
+{}
+TemplatesEventAnalyzer::TemplatesEventAnalyzer(CJLSTSet const* inTreeSet, Channel channel_, Category category_) :
+  BaseTreeLooper(inTreeSet), channel(channel_), category(category_), recordCategorizationKDs(false), recordKDVariables(false)
+{}
 
 bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEntry& product){
   bool validProducts=(tree!=nullptr);
@@ -79,7 +97,10 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
       auto& KDbuilder = KDbuilderpair.first;
       auto& strKDVarsList = KDbuilderpair.second;
       vector<float> KDBuildVals; KDBuildVals.reserve(strKDVarsList.size());
-      for (auto const& s:strKDVarsList) KDBuildVals.push_back(*(valfloats[s]));
+      for (auto const& s:strKDVarsList){
+        KDBuildVals.push_back(*(valfloats[s]));
+        if (recordKDVariables) product.setNamedVal(s, KDBuildVals.back());
+      }
       float KD = KDbuilder->update(KDBuildVals, ZZMass);
       validProducts &= !(std::isnan(KD) || std::isinf(KD));
 
@@ -92,6 +113,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
           }
         }
         DjjVBF[hypo]=KD;
+        if (recordCategorizationKDs) product.setNamedVal(it->first, KD);
       }
       else if (it->first.Contains("DjjZH")){
         ACHypothesisHelpers::ACHypothesis hypo=kSM;
@@ -102,6 +124,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
           }
         }
         DjjZH[hypo]=KD;
+        if (recordCategorizationKDs) product.setNamedVal(it->first, KD);
       }
       else if (it->first.Contains("DjjWH")){
         ACHypothesisHelpers::ACHypothesis hypo=kSM;
@@ -112,6 +135,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
           }
         }
         DjjWH[hypo]=KD;
+        if (recordCategorizationKDs) product.setNamedVal(it->first, KD);
       }
       else{
         product.setNamedVal(it->first, KD);

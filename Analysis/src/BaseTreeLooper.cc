@@ -8,16 +8,18 @@
 using namespace std;
 
 
-BaseTreeLooper::BaseTreeLooper(){ setExternalProductList(); setExternalProductTree(); }
-BaseTreeLooper::BaseTreeLooper(CJLSTTree* inTree){ this->addTree(inTree); setExternalProductList(); setExternalProductTree(); }
+BaseTreeLooper::BaseTreeLooper() : maxNEvents(-1) { setExternalProductList(); setExternalProductTree(); }
+BaseTreeLooper::BaseTreeLooper(CJLSTTree* inTree) : maxNEvents(-1) { this->addTree(inTree); setExternalProductList(); setExternalProductTree(); }
 BaseTreeLooper::BaseTreeLooper(std::vector<CJLSTTree*> const& inTreeList) :
-  treeList(inTreeList)
+  treeList(inTreeList),
+  maxNEvents(-1)
 {
   setExternalProductList();
   setExternalProductTree();
 }
 BaseTreeLooper::BaseTreeLooper(CJLSTSet const* inTreeSet) :
-  treeList(inTreeSet->getCJLSTTreeList())
+  treeList(inTreeSet->getCJLSTTreeList()),
+  maxNEvents(-1)
 {
   setExternalProductList();
   setExternalProductTree();
@@ -59,6 +61,8 @@ void BaseTreeLooper::setExternalProductTree(BaseTree* extTree){
   this->productTree=extTree;
   this->productListRef=&(this->productList); // To make sure product list collects some events before flushing
 }
+
+void BaseTreeLooper::setMaximumEvents(int n){ maxNEvents=n; }
 
 void BaseTreeLooper::addProduct(SimpleEntry& product, unsigned int* ev_rec){
   this->productListRef->push_back(product);
@@ -113,6 +117,7 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
       int ev=0;
       const int nevents = tree->getSelectedNEvents();
       while (tree->getSelectedEvent(ev)){
+        if (maxNEvents>=0 && (int) ev_rec==maxNEvents) break;
         SimpleEntry product;
         if (tree->isValidEvent()){
           if (this->runEvent(tree, wgtExternal, product)){
@@ -129,6 +134,7 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
       int ev=0;
       const int nevents = tree->getFailedNEvents();
       while (tree->getFailedEvent(ev)){
+        if (maxNEvents>=0 && (int) ev_rec==maxNEvents) break;
         SimpleEntry product;
         if (tree->isValidEvent()){
           if (this->runEvent(tree, wgtExternal, product)){

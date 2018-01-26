@@ -20,7 +20,6 @@ protected:
 
   void resetVal();
   virtual void eval(const std::vector<float>& vars, const float& valReco)=0;
-  virtual float getCval(const float valReco) const;
 
 public:
   Discriminant(
@@ -41,6 +40,7 @@ public:
   bool operator==(const float& other) const;
   bool operator!=(const float& other) const;
 
+  virtual float getCval(const float valReco) const;
   float update(const std::vector<float>& vars, const float valReco);
   float applyAdditionalC(const float cval);
 

@@ -156,5 +156,8 @@ void TemplateHelpers::getCategorizationDiscriminants(const SystematicsHelpers::S
   KDjjWHa3.KDvars = getKDVars(kDjjWHa3);
   KDlist.push_back(KDjjWHa3);
 
+  // Set WPs
+  for (auto& KDspec:KDlist) KDspec.KD->setWP(DiscriminantClasses::getKDWP(KDspec.KDtype));
+
   SystematicsHelpers::adjustDiscriminantJECVariables(syst, KDlist);
 }

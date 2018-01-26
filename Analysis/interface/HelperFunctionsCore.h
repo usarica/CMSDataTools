@@ -2,6 +2,7 @@
 #define HELPERFUNCTIONSCORE_H
 
 #include <string>
+#include <sstream>
 #include <vector>
 #include <utility>
 #include <algorithm>
@@ -20,13 +21,17 @@ namespace HelperFunctions{
   template<> void replaceString<std::string, const std::string>(std::string& strinput, const std::string strTakeOut, const std::string strPutIn);
   template<> void replaceString<std::string, const char*>(std::string& strinput, const char* strTakeOut, const char* strPutIn);
 
+  template<typename T> void castStringToValue(std::string const name, T& val);
+  template<> void castStringToValue(std::string const name, bool& val);
+  template<typename T> void castStringToValue(TString const name, T& val);
+  template<typename T> void castStringToValue(const char* name, T& val);
+
 }
 
 template<typename T> bool HelperFunctions::getUnorderedMapIterator(TString name, const std::unordered_map<TString, T>& theMap, typename std::unordered_map<TString, T>::const_iterator& it){
   it = theMap.find(name);
   return (it!=theMap.cend());
 }
-
 template<typename T> bool HelperFunctions::getUnorderedMapIterator(TString name, std::unordered_map<TString, T>& theMap, typename std::unordered_map<TString, T>::iterator& it){
   it = theMap.find(name);
   return (it!=theMap.end());
@@ -96,5 +101,27 @@ template bool HelperFunctions::getUnorderedMapIterator<std::pair<float, float>*>
 template bool HelperFunctions::getUnorderedMapIterator<std::pair<float, float>*>(TString name, std::unordered_map<TString, std::pair<float, float>*>& theMap, std::unordered_map<TString, std::pair<float, float>*>::iterator& it);
 template bool HelperFunctions::getUnorderedMapIterator<std::pair<double, double>*>(TString name, const std::unordered_map<TString, std::pair<double, double>*>& theMap, std::unordered_map<TString, std::pair<double, double>*>::const_iterator& it);
 template bool HelperFunctions::getUnorderedMapIterator<std::pair<double, double>*>(TString name, std::unordered_map<TString, std::pair<double, double>*>& theMap, std::unordered_map<TString, std::pair<double, double>*>::iterator& it);
+
+
+template<typename T> void HelperFunctions::castStringToValue(std::string const name, T& val){ std::stringstream ss(name); ss >> val; }
+template<typename T> void HelperFunctions::castStringToValue(TString const name, T& val){ std::string s(name.Data()); HelperFunctions::castStringToValue(s, val); }
+template<typename T> void HelperFunctions::castStringToValue(const char* name, T& val){ std::string s(name); HelperFunctions::castStringToValue(s, val); }
+template void HelperFunctions::castStringToValue(TString const name, bool& val);
+template void HelperFunctions::castStringToValue(const char* name, bool& val);
+template void HelperFunctions::castStringToValue(std::string const name, short& val);
+template void HelperFunctions::castStringToValue(TString const name, short& val);
+template void HelperFunctions::castStringToValue(const char* name, short& val);
+template void HelperFunctions::castStringToValue(std::string const name, unsigned int& val);
+template void HelperFunctions::castStringToValue(TString const name, unsigned int& val);
+template void HelperFunctions::castStringToValue(const char* name, unsigned int& val);
+template void HelperFunctions::castStringToValue(std::string const name, int& val);
+template void HelperFunctions::castStringToValue(TString const name, int& val);
+template void HelperFunctions::castStringToValue(const char* name, int& val);
+template void HelperFunctions::castStringToValue(std::string const name, float& val);
+template void HelperFunctions::castStringToValue(TString const name, float& val);
+template void HelperFunctions::castStringToValue(const char* name, float& val);
+template void HelperFunctions::castStringToValue(std::string const name, double& val);
+template void HelperFunctions::castStringToValue(TString const name, double& val);
+template void HelperFunctions::castStringToValue(const char* name, double& val);
 
 #endif

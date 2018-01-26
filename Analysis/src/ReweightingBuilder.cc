@@ -35,7 +35,11 @@ float ReweightingBuilder::eval(CJLSTTree* theTree) const{
   float divisor=1; if (divideByNSample) divisor=theTree->getNGenNoPU();
   float weight=0;
   if (rule && divisor!=0.) weight=rule(theTree, it->second)/divisor;
-  if (!allowNegativeWeights && weight<0.) weight=0;
+  if (!allowNegativeWeights && weight<0.){
+    weight=0;
+    MELAerr << "ReweightingBuilder::eval: Negative weight encountered: "; for (auto& v:it->second) MELAerr << *v << ", "; MELAerr << endl;
+    assert(0);
+  }
   return weight;
 }
 

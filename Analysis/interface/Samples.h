@@ -2,9 +2,12 @@
 #define SAMPLES_H
 
 #include "HostHelpers.h"
+#include <string>
 
 // CJLST samples directory
-const TString CJLSTdate = "180121";
+//const unsigned int CJLSTversion = 180121;
+const unsigned int CJLSTversion = 171104;
+const TString CJLSTdate = std::to_string(CJLSTversion);
 const TString CJLSTrootdir = HostHelpers::GetCJLSTSamplesDirectory(CJLSTdate);
 const TString CJLSTsamplesdir = CJLSTrootdir + "/" + CJLSTdate;
 

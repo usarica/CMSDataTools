@@ -12,6 +12,9 @@ protected:
   // List of trees to loop over
   std::vector<CJLSTTree*> treeList;
 
+  // Max. events to process
+  int maxNEvents;
+
   // Consumes
   std::unordered_map<TString, short*> valshorts;
   std::unordered_map<TString, unsigned int*> valuints;
@@ -65,6 +68,9 @@ public:
   void addSystematic(TString systname, SystematicsHelpers::SystematicsClass* systVar);
   void setExternalProductList(std::vector<SimpleEntry>* extProductListRef=nullptr);
   void setExternalProductTree(BaseTree* extTree=nullptr);
+
+  // Max. events
+  void setMaximumEvents(int n);
 
   // Function to loop over the tree list
   virtual void loop(bool loopSelected, bool loopFailed, bool keepProducts);

@@ -7,6 +7,14 @@ using namespace std;
 using namespace MELAStreamHelpers;
 
 
+template<> void HelperFunctions::castStringToValue(std::string const name, bool& val){
+  std::string namelower=name;
+  std::transform(namelower.begin(), namelower.end(), namelower.begin(), ::tolower);
+  if (namelower=="true" || namelower=="t") val=1;
+  else if (namelower=="false" || namelower=="f") val=0;
+  else{ std::stringstream ss(name); ss >> val; }
+}
+
 TString HelperFunctions::todaysdate(){
   TString result;
   time_t now = time(0);

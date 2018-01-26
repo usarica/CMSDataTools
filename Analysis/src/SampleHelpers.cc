@@ -1,3 +1,4 @@
+#include "Samples.h"
 #include "SampleHelpers.h"
 
 
@@ -110,9 +111,11 @@ bool SampleHelpers::testChannel(SampleHelpers::Channel const& targetChannel, sho
 
 std::vector<TString> SampleHelpers::getXsecBranchNames(){
   std::vector<TString> res;
-  //res.push_back("xsec");
-  res.push_back("genxsec");
-  res.push_back("genBR");
+  if (CJLSTversion>=180121){
+    res.push_back("genxsec");
+    res.push_back("genBR");
+  }
+  else res.push_back("xsec");
   return res;
 }
 void SampleHelpers::addXsecBranchNames(std::vector<TString>& vars){

@@ -13,17 +13,6 @@
 
 
 namespace DiscriminantClasses{
-  struct KDspecs{
-    TString KDname;
-    std::vector<TString> KDvars;
-
-    Discriminant* KD;
-
-    KDspecs();
-    KDspecs(TString strname);
-    bool isValid() const;
-  };
-
   enum Type{
     kDbkgkin,
     kDbkgdec,
@@ -72,6 +61,19 @@ namespace DiscriminantClasses{
     kDa3jjVHint,
 
     kNTypes
+  };
+
+  struct KDspecs{
+    TString KDname;
+    Type KDtype;
+    std::vector<TString> KDvars;
+
+    Discriminant* KD;
+
+    KDspecs();
+    KDspecs(TString strname);
+    KDspecs(DiscriminantClasses::Type type);
+    bool isValid() const;
   };
 
   extern const std::unordered_map<TString, DiscriminantClasses::Type> mapKDNameType;

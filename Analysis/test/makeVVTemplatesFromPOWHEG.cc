@@ -43,7 +43,7 @@ void plotProcessCheckStage_SystPairs(
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
 void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
-  if (!systematicAllowed(category, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -117,7 +117,7 @@ void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_NgenOverNgenWPU, false, true);
 
   std::vector<ReweightingBuilder*> extraEvaluators;
-  SystematicsClass* systhandle = constructSystematic(category, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators);
+  SystematicsClass* systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators);
 
   // Setup GenHMass binning
   // Binning for inclusive reweighting
@@ -222,7 +222,7 @@ void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
 void makeVVTemplatesFromPOWHEG_two(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
-  if (!systematicAllowed(category, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -281,7 +281,7 @@ void makeVVTemplatesFromPOWHEG_two(const Channel channel, const Category categor
 
 void makeVVTemplatesFromPOWHEG_checkstage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate){
   if (channel==NChannels) return;
-  if (!systematicAllowed(category, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);

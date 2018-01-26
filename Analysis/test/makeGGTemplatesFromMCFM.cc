@@ -43,7 +43,7 @@ void plotProcessCheckStage_SystPairs(
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
 void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
-  if (!systematicAllowed(category, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -140,7 +140,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
   {
     vector<CJLSTTree*> trees;
     for (auto& theSampleSet:theSets) std::copy(theSampleSet->getCJLSTTreeList().begin(), theSampleSet->getCJLSTTreeList().end(), std::back_inserter(trees));
-    systhandle = constructSystematic(category, theProcess.getProcessType(), syst, trees, extraEvaluators);
+    systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, trees, extraEvaluators);
   }
 
   // Setup GenHMass binning
@@ -249,7 +249,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
 
 void makeGGTemplatesFromMCFM_two(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
-  if (!systematicAllowed(category, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -308,7 +308,7 @@ void makeGGTemplatesFromMCFM_two(const Channel channel, const Category category,
 
 void makeGGTemplatesFromMCFM_checkstage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate){
   if (channel==NChannels) return;
-  if (!systematicAllowed(category, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);

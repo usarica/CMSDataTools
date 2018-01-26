@@ -42,7 +42,7 @@ void plotProcessCheckStage(
     break;
   };
   if (!thePerProcessHandle) return;
-  if (!systematicAllowed(category, thePerProcessHandle->getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -542,7 +542,7 @@ void plotProcessCheckStage_SystPairs(
     break;
   };
   if (!thePerProcessHandle) return;
-  if (!systematicAllowed(category, thePerProcessHandle->getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
 
   const int isyst = convertSystematicVariationTypeToInt(syst);
   if (syst==sNominal || isyst%2==1) return; // This means the code runs only when Up systematics are passed.

@@ -32,8 +32,11 @@ float SystematicsHelpers::getNormalizedSystematic(CJLSTTree* theTree, const std:
 
 
 SystematicsHelpers::PerLeptonSystematic::PerLeptonSystematic(
-  const std::vector<TString>& inStrVars, std::pair<float, float> (*infcn)(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>*> const&), bool doUp_
-) : rule(infcn), strVars(inStrVars), doUp(doUp_)
+  const std::vector<TString>& inStrVars,
+  std::pair<float, float>(*infcn)(short const&, short const&, std::vector<std::vector<float>*> const&, unsigned int const),
+  unsigned int const id_requested_,
+  bool doUp_
+) : rule(infcn), strVars(inStrVars), id_requested(id_requested_), doUp(doUp_)
 {}
 float SystematicsHelpers::PerLeptonSystematic::eval(CJLSTTree* theTree) const{
   auto it = componentRefs.find(theTree);
@@ -41,7 +44,7 @@ float SystematicsHelpers::PerLeptonSystematic::eval(CJLSTTree* theTree) const{
     MELAerr << "PerLeptonSystematic::eval: Could not find the variables for tree " << theTree->sampleIdentifier << ". Call PerLeptonSystematic::setup first!" << endl;
     return 0;
   }
-  std::pair<float, float> res = rule(*(it->second.first.at(0)), *(it->second.first.at(1)), it->second.second);
+  std::pair<float, float> res = rule(*(it->second.first.at(0)), *(it->second.first.at(1)), it->second.second, id_requested);
   return (doUp ? res.second : res.first);
 }
 void SystematicsHelpers::PerLeptonSystematic::setup(CJLSTTree* theTree){
@@ -59,8 +62,9 @@ void SystematicsHelpers::PerLeptonSystematic::setup(CJLSTTree* theTree){
   if (!refVar.empty()) componentRefs[theTree]=std::pair<std::vector<short*>, std::vector<std::vector<float>*>>(refId, refVar);
 }
 
-std::pair<float, float> SystematicsHelpers::getLeptonSFSystematic(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>*> const& LepVars){
+std::pair<float, float> SystematicsHelpers::getLeptonSFSystematic(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>*> const& LepVars, unsigned int const idreq){
   std::pair<float, float> res(1, 1);
+  if ((Z1Flav*Z2Flav)%(short)idreq != 0) return res;
   assert(LepVars.size()==5);
   float const& lep4pt = LepVars.at(0)->back();
   for (unsigned int ilep=0; ilep<LepVars.at(0)->size(); ilep++){
@@ -106,7 +110,11 @@ std::pair<float, float> SystematicsHelpers::getLeptonSFSystematic(short const& Z
 
 
 int SystematicsHelpers::convertSystematicVariationTypeToInt(SystematicsHelpers::SystematicVariationTypes type){ return (int) type; }
-std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::getProcessSystematicVariations(CategorizationHelpers::Category const category, ProcessHandler::ProcessType const type){
+std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::getProcessSystematicVariations(
+  CategorizationHelpers::Category const category,
+  SampleHelpers::Channel const channel,
+  ProcessHandler::ProcessType const type
+){
   std::vector<SystematicVariationTypes> res;
 
   res.push_back(sNominal);
@@ -115,8 +123,14 @@ std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::ge
   //res.push_back(eZJetsStatsUp);
 
   // FIXME: Z+X DOES NOT HAVE THESE, BUT WE NEED ZJETS PROCESS FIRST TO TEST
-  res.push_back(eLepSFDn);
-  res.push_back(eLepSFUp);
+  if (channel==SampleHelpers::k4e || channel==SampleHelpers::k2e2mu){
+    res.push_back(eLepSFEleDn);
+    res.push_back(eLepSFEleUp);
+  }
+  if (channel==SampleHelpers::k4mu || channel==SampleHelpers::k2e2mu){
+    res.push_back(eLepSFMuDn);
+    res.push_back(eLepSFMuUp);
+  }
 
   res.push_back(tPDFScaleDn);
   res.push_back(tPDFScaleUp);
@@ -141,22 +155,24 @@ std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::ge
 }
 bool SystematicsHelpers::systematicAllowed(
   CategorizationHelpers::Category const category,
+  SampleHelpers::Channel const channel,
   ProcessHandler::ProcessType const proc,
   SystematicsHelpers::SystematicVariationTypes const syst
 ){
-  std::vector<SystematicsHelpers::SystematicVariationTypes> allowedTypes = SystematicsHelpers::getProcessSystematicVariations(category, proc);
+  std::vector<SystematicsHelpers::SystematicVariationTypes> allowedTypes = SystematicsHelpers::getProcessSystematicVariations(category, channel, proc);
   for (SystematicVariationTypes& st:allowedTypes){ if (st==syst) return true; }
   return false;
 }
 SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
   CategorizationHelpers::Category const category,
+  SampleHelpers::Channel const channel,
   ProcessHandler::ProcessType const proc,
   SystematicsHelpers::SystematicVariationTypes const syst,
   std::vector<CJLSTTree*> trees,
   std::vector<ReweightingBuilder*>& extraEvaluators
 ){
   SystematicsClass* res=nullptr;
-  if (!systematicAllowed(category, proc, syst)) return res;
+  if (!systematicAllowed(category, channel, proc, syst)) return res;
 
   ExtendedBinning binning((theSqrts*1000.-70.)/10., 70., theSqrts*1000., "GenHMass");
   ReweightingBuilder* rewgtbuilder=nullptr;
@@ -164,7 +180,7 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
   std::vector<TString> strVars, strVarsNorm;
   std::vector<ReweightingBuilder*> evaluators;
   ReweightingFunctions::ReweightingFunction_t computeFcn=nullptr;
-  if (syst==eLepSFDn || syst==eLepSFUp){
+  if (syst==eLepSFEleDn || syst==eLepSFEleUp || syst==eLepSFMuDn || syst==eLepSFMuUp){
     strVars.reserve(5);
     strVars.push_back("LepPt");
     strVars.push_back("LepRecoSF");
@@ -176,7 +192,12 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
       tree->bookBranch<short>("Z2Flav", 0);
       for (TString const& s:strVars) tree->bookBranch<vector<float>*>(s, nullptr);
     }
-    res = new PerLeptonSystematic(strVars, SystematicsHelpers::getLeptonSFSystematic, (syst==eLepSFUp));
+    res = new PerLeptonSystematic(
+      strVars,
+      SystematicsHelpers::getLeptonSFSystematic,
+      (syst==eLepSFEleDn || syst==eLepSFEleUp ? 11 : 13),
+      (syst==eLepSFEleUp || syst==eLepSFMuUp)
+    );
     for (CJLSTTree*& tree:trees) ((PerLeptonSystematic*) res)->setup(tree);
   }
   else if (syst==tQQBkgEWCorrDn || syst==tQQBkgEWCorrUp){
@@ -299,10 +320,14 @@ TString SystematicsHelpers::getSystematicsName(SystematicsHelpers::SystematicVar
     return "EWCorrDn";
   case tQQBkgEWCorrUp:
     return "EWCorrUp";
-  case eLepSFDn:
-    return "LepEffDn";
-  case eLepSFUp:
-    return "LepEffUp";
+  case eLepSFEleDn:
+    return "LepEffEleDn";
+  case eLepSFEleUp:
+    return "LepEffEleUp";
+  case eLepSFMuDn:
+    return "LepEffMuDn";
+  case eLepSFMuUp:
+    return "LepEffMuUp";
   case eJECDn:
     return "JECDn";
   case eJECUp:

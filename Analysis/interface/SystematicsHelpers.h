@@ -33,8 +33,9 @@ namespace SystematicsHelpers{
 
   class PerLeptonSystematic : public SystematicsClass{
   protected:
-    std::pair<float, float> (*rule)(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>*> const&);
+    std::pair<float, float> (*rule)(short const&, short const&, std::vector<std::vector<float>*> const&, unsigned int const);
     std::vector<TString> strVars;
+    unsigned int const id_requested;
     bool doUp;
     std::unordered_map<CJLSTTree*,
       std::pair<
@@ -42,13 +43,18 @@ namespace SystematicsHelpers{
       >
     > componentRefs;
   public:
-    PerLeptonSystematic(const std::vector<TString>& inStrVars, std::pair<float, float> (*infcn)(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>*> const&), bool doUp_);
+    PerLeptonSystematic(
+      const std::vector<TString>& inStrVars,
+      std::pair<float, float>(*infcn)(short const&, short const&, std::vector<std::vector<float>*> const&, unsigned int const),
+      unsigned int const id_requested_,
+      bool doUp_
+    );
     virtual ~PerLeptonSystematic(){}
     virtual float eval(CJLSTTree* theTree) const;
     virtual void setup(CJLSTTree* theTree);
   };
 
-  std::pair<float, float> getLeptonSFSystematic(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>*> const& LepVars);
+  std::pair<float, float> getLeptonSFSystematic(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>*> const& LepVars, unsigned int const idreq);
 
 
   enum SystematicVariationTypes{
@@ -58,7 +64,8 @@ namespace SystematicsHelpers{
     tAsMZDn, tAsMZUp,
     tPDFReplicaDn, tPDFReplicaUp,
     tQQBkgEWCorrDn, tQQBkgEWCorrUp,
-    eLepSFDn, eLepSFUp,
+    eLepSFEleDn, eLepSFEleUp,
+    eLepSFMuDn, eLepSFMuUp,
     eJECDn, eJECUp,
     eZJetsStatsDn, eZJetsStatsUp,
     nSystematicVariations
@@ -66,16 +73,22 @@ namespace SystematicsHelpers{
 
   int convertSystematicVariationTypeToInt(SystematicsHelpers::SystematicVariationTypes type);
 
-  std::vector<SystematicsHelpers::SystematicVariationTypes> getProcessSystematicVariations(CategorizationHelpers::Category const category, ProcessHandler::ProcessType const type);
+  std::vector<SystematicsHelpers::SystematicVariationTypes> getProcessSystematicVariations(
+    CategorizationHelpers::Category const category,
+    SampleHelpers::Channel const channel,
+    ProcessHandler::ProcessType const type
+  );
 
   bool systematicAllowed(
     CategorizationHelpers::Category const category,
+    SampleHelpers::Channel const channel,
     ProcessHandler::ProcessType const proc,
     SystematicsHelpers::SystematicVariationTypes const syst
   );
 
   SystematicsClass* constructSystematic(
     CategorizationHelpers::Category const category,
+    SampleHelpers::Channel const channel,
     ProcessHandler::ProcessType const proc,
     SystematicsHelpers::SystematicVariationTypes const syst,
     std::vector<CJLSTTree*> trees,

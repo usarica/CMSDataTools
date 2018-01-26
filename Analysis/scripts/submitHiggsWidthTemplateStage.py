@@ -105,7 +105,7 @@ class StageXBatchManager:
       channels = [ "k2e2mu", "k4e", "k4mu" ]
       categories = [ "Inclusive" ] # Not yet ready for tagged categories
       hypos = [ "kSM", "kL1", "kA2", "kA3" ]
-      systematics = [ "sNominal", "eLepSFDn", "eLepSFUp", "tPDFScaleDn", "tPDFScaleUp", "tQCDScaleDn", "tQCDScaleUp", "tAsMZDn", "tAsMZUp", "tPDFReplicaDn", "tPDFReplicaUp", "tQQBkgEWCorrDn", "tQQBkgEWCorrUp", "eJECDn", "eJECUp" ]
+      systematics = [ "sNominal", "eLepSFEleDn", "eLepSFEleUp", "eLepSFMuDn", "eLepSFMuUp", "tPDFScaleDn", "tPDFScaleUp", "tQCDScaleDn", "tQCDScaleUp", "tAsMZDn", "tAsMZUp", "tPDFReplicaDn", "tPDFReplicaUp", "tQQBkgEWCorrDn", "tQQBkgEWCorrUp", "eJECDn", "eJECUp" ]
 
       for channel in channels:
          if self.opt.customChannels is not None:

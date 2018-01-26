@@ -12,14 +12,16 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
   if (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged){
-    KDspecs KDbkg("Dbkgkin");
-    KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
-    KDbkg.KDvars = getKDVars(kDbkgkin);
-    KDlist.push_back(KDbkg);
-    KDspecs KDbkgsigint("Dggint");
-    KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
-    KDbkgsigint.KDvars = getKDVars(kDggint);
-    KDlist.push_back(KDbkgsigint);
+    if (channel==k4e || channel==k4mu || channel==k2e2mu){
+      KDspecs KDbkg("Dbkgkin");
+      KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+      KDbkg.KDvars = getKDVars(kDbkgkin);
+      KDlist.push_back(KDbkg);
+      KDspecs KDbkgsigint("Dggint");
+      KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
+      KDbkgsigint.KDvars = getKDVars(kDggint);
+      KDlist.push_back(KDbkgsigint);
+    }
     KDspecs KDL1("DL1dec");
     KDL1.KD = constructKDFromType(kDL1dec, "", "", "../data/gConstant_HZZ2e2mu_L1.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_L1", 1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1));
     KDL1.KDvars = getKDVars(kDL1dec);
@@ -34,14 +36,16 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDlist.push_back(KDa3);
   }
   else if (category==CategorizationHelpers::JJVBFTagged){
-    KDspecs KDbkg("Dbkgkin"); // REPLACE ME
-    KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
-    KDbkg.KDvars = getKDVars(kDbkgkin);
-    KDlist.push_back(KDbkg);
-    KDspecs KDbkgsigint("Dggint");
-    //KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
-    //KDbkgsigint.KDvars = getKDVars(kDggint);
-    KDlist.push_back(KDbkgsigint);
+    if (channel==k4e || channel==k4mu || channel==k2e2mu){
+      KDspecs KDbkg("Dbkgkin"); // REPLACE ME
+      KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+      KDbkg.KDvars = getKDVars(kDbkgkin);
+      KDlist.push_back(KDbkg);
+      KDspecs KDbkgsigint("Dggint");
+      KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
+      KDbkgsigint.KDvars = getKDVars(kDggint);
+      KDlist.push_back(KDbkgsigint);
+    }
     KDspecs KDL1("DL1jjVBFdec");
     KDL1.KD = constructKDFromType(kDL1jjVBFdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1), 2));
     KDL1.KD->addAdditionalG("../data/gConstant_VBF_L1.root", "sp_tgfinal_VBF_SM_over_tgfinal_VBF_L1");
@@ -62,14 +66,16 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDlist.push_back(KDa3);
   }
   else if (category==CategorizationHelpers::HadVHTagged){
-    KDspecs KDbkg("Dbkgkin"); // REPLACE ME
-    KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
-    KDbkg.KDvars = getKDVars(kDbkgkin);
-    KDlist.push_back(KDbkg);
-    KDspecs KDbkgsigint("Dggint");
-    //KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
-    //KDbkgsigint.KDvars = getKDVars(kDggint);
-    KDlist.push_back(KDbkgsigint);
+    if (channel==k4e || channel==k4mu || channel==k2e2mu){
+      KDspecs KDbkg("Dbkgkin"); // REPLACE ME
+      KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+      KDbkg.KDvars = getKDVars(kDbkgkin);
+      KDlist.push_back(KDbkg);
+      KDspecs KDbkgsigint("Dggint");
+      KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
+      KDbkgsigint.KDvars = getKDVars(kDggint);
+      KDlist.push_back(KDbkgsigint);
+    }
     KDspecs KDL1("DL1jjVHdec");
     KDL1.KD = constructKDFromType(kDL1jjVHdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1), 2));
     KDL1.KD->addAdditionalG("../data/gConstant_VH_L1.root", "sp_tgfinal_ZH_SM_plus_tgfinal_WH_SM_over_tgfinal_ZH_L1_plus_tgfinal_WH_L1");

@@ -3,6 +3,12 @@
 #include "fixTreeWeights.h"
 
 
+#ifndef catscheme_def
+#define catscheme_def
+// Set categorization scheme
+CategorizationHelpers::setGlobalCategorizationScheme(UntaggedOrJJVBF);
+#endif
+
 // Process handle
 typedef VVProcessHandler ProcessHandleType;
 const ProcessHandleType& theProcess = TemplateHelpers::OffshellVVProcessHandle;

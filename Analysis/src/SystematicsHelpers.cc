@@ -68,11 +68,10 @@ std::pair<float, float> SystematicsHelpers::getLeptonSFSystematic(short const& Z
   assert(LepVars.size()==5);
   float const& lep4pt = LepVars.at(0)->back();
   for (unsigned int ilep=0; ilep<LepVars.at(0)->size(); ilep++){
-    if (
-      (ilep<2 && (Z1Flav%(short) idreq==0))
-      ||
-      (ilep>=2 && (Z2Flav%(short) idreq==0))
-      ){
+    short absZflav;
+    if (ilep<2) absZflav=std::abs(Z1Flav);
+    else absZflav=std::abs(Z2Flav);
+    if (absZflav%(short) idreq==0){
       res.first *= (1.-LepVars.at(2)->at(ilep)/LepVars.at(1)->at(ilep))*(1.-LepVars.at(4)->at(ilep)/LepVars.at(3)->at(ilep));
       res.second *= (1.+LepVars.at(2)->at(ilep)/LepVars.at(1)->at(ilep))*(1.+LepVars.at(4)->at(ilep)/LepVars.at(3)->at(ilep));
     }

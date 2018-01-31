@@ -112,8 +112,10 @@ namespace HelperFunctions{
   bool test_bit(int mask, unsigned int iBit);
 
   void splitOption(const std::string rawoption, std::string& wish, std::string& value, char delimiter);
+  void splitOption(const TString rawoption, TString& wish, TString& value, char delimiter);
 
   void splitOptionRecursive(const std::string rawoption, std::vector<std::string>& splitoptions, char delimiter);
+  void splitOptionRecursive(const TString rawoption, std::vector<TString>& splitoptions, char delimiter);
 
   TSpline3* convertGraphToSpline3(TGraph* tg, bool faithfulFirst=false, bool faithfulSecond=false, double* dfirst=nullptr, double* dlast=nullptr);
 

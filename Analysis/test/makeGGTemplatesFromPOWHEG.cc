@@ -3,6 +3,12 @@
 #include "fixTreeWeights.h"
 
 
+#ifndef catscheme_def
+#define catscheme_def
+// Set categorization scheme
+CategorizationHelpers::setGlobalCategorizationScheme(UntaggedOrJJVBF);
+#endif
+
 // Process handle
 typedef GGProcessHandler ProcessHandleType;
 const ProcessHandleType& theProcess = TemplateHelpers::OffshellGGProcessHandle;
@@ -153,7 +159,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     BaseTree* theFinalTree = new BaseTree(treename); // The tree to record into the ROOT file
 
     // Build the analyzer and loop over the events
-      // Build the MELA reweightings separately for each POWHEG 2f2f' sample set since NormComponent combines xsec
+    // Build the MELA reweightings separately for each POWHEG 2f2f' sample set since NormComponent combines xsec
     ReweightingBuilder* melarewgtBuilder = new ReweightingBuilder(strReweightingWeights, getSimpleWeight);
     melarewgtBuilder->rejectNegativeWeights(true);
     melarewgtBuilder->setDivideByNSample(true);

@@ -31,6 +31,7 @@ class StageXBatchManager:
 
       self.parser.add_option("--dry", dest="dryRun", action="store_true", default=False, help="Do not submit jobs, just set up the files")
       self.parser.add_option("--interactive", dest="interactive", action="store_true", default=False, help="Do not submit jobs; run them interactively")
+      self.parser.add_option("--merge4l", action="store_true", default=False, help="Merge 4e and 4mu channels")
 
       (self.opt,self.args) = self.parser.parse_args()
 
@@ -107,6 +108,8 @@ class StageXBatchManager:
 
    def submitJobs(self):
       channels = [ "NChannels", "k2e2mu", "k4e", "k4mu" ]
+      if self.opt.merge4l:
+         channels = [ "k2l2l", "k4l" ]
       categories = [ "Inclusive", "JJVBFTagged", "HadVHTagged" ]
 
       fcnargs=self.getFcnArguments(self.scriptname, self.fcnname)

@@ -2,6 +2,12 @@
 #include "TemplatesEventAnalyzer.h"
 
 
+#ifndef catscheme_def
+#define catscheme_def
+// Set categorization scheme
+CategorizationHelpers::setGlobalCategorizationScheme(UntaggedOrJJVBF);
+#endif
+
 // Process handle
 typedef QQBkgProcessHandler ProcessHandleType;
 const ProcessHandleType& theProcess = TemplateHelpers::OffshellQQBkgProcessHandle;

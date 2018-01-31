@@ -357,7 +357,24 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     break;
 
   case kDbkgjjEWQCD:
-    /* Not yet implemented */
+    res.push_back("p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal");
+    res.push_back("p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal");
+    res.push_back("p_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"); // FIXME
+    res.push_back("p_JJVBF_BKG_MCFM_JECNominal");
+    res.push_back("p_HadZH_BKG_MCFM_JECNominal");
+    res.push_back("p_HadWH_BKG_MCFM_JECNominal");
+    res.push_back("p_JJQCD_BKG_MCFM_JECNominal");
+    res.push_back("p_HadZH_mavjj_JECNominal");
+    res.push_back("p_HadZH_mavjj_true_JECNominal");
+    res.push_back("p_HadWH_mavjj_JECNominal");
+    res.push_back("p_HadWH_mavjj_true_JECNominal");
+    res.push_back("pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal");
+    res.push_back("pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal");
+    res.push_back("pConst_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"); // FIXME
+    res.push_back("pConst_JJVBF_BKG_MCFM_JECNominal");
+    res.push_back("pConst_HadZH_BKG_MCFM_JECNominal");
+    res.push_back("pConst_HadWH_BKG_MCFM_JECNominal");
+    res.push_back("pConst_JJQCD_BKG_MCFM_JECNominal");
     break;
 
   case kDL1dec:

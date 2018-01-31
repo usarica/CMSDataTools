@@ -12,6 +12,8 @@ protected:
   bool recordCategorizationKDs;
   bool recordKDVariables;
 
+  std::vector<std::pair<float, float>> mass_boundaries;
+
   bool runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEntry& product);
 
 public:
@@ -22,6 +24,8 @@ public:
 
   void setRecordCategorizationKDs(bool flag){ recordCategorizationKDs=flag; }
   void setRecordKDVariables(bool flag){ recordKDVariables=flag; }
+
+  void addMassWindow(std::pair<float, float> const boundaries){ mass_boundaries.push_back(boundaries); }
 };
 
 TemplatesEventAnalyzer::TemplatesEventAnalyzer(Channel channel_, Category category_) :
@@ -48,6 +52,21 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
     float& GenHMass = *(valfloats["GenHMass"]);
     product.setNamedVal("ZZMass", ZZMass);
     //product.setNamedVal("GenHMass", GenHMass);
+
+    if (!mass_boundaries.empty()){
+      bool mass_range_found=false;
+      for (std::pair<float, float>& mass_boundary:mass_boundaries){
+        if (
+          (mass_boundary.first<0. || ZZMass>=mass_boundary.first)
+          &&
+          (mass_boundary.second<0. || ZZMass<mass_boundary.second)
+          ){
+          mass_range_found=true;
+          break;
+        }
+      }
+      validProducts &= mass_range_found;
+    }
 
     // Construct the weights
     float wgt = externalWgt;
@@ -172,6 +191,5 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
 
   return validProducts;
 }
-
 
 #endif

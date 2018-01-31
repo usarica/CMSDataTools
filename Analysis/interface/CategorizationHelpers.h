@@ -13,6 +13,14 @@ namespace CategorizationHelpers{
     HadVHTagged,
     nCategories
   };
+  enum CategorizationScheme{
+    UntaggedOrJJVBF,
+    UntaggedOrJJVBFOrHadVH,
+    UntaggedOrJJVBFOrHadVH_Arbitrated
+  };
+
+  extern CategorizationScheme globalCategorizationScheme;
+  void setGlobalCategorizationScheme(CategorizationHelpers::CategorizationScheme scheme);
 
   TString getCategoryName(CategorizationHelpers::Category category);
 

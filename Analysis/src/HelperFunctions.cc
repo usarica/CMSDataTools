@@ -72,6 +72,20 @@ void HelperFunctions::splitOptionRecursive(const std::string rawoption, std::vec
   if (remnant!="") splitoptions.push_back(remnant);
 }
 
+void HelperFunctions::splitOption(const TString rawoption, TString& wish, TString& value, char delimiter){
+  std::string const s_rawoption = rawoption.Data();
+  std::string s_wish, s_value;
+  splitOption(s_rawoption, s_wish, s_value, delimiter);
+  wish=s_wish.c_str();
+  value=s_value.c_str();
+}
+void HelperFunctions::splitOptionRecursive(const TString rawoption, std::vector<TString>& splitoptions, char delimiter){
+  std::string const s_rawoption = rawoption.Data();
+  std::vector<std::string> s_splitoptions;
+  splitOptionRecursive(s_rawoption, s_splitoptions, delimiter);
+  for (std::string const& s:s_splitoptions) splitoptions.push_back(s.c_str());
+}
+
 /* SPECIFIC COMMENT: Get a1 and a2 as well as a TF1 object for the formula a0+a1*exp(x) */
 TF1* HelperFunctions::getFcn_a0plusa1expX(TSpline3* sp, double xmin, double xmax, bool useLowBound){
   double x, y, s;
@@ -216,18 +230,21 @@ void HelperFunctions::convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F
 TGraph* HelperFunctions::createROCFromDistributions(TH1* hA, TH1* hB, TString name){
   if (!hA || !hB) return nullptr;
   assert(hA->GetNbinsX()==hB->GetNbinsX());
-
-  vector<pair<float, float>> sumWgtsPerBin; sumWgtsPerBin.assign(hA->GetNbinsX(), pair<float, float>(0, 0));
-  for (int ix=1; ix<=hA->GetNbinsX(); ix++){
-    for (int jx=ix; jx<=hA->GetNbinsX(); jx++){
-      sumWgtsPerBin.at(ix-1).second += hA->GetBinContent(jx);
-      sumWgtsPerBin.at(ix-1).first += hB->GetBinContent(jx);
+  const int nbins=hA->GetNbinsX();
+  double integral[2]={ hA->Integral(0, nbins), hB->Integral(0, nbins) };
+  vector<pair<float, float>> sumWgtsPerBin; sumWgtsPerBin.assign(nbins, pair<float, float>(0, 0));
+  for (int ix=1; ix<=nbins; ix++){
+    for (int jx=ix; jx<=nbins; jx++){
+      sumWgtsPerBin.at(ix-1).second += hA->GetBinContent(jx)/integral[0];
+      sumWgtsPerBin.at(ix-1).first += hB->GetBinContent(jx)/integral[1];
     }
   }
   TGraph* tg=HelperFunctions::makeGraphFromPair(sumWgtsPerBin, name);
   HelperFunctions::addPoint(tg, 0, 0);
-  //tg->GetYaxis()->SetTitle("Sample A efficiency");
-  //tg->GetXaxis()->SetTitle("Sample B efficiency");
+  tg->GetYaxis()->SetRangeUser(0, 1);
+  tg->GetYaxis()->SetTitle(TString(hA->GetTitle())+" eff.");
+  tg->GetXaxis()->SetRangeUser(0, 1);
+  tg->GetXaxis()->SetTitle(TString(hB->GetTitle())+" eff.");
   return tg;
 }
 

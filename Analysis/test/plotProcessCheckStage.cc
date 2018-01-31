@@ -9,6 +9,12 @@
 #include "TArrayI.h"
 
 
+#ifndef catscheme_def
+#define catscheme_def
+// Set categorization scheme
+CategorizationHelpers::setGlobalCategorizationScheme(UntaggedOrJJVBF);
+#endif
+
 // Constants to affect the template code
 #ifndef outputdir_def
 #define outputdir_def
@@ -295,6 +301,7 @@ void plotTH1Fs(TFile* foutput, TString coutdir, TString canvasname, TString ytit
   canvas->SaveAs(Form("%s/%s%s", coutdir.Data(), canvasname.Data(), ".png"));
   canvas->SaveAs(Form("%s/%s%s", coutdir.Data(), canvasname.Data(), ".pdf"));
   foutput->WriteTObject(canvas);
+  delete pt;
   delete legend;
   canvas->Close();
 

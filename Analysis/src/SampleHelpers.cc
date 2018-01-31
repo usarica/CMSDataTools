@@ -147,6 +147,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("VBFH130");
     samples.push_back("VBFH135");
     samples.push_back("VBFH140");
+    samples.push_back("VBFH145");
     samples.push_back("VBFH150");
     samples.push_back("VBFH155");
     samples.push_back("VBFH160");
@@ -155,12 +156,14 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("VBFH175");
     samples.push_back("VBFH180");
     samples.push_back("VBFH190");
+    samples.push_back("VBFH200");
     samples.push_back("VBFH210");
     samples.push_back("VBFH230");
     samples.push_back("VBFH250");
     samples.push_back("VBFH270");
     samples.push_back("VBFH300");
     samples.push_back("VBFH350");
+    samples.push_back("VBFH400");
     samples.push_back("VBFH450");
     samples.push_back("VBFH500");
     samples.push_back("VBFH550");
@@ -170,6 +173,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("VBFH800");
     samples.push_back("VBFH900");
     samples.push_back("VBFH1000");
+    samples.push_back("VBFH1500");
     samples.push_back("VBFH2000");
     samples.push_back("VBFH2500");
     samples.push_back("VBFH3000");
@@ -201,6 +205,24 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("WminusH200");
     samples.push_back("WminusH210");
     samples.push_back("WminusH230");
+    samples.push_back("WminusH250");
+    samples.push_back("WminusH270");
+    samples.push_back("WminusH300");
+    samples.push_back("WminusH350");
+    samples.push_back("WminusH400");
+    samples.push_back("WminusH450");
+    samples.push_back("WminusH500");
+    samples.push_back("WminusH550");
+    samples.push_back("WminusH600");
+    samples.push_back("WminusH700");
+    samples.push_back("WminusH750");
+    samples.push_back("WminusH800");
+    samples.push_back("WminusH900");
+    samples.push_back("WminusH1000");
+    samples.push_back("WminusH1500");
+    samples.push_back("WminusH2000");
+    samples.push_back("WminusH2500");
+    samples.push_back("WminusH3000");
   }
   if (strsample=="WplusH_Sig_POWHEG"){
     samples.push_back("WplusH115");
@@ -223,6 +245,24 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("WplusH200");
     samples.push_back("WplusH210");
     samples.push_back("WplusH230");
+    samples.push_back("WplusH250");
+    samples.push_back("WplusH270");
+    samples.push_back("WplusH300");
+    samples.push_back("WplusH350");
+    samples.push_back("WplusH400");
+    samples.push_back("WplusH450");
+    samples.push_back("WplusH500");
+    samples.push_back("WplusH550");
+    samples.push_back("WplusH600");
+    samples.push_back("WplusH700");
+    samples.push_back("WplusH750");
+    samples.push_back("WplusH800");
+    samples.push_back("WplusH900");
+    samples.push_back("WplusH1000");
+    samples.push_back("WplusH1500");
+    samples.push_back("WplusH2000");
+    samples.push_back("WplusH2500");
+    samples.push_back("WplusH3000");
   }
 
   if (strsample=="ZH_Sig_POWHEG"){
@@ -246,6 +286,24 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("ZH200");
     samples.push_back("ZH210");
     samples.push_back("ZH230");
+    samples.push_back("ZH250");
+    samples.push_back("ZH270");
+    samples.push_back("ZH300");
+    samples.push_back("ZH350");
+    samples.push_back("ZH400");
+    samples.push_back("ZH450");
+    samples.push_back("ZH500");
+    samples.push_back("ZH550");
+    samples.push_back("ZH600");
+    samples.push_back("ZH700");
+    samples.push_back("ZH750");
+    samples.push_back("ZH800");
+    samples.push_back("ZH900");
+    samples.push_back("ZH1000");
+    samples.push_back("ZH1500");
+    samples.push_back("ZH2000");
+    samples.push_back("ZH2500");
+    samples.push_back("ZH3000");
   }
 
   if (strsample=="gg_Sig_POWHEG"){

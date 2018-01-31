@@ -45,6 +45,19 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
       KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
       KDbkgsigint.KDvars = getKDVars(kDggint);
       KDlist.push_back(KDbkgsigint);
+
+      KDspecs KDbkgjjEWQCD("DbkgjjEWQCD");
+      KDbkgjjEWQCD.KD = constructKDFromType(
+        kDbkgjjEWQCD,
+        Form(
+          "%s%s%s",
+          (channel==k2e2mu ? "../data/SmoothKDConstant_m4l_DbkgjjEWQCD_2l2l_" : "../data/SmoothKDConstant_m4l_DbkgjjEWQCD_4l_"),
+          strCategory.Data(), "_13TeV.root"
+        ),
+        "sp_gr_varReco_Constant_Smooth"
+      );
+      KDbkgjjEWQCD.KDvars = getKDVars(kDbkgjjEWQCD);
+      KDlist.push_back(KDbkgjjEWQCD);
     }
     KDspecs KDL1("DL1jjVBFdec");
     KDL1.KD = constructKDFromType(kDL1jjVBFdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1), 2));
@@ -75,6 +88,19 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
       KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
       KDbkgsigint.KDvars = getKDVars(kDggint);
       KDlist.push_back(KDbkgsigint);
+
+      KDspecs KDbkgjjEWQCD("DbkgjjEWQCD");
+      KDbkgjjEWQCD.KD = constructKDFromType(
+        kDbkgjjEWQCD,
+        Form(
+          "%s%s%s",
+          (channel==k2e2mu ? "../data/SmoothKDConstant_m4l_DbkgjjEWQCD_2l2l_" : "../data/SmoothKDConstant_m4l_DbkgjjEWQCD_4l_"),
+          strCategory.Data(), "_13TeV.root"
+        ),
+        "sp_gr_varReco_Constant_Smooth"
+      );
+      KDbkgjjEWQCD.KDvars = getKDVars(kDbkgjjEWQCD);
+      KDlist.push_back(KDbkgjjEWQCD);
     }
     KDspecs KDL1("DL1jjVHdec");
     KDL1.KD = constructKDFromType(kDL1jjVHdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1), 2));

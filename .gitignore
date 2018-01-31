@@ -18,3 +18,7 @@ __init__.py
 Analysis/**/getKDConstant*.c
 Analysis/**/make*.c
 Analysis/**/plot*.c
+Analysis/test/*.pdf
+Analysis/test/*.png
+Analysis/test/*.eps
+Analysis/test/*.root

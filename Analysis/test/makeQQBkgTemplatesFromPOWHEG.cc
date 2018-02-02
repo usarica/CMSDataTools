@@ -1,12 +1,7 @@
 #include "common_includes.h"
 #include "TemplatesEventAnalyzer.h"
+#include "CheckSetTemplatesCategoryScheme.h"
 
-
-#ifndef catscheme_def
-#define catscheme_def
-// Set categorization scheme
-CategorizationHelpers::setGlobalCategorizationScheme(UntaggedOrJJVBF);
-#endif
 
 // Process handle
 typedef QQBkgProcessHandler ProcessHandleType;
@@ -48,6 +43,7 @@ void plotProcessCheckStage_SystPairs(
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
 void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
+  if (!CheckSetTemplatesCategoryScheme(category)) return;
   if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
@@ -181,6 +177,7 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
 
 void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
+  if (!CheckSetTemplatesCategoryScheme(category)) return;
   if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
@@ -230,6 +227,7 @@ void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category cate
 
 void makeQQBkgTemplatesFromPOWHEG_checkstage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate){
   if (channel==NChannels) return;
+  if (!CheckSetTemplatesCategoryScheme(category)) return;
   if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);

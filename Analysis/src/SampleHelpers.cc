@@ -90,6 +90,22 @@ TString SampleHelpers::getChannelName(const SampleHelpers::Channel chan){
     return "";
   }
 }
+TString SampleHelpers::getChannelLabel(const SampleHelpers::Channel chan){
+  switch (chan){
+  case k4mu:
+    return "4#mu";
+  case k4e:
+    return "4e";
+  case k2e2mu:
+    return "2e2#mu";
+  case k4l:
+    return "4l";
+  case k2l2l:
+    return "2l2l";
+  default:
+    return "";
+  }
+}
 SampleHelpers::Channel SampleHelpers::getChannelFromName(const TString channame){
   if (channame=="4mu") return k4mu;
   else if (channame=="4e") return k4e;
@@ -304,6 +320,11 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("ZH2000");
     samples.push_back("ZH2500");
     samples.push_back("ZH3000");
+  }
+
+  if (strsample=="gg_Sig_POWHEG_MINLO"){
+    samples.push_back("ggH125_minloHJJ");
+    samples.push_back("ggH300_minloHJJ");
   }
 
   if (strsample=="gg_Sig_POWHEG"){

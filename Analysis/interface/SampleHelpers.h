@@ -42,6 +42,7 @@ namespace SampleHelpers{
   float getEntry(std::vector<std::pair<TTree*, TH1F*>>& treeList, int evid);
 
   TString getChannelName(const SampleHelpers::Channel chan);
+  TString getChannelLabel(const SampleHelpers::Channel chan);
   SampleHelpers::Channel getChannelFromName(const TString channame);
   bool testChannel(SampleHelpers::Channel const& targetChannel, short const& Z1Flav, short const& Z2Flav);
 

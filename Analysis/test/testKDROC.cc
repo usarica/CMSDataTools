@@ -35,7 +35,8 @@ void testKDROC(
 
   if (process[0]->getProcessType()==ProcessHandler::kGG){
     vector<TString> strSampleIdentifiers;
-    strSampleIdentifiers.push_back("gg_Sig_POWHEG");
+    if (strKD.Contains("DbkgjjEWQCD")) strSampleIdentifiers.push_back("gg_Sig_POWHEG_MINLO");
+    else strSampleIdentifiers.push_back("gg_Sig_POWHEG");
     for (TString& s:strSampleIdentifiers){
       vector<TString> ss;
       vector<TString> slist; slist.push_back(s);
@@ -81,7 +82,8 @@ void testKDROC(
 
   if (process[1]->getProcessType()==ProcessHandler::kGG){
     vector<TString> strSampleIdentifiers;
-    strSampleIdentifiers.push_back("gg_Sig_POWHEG");
+    if (strKD.Contains("DbkgjjEWQCD")) strSampleIdentifiers.push_back("gg_Sig_POWHEG_MINLO");
+    else strSampleIdentifiers.push_back("gg_Sig_POWHEG");
     for (TString& s:strSampleIdentifiers){
       vector<TString> ss;
       vector<TString> slist; slist.push_back(s);

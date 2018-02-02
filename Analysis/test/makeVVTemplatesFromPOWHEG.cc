@@ -1,13 +1,8 @@
 #include "common_includes.h"
 #include "TemplatesEventAnalyzer.h"
+#include "CheckSetTemplatesCategoryScheme.h"
 #include "fixTreeWeights.h"
 
-
-#ifndef catscheme_def
-#define catscheme_def
-// Set categorization scheme
-CategorizationHelpers::setGlobalCategorizationScheme(UntaggedOrJJVBF);
-#endif
 
 // Process handle
 typedef VVProcessHandler ProcessHandleType;
@@ -49,6 +44,7 @@ void plotProcessCheckStage_SystPairs(
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
 void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
+  if (!CheckSetTemplatesCategoryScheme(category)) return;
   if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
@@ -228,6 +224,7 @@ void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
 void makeVVTemplatesFromPOWHEG_two(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
+  if (!CheckSetTemplatesCategoryScheme(category)) return;
   if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);
@@ -287,6 +284,7 @@ void makeVVTemplatesFromPOWHEG_two(const Channel channel, const Category categor
 
 void makeVVTemplatesFromPOWHEG_checkstage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate){
   if (channel==NChannels) return;
+  if (!CheckSetTemplatesCategoryScheme(category)) return;
   if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
 
   const TString strChannel = getChannelName(channel);

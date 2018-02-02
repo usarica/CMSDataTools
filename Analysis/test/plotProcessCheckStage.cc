@@ -2,18 +2,13 @@
 #define PLOTPROCESSCHECKSTAGE_H
 
 #include "common_includes.h"
+#include "CheckSetTemplatesCategoryScheme.h"
 #include "smoothenHistograms.h"
 #include "TText.h"
 #include "TPaveText.h"
 #include "TColor.h"
 #include "TArrayI.h"
 
-
-#ifndef catscheme_def
-#define catscheme_def
-// Set categorization scheme
-CategorizationHelpers::setGlobalCategorizationScheme(UntaggedOrJJVBF);
-#endif
 
 // Constants to affect the template code
 #ifndef outputdir_def
@@ -33,6 +28,7 @@ void plotProcessCheckStage(
   const TString strGenerator
 ){
   if (channel==NChannels) return;
+  if (!CheckSetTemplatesCategoryScheme(category)) return;
   ProcessHandler const* thePerProcessHandle=nullptr;
   switch (proctype){
   case ProcessHandler::kGG:
@@ -534,6 +530,7 @@ void plotProcessCheckStage_SystPairs(
   const TString strGenerator
 ){
   if (channel==NChannels) return;
+  if (!CheckSetTemplatesCategoryScheme(category)) return;
   ProcessHandler const* thePerProcessHandle=nullptr;
   switch (proctype){
   case ProcessHandler::kGG:

@@ -67,6 +67,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
       }
       validProducts &= mass_range_found;
     }
+    if (!validProducts) return validProducts;
 
     // Construct the weights
     float wgt = externalWgt;
@@ -100,6 +101,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
       }
       validProducts=false;
     }
+    if (!validProducts) return validProducts;
 
     // Compute the KDs
     // Reserve the special DjjVBF, DjjZH and DjjWH discriminants
@@ -162,6 +164,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
       }
       //product.setNamedVal(it->first, KD);
     }
+    if (!validProducts) return validProducts;
 
     // Category check
     bool fitsAtLeastOneCategory=(category==Inclusive);
@@ -184,9 +187,11 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
       }
     }
     validProducts &= fitsAtLeastOneCategory;
+    if (!validProducts) return validProducts;
 
     // Channel check
     validProducts &= SampleHelpers::testChannel(channel, *(valshorts["Z1Flav"]), *(valshorts["Z2Flav"]));
+    if (!validProducts) return validProducts;
   }
 
   return validProducts;

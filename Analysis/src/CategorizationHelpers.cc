@@ -25,6 +25,21 @@ TString CategorizationHelpers::getCategoryName(CategorizationHelpers::Category c
   }
 }
 
+TString CategorizationHelpers::getCategoryLabel(CategorizationHelpers::Category category){
+  switch (category){
+  case Inclusive:
+    return "Inclusive";
+  case Untagged:
+    return "Untagged";
+  case JJVBFTagged:
+    return "VBF 2 jets";
+  case HadVHTagged:
+    return "Had. VH";
+  default:
+    return "";
+  }
+}
+
 void CategorizationHelpers::setGlobalCategorizationScheme(CategorizationHelpers::CategorizationScheme scheme){ globalCategorizationScheme=scheme; }
 
 CategorizationHelpers::Category CategorizationHelpers::getCategory(const float& DjjVBF, const float& DjjZH, const float& DjjWH, const bool forceUntagged){
@@ -58,5 +73,25 @@ CategorizationHelpers::Category CategorizationHelpers::getCategory(const float& 
       ) return JJVBFTagged;
     else return Untagged;
   }
+}
+std::vector<CategorizationHelpers::Category> CategorizationHelpers::getAllowedCategories(CategorizationHelpers::CategorizationScheme scheme){
+  std::vector<CategorizationHelpers::Category> res;
+  res.push_back(Inclusive);
+  switch (globalCategorizationScheme){
+  case UntaggedOrJJVBFOrHadVH:
+  case UntaggedOrJJVBFOrHadVH_Arbitrated:
+    res.push_back(HadVHTagged);
+  case UntaggedOrJJVBF:
+    res.push_back(JJVBFTagged);
+    res.push_back(Untagged);
+  default:
+    break;
+  }
+  return res;
+}
+bool CategorizationHelpers::testCategoryAgainstGlobalScheme(CategorizationHelpers::Category theCategory){
+  std::vector<Category> cats=getAllowedCategories(globalCategorizationScheme);
+  for (Category const& cat:cats){ if (cat==theCategory) return true; }
+  return false;
 }
 

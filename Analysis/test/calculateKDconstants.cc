@@ -637,7 +637,7 @@ void KDConstantByMass::run(
 
   for (unsigned int ih=0; ih<2; ih++){
     bool hasMELARewgt=false;
-    for (vector<TString> const& v:strMelaWgts[ih]){ if (!v.empty()) hasMELARewgt=true; break; }
+    for (vector<TString> const& v:strMelaWgts[ih]){ if (!v.empty()){ hasMELARewgt=true; break; } }
     if (hasMELARewgt) KDConstantByMass::fixWeights(index[ih]);
   }
   if (writeFinalTree){
@@ -943,7 +943,7 @@ void getKDConstant_Dbkgkin(const Channel channel, float sqrts=13, const bool wri
   const TString strChannel = getChannelName(channel);
 
   float divisor=21000;
-  if (channel==k2l2l || channel==k2e2mu) divisor = 50000;
+  if (channel==k2e2mu) divisor = 50000;
   TString strKD="Dbkgkin";
 
   vector<TString> strSamples[2];
@@ -1005,23 +1005,106 @@ void getKDConstant_Dbkgkin(const Channel channel, float sqrts=13, const bool wri
   strMelaWgts[1].at(2).push_back("p_Gen_QQB_BKG_MCFM");
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
-  {
-    pair<float, float> valrange(70, 142);
-    vector<float> manualboundaries;
-    manualboundaries.push_back(75); manualboundaries.push_back(85);
-    manualboundaries.push_back(89); manualboundaries.push_back(93); manualboundaries.push_back(96);
-    manualboundaries.push_back(100); manualboundaries.push_back(105); manualboundaries.push_back(110); manualboundaries.push_back(115);
-    manualboundaries.push_back(120); manualboundaries.push_back(123); manualboundaries.push_back(135);
-    manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+  if (channel==k4e){
+    {
+      pair<float, float> valrange(70, 147);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(75); manualboundaries.push_back(85);
+      manualboundaries.push_back(89); manualboundaries.push_back(93); manualboundaries.push_back(96);
+      manualboundaries.push_back(100); manualboundaries.push_back(105);
+      manualboundaries.push_back(113); manualboundaries.push_back(117.5); manualboundaries.push_back(120);
+      manualboundaries.push_back(122); manualboundaries.push_back(124); manualboundaries.push_back(126);
+      manualboundaries.push_back(129); manualboundaries.push_back(135); manualboundaries.push_back(139);
+      manualboundaries.push_back(143); manualboundaries.push_back(146);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    {
+      pair<float, float> valrange(180, 188);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(182); manualboundaries.push_back(184); manualboundaries.push_back(187);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    {
+      pair<float, float> valrange(189, 362);
+      vector<float> manualboundaries;
+      for (unsigned int it=0; it<=8; it++) manualboundaries.push_back(195.+it*10.);
+      for (unsigned int it=1; it<=5; it++) manualboundaries.push_back(275.+it*15.);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    {
+      pair<float, float> valrange(2000, 13000);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(3300);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
   }
-  {
-    pair<float, float> valrange(600, 2500);
-    vector<float> manualboundaries;
-    manualboundaries.push_back(700); manualboundaries.push_back(900); manualboundaries.push_back(1100); manualboundaries.push_back(1400); manualboundaries.push_back(1900);
-    manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+  else if (channel==k4mu){
+    {
+      pair<float, float> valrange(70, 146);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(75); manualboundaries.push_back(85);
+      manualboundaries.push_back(89); manualboundaries.push_back(93); manualboundaries.push_back(96);
+      manualboundaries.push_back(100); manualboundaries.push_back(105);
+      manualboundaries.push_back(113); manualboundaries.push_back(117.5); manualboundaries.push_back(120);
+      manualboundaries.push_back(122); manualboundaries.push_back(124); manualboundaries.push_back(126);
+      manualboundaries.push_back(129); manualboundaries.push_back(135); manualboundaries.push_back(139);
+      manualboundaries.push_back(143);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    {
+      pair<float, float> valrange(147, 401);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(153); manualboundaries.push_back(160); manualboundaries.push_back(170);
+      manualboundaries.push_back(180); manualboundaries.push_back(185); manualboundaries.push_back(190);
+      for (unsigned int it=0; it<=9; it++) manualboundaries.push_back(200.+it*10.);
+      for (unsigned int it=0; it<=5; it++) manualboundaries.push_back(300.+it*20.);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    {
+      pair<float, float> valrange(490, 560);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(520);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    {
+      pair<float, float> valrange(2500, 13000);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(3300);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+  }
+  else if (channel==k2e2mu){
+    {
+      pair<float, float> valrange(70, 146);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(75); manualboundaries.push_back(85);
+      manualboundaries.push_back(89); manualboundaries.push_back(93); manualboundaries.push_back(96);
+      manualboundaries.push_back(100); manualboundaries.push_back(105);
+      manualboundaries.push_back(113); manualboundaries.push_back(117.5); manualboundaries.push_back(120);
+      manualboundaries.push_back(122); manualboundaries.push_back(124); manualboundaries.push_back(126);
+      manualboundaries.push_back(129); manualboundaries.push_back(135); manualboundaries.push_back(139);
+      manualboundaries.push_back(143);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    {
+      pair<float, float> valrange(147, 401);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(153); manualboundaries.push_back(160); manualboundaries.push_back(170);
+      manualboundaries.push_back(180); manualboundaries.push_back(185); manualboundaries.push_back(190);
+      for (unsigned int it=0; it<=9; it++) manualboundaries.push_back(200.+it*10.);
+      for (unsigned int it=0; it<=5; it++) manualboundaries.push_back(300.+it*20.);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    {
+      pair<float, float> valrange(2500, 13000);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(3300);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
   }
 
   KDConstantByMass constProducer(sqrts, strKD);
+  constProducer.setMaxNEventsPerBin(80000);
   {
     std::vector<CJLSTSet::NormScheme> NormSchemeB;
     NormSchemeB.assign(strSamples[1].size(), CJLSTSet::NormScheme_NgenOverNgenWPU);
@@ -1617,7 +1700,7 @@ void SmoothKDConstantProducer_Dbkgkin(const Channel channel){
     &getFcn_a0plusa1timesXN<1>,
     &getFcn_a0timesexpa1X,
     //&getFcn_a0plusa1overXN<6>,
-    true, false
+    true, true
   );
 }
 
@@ -1639,9 +1722,10 @@ void SmoothKDConstantProducer_DbkgjjEWQCD(const Channel channel, const Category 
   const TString strChannel = getChannelName(channel);
   generic_SmoothKDConstantProducer(
     13, Form("DbkgjjEWQCD_%s_%s", strChannel.Data(), CategorizationHelpers::getCategoryName(category).Data()), "",
-    &getFcn_a0plusa1timesXN<1>,
+    //&getFcn_a0plusa1timesXN<1>,
     &getFcn_a0timesexpa1X,
-    //&getFcn_a0plusa1overXN<6>,
+    //&getFcn_a0timesexpa1X,
+    &getFcn_a0plusa1overXN<6>,
     true, false
   );
 }

@@ -14,7 +14,7 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
   if (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged){
     if (channel==k4e || channel==k4mu || channel==k2e2mu){
       KDspecs KDbkg("Dbkgkin");
-      KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+      KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
       KDbkg.KDvars = getKDVars(kDbkgkin);
       KDlist.push_back(KDbkg);
       KDspecs KDbkgsigint("Dggint");
@@ -37,8 +37,8 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
   }
   else if (category==CategorizationHelpers::JJVBFTagged){
     if (channel==k4e || channel==k4mu || channel==k2e2mu){
-      KDspecs KDbkg("Dbkgkin"); // REPLACE ME
-      KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+      KDspecs KDbkg("Dbkgkin");
+      KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
       KDbkg.KDvars = getKDVars(kDbkgkin);
       KDlist.push_back(KDbkg);
       KDspecs KDbkgsigint("Dggint");
@@ -80,8 +80,8 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
   }
   else if (category==CategorizationHelpers::HadVHTagged){
     if (channel==k4e || channel==k4mu || channel==k2e2mu){
-      KDspecs KDbkg("Dbkgkin"); // REPLACE ME
-      KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varTrue_Constant_Smooth");
+      KDspecs KDbkg("Dbkgkin");
+      KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
       KDbkg.KDvars = getKDVars(kDbkgkin);
       KDlist.push_back(KDbkg);
       KDspecs KDbkgsigint("Dggint");

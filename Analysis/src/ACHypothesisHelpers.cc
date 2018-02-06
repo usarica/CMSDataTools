@@ -25,7 +25,7 @@ std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet
     res.push_back(DiscriminantClasses::kDbkgkin);
     switch (hypo){
     case kSM:
-      //res.push_back(DiscriminantClasses::kDggint);
+      res.push_back(DiscriminantClasses::kDggint);
       break;
     case kL1:
       res.push_back(DiscriminantClasses::kDL1dec);
@@ -41,7 +41,7 @@ std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet
     };
   }
   else if (category==CategorizationHelpers::JJVBFTagged){
-    res.push_back(DiscriminantClasses::kDbkgkin); // Replace with JJEWQCD and int
+    res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
     switch (hypo){
     case kSM:
       break;
@@ -59,7 +59,7 @@ std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet
     };
   }
   else if (category==CategorizationHelpers::HadVHTagged){
-    res.push_back(DiscriminantClasses::kDbkgkin); // Replace with JJEWQCD and int
+    res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
     switch (hypo){
     case kSM:
       break;

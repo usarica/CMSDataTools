@@ -958,25 +958,69 @@ void getKDConstant_Dbkgkin(const Channel channel, float sqrts=13, const bool wri
   if (channel!=k2e2mu && channel!=k4e && channel!=k4mu) return;
   const TString strChannel = getChannelName(channel);
 
-  float divisor=10000;
-  //float divisor=21000;
-  //if (channel==k2e2mu) divisor = 50000;
+  float divisor=21000;
+  if (channel==k2e2mu) divisor = 50000;
   TString strKD="Dbkgkin";
 
   vector<TString> strSamples[2];
   strSamples[0].push_back("ggHPowheg");
+  //strSamples[0].push_back("ggHMCFM");
+  strSamples[0].push_back(
+    Form("gg_Bkg_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0PH_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0PH_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0PH_MCFM_%s", strChannel.Data())
+  );
   strSamples[0].push_back("VBFPowheg");
-  strSamples[0].push_back(Form("VV_Sig_Phantom_%s", strChannel.Data()));
   strSamples[1].push_back("qqBkg");
-  strSamples[1].push_back(Form("gg_Bkg_MCFM_%s", strChannel.Data()));
-
+  strSamples[1].push_back("ggHPowheg");
+  strSamples[1].push_back(
+    Form("gg_Bkg_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_SM_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0M_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_Sig_0PH_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI_0PH_MCFM_%s", strChannel.Data())
+    + TString("+")
+    + Form("gg_BSI10_0PH_MCFM_%s", strChannel.Data())
+  );
   vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
   // Reweight ggBkg decay kinematics to qqBkg
+  SampleHelpers::addXsecBranchNames(strMelaWgts[0].at(1));
+  strMelaWgts[0].at(1).push_back("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
   SampleHelpers::addXsecBranchNames(strMelaWgts[1].at(1));
   strMelaWgts[1].at(1).push_back("p_Gen_QQB_BKG_MCFM");
+  strMelaWgts[1].at(1).push_back("p_Gen_CPStoBWPropRewgt");
+  SampleHelpers::addXsecBranchNames(strMelaWgts[1].at(2));
+  strMelaWgts[1].at(2).push_back("p_Gen_QQB_BKG_MCFM");
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
-  /*
   if (channel==k4e){
     {
       pair<float, float> valrange(70, 147);
@@ -1074,12 +1118,9 @@ void getKDConstant_Dbkgkin(const Channel channel, float sqrts=13, const bool wri
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
   }
-  */
+
   KDConstantByMass constProducer(sqrts, strKD);
-  constProducer.setMaxNEventsPerBin(divisor*3);
-  if (channel==k4e) constProducer.setMinMaxTrackingVal(70, 3120);
-  else if (channel==k4mu) constProducer.setMinMaxTrackingVal(70, 3300);
-  else constProducer.setMinMaxTrackingVal(70, 3660);
+  constProducer.setMaxNEventsPerBin(80000);
   {
     std::vector<CJLSTSet::NormScheme> NormSchemeB;
     NormSchemeB.assign(strSamples[1].size(), CJLSTSet::NormScheme_NgenOverNgenWPU);
@@ -1427,7 +1468,7 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       pair<float, float> valrange(124, 129);
       vector<float> manualboundaries;
       manualboundaries.push_back(124.8);
-      manualboundaries.push_back(126.5);
+      //manualboundaries.push_back(126.5);
       manualboundaries.push_back(128);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
@@ -1439,9 +1480,12 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
-      pair<float, float> valrange(172, 178);
+      pair<float, float> valrange(157, 178);
       vector<float> manualboundaries;
-      manualboundaries.push_back(174.2);
+      manualboundaries.push_back(160.5);
+      manualboundaries.push_back(166);
+      manualboundaries.push_back(170.5);
+      manualboundaries.push_back(175);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {

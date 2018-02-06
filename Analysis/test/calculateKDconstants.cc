@@ -172,6 +172,8 @@ protected:
   TString strKD;
   unsigned int nstepsiter;
   int maxNEventsPerBin;
+  float infTrackingVal;
+  float supTrackingVal;
   std::vector<CJLSTSet::NormScheme> NormSchemeA;
   std::vector<CJLSTSet::NormScheme> NormSchemeB;
 
@@ -189,6 +191,7 @@ public:
   void setMaxNEventsPerBin(unsigned int nevents){ maxNEventsPerBin=nevents; }
   void setNormSchemeA(std::vector<CJLSTSet::NormScheme> scheme){ NormSchemeA=scheme; }
   void setNormSchemeB(std::vector<CJLSTSet::NormScheme> scheme){ NormSchemeB=scheme; }
+  void setMinMaxTrackingVal(float const minVal, float const maxVal){ infTrackingVal=minVal; supTrackingVal=maxVal; }
 
   void run(
     vector<TString> strSamples[2], vector<vector<TString>> strMelaWgts[2],
@@ -203,7 +206,8 @@ public:
 KDConstantByMass::KDConstantByMass(float sqrts_, TString strKD_) :
   sqrts(sqrts_), strKD(strKD_),
   nstepsiter(100),
-  maxNEventsPerBin(-1)
+  maxNEventsPerBin(-1),
+  infTrackingVal(-1), supTrackingVal(-2)
 {}
 
 
@@ -383,6 +387,15 @@ void KDConstantByMass::run(
   int nEntries[2]={ 0 };
   float infimum=0;
   float supremum=sqrts*1000.;
+  if (infTrackingVal<supTrackingVal){
+    infimum=infTrackingVal;
+    supremum=supTrackingVal;
+    cout
+      << "KDConstantByMass::run: WARNING! Initial values of infimum and supremum are changed to ("
+      << infimum << ", " << supremum
+      << ") by hand! Please make sure this is really what you would like to do."
+      << endl;
+  }
 
   for (unsigned int ih=0; ih<2; ih++){
     vector<CJLSTSet*> theSets;
@@ -427,7 +440,8 @@ void KDConstantByMass::run(
           GenHMassBinning.addBinBoundary(MHValfirst+5);
           GenHMassBinning.addBinBoundary(160);
           GenHMassBinning.addBinBoundary(220);
-          GenHMassBinning.addBinBoundary(1000);
+          GenHMassBinning.addBinBoundary(450);
+          GenHMassBinning.addBinBoundary(1300);
         }
         else{
           for (unsigned int is=0; is<theSet->getCJLSTTreeList().size()-1; is++){
@@ -446,6 +460,8 @@ void KDConstantByMass::run(
           GenHMassBinning.addBinBoundary(100);
           GenHMassBinning.addBinBoundary(160);
           GenHMassBinning.addBinBoundary(220);
+          GenHMassBinning.addBinBoundary(450);
+          GenHMassBinning.addBinBoundary(1300);
           GenHMassBinning.addBinBoundary(sqrts*1000.);
         }
         melarewgtBuilder = new ReweightingBuilder(*melawgtcollit, ReweightingFunctions::getSimpleWeight);
@@ -579,7 +595,7 @@ void KDConstantByMass::run(
     cout << "Initial bin boundary for bin " << ix << ": " << binboundary << endl;
 
     bool skip=false;
-    if (manualboundary_validity_pairs!=0){
+    if (manualboundary_validity_pairs){
       for (auto const& mbvpair : (*manualboundary_validity_pairs)){
         const pair<float, float>& valrange = mbvpair.second;
         skip = (
@@ -594,7 +610,7 @@ void KDConstantByMass::run(
   }
   binboundarylist.push_back(supremum);
 
-  if (manualboundary_validity_pairs!=0){
+  if (manualboundary_validity_pairs){
     for (auto& mbvpair : (*manualboundary_validity_pairs)){
       vector<float>& bvals = mbvpair.first;
       for (unsigned int ib=0; ib<bvals.size(); ib++){
@@ -613,7 +629,7 @@ void KDConstantByMass::run(
   }
 
   // Recalibrate index boundaries
-  if (manualboundary_validity_pairs!=0){
+  if (manualboundary_validity_pairs){
     for (unsigned int ih=0; ih<2; ih++){
       indexboundaries[ih].clear();
       indexboundaries[ih].push_back(0);
@@ -942,69 +958,25 @@ void getKDConstant_Dbkgkin(const Channel channel, float sqrts=13, const bool wri
   if (channel!=k2e2mu && channel!=k4e && channel!=k4mu) return;
   const TString strChannel = getChannelName(channel);
 
-  float divisor=21000;
-  if (channel==k2e2mu) divisor = 50000;
+  float divisor=10000;
+  //float divisor=21000;
+  //if (channel==k2e2mu) divisor = 50000;
   TString strKD="Dbkgkin";
 
   vector<TString> strSamples[2];
   strSamples[0].push_back("ggHPowheg");
-  //strSamples[0].push_back("ggHMCFM");
-  strSamples[0].push_back(
-    Form("gg_Bkg_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_Sig_SM_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_BSI_SM_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_BSI10_SM_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_Sig_0M_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_BSI_0M_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_BSI10_0M_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_Sig_0PH_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_BSI_0PH_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_BSI10_0PH_MCFM_%s", strChannel.Data())
-  );
   strSamples[0].push_back("VBFPowheg");
+  strSamples[0].push_back(Form("VV_Sig_Phantom_%s", strChannel.Data()));
   strSamples[1].push_back("qqBkg");
-  strSamples[1].push_back("ggHPowheg");
-  strSamples[1].push_back(
-    Form("gg_Bkg_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_Sig_SM_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_BSI_SM_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_BSI10_SM_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_Sig_0M_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_BSI_0M_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_BSI10_0M_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_Sig_0PH_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_BSI_0PH_MCFM_%s", strChannel.Data())
-    + TString("+")
-    + Form("gg_BSI10_0PH_MCFM_%s", strChannel.Data())
-  );
+  strSamples[1].push_back(Form("gg_Bkg_MCFM_%s", strChannel.Data()));
+
   vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
   // Reweight ggBkg decay kinematics to qqBkg
-  SampleHelpers::addXsecBranchNames(strMelaWgts[0].at(1));
-  strMelaWgts[0].at(1).push_back("p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_MCFM");
   SampleHelpers::addXsecBranchNames(strMelaWgts[1].at(1));
   strMelaWgts[1].at(1).push_back("p_Gen_QQB_BKG_MCFM");
-  strMelaWgts[1].at(1).push_back("p_Gen_CPStoBWPropRewgt");
-  SampleHelpers::addXsecBranchNames(strMelaWgts[1].at(2));
-  strMelaWgts[1].at(2).push_back("p_Gen_QQB_BKG_MCFM");
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
+  /*
   if (channel==k4e){
     {
       pair<float, float> valrange(70, 147);
@@ -1102,9 +1074,12 @@ void getKDConstant_Dbkgkin(const Channel channel, float sqrts=13, const bool wri
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
   }
-
+  */
   KDConstantByMass constProducer(sqrts, strKD);
-  constProducer.setMaxNEventsPerBin(80000);
+  constProducer.setMaxNEventsPerBin(divisor*3);
+  if (channel==k4e) constProducer.setMinMaxTrackingVal(70, 3120);
+  else if (channel==k4mu) constProducer.setMinMaxTrackingVal(70, 3300);
+  else constProducer.setMinMaxTrackingVal(70, 3660);
   {
     std::vector<CJLSTSet::NormScheme> NormSchemeB;
     NormSchemeB.assign(strSamples[1].size(), CJLSTSet::NormScheme_NgenOverNgenWPU);
@@ -1437,21 +1412,14 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
   }
   else if (category==JJVBFTagged && channel==k4l){
     {
-      pair<float, float> valrange(70, 121.5);
+      pair<float, float> valrange(70, 123.5);
       vector<float> manualboundaries;
       manualboundaries.push_back(95);
       manualboundaries.push_back(105);
       manualboundaries.push_back(113);
       manualboundaries.push_back(115);
-      manualboundaries.push_back(118);
       manualboundaries.push_back(119.1);
-      manualboundaries.push_back(120);
       manualboundaries.push_back(121);
-      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
-    }
-    {
-      pair<float, float> valrange(122, 123.5);
-      vector<float> manualboundaries;
       manualboundaries.push_back(123.1);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
@@ -1460,9 +1428,7 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       vector<float> manualboundaries;
       manualboundaries.push_back(124.8);
       manualboundaries.push_back(126.5);
-      manualboundaries.push_back(127.2);
       manualboundaries.push_back(128);
-      manualboundaries.push_back(128.8);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
@@ -1473,22 +1439,9 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
-      pair<float, float> valrange(130, 135);
-      vector<float> manualboundaries;
-      manualboundaries.push_back(133);
-      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
-    }
-    {
-      pair<float, float> valrange(154, 159);
-      vector<float> manualboundaries;
-      manualboundaries.push_back(156.4);
-      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
-    }
-    {
       pair<float, float> valrange(172, 178);
       vector<float> manualboundaries;
       manualboundaries.push_back(174.2);
-      manualboundaries.push_back(176.2);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
@@ -1548,7 +1501,7 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundaries.push_back(121);
       manualboundaries.push_back(124);
       manualboundaries.push_back(126.5);
-      manualboundaries.push_back(131);
+      //manualboundaries.push_back(131);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
   }

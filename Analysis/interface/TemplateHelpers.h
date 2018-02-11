@@ -4,6 +4,7 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TH3F.h"
+#include "ExtendedBinning.h"
 #include "DiscriminantClasses.h"
 #include "SampleHelpers.h"
 #include "CategorizationHelpers.h"
@@ -20,7 +21,7 @@ namespace TemplateHelpers{
   template<typename T> void setTemplateAxisLabels(T* histo);
   void getLikelihoodDiscriminants(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, const SystematicsHelpers::SystematicVariationTypes syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);
   void getCategorizationDiscriminants(const SystematicsHelpers::SystematicVariationTypes syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);
-
+  ExtendedBinning getDiscriminantBinning(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell);
 
   /****************/
   /* Gluon fusion */

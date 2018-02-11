@@ -1,5 +1,9 @@
 #include "TemplateHelpers.h"
 #include "TemplateHelpers.hpp"
+#include "MELAStreamHelpers.hh"
+
+
+using namespace MELAStreamHelpers;
 
 
 /*********************/
@@ -192,4 +196,48 @@ void TemplateHelpers::getCategorizationDiscriminants(const SystematicsHelpers::S
   for (auto& KDspec:KDlist) KDspec.KD->setWP(DiscriminantClasses::getKDWP(KDspec.KDtype));
 
   SystematicsHelpers::adjustDiscriminantJECVariables(syst, KDlist);
+}
+ExtendedBinning TemplateHelpers::getDiscriminantBinning(const SampleHelpers::Channel /*channel*/, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell){
+  ExtendedBinning res(strKD);
+  if (strKD=="ZZMass"){
+    if (useOffshell){
+      res.addBinBoundary(220);
+      res.addBinBoundary(theSqrts*1000.);
+      if (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged){
+        res.addBinBoundary(230);
+        res.addBinBoundary(240);
+        res.addBinBoundary(250);
+        res.addBinBoundary(260);
+        res.addBinBoundary(280);
+        res.addBinBoundary(310);
+        res.addBinBoundary(350);
+        res.addBinBoundary(430);
+        res.addBinBoundary(590);
+        res.addBinBoundary(710);
+        res.addBinBoundary(1000);
+      }
+      else if (category==CategorizationHelpers::JJVBFTagged){
+        res.addBinBoundary(260);
+        res.addBinBoundary(310);
+        res.addBinBoundary(400);
+        res.addBinBoundary(750);
+      }
+      else{
+        MELAerr << "TemplateHelpers::getDiscriminantBinning: Category " << CategorizationHelpers::getCategoryName(category)  << " not yet implemented!" << endl;
+        assert(0);
+      }
+    }
+    else{ for (unsigned int i=105; i<=140; i++) res.addBinBoundary(i); }
+  }
+  else if (strKD.Contains("int")){
+    unsigned int nbins=30;
+    double stepsize=2./double(nbins);
+    for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(-1.+double(i)*stepsize);
+  }
+  else{
+    unsigned int nbins=30;
+    double stepsize=1./double(nbins);
+    for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(double(i)*stepsize);
+  }
+  return res;
 }

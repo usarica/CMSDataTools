@@ -54,6 +54,8 @@ public:
   float getNormComponent(CJLSTTree* theTree) const; // Tree is passed here to find the bin
   float getNormComponent(int bin) const;
   float getNorm() const;
+
+  static ExtendedBinning getTrueMassBinning(std::vector<CJLSTTree*> const& trees, float forceMass=-1);
 };
 
 

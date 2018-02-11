@@ -1328,3 +1328,49 @@ void HelperFunctions::CopyDirectory(TDirectory* source, TTree*(*fcnTree)(TTree*)
   adir->SaveSelf(kTRUE);
   savdir->cd();
 }
+
+void HelperFunctions::extractTreesFromDirectory(TDirectory* source, std::vector<TTree*> res, bool doClone){
+  TDirectory* target = gDirectory;
+
+  source->cd();
+  // Loop on all entries of this directory
+  TKey* key;
+  TIter nextkey(source->GetListOfKeys());
+  vector<TString> copiedTrees;
+  while ((key = (TKey*) nextkey())){
+    MELAout << "HelperFunctions::GetTreesInDirectory: Acquiring key " << key->GetName() << endl;
+    const char* classname = key->GetClassName();
+    TClass* cl = gROOT->GetClass(classname);
+    if (!cl) continue;
+    if (cl->InheritsFrom(TDirectory::Class())){
+      MELAout << "- HelperFunctions::GetTreesInDirectory: Key " << key->GetName() << " is a directory." << endl;
+      source->cd(key->GetName());
+      TDirectory* subdir = gDirectory;
+      source->cd();
+      extractTreesFromDirectory(subdir, res, doClone);
+    }
+    else if (cl->InheritsFrom(TTree::Class())){
+      MELAout << "- HelperFunctions::GetTreesInDirectory: Key " << key->GetName() << " is a tree." << endl;
+      TTree* T = (TTree*) source->Get(key->GetName());
+      bool alreadyCopied=false;
+      for (auto& k:copiedTrees){
+        if (k==key->GetName()){
+          alreadyCopied=true;
+          break;
+        }
+      }
+      if (!alreadyCopied){
+        TTree* newT;
+        if (doClone) newT = T->CloneTree(-1, "fast");
+        else newT = T;
+        if (newT){
+          copiedTrees.push_back(key->GetName());
+          res.push_back(newT);
+        }
+      }
+    }
+  }
+
+  target->cd();
+}
+

@@ -149,6 +149,9 @@ namespace HelperFunctions{
   void CopyFile(TString fname, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*));
   void CopyDirectory(TDirectory* source, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*));
 
+  // Function to extract all trees in a file
+  void extractTreesFromDirectory(TDirectory* source, std::vector<TTree*> res, bool doClone=false);
+
   // Function to extract all histograms from file
   template<typename T> void extractHistogramsFromDirectory(TDirectory* source, std::vector<T*>& histolist);
 
@@ -419,12 +422,9 @@ template<int N> TF1* HelperFunctions::getFcn_a0plusa1timesXN(TSpline3* sp, doubl
 // Function to extract all histograms from file
 template<typename T> void HelperFunctions::extractHistogramsFromDirectory(TDirectory* source, std::vector<T*>& histolist){
   // Copy all objects and subdirs of directory source as a subdir of the current directory
+  TDirectory* target = gDirectory;
   source->ls();
-  TDirectory* savdir = gDirectory;
-  TDirectory* adir;
-  if (dynamic_cast<TFile*>(source)==nullptr) adir = savdir->mkdir(source->GetName());
-  else adir=savdir;
-  adir->cd();
+  source->cd();
   // Loop on all entries of this directory
   TKey* key;
   TIter nextkey(source->GetListOfKeys());
@@ -436,9 +436,8 @@ template<typename T> void HelperFunctions::extractHistogramsFromDirectory(TDirec
     if (cl->InheritsFrom(TDirectory::Class())){
       source->cd(key->GetName());
       TDirectory* subdir = gDirectory;
-      adir->cd();
+      source->cd();
       extractHistogramsFromDirectory<T>(subdir, histolist);
-      adir->cd();
     }
     else if (cl->InheritsFrom(T::Class())){
       T* hist = (T*)source->Get(key->GetName());
@@ -449,7 +448,6 @@ template<typename T> void HelperFunctions::extractHistogramsFromDirectory(TDirec
           break;
         }
       }
-      adir->cd();
       if (!alreadyCopied){
         if (hist){
           copiedKeys.push_back(key->GetName());
@@ -458,7 +456,7 @@ template<typename T> void HelperFunctions::extractHistogramsFromDirectory(TDirec
       }
     }
   }
-  savdir->cd();
+  target->cd();
 }
 template void HelperFunctions::extractHistogramsFromDirectory<TH1F>(TDirectory* source, std::vector<TH1F*>& histolist);
 template void HelperFunctions::extractHistogramsFromDirectory<TH2F>(TDirectory* source, std::vector<TH2F*>& histolist);

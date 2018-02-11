@@ -333,3 +333,47 @@ float ReweightingBuilder::getNorm() const{
   if (sumN!=0) sum /= float(sumN);
   return sum;
 }
+
+ExtendedBinning ReweightingBuilder::getTrueMassBinning(std::vector<CJLSTTree*> const& trees, float forceMass){
+  ExtendedBinning GenHMassBinning("GenHMass");
+  GenHMassBinning.addBinBoundary(0);
+  GenHMassBinning.addBinBoundary(theSqrts*1000.);
+
+  if (trees.empty()) return GenHMassBinning;
+
+  if (forceMass<0.){ // Determine from the masses in the list
+    vector<double> masslist;
+    for (CJLSTTree* const& tree:trees){ if (tree->MHVal>0.) HelperFunctions::addByLowest<double>(masslist, (double) tree->MHVal, true); }
+    if (masslist.size()==1){
+      const double MHValfirst = masslist.back();
+      GenHMassBinning.addBinBoundary(100);
+      GenHMassBinning.addBinBoundary(MHValfirst-1);
+      GenHMassBinning.addBinBoundary(MHValfirst+1);
+      GenHMassBinning.addBinBoundary(160);
+      GenHMassBinning.addBinBoundary(220);
+      GenHMassBinning.addBinBoundary(450);
+      GenHMassBinning.addBinBoundary(1300);
+    }
+    else if (!masslist.empty()){
+      for (unsigned int is=0; is<masslist.size()-1; is++){
+        double boundary = (masslist.at(is) + masslist.at(is+1))/2.;
+        GenHMassBinning.addBinBoundary(boundary);
+      }
+    }
+
+  }
+  else if (forceMass==125.){
+    GenHMassBinning.addBinBoundary(124);
+    GenHMassBinning.addBinBoundary(126);
+    GenHMassBinning.addBinBoundary(160);
+    GenHMassBinning.addBinBoundary(220);
+    GenHMassBinning.addBinBoundary(450);
+    GenHMassBinning.addBinBoundary(1300);
+  }
+  else{
+    MELAerr << "ReweightingBuilder::getTrueMassBinning: Force mass " << forceMass << " is not implemented!" << endl;
+    assert(0);
+  }
+
+  return GenHMassBinning;
+}

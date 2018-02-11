@@ -33,7 +33,7 @@ namespace SampleHelpers{
 
   extern shared_ptr<Mela> GlobalMELA;
 
-  void makeGlobalMELA(int CoM);
+  void makeGlobalMELA(int CoM, TVar::VerbosityLevel verbosity=TVar::ERROR);
 
   float findPoleMass(const TString samplename);
   TTree* findTree(std::vector<TTree*> const& treeList, int evid);

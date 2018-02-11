@@ -176,6 +176,8 @@ protected:
   float supTrackingVal;
   std::vector<CJLSTSet::NormScheme> NormSchemeA;
   std::vector<CJLSTSet::NormScheme> NormSchemeB;
+  std::vector<std::pair<float, float>> ConstantFractionRanges[2];
+  std::vector<std::pair<int, int>> ConstantFractionBinRanges[2];
 
   void LoopForConstant(
     vector<SimpleEntry>(&index)[2],
@@ -192,6 +194,7 @@ public:
   void setNormSchemeA(std::vector<CJLSTSet::NormScheme> scheme){ NormSchemeA=scheme; }
   void setNormSchemeB(std::vector<CJLSTSet::NormScheme> scheme){ NormSchemeB=scheme; }
   void setMinMaxTrackingVal(float const minVal, float const maxVal){ infTrackingVal=minVal; supTrackingVal=maxVal; }
+  void ensureConstantSampleFraction(unsigned int whichSet, std::vector<std::pair<float, float>> const& setranges){ if (whichSet<2) ConstantFractionRanges[whichSet]=setranges; }
 
   void run(
     vector<TString> strSamples[2], vector<vector<TString>> strMelaWgts[2],
@@ -223,9 +226,19 @@ void KDConstantByMass::LoopForConstant(
   cout << "Begin KDConstantByMass::LoopForConstant" << endl;
 
   int nbins = indexboundaries[0].size()-1;
+  vector<pair<float, float>> finalFractionPerBin; finalFractionPerBin.assign(nbins, pair<float, float>(2, 2));
 
   for (int bin=0; bin<nbins; bin++){
     cout << "Bin " << bin << " / " << nbins << " is now being scrutinized..." << endl;
+    // Determine whether fraction of a set needs to keep fixed
+    bool keepFractionFixed[2]={ 0 };
+    for (unsigned int ih=0; ih<2; ih++){
+      for (pair<int, int>& valrange:ConstantFractionBinRanges[ih]){
+        if (bin>=valrange.first && bin<=valrange.second){ keepFractionFixed[ih]=true; break; }
+      }
+    }
+    if (bin==0 || (keepFractionFixed[0] && keepFractionFixed[1])){ for (unsigned int ih=0; ih<2; ih++) keepFractionFixed[ih]=false; }
+    for (unsigned int ih=0; ih<2; ih++){ if (keepFractionFixed[ih]) cout << " - Fraction of events for set " << ih << " will be kept the same as previous bin." << endl; }
 
     // First find the average KD in each sample
     float sumKD[2]={ 0 }; float sumWgt[2]={ 0 }; float avgKD[2]={ 0 };
@@ -320,7 +333,10 @@ void KDConstantByMass::LoopForConstant(
           sumWgtHalf[ih]=sumWgtHalf[ih]/sumWgtAll[ih];
         }
 
-        float sumWgtHalfDiff=sumWgtHalf[0]-sumWgtHalf[1];
+        float sumWgtHalfDiff;
+        if (keepFractionFixed[0]) sumWgtHalfDiff = sumWgtHalf[0] - finalFractionPerBin.at(bin-1).first;
+        else if (keepFractionFixed[1]) sumWgtHalfDiff = sumWgtHalf[1] - finalFractionPerBin.at(bin-1).second;
+        else sumWgtHalfDiff=sumWgtHalf[0]-sumWgtHalf[1];
         float absSumWgtHalfDiff=fabs(sumWgtHalfDiff);
         short sgnSumWgtHalfDiff = TMath::Sign(float(1), sumWgtHalfDiff);
         if (mindiff>absSumWgtHalfDiff){
@@ -334,6 +350,8 @@ void KDConstantByMass::LoopForConstant(
       }
       cout << "  - New c found = " << Cfound << " (old was " << centralConstant << ")" << endl;
       cout << "  - Final fractions were = " << finalFraction[0] << " , " << finalFraction[1] << " (sign of difference: " << sgnMinDiff << ")" << endl;
+      finalFractionPerBin.at(bin).first=finalFraction[0];
+      finalFractionPerBin.at(bin).second=finalFraction[1];
       if (fabs(Cfound/centralConstant-1)<1e-4 && it>0) break;
       centralConstant=Cfound;
       if (it>2){
@@ -642,6 +660,20 @@ void KDConstantByMass::run(
         }
       }
       indexboundaries[ih].push_back(index[ih].size());
+    }
+  }
+
+  // Find for which bins the fraction of a set should be constant
+  for (unsigned int ih=0; ih<2; ih++){
+    for (pair<float, float>& valrange:ConstantFractionRanges[ih]){
+      int ilow=-1, ihigh=-1;
+      float difflow=1000.*sqrts;
+      float diffhigh=1000.*sqrts;
+      for (unsigned int ix=0; ix<nbins; ix++){
+        if (fabs(valrange.first-binning[ix])<difflow){ ilow=ix; difflow=fabs(valrange.first-binning[ix]); }
+        if (fabs(valrange.first-binning[ix+1])<diffhigh){ ihigh=ix; diffhigh=fabs(valrange.first-binning[ix+1]); }
+      }
+      if (ilow>=0 && ihigh>=0 && ilow<=ihigh) ConstantFractionBinRanges[ih].push_back(pair<int, int>(ilow, ihigh));
     }
   }
 
@@ -1381,6 +1413,7 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
     strSamples[1].push_back("WHPowheg"); strSamples[1].push_back("ZHPowheg");
   }
   strSamples[1].push_back("qqBkg");
+  //strSamples[1].push_back("ggHPowheg");
   vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
   for (unsigned int ih=0; ih<2; ih++){
     unsigned int iw=0;
@@ -1390,6 +1423,12 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
         wlist.push_back(OffshellVVProcessHandle.getMELAHypothesisWeight((ih==0 ? VVProcessHandler::VVSig : VVProcessHandler::VVBkg), kSM));
         wlist.push_back("p_Gen_CPStoBWPropRewgt");
       }
+      /*
+      else{
+        wlist.push_back("p_Gen_QQB_BKG_MCFM");
+        wlist.push_back("p_Gen_CPStoBWPropRewgt");
+      }
+      */
       iw++;
     }
   }
@@ -1444,6 +1483,12 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
+      pair<float, float> valrange(800, 1600);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(1152);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    {
       pair<float, float> valrange(2500, sqrts*1000.);
       vector<float> manualboundaries;
       manualboundaries.push_back(3000);
@@ -1484,7 +1529,6 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       vector<float> manualboundaries;
       manualboundaries.push_back(160.5);
       manualboundaries.push_back(166);
-      manualboundaries.push_back(170.5);
       manualboundaries.push_back(175);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
@@ -1494,6 +1538,12 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundaries.push_back(180.6);
       manualboundaries.push_back(184);
       manualboundaries.push_back(191);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    {
+      pair<float, float> valrange(650, 770);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(710);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
@@ -1512,7 +1562,7 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundaries.push_back(116);
       manualboundaries.push_back(121);
       manualboundaries.push_back(124.8);
-      manualboundaries.push_back(126.5);
+      //manualboundaries.push_back(126.5);
       manualboundaries.push_back(129);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
@@ -1523,17 +1573,21 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
-      pair<float, float> valrange(162, 174);
-      vector<float> manualboundaries;
-      manualboundaries.push_back(169);
-      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
-    }
-    {
       pair<float, float> valrange(191, 207);
       vector<float> manualboundaries;
       manualboundaries.push_back(200);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
+    /*
+    {
+      pair<float, float> valrange(940, sqrts*1000.);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(950);
+      manualboundaries.push_back(1170);
+      manualboundaries.push_back(1420);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    */
   }
   else if (category==HadVHTagged && channel==k4l){
     {
@@ -1548,9 +1602,31 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       //manualboundaries.push_back(131);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
+    {
+      pair<float, float> valrange(280, 330);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(301);
+      manualboundaries.push_back(318);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    /*
+    {
+      pair<float, float> valrange(410, 580);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(421);
+      manualboundaries.push_back(460);
+      manualboundaries.push_back(510);
+      manualboundaries.push_back(570);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    */
   }
 
   KDConstantByMass constProducer(sqrts, strKD);
+  {
+    vector<pair<float, float>> setranges; setranges.push_back(pair<float, float>(350, sqrts*1000.));
+    constProducer.ensureConstantSampleFraction(0, setranges);
+  }
   constProducer.run(
     strSamples, strMelaWgts,
     channel, category,
@@ -1719,10 +1795,8 @@ void SmoothKDConstantProducer_DbkgjjEWQCD(const Channel channel, const Category 
   const TString strChannel = getChannelName(channel);
   generic_SmoothKDConstantProducer(
     13, Form("DbkgjjEWQCD_%s_%s", strChannel.Data(), CategorizationHelpers::getCategoryName(category).Data()), "",
-    //&getFcn_a0plusa1timesXN<1>,
     &getFcn_a0timesexpa1X,
-    //&getFcn_a0timesexpa1X,
-    &getFcn_a0plusa1overXN<6>,
+    &getFcn_a0plusa1overXN<1>,
     true, false
   );
 }

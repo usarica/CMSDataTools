@@ -11,7 +11,7 @@ namespace SampleHelpers{
   shared_ptr<Mela> GlobalMELA;
 }
 
-void SampleHelpers::makeGlobalMELA(int CoM){ if (!GlobalMELA) GlobalMELA.reset(new Mela(CoM, 125, TVar::ERROR)); }
+void SampleHelpers::makeGlobalMELA(int CoM, TVar::VerbosityLevel verbosity){ if (!GlobalMELA) GlobalMELA.reset(new Mela(CoM, 125, verbosity)); }
 
 float SampleHelpers::findPoleMass(const TString samplename){
   float mass = -1;
@@ -155,6 +155,11 @@ void SampleHelpers::getSamplePairs(float sqrts, std::vector<TString> const& s1, 
 std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, float sqrts){
   std::vector<TString> samples;
   if (sqrts!=13) return samples;
+
+  if (CJLSTversion>180121){
+    MELAout << "SampleHelpers::constructSamplesList: Check ggH and ZH samples list before proceeding" << endl;
+    assert(0);
+  }
 
   if (strsample=="VBF_Sig_POWHEG"){
     samples.push_back("VBFH115");
@@ -311,7 +316,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("ZH400");
     samples.push_back("ZH450");
     samples.push_back("ZH500");
-    samples.push_back("ZH550");
+    //samples.push_back("ZH550");
     samples.push_back("ZH600");
     samples.push_back("ZH700");
     samples.push_back("ZH750");
@@ -337,6 +342,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("ggH126");
     samples.push_back("ggH130");
     samples.push_back("ggH135");
+    samples.push_back("ggH140");
     samples.push_back("ggH145");
     samples.push_back("ggH150");
     samples.push_back("ggH155");
@@ -356,11 +362,11 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("ggH400");
     samples.push_back("ggH450");
     samples.push_back("ggH500");
-    samples.push_back("ggH550");
+    //samples.push_back("ggH550");
     samples.push_back("ggH600");
     samples.push_back("ggH700");
     samples.push_back("ggH750");
-    samples.push_back("ggH800");
+    //samples.push_back("ggH800");
     samples.push_back("ggH900");
     samples.push_back("ggH1000");
     samples.push_back("ggH1500");

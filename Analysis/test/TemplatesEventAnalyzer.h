@@ -51,7 +51,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
     float& ZZMass = *(valfloats["ZZMass"]);
     float& GenHMass = *(valfloats["GenHMass"]);
     product.setNamedVal("ZZMass", ZZMass);
-    //product.setNamedVal("GenHMass", GenHMass);
+    product.setNamedVal("GenHMass", GenHMass);
 
     if (!mass_boundaries.empty()){
       bool mass_range_found=false;

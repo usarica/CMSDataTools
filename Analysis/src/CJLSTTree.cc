@@ -9,9 +9,9 @@ CJLSTTree::CJLSTTree(TString strsample) :
   GHVal(0)
 {
   if (valid){
-    //SampleHelpers::makeGlobalMELA(theSqrts);
+    SampleHelpers::makeGlobalMELA(theSqrts);
     MHVal = SampleHelpers::findPoleMass(sampleIdentifier);
-    //GHVal = SampleHelpers::GlobalMELA->getHiggsWidthAtPoleMass(MHVal);
+    if (MHVal>0.) GHVal = SampleHelpers::GlobalMELA->getHiggsWidthAtPoleMass(MHVal);
   }
 }
 

@@ -14,8 +14,7 @@ const TString user_output_dir = "output/";
 
 void fixWeights(std::vector<SimpleEntry>& index);
 
-void testKDDistributions(
-  const TString strKD,
+void testGenHMassDistributions(
   const Channel channel, const Category category,
   const ProcessHandler& processA, unsigned int hypoA, unsigned int AChypoA,
   const ProcessHandler& processB, unsigned int hypoB, unsigned int AChypoB,
@@ -24,18 +23,16 @@ void testKDDistributions(
   const SystematicVariationTypes syst = sNominal;
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
-  vector<TString> KDnames;
-  splitOptionRecursive(strKD, KDnames, ',');
-  MELAout << "Processing KDs " << KDnames << endl;
 
   // Get list of samples
+  vector<TString> KDnames; KDnames.push_back("GenHMass");
   const ProcessHandler* process[2]={ &processA, &processB };
   unsigned int hypo[2]={ hypoA, hypoB };
   vector<TH2F*> hKD[2]; for (unsigned int is=0; is<2; is++) hKD[is].assign(KDnames.size(), nullptr);
   vector<vector<TString>> strSamples[2];
   vector<TString> melawgtvars[2];
 
-  TString canvasname = "KDcomparison_";
+  TString canvasname = "TrueMasscomparison_";
   ExtendedBinning binning_ZZMass("ZZMass");
   binning_ZZMass.addBinBoundary(70);
   binning_ZZMass.addBinBoundary(100);
@@ -65,7 +62,14 @@ void testKDDistributions(
     }
     for (unsigned int ikd=0; ikd<KDnames.size(); ikd++){
       TString hname = hnamecore[is] + "_ " + KDnames.at(ikd);
-      ExtendedBinning binning_KD = TemplateHelpers::getDiscriminantBinning(channel, category, KDnames.at(ikd), true);
+      ExtendedBinning binning_KD("GenHMass");
+      binning_KD.addBinBoundary(binning_ZZMass.getBinHighEdge(binning_ZZMass.getNbins()-1));
+      for (unsigned int bin=0; bin<binning_ZZMass.getNbins(); bin++){
+        double binwidth=binning_ZZMass.getBinHighEdge(bin)-binning_ZZMass.getBinLowEdge(bin);
+        unsigned int ndiv=20;
+        if (binwidth>1000.) ndiv=40;
+        for (unsigned int i=0; i<ndiv; i++) binning_KD.addBinBoundary(binning_ZZMass.getBinLowEdge(bin) + double(i)*binwidth/double(ndiv));
+      }
       hKD[is][ikd] = new TH2F(hname, proclabel[is], binning_ZZMass.getNbins(), binning_ZZMass.getBinning(), binning_KD.getNbins(), binning_KD.getBinning());
     }
   }
@@ -164,7 +168,6 @@ void testKDDistributions(
 
   // Register the discriminants
   vector<KDspecs> KDlist;
-  getLikelihoodDiscriminants(channel, category, syst, KDlist);
   if (category!=Inclusive) getCategorizationDiscriminants(syst, KDlist);
 
   // Open the output file
@@ -355,6 +358,8 @@ void testKDDistributions(
           histo[is]->GetYaxis()->SetTitleOffset(1);
           histo[is]->GetYaxis()->SetTitleFont(42);
           histo[is]->GetYaxis()->SetRangeUser(0, maxY*1.2);
+          if (binning_ZZMass.getBinLowEdge(bin)<350) histo[is]->GetXaxis()->SetRangeUser(binning_ZZMass.getBinLowEdge(0), 349.9);
+          else histo[is]->GetXaxis()->SetRangeUser(350, 4000);
           legend->AddEntry(histo[is], histo[is]->GetTitle(), "l");
           histo[is]->SetTitle("");
           if (is==0) histo[is]->Draw("hist");

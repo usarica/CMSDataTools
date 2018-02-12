@@ -356,8 +356,25 @@ ExtendedBinning ReweightingBuilder::getTrueMassBinning(std::vector<CJLSTTree*> c
     }
     else if (!masslist.empty()){
       for (unsigned int is=0; is<masslist.size()-1; is++){
-        double boundary = (masslist.at(is) + masslist.at(is+1))/2.;
-        GenHMassBinning.addBinBoundary(boundary);
+        double const& MHfirst = masslist.at(is);
+        double const& MHsecond = masslist.at(is+1);
+        double GHfirst = SampleHelpers::GlobalMELA->getHiggsWidthAtPoleMass(MHfirst);
+        double GHsecond = SampleHelpers::GlobalMELA->getHiggsWidthAtPoleMass(MHsecond);
+        double GHsum = GHfirst + GHsecond;
+        double boundary;
+        if (GHsum*10.<fabs(MHsecond - MHfirst)){
+          boundary = (MHfirst*GHsecond + MHsecond*GHfirst)/GHsum;
+          if (is==0 && MHfirst-4.*GHfirst>0.) GenHMassBinning.addBinBoundary(MHfirst-4.*GHfirst);
+          if (MHfirst+4.*GHfirst<boundary && MHsecond-4.*GHsecond>boundary){
+            GenHMassBinning.addBinBoundary(MHfirst+4.*GHfirst);
+            GenHMassBinning.addBinBoundary(MHsecond-4.*GHsecond);
+          }
+          else GenHMassBinning.addBinBoundary(boundary);
+        }
+        else{
+          boundary = (MHfirst + MHsecond)/2.;
+          GenHMassBinning.addBinBoundary(boundary);
+        }
       }
     }
 

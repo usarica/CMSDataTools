@@ -36,6 +36,7 @@ void deriveWPsFromGGH125(){
     KDjVBF.KDvars = getKDVars(kDjVBF);
     KDlist.push_back(KDjVBF);
   }
+  for (auto& KD:KDlist){ KD.KD->setWP(0.5); }
 
   CJLSTSet* theSampleSet = new CJLSTSet("ggH125");
   // Book common variables

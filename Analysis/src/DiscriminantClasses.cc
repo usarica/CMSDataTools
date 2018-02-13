@@ -164,17 +164,17 @@ float DiscriminantClasses::getKDWP(DiscriminantClasses::Type type){
   case kDjjVBFL1:
   case kDjjVBFa2:
   case kDjjVBFa3:
-    return 0.4894;
+    return 0.46386;
   case kDjjZH:
   case kDjjZHL1:
   case kDjjZHa2:
   case kDjjZHa3:
-    return 0.52419;
+    return 0.88982;
   case kDjjWH:
   case kDjjWHL1:
   case kDjjWHa2:
   case kDjjWHa3:
-    return 0.52597;
+    return 0.89051;
   default:
     return 0.5;
   };

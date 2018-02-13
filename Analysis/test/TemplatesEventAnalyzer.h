@@ -22,9 +22,11 @@ public:
   TemplatesEventAnalyzer(std::vector<CJLSTTree*> const& inTreeList, Channel channel_, Category category_);
   TemplatesEventAnalyzer(CJLSTSet const* inTreeSet, Channel channel_, Category category_);
 
+  // Record categorization discriminants
   void setRecordCategorizationKDs(bool flag){ recordCategorizationKDs=flag; }
+  // Record discriminant input MEs
   void setRecordKDVariables(bool flag){ recordKDVariables=flag; }
-
+  // Reco. mass windows
   void addMassWindow(std::pair<float, float> const boundaries){ mass_boundaries.push_back(boundaries); }
 };
 
@@ -106,6 +108,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
     // Compute the KDs
     // Reserve the special DjjVBF, DjjZH and DjjWH discriminants
     float DjjVBF[nACHypotheses];
+    float DjVBF[nACHypotheses];
     float DjjWH[nACHypotheses];
     float DjjZH[nACHypotheses];
     for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
@@ -156,6 +159,17 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
           }
         }
         DjjWH[hypo]=KD;
+        if (recordCategorizationKDs) product.setNamedVal(it->first, KD);
+      }
+      else if (it->first.Contains("DjVBF")){
+        ACHypothesisHelpers::ACHypothesis hypo=kSM;
+        for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
+          if (it->first.Contains(ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac))){
+            hypo=(ACHypothesisHelpers::ACHypothesis)iac;
+            break;
+          }
+        }
+        DjVBF[hypo]=KD;
         if (recordCategorizationKDs) product.setNamedVal(it->first, KD);
       }
       else{

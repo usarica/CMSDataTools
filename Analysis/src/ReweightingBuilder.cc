@@ -340,6 +340,7 @@ ExtendedBinning ReweightingBuilder::getTrueMassBinning(std::vector<CJLSTTree*> c
   GenHMassBinning.addBinBoundary(theSqrts*1000.);
 
   if (trees.empty()) return GenHMassBinning;
+  SampleHelpers::makeGlobalMELA(theSqrts);
 
   if (forceMass<0.){ // Determine from the masses in the list
     vector<double> masslist;

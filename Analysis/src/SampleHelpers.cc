@@ -156,7 +156,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
   std::vector<TString> samples;
   if (sqrts!=13) return samples;
 
-  if (CJLSTversion>180121){
+  if (CJLSTversion>180212){
     MELAout << "SampleHelpers::constructSamplesList: Check ggH and ZH samples list before proceeding" << endl;
     assert(0);
   }

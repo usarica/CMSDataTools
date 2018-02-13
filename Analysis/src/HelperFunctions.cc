@@ -676,6 +676,8 @@ template<> void HelperFunctions::addPointsBetween<TGraph>(TGraph*& tgOriginal, d
   TGraph* tgtmp = makeGraphFromPair(tmpPoints, "tgtmp");
   TSpline3* sptmp = convertGraphToSpline3(tgtmp);
 
+  MELAout << "HelperFunctions::addPointsBetween: Adding " << nadd << " points between " << xy[0][pfirst] << " and " << xy[0][plast] << endl;
+
   double addWidth = (xmax-xmin)/double(nadd+1);
   for (unsigned int it=1; it<=nadd; it++){
     double xnew = xmin + addWidth*double(it);
@@ -703,6 +705,8 @@ template<> void HelperFunctions::addPointsBetween<TGraphErrors>(TGraphErrors*& t
 
   TGraph* tgtmp = makeGraphFromPair(tmpPoints, "tgtmp");
   TSpline3* sptmp = convertGraphToSpline3(tgtmp);
+
+  MELAout << "HelperFunctions::addPointsBetween: Adding " << nadd << " points between " << xy[0][pfirst] << " and " << xy[0][plast] << endl;
 
   double addWidth = (xmax-xmin)/double(nadd+1);
   for (unsigned int it=1; it<=nadd; it++){

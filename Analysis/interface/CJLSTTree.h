@@ -15,7 +15,6 @@ protected:
 public:
   const TString sampleIdentifier;
   float MHVal;
-  float GHVal;
 
   static TString constructCJLSTSamplePath(TString strsample);
 
@@ -24,7 +23,6 @@ public:
 
   unsigned int getNGenNoPU();
   float getNGenWithPU();
-  float getTrueBW(float const* overrideMH=nullptr);
 
   void setAssociatedSet(CJLSTSet* inSet){ associatedSet = inSet; }
   CJLSTSet* getAssociatedSet(){ return associatedSet; }

@@ -159,21 +159,22 @@ TString DiscriminantClasses::getKDLabel(TString name){ return getKDLabel(getKDTy
 float DiscriminantClasses::getKDWP(DiscriminantClasses::Type type){
   switch (type){
   case kDjVBF:
-    return 0.370614;
+    return 0.37605;
   case kDjjVBF:
   case kDjjVBFL1:
   case kDjjVBFa2:
   case kDjjVBFa3:
-    return 0.474421;
+    return 0.4894;
   case kDjjZH:
   case kDjjZHL1:
   case kDjjZHa2:
   case kDjjZHa3:
+    return 0.52419;
   case kDjjWH:
   case kDjjWHL1:
   case kDjjWHa2:
   case kDjjWHa3:
-    return 0.879954;
+    return 0.52597;
   default:
     return 0.5;
   };

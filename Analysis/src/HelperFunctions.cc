@@ -1333,7 +1333,7 @@ void HelperFunctions::CopyDirectory(TDirectory* source, TTree*(*fcnTree)(TTree*)
   savdir->cd();
 }
 
-void HelperFunctions::extractTreesFromDirectory(TDirectory* source, std::vector<TTree*> res, bool doClone){
+void HelperFunctions::extractTreesFromDirectory(TDirectory* source, std::vector<TTree*>& res, bool doClone){
   TDirectory* target = gDirectory;
 
   source->cd();
@@ -1359,6 +1359,7 @@ void HelperFunctions::extractTreesFromDirectory(TDirectory* source, std::vector<
       bool alreadyCopied=false;
       for (auto& k:copiedTrees){
         if (k==key->GetName()){
+          MELAout << "- HelperFunctions::GetTreesInDirectory: Tree " << key->GetName() << " already copied." << endl;
           alreadyCopied=true;
           break;
         }

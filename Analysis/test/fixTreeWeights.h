@@ -5,21 +5,31 @@
 
 
 TTree* fixTreeWeights(TTree* tree){
-  const unsigned int nMarginalMax = 100;
-  const unsigned int nMarginalMaxMult = 1000;
-  const float nMarginalMaxFrac = 1./static_cast<float const>(nMarginalMaxMult);
-  const unsigned int countThreshold=nMarginalMaxMult*nMarginalMax;
-
+  if (!tree) return nullptr;
   const TString treename=tree->GetName();
   float ZZMass, weight;
   tree->SetBranchAddress("ZZMass", &ZZMass);
   tree->SetBranchAddress("weight", &weight);
-
-  int const nbinsraw = (1000*theSqrts-70)/5;
-  TH1F* hmass = new TH1F("hmass", "", nbinsraw, 70, 13000);
+  const int nEntries = tree->GetEntries();
   TTree* newtree = tree->CloneTree(0);
+
+  unsigned int nMarginalMax;
+  if (nEntries>100000) nMarginalMax=100;
+  else nMarginalMax=50;
+  unsigned int nMarginalMaxMult;
+  if (nEntries>100000) nMarginalMaxMult=1000;
+  else if (nEntries>50000) nMarginalMaxMult=500;
+  else nMarginalMaxMult=100;
+  const float nMarginalMaxFrac = 1./static_cast<float>(nMarginalMaxMult);
+  const unsigned int countThreshold=nMarginalMaxMult*nMarginalMax;
+
+  const float massLow = 70.;
+  const float massHigh = theSqrts*1000.;
+  const float massWidth = 5.;
+  int const nbinsraw = (massHigh-massLow)/massWidth+0.5;
+  TH1F* hmass = new TH1F("hmass", "", nbinsraw, massLow, massHigh);
   // Initial loop over the tree to count the events in each bin
-  for (int ev=0; ev<tree->GetEntries(); ev++){
+  for (int ev=0; ev<nEntries; ev++){
     tree->GetEntry(ev);
     hmass->Fill(ZZMass);
   }
@@ -48,7 +58,7 @@ TTree* fixTreeWeights(TTree* tree){
     << "counts.size()=" << counts.size() << "=?" << "nbins=" << binning.getNbins()
     << endl;
   // These lines guarantee count>countThreshold in every bin
-  if (counts.at(0)<countThreshold){
+  if (counts.at(0)<countThreshold && counts.size()>1){
     counts.at(1) += counts.at(0);
     counts.erase(counts.begin());
     binning.removeBinLowEdge(1);
@@ -65,7 +75,7 @@ TTree* fixTreeWeights(TTree* tree){
     << endl;
   vector<vector<float>> wgtcollList;
   wgtcollList.assign(binning.getNbins(), vector<float>());
-  for (int ev=0; ev<tree->GetEntries(); ev++){
+  for (int ev=0; ev<nEntries; ev++){
     tree->GetEntry(ev);
     int bin = binning.getBin(ZZMass);
     if (bin>=0 && bin<(int)binning.getNbins()){
@@ -94,7 +104,7 @@ TTree* fixTreeWeights(TTree* tree){
     wgtThresholds.push_back(threshold);
   }
   
-  for (int ev=0; ev<tree->GetEntries(); ev++){
+  for (int ev=0; ev<nEntries; ev++){
     tree->GetEntry(ev);
     int bin = binning.getBin(ZZMass);
     if (bin>=0 && bin<(int)binning.getNbins() && fabs(weight)>wgtThresholds.at(bin)) weight = pow(wgtThresholds.at(bin), 2)/weight;

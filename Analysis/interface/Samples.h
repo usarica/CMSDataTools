@@ -5,8 +5,8 @@
 #include <string>
 
 // CJLST samples directory
-//const unsigned int CJLSTversion = 180212;
-const unsigned int CJLSTversion = 180121;
+const unsigned int CJLSTversion = 180212;
+//const unsigned int CJLSTversion = 180121;
 const TString CJLSTdate = std::to_string(CJLSTversion);
 const TString CJLSTrootdir = HostHelpers::GetCJLSTSamplesDirectory(CJLSTdate);
 const TString CJLSTsamplesdir = CJLSTrootdir + "/" + CJLSTdate;

@@ -59,10 +59,11 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
+  coutput_common+="Stage1/";
   gSystem->Exec("mkdir -p " + coutput_common);
 
   TString OUTPUT_NAME = Form(
-    "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1",
+    "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG",
     strChannel.Data(), strCategory.Data(),
     getACHypothesisName(hypo).Data(), theProcess.getProcessName().Data(),
     strSystematics.Data()
@@ -237,21 +238,30 @@ void makeGGTemplatesFromPOWHEG_two(const Channel channel, const Category categor
   TString strdate = todaysdate();
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
-  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
+  TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
+  TString coutput_common=cinput_common;
+  cinput_common+="Stage1/";
+  coutput_common+="Stage2/";
 
   TString INPUT_NAME = Form(
-    "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1",
+    "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG",
     strChannel.Data(), strCategory.Data(),
     getACHypothesisName(hypo).Data(), theProcess.getProcessName().Data(),
     strSystematics.Data()
   );
   INPUT_NAME += ".root";
-  TString cinput = coutput_common + INPUT_NAME;
+  TString cinput = cinput_common + INPUT_NAME;
+  // Test for the presence of the file
   if (gSystem->AccessPathName(cinput)) makeGGTemplatesFromPOWHEG_one(channel, category, hypo, syst, fixedDate);
+  // Test again and fail if file still doesn't exist
+  if (gSystem->AccessPathName(cinput)){
+    MELAerr << "File " << cinput << " still doesn't exist. Reason is not understood. Quitting..." << endl;
+    return;
+  }
 
   gSystem->Exec("mkdir -p " + coutput_common);
   TString OUTPUT_NAME = Form(
-    "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG_Stage2",
+    "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG",
     strChannel.Data(), strCategory.Data(),
     getACHypothesisName(hypo).Data(), theProcess.getProcessName().Data(),
     strSystematics.Data()
@@ -276,8 +286,8 @@ void makeGGTemplatesFromPOWHEG_two(const Channel channel, const Category categor
   foutput->Close();
 
   MELAout << "===============================" << endl;
-  MELAout << "Stage 1 file " << cinput << " is no longer needed. Removing the file..." << endl;
-  gSystem->Exec("rm -f " + cinput);
+  //MELAout << "Stage 1 file " << cinput << " is no longer needed. Removing the file..." << endl;
+  //gSystem->Exec("rm -f " + cinput);
   MELAout << "===============================" << endl;
 
   MELAout.close();
@@ -295,6 +305,7 @@ void makeGGTemplatesFromPOWHEG_checkstage(
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
   const TString strSystematics = getSystematicsName(syst);
+  const TString strStage = Form("Stage%i", istage);
   std::vector<ProcessHandleType::HypothesisType> tplset = theProcess.getHypothesesForACHypothesis(kSM);
   if (hypo!=kSM){
     std::vector<ProcessHandleType::HypothesisType> tplset_tmp = theProcess.getHypothesesForACHypothesis(hypo);
@@ -313,24 +324,24 @@ void makeGGTemplatesFromPOWHEG_checkstage(
   TString strdate = todaysdate();
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
-  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
+  TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/" + strStage + "/";
+  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Check_" + strStage + "/";
 
   vector<TFile*> finputList;
   for (unsigned int f=0; f<2; f++){
     if (f==1 && hypo==kSM) break;
     ACHypothesis fhypo = (f==1 ? hypo : kSM);
     TString INPUT_NAME = Form(
-      "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG_Stage%i",
+      "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG",
       strChannel.Data(), strCategory.Data(),
       getACHypothesisName(fhypo).Data(), theProcess.getProcessName().Data(),
-      strSystematics.Data(), istage
+      strSystematics.Data()
     );
-    INPUT_NAME += ".root";
-    TString cinput = coutput_common + INPUT_NAME;
+    TString cinput = cinput_common + INPUT_NAME;
     if (gSystem->AccessPathName(cinput)){
-      if (istage==1) makeGGTemplatesFromPOWHEG_one(channel, category, fhypo, syst, fixedDate);
-      else if (istage==2) makeGGTemplatesFromPOWHEG_two(channel, category, fhypo, syst, fixedDate);
-      else return;
+      MELAerr << "File " << cinput << " is not found! Run " << strStage << " functions first." << endl;
+      for (TFile*& ff:finputList) ff->Close();
+      return;
     }
     TFile* ftmp = TFile::Open(cinput, "read");
     finputList.push_back(ftmp);
@@ -338,11 +349,11 @@ void makeGGTemplatesFromPOWHEG_checkstage(
 
   gSystem->Exec("mkdir -p " + coutput_common);
   TString OUTPUT_NAME = Form(
-    "HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Check%sDiscriminants_Stage%i",
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Check%sDiscriminants",
     strChannel.Data(), strCategory.Data(),
     theProcess.getProcessName().Data(),
     strSystematics.Data(),
-    getACHypothesisName(hypo).Data(), istage
+    getACHypothesisName(hypo).Data()
   );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";

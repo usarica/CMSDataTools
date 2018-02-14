@@ -50,24 +50,25 @@ void plotProcessCheckStage(
   const TString strCategory = getCategoryName(category);
   const TString strSystematics = getSystematicsName(syst);
   const TString strACHypo = getACHypothesisName(hypo);
+  const TString strStage = Form("Stage%i", istage);
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
   TString strdate = todaysdate();
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
-  TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
-  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Plots/" + strACHypo + "/" + strChannel + "/" + strCategory + "/" + strGenerator + "/" + strSystematics + "/";
+  TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Check_" + strStage + "/";
+  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Plots/" + strStage + "/"
+    + strACHypo + "/" + strChannel + "/" + strCategory + "/" + strGenerator + "/" + strSystematics + "/";
 
   gSystem->Exec("mkdir -p " + coutput_common);
   TString INPUT_NAME = Form(
-    "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Check%sDiscriminants_Stage%i",
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Check%sDiscriminants",
     strChannel.Data(), strCategory.Data(),
     thePerProcessHandle->getProcessName().Data(),
     strSystematics.Data(),
     strGenerator.Data(),
-    getACHypothesisName(hypo).Data(),
-    istage
+    getACHypothesisName(hypo).Data()
   );
   TString OUTPUT_NAME = INPUT_NAME;
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
@@ -554,6 +555,7 @@ void plotProcessCheckStage_SystPairs(
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
   const TString strACHypo = getACHypothesisName(hypo);
+  const TString strStage = Form("Stage%i", istage);
   TString strSystematics = getSystematicsName(syst);
   replaceString(strSystematics, "Up", "Syst");
 
@@ -567,48 +569,42 @@ void plotProcessCheckStage_SystPairs(
   TString strdate = todaysdate();
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
-  TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
-  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Plots/" + strACHypo + "/" + strChannel + "/" + strCategory + "/" + strGenerator + "/" + strSystematics + "/";
+  TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Check_" + strStage + "/";
+  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Plots/" + strStage + "/"
+    + strACHypo + "/" + strChannel + "/" + strCategory + "/" + strGenerator + "/" + strSystematics + "/";
 
   gSystem->Exec("mkdir -p " + coutput_common);
   TString INPUT_NOMINAL_NAME = Form(
-    "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Check%sDiscriminants_Stage%i%s",
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Check%sDiscriminants.root",
     strChannel.Data(), strCategory.Data(),
     thePerProcessHandle->getProcessName().Data(),
     getSystematicsName(sNominal).Data(),
     strGenerator.Data(),
-    getACHypothesisName(hypo).Data(),
-    istage,
-    ".root"
+    getACHypothesisName(hypo).Data()
   );
   TString INPUT_DN_NAME = Form(
-    "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Check%sDiscriminants_Stage%i%s",
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Check%sDiscriminants.root",
     strChannel.Data(), strCategory.Data(),
     thePerProcessHandle->getProcessName().Data(),
     strSystematics_Dn.Data(),
     strGenerator.Data(),
-    getACHypothesisName(hypo).Data(),
-    istage,
-    ".root"
+    getACHypothesisName(hypo).Data()
   );
   TString INPUT_UP_NAME = Form(
-    "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Check%sDiscriminants_Stage%i%s",
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Check%sDiscriminants.root",
     strChannel.Data(), strCategory.Data(),
     thePerProcessHandle->getProcessName().Data(),
     strSystematics_Up.Data(),
     strGenerator.Data(),
-    getACHypothesisName(hypo).Data(),
-    istage,
-    ".root"
+    getACHypothesisName(hypo).Data()
   );
   TString OUTPUT_NAME = Form(
-    "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Check%sDiscriminants_Stage%i",
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Check%sDiscriminants",
     strChannel.Data(), strCategory.Data(),
     thePerProcessHandle->getProcessName().Data(),
     strSystematics.Data(),
     strGenerator.Data(),
-    getACHypothesisName(hypo).Data(),
-    istage
+    getACHypothesisName(hypo).Data()
   );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += "_plot.root";

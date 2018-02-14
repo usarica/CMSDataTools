@@ -150,7 +150,7 @@ namespace HelperFunctions{
   void CopyDirectory(TDirectory* source, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*));
 
   // Function to extract all trees in a file
-  void extractTreesFromDirectory(TDirectory* source, std::vector<TTree*> res, bool doClone=false);
+  void extractTreesFromDirectory(TDirectory* source, std::vector<TTree*>& res, bool doClone=false);
 
   // Function to extract all histograms from file
   template<typename T> void extractHistogramsFromDirectory(TDirectory* source, std::vector<T*>& histolist);

@@ -56,9 +56,15 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
+  coutput_common+="Stage1/";
   gSystem->Exec("mkdir -p " + coutput_common);
 
-  TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1", strChannel.Data(), strCategory.Data(), theProcess.getProcessName().Data(), strSystematics.Data());
+  TString OUTPUT_NAME = Form(
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG",
+    strChannel.Data(), strCategory.Data(),
+    theProcess.getProcessName().Data(),
+    strSystematics.Data()
+  );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -189,15 +195,34 @@ void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category cate
   TString strdate = todaysdate();
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
-  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
+  TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
+  TString coutput_common=cinput_common;
+  cinput_common+="Stage1/";
+  coutput_common+="Stage2/";
 
-  TString INPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage1", strChannel.Data(), strCategory.Data(), theProcess.getProcessName().Data(), strSystematics.Data());
+  TString INPUT_NAME = Form(
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG",
+    strChannel.Data(), strCategory.Data(),
+    theProcess.getProcessName().Data(),
+    strSystematics.Data()
+  );
   INPUT_NAME += ".root";
-  TString cinput = coutput_common + INPUT_NAME;
-  if (gSystem->AccessPathName(cinput)) makeQQBkgTemplatesFromPOWHEG_one(channel, category, syst);
+  TString cinput = cinput_common + INPUT_NAME;
+  // Test for the presence of the file
+  if (gSystem->AccessPathName(cinput)) makeQQBkgTemplatesFromPOWHEG_one(channel, category, syst, fixedDate);
+  // Test again and fail if file still doesn't exist
+  if (gSystem->AccessPathName(cinput)){
+    MELAerr << "File " << cinput << " still doesn't exist. Reason is not understood. Quitting..." << endl;
+    return;
+  }
 
   gSystem->Exec("mkdir -p " + coutput_common);
-  TString OUTPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage2", strChannel.Data(), strCategory.Data(), theProcess.getProcessName().Data(), strSystematics.Data());
+  TString OUTPUT_NAME = Form(
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG",
+    strChannel.Data(), strCategory.Data(),
+    theProcess.getProcessName().Data(),
+    strSystematics.Data()
+  );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";
   OUTPUT_LOG_NAME += ".log";
@@ -218,14 +243,18 @@ void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category cate
   foutput->Close();
 
   MELAout << "===============================" << endl;
-  MELAout << "Stage 1 file " << cinput << " is no longer needed. Removing the file..." << endl;
-  gSystem->Exec("rm -f " + cinput);
+  //MELAout << "Stage 1 file " << cinput << " is no longer needed. Removing the file..." << endl;
+  //gSystem->Exec("rm -f " + cinput);
   MELAout << "===============================" << endl;
 
   MELAout.close();
 }
 
-void makeQQBkgTemplatesFromPOWHEG_checkstage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate){
+void makeQQBkgTemplatesFromPOWHEG_checkstage(
+  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
+  const unsigned int istage,
+  const TString fixedDate
+){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
   if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
@@ -233,6 +262,7 @@ void makeQQBkgTemplatesFromPOWHEG_checkstage(const Channel channel, const Catego
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
   const TString strSystematics = getSystematicsName(syst);
+  const TString strStage = Form("Stage%i", istage);
   std::vector<ProcessHandleType::HypothesisType> tplset; tplset.push_back(ProcessHandleType::QQBkg);
   const unsigned int ntpls = tplset.size();
 
@@ -247,25 +277,29 @@ void makeQQBkgTemplatesFromPOWHEG_checkstage(const Channel channel, const Catego
   TString strdate = todaysdate();
   if (fixedDate!="") strdate=fixedDate;
   cout << "Today's date: " << strdate << endl;
-  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
+  TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/" + strStage + "/";
+  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Check_" + strStage + "/";
 
-  TString INPUT_NAME = Form("HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Stage%i", strChannel.Data(), strCategory.Data(), theProcess.getProcessName().Data(), strSystematics.Data(), istage);
-  INPUT_NAME += ".root";
-  TString cinput = coutput_common + INPUT_NAME;
+  TString INPUT_NAME = Form(
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG.root",
+    strChannel.Data(), strCategory.Data(),
+    theProcess.getProcessName().Data(),
+    strSystematics.Data()
+  );
+  TString cinput = cinput_common + INPUT_NAME;
   if (gSystem->AccessPathName(cinput)){
-    if (istage==1) makeQQBkgTemplatesFromPOWHEG_one(channel, category, syst, fixedDate);
-    else if (istage==2) makeQQBkgTemplatesFromPOWHEG_two(channel, category, syst, fixedDate);
-    else return;
+    MELAerr << "File " << cinput << " is not found! Run " << strStage << " functions first." << endl;
+    return;
   }
   TFile* finput = TFile::Open(cinput, "read");
 
   gSystem->Exec("mkdir -p " + coutput_common);
   TString OUTPUT_NAME = Form(
-    "HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Check%sDiscriminants_Stage%i",
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_POWHEG_Check%sDiscriminants",
     strChannel.Data(), strCategory.Data(),
     theProcess.getProcessName().Data(),
     strSystematics.Data(),
-    ACHypothesisHelpers::getACHypothesisName(hypo).Data(), istage
+    getACHypothesisName(hypo).Data()
   );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
   OUTPUT_NAME += ".root";

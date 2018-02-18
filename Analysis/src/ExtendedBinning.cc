@@ -17,6 +17,7 @@ ExtendedBinning::ExtendedBinning(const double* abinlow, const TString label_) : 
   }
 }
 ExtendedBinning::ExtendedBinning(const std::vector<double>& vbinlow_, const TString label_) : vbinlow(vbinlow_), label(label_){}
+ExtendedBinning::ExtendedBinning(ExtendedBinning const& other) : vbinlow(other.vbinlow), label(other.label){}
 
 bool ExtendedBinning::isValid() const{
   return (vbinlow.size()>1);

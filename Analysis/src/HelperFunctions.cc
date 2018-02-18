@@ -131,6 +131,56 @@ TF1* HelperFunctions::getFcn_a0timesexpa1X(TSpline3* sp, double xmin, double xma
   return fcn;
 }
 
+/* SPECIFIC COMMENT: Get a1 and a2 as well as a TF1 object for the formula a0+a1*exp(x/a2) */
+TF1* HelperFunctions::getFcn_a0plusa1timesexpXovera2(TSpline3* sp, double xmin, double xmax, bool useLowBound){
+  double x, xp, dx, y, b, c, d;
+  double s, ss;
+  if (useLowBound){
+    x = sp->GetXmin();
+    sp->GetCoeff(0, xp, y, b, c, d); // Hopefully xp=x; we don't care about y.
+  }
+  else{
+    x = sp->GetXmax();
+    sp->GetCoeff(sp->GetNp()-2, xp, y, b, c, d); // We don't care about y.
+  }
+  dx=x-xp;
+  y = sp->Eval(x);
+  s = sp->Derivative(x); // == b + 2.*c*dx + 3.*d*dx*dx
+  ss = 2.*c + 6.*d*dx;
+
+  cout << "s = " << s << " =? b + 2.*c*dx + 3.*d*dx*dx = " << b + 2.*c*dx + 3.*d*dx*dx << endl;
+  cout << "b = " << b << ", c = " << c << ", d = " << d << endl;
+  cout << "x = " << x << ", xp = " << xp << endl;
+
+  double a0, a1, a2;
+  // y=a0+a1*exp(x/a2) => s=a1/a2*exp(x/a2), ss=a1/pow(a2, 2)*exp(x/a2)
+  TF1* fcn=nullptr;
+  if (ss!=0.){
+    a2=s/ss;
+    a1=s*a2*exp(-x/a2);
+    a0=y-a1*exp(-x/a2);
+
+    TString fcnName;
+    if (useLowBound) fcnName = Form("lowFcn_%s", sp->GetName());
+    else fcnName = Form("highFcn_%s", sp->GetName());
+    fcn = new TF1(fcnName, "[0]+[1]*exp(x/[2])", xmin, xmax);
+    fcn->SetParameter(0, a0);
+    fcn->SetParameter(1, a1);
+    fcn->SetParameter(2, a2);
+  }
+  else{
+    MELAout << "HelperFunctions::getFcn_a0plusa1timesexpXovera2: Second derivative was 0! Forcing constant interpolation." << endl;
+    a0=y;
+
+    TString fcnName;
+    if (useLowBound) fcnName = Form("lowFcn_%s", sp->GetName());
+    else fcnName = Form("highFcn_%s", sp->GetName());
+    fcn = new TF1(fcnName, "[0]", xmin, xmax);
+    fcn->SetParameter(0, a0);
+  }
+  return fcn;
+}
+
 
 TSpline3* HelperFunctions::convertGraphToSpline3(TGraph* tg, bool faithfulFirst, bool faithfulSecond, double* dfirst, double* dlast){
   unsigned int nbins = tg->GetN();
@@ -249,16 +299,23 @@ TGraph* HelperFunctions::createROCFromDistributions(TH1* hA, TH1* hB, TString na
 }
 
 TGraphErrors* HelperFunctions::makeGraphFromTH1(TH1* hx, TH1* hy, TString name){
-  if (hx->GetNbinsX()!=hy->GetNbinsX()){
+  if (!hy) return nullptr;
+  if (hx && hx->GetNbinsX()!=hy->GetNbinsX()){
     MELAerr << "Number of bins for x coordinate != those for y" << endl;
     assert(0);
   }
-  unsigned int nbins = hx->GetNbinsX();
+  unsigned int nbins = hy->GetNbinsX();
   double* xexyey[4];
   for (unsigned int ix=0; ix<4; ix++) xexyey[ix] = new double[nbins];
   for (unsigned int bin=0; bin<nbins; bin++){
-    xexyey[0][bin] = hx->GetBinContent(bin+1);
-    xexyey[1][bin] = hx->GetBinError(bin+1);
+    if (hx){
+      xexyey[0][bin] = hx->GetBinContent(bin+1);
+      xexyey[1][bin] = hx->GetBinError(bin+1);
+    }
+    else{
+      xexyey[0][bin] = hy->GetBinCenter(bin+1);
+      xexyey[1][bin] = 0;
+    }
 
     //MELAout << "Bin " << bin << " x-center: " << xexyey[0][bin] << " +- " << xexyey[1][bin] << endl;
     xexyey[2][bin] = hy->GetBinContent(bin+1);
@@ -456,6 +513,51 @@ void HelperFunctions::addPoint(TGraphErrors*& tg, double x, double y, double ex,
   for (unsigned int i=0; i<4; i++) delete[] xynew[i];
 }
 
+TGraph* HelperFunctions::genericPatcher(
+  TGraph* tg, const TString newname,
+  double const xmin, double const xmax,
+  TF1* (*lowf)(TSpline3*, double, double, bool),
+  TF1* (*highf)(TSpline3*, double, double, bool),
+  bool useFaithfulSlopeFirst, bool useFaithfulSlopeSecond,
+  vector<pair<pair<double, double>, unsigned int>>* addpoints
+){
+  if (addpoints!=0){ for (auto& prange : *addpoints) addPointsBetween(tg, prange.first.first, prange.first.second, prange.second); }
+
+  int n = tg->GetN();
+  double* xx = tg->GetX();
+  double* yy = tg->GetY();
+
+  TSpline3* sp = convertGraphToSpline3(tg, useFaithfulSlopeFirst, useFaithfulSlopeSecond);
+  double tglow = xx[0];
+  double tghigh = xx[tg->GetN()-1];
+  TF1* lowFcn = lowf(sp, xmin, tglow, true);
+  TF1* highFcn = highf(sp, tghigh, xmax, false);
+  lowFcn->SetNpx((int) (tglow-xmin)*5);
+  highFcn->SetNpx((int) (xmax-tghigh)*5);
+  delete sp;
+
+  vector<pair<double, double>> points;
+  for (double xval=xmin; xval<tglow; xval+=1){
+    double yval = lowFcn->Eval(xval);
+    addByLowest<double, double>(points, xval, yval);
+  }
+  delete lowFcn;
+
+  for (int ix=0; ix<n; ix++) addByLowest<double, double>(points, xx[ix], yy[ix]);
+
+  int tghigh_int = ((int) ((tghigh+1.)/100.+0.5))*100;
+  if (tghigh>=(double) tghigh_int) tghigh_int+=100;
+  for (double xval=tghigh_int; xval<=xmax; xval+=100){
+    double yval = highFcn->Eval(xval);
+    addByLowest<double, double>(points, xval, yval);
+  }
+  delete highFcn;
+
+  TGraph* res = makeGraphFromPair(points, newname);
+  return res;
+}
+
+
 void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX, double omitbelow, double omitabove, int nIter_, double threshold_){
   unsigned int nbins_slice = tgSlice->GetN();
   double* xy_slice[2]={
@@ -536,7 +638,7 @@ void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixe
   for (unsigned int ix=0; ix<2; ix++) delete[] xy_mod[ix];
 }
 void HelperFunctions::regularizeSlice(TGraphErrors* tgSlice, std::vector<double>* fixedX, double omitbelow, double omitabove, int nIter_, double threshold_, double acceleration_){
-  const int ndim=4;
+  const unsigned int ndim=4;
   unsigned int nbins_slice = tgSlice->GetN();
   double* xy_slice[ndim]={
     tgSlice->GetX(),
@@ -640,6 +742,25 @@ void HelperFunctions::regularizeSlice(TGraphErrors* tgSlice, std::vector<double>
   }
   for (unsigned int ix=0; ix<ndim; ix++) delete[] xy_mod[ix];
 }
+
+float HelperFunctions::calculateEfficiencyError(
+  float const sumW, float const sumWAll,
+  float const sumWsq, float const sumWsqAll
+  ){
+  float const& sumWp=sumW;
+  float const& sumWsqp=sumWsq;
+  float const sumWm = sumWAll-sumWp;
+  float const sumWsqm = sumWsqAll-sumWsqp;
+  float numerator, denominator;
+  float ratio=0;
+  if (sumWAll!=0.){
+    numerator = sqrt(sumWsqp*pow(sumWm, 2) + sumWsqm*pow(sumWp, 2));
+    denominator = pow(sumWAll, 2);
+    ratio = numerator/denominator;
+  }
+  return ratio;
+}
+
 
 template<> void HelperFunctions::replaceString<TString, const TString>(TString& strinput, const TString strTakeOut, const TString strPutIn){
   Ssiz_t ipos=strinput.Index(strTakeOut);
@@ -1143,6 +1264,76 @@ template<> float HelperFunctions::computeIntegral<TH3F>(TH3F* histo, bool useWid
     }
   }
   return sum;
+}
+
+template<> void HelperFunctions::divideHistograms<TH1F>(TH1F* hnum, TH1F* hden, TH1F*& hAssign, bool useEffErr){
+  if (hnum->GetNbinsX()!=hden->GetNbinsX()) return; const int nbinsx = hnum->GetNbinsX();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    float sumW = hnum->GetBinContent(binx);
+    float sumWAll = hden->GetBinContent(binx);
+    float sumWsq = pow(hnum->GetBinError(binx), 2);
+    float sumWsqAll = pow(hden->GetBinError(binx), 2);
+    float bincontent=0;
+    float binerror=0;
+    if (sumWAll!=0.) bincontent = sumW/sumWAll;
+    if (useEffErr) binerror = calculateEfficiencyError(sumW, sumWAll, sumWsq, sumWsqAll);
+    else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+    if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
+      bincontent=0;
+      binerror=0;
+    }
+    hAssign->SetBinContent(binx, bincontent);
+    hAssign->SetBinError(binx, binerror);
+  }
+}
+template<> void HelperFunctions::divideHistograms<TH2F>(TH2F* hnum, TH2F* hden, TH2F*& hAssign, bool useEffErr){
+  if (hnum->GetNbinsX()!=hden->GetNbinsX()) return; const int nbinsx = hnum->GetNbinsX();
+  if (hnum->GetNbinsY()!=hden->GetNbinsY()) return; const int nbinsy = hnum->GetNbinsY();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    for (int biny=0; biny<=nbinsy+1; biny++){
+      float sumW = hnum->GetBinContent(binx, biny);
+      float sumWAll = hden->GetBinContent(binx, biny);
+      float sumWsq = pow(hnum->GetBinError(binx, biny), 2);
+      float sumWsqAll = pow(hden->GetBinError(binx, biny), 2);
+      float bincontent=0;
+      float binerror=0;
+      if (sumWAll!=0.) bincontent = sumW/sumWAll;
+      if (useEffErr) binerror = calculateEfficiencyError(sumW, sumWAll, sumWsq, sumWsqAll);
+      else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+      if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
+        bincontent=0;
+        binerror=0;
+      }
+      hAssign->SetBinContent(binx, biny, bincontent);
+      hAssign->SetBinError(binx, biny, binerror);
+    }
+  }
+}
+template<> void HelperFunctions::divideHistograms<TH3F>(TH3F* hnum, TH3F* hden, TH3F*& hAssign, bool useEffErr){
+  if (hnum->GetNbinsX()!=hden->GetNbinsX()) return; const int nbinsx = hnum->GetNbinsX();
+  if (hnum->GetNbinsY()!=hden->GetNbinsY()) return; const int nbinsy = hnum->GetNbinsY();
+  if (hnum->GetNbinsZ()!=hden->GetNbinsZ()) return; const int nbinsz = hnum->GetNbinsZ();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    for (int biny=0; biny<=nbinsy+1; biny++){
+      for (int binz=0; binz<=nbinsz+1; binz++){
+        float sumW = hnum->GetBinContent(binx, biny, binz);
+        float sumWAll = hden->GetBinContent(binx, biny, binz);
+        float sumWsq = pow(hnum->GetBinError(binx, biny, binz), 2);
+        float sumWsqAll = pow(hden->GetBinError(binx, biny, binz), 2);
+        float bincontent=0;
+        float binerror=0;
+        if (sumWAll!=0.) bincontent = sumW/sumWAll;
+        if (useEffErr) binerror = calculateEfficiencyError(sumW, sumWAll, sumWsq, sumWsqAll);
+        else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+        if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
+          bincontent=0;
+          binerror=0;
+        }
+        hAssign->SetBinContent(binx, biny, binz, bincontent);
+        hAssign->SetBinError(binx, biny, binz, binerror);
+      }
+    }
+  }
 }
 
 template <> void HelperFunctions::symmetrizeHistogram<TH1F>(TH1F* histo, unsigned int const axis){

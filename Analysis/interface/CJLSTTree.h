@@ -18,7 +18,7 @@ public:
 
   static TString constructCJLSTSamplePath(TString strsample);
 
-  CJLSTTree(TString strsample);
+  CJLSTTree(TString strsample, const TString treename=TREE_NAME, const TString failedtreename=TREE_FAILED_NAME, const TString countersname=COUNTERS_NAME);
   ~CJLSTTree(){}
 
   unsigned int getNGenNoPU();

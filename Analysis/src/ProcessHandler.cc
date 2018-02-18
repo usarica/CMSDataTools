@@ -15,13 +15,25 @@ ProcessHandler::ProcessHandler(ProcessType proctype_, bool useOffshell_) : proct
 void ProcessHandler::assignProcessName(){
   switch (proctype){
   case kGG:
-    procname=(useOffshell ? "ggZZ_offshell" : "gg");
+    procname=(useOffshell ? "ggZZ_offshell" : "ggZZ");
     break;
   case kVV:
-    procname= (useOffshell ? "VVZZ_offshell" : "VBF");
+    procname= (useOffshell ? "VVZZ_offshell" : "VVZZ");
+    break;
+  case kVBF:
+    procname= (useOffshell ? "VBF_offshell" : "VBF");
+    break;
+  case kZH:
+    procname= (useOffshell ? "ZZZ_offshell" : "ZH");
+    break;
+  case kWH:
+    procname= (useOffshell ? "WZZ_offshell" : "WH");
     break;
   case kQQBkg:
     procname= (useOffshell ? "qqZZ" : "bkg_qqzz");
+    break;
+  case kZX:
+    procname= (useOffshell ? "Zjets" : "Zjets");
     break;
   default:
     procname="";
@@ -437,11 +449,22 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vec
 }
 
 
-/****************/
-/* EW VV fusion */
-/****************/
-VVProcessHandler::VVProcessHandler(bool useOffshell_) : ProcessHandler(ProcessHandler::kVV, useOffshell_)
-{}
+/*************************/
+/* EW VV fusion, VBF, VH */
+/*************************/
+VVProcessHandler::VVProcessHandler(bool useOffshell_, ProcessHandler::ProcessType proctype_) : ProcessHandler(proctype_, useOffshell_){
+  if (
+    !(
+      proctype==ProcessHandler::kVV
+      ||
+      proctype==ProcessHandler::kVBF
+      ||
+      proctype==ProcessHandler::kZH
+      ||
+      proctype==ProcessHandler::kWH
+      )
+    ) MELAout << "VVProcessHandler::VVProcessHandler: Process type " << getProcessName() << " is not supported!" << endl;
+}
 
 TString VVProcessHandler::getOutputTreeName(VVProcessHandler::HypothesisType type) const{
   TString res;
@@ -629,6 +652,22 @@ std::vector<VVProcessHandler::HypothesisType> VVProcessHandler::getHypothesesFor
   return res;
 }
 TString VVProcessHandler::getProcessLabel(VVProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const{
+  TString proclabelbare;
+  switch (proctype){
+  case ProcessHandler::kVV:
+    proclabelbare="VV";
+    break;
+  case ProcessHandler::kZH:
+    proclabelbare="ZH";
+    break;
+  case ProcessHandler::kWH:
+    proclabelbare="WH";
+    break;
+  default:
+    assert(0);
+    break;
+  }
+
   TString acname;
   switch (hypo){
   case ACHypothesisHelpers::kL1:
@@ -645,28 +684,44 @@ TString VVProcessHandler::getProcessLabel(VVProcessHandler::HypothesisType type,
   };
   switch (type){
   case VVBkg:
-    return "VV #rightarrow 4l bkg.";
+    return Form("%s #rightarrow 4l bkg.", proclabelbare.Data());
   case VVSig:
-    return "VV #rightarrow 4l SM sig.";
+    return Form("%s #rightarrow 4l SM sig.", proclabelbare.Data());
   case VVBSI:
-    return "VV #rightarrow 4l SM sig.+bkg.";
+    return Form("%s #rightarrow 4l SM sig.+bkg.", proclabelbare.Data());
   case VVSigBSM:
-    return Form("VV #rightarrow 4l %s%s sig.", acname.Data(), "=1");
+    return Form("%s #rightarrow 4l %s%s sig.", proclabelbare.Data(), acname.Data(), "=1");
   case VVSigBSMSMInt0p25:
-    return Form("VV #rightarrow 4l %s%s sig.", acname.Data(), "=0.059");
+    return Form("%s #rightarrow 4l %s%s sig.", proclabelbare.Data(), acname.Data(), "=0.059");
   case VVSigBSMSMInt0p5:
-    return Form("VV #rightarrow 4l %s%s sig.", acname.Data(), "=0.2");
+    return Form("%s #rightarrow 4l %s%s sig.", proclabelbare.Data(), acname.Data(), "=0.2");
   case VVSigBSMSMInt0p75:
-    return Form("VV #rightarrow 4l %s%s sig.", acname.Data(), "=0.36");
+    return Form("%s #rightarrow 4l %s%s sig.", proclabelbare.Data(), acname.Data(), "=0.36");
   case VVBBI:
-    return Form("VV #rightarrow 4l %s%s sig.+bkg.", acname.Data(), "=1");
+    return Form("%s #rightarrow 4l %s%s sig.+bkg.", proclabelbare.Data(), acname.Data(), "=1");
   case VVBMI:
-    return Form("VV #rightarrow 4l %s%s sig.+bkg.", acname.Data(), "=0.5");
+    return Form("%s #rightarrow 4l %s%s sig.+bkg.", proclabelbare.Data(), acname.Data(), "=0.5");
   default:
     return "";
   };
 }
 TString VVProcessHandler::getProcessLabel(VVProcessHandler::TemplateType type, ACHypothesisHelpers::ACHypothesis hypo) const{
+  TString proclabelbare;
+  switch (proctype){
+  case ProcessHandler::kVV:
+    proclabelbare="VV";
+    break;
+  case ProcessHandler::kZH:
+    proclabelbare="ZH";
+    break;
+  case ProcessHandler::kWH:
+    proclabelbare="WH";
+    break;
+  default:
+    assert(0);
+    break;
+  }
+
   TString acname;
   switch (hypo){
   case ACHypothesisHelpers::kL1:
@@ -683,23 +738,23 @@ TString VVProcessHandler::getProcessLabel(VVProcessHandler::TemplateType type, A
   };
   switch (type){
   case VVTplBkg:
-    return "VV #rightarrow 4l bkg.";
+    return Form("%s #rightarrow 4l bkg.", proclabelbare.Data());
   case VVTplSig:
-    return "VV #rightarrow 4l SM sig.";
+    return Form("%s #rightarrow 4l SM sig.", proclabelbare.Data());
   case VVTplInt_Re:
-    return "VV #rightarrow 4l SM sig.-bkg. interference";
+    return Form("%s #rightarrow 4l SM sig.-bkg. interference", proclabelbare.Data());
   case VVTplSigBSM:
-    return Form("VV #rightarrow 4l %s sig.", acname.Data());
+    return Form("%s #rightarrow 4l %s sig.", proclabelbare.Data(), acname.Data());
   case VVTplSigBSMSMInt_ai1_1_Re:
-    return Form("VV #rightarrow 4l %s%s interference", acname.Data(), "^{1}");
+    return Form("%s #rightarrow 4l %s%s interference", proclabelbare.Data(), acname.Data(), "^{1}");
   case VVTplSigBSMSMInt_ai1_2_PosDef:
-    return Form("VV #rightarrow 4l %s%s interference", acname.Data(), "^{2}");
+    return Form("%s #rightarrow 4l %s%s interference", proclabelbare.Data(), acname.Data(), "^{2}");
   case VVTplSigBSMSMInt_ai1_3_Re:
-    return Form("VV #rightarrow 4l %s%s interference", acname.Data(), "^{3}");
+    return Form("%s #rightarrow 4l %s%s interference", proclabelbare.Data(), acname.Data(), "^{3}");
   case VVTplIntBSM_ai1_1_Re:
-    return Form("VV #rightarrow 4l %s%s sig.-bkg. interference", acname.Data(), "^{1}");
+    return Form("%s #rightarrow 4l %s%s sig.-bkg. interference", proclabelbare.Data(), acname.Data(), "^{1}");
   case VVTplIntBSM_ai1_2_Re:
-    return Form("VV #rightarrow 4l %s%s sig.-bkg. interference", acname.Data(), "^{2}");
+    return Form("%s #rightarrow 4l %s%s sig.-bkg. interference", proclabelbare.Data(), acname.Data(), "^{2}");
   default:
     return "";
   };
@@ -769,22 +824,24 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
 
     pairing(float* pa, float* pb, float* pc, float* pint, const float mult, const float cA, const float cB, const float cC) : PA(pa), PB(pb), PC(pc), Pint(pint), multInt(mult), coefA(cA), coefB(cB), coefC(cC) {}
 
-    void scale(){
-      assert((PA && coefA==0.) || (PB && coefB==0.) || (PC && coefC==0.));
+    bool scale(){
+      assert((PA && coefA!=0.) || (PB && coefB!=0.) || (PC && coefC!=0.));
+      bool res=false;
       float thr=multInt;
-      if (PA && *PA<0.){
-        *PA=0.;
+      if (PA){
+        if (*PA<0.){ *PA=0.; res=true; }
         thr *= pow(*PA, coefA);
       }
-      if (PB && *PB<0.){
-        *PB=0.;
+      if (PB){
+        if (*PB<0.){ *PB=0.; res=true; }
         thr *= pow(*PB, coefB);
       }
-      if (PC && *PC<0.){
-        *PC=0.;
+      if (PC){
+        if (*PC<0.){ *PC=0.; res=true; }
         thr *= pow(*PC, coefC);
       }
-      if (Pint && fabs(*Pint)>thr) *Pint *= thr*0.99/fabs(*Pint);
+      if (Pint && fabs(*Pint)>thr){ *Pint *= thr*0.99/fabs(*Pint); res=true; }
+      return res;
     }
   };
 
@@ -798,7 +855,9 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
     pairings.push_back(pairing(&vals.at(VVTplBkg), &vals.at(VVTplSig), &vals.at(VVTplSigBSM), &vals.at(VVTplIntBSM_ai1_1_Re), 2., 0.5, 0.25, 0.25));
     pairings.push_back(pairing(&vals.at(VVTplBkg), nullptr, &vals.at(VVTplSigBSM), &vals.at(VVTplIntBSM_ai1_2_Re), 2., 0.5, 0, 0.5));
   }
-  for (auto& pair:pairings) pair.scale();
+  //unsigned int nBinsCorrected=0;
+  for (auto& pair:pairings) /*nBinsCorrected += */pair.scale();
+  //MELAout << "VVProcessHandler::imposeTplPhysicality: Corrected number of bins: " << nBinsCorrected << endl;
 }
 template<> void VVProcessHandler::recombineHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   if (vals.empty()) return;
@@ -1015,6 +1074,61 @@ template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::
 template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals) const{
   typedef TH3F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nQQBkgTypes)) return;
+  for (T*& hh:vals){
+    HelperFunctions::wipeOverUnderFlows<T>(hh);
+    HelperFunctions::divideBinWidth<T>(hh);
+    hh->Scale(xsecScale);
+    hh->SetTitle(getProcessLabel());
+    TemplateHelpers::setTemplateAxisLabels<T>(hh);
+  }
+}
+
+
+/******************/
+/* Z+X background */
+/******************/
+ZXProcessHandler::ZXProcessHandler(bool useOffshell_) : ProcessHandler(ProcessHandler::kZX, useOffshell_)
+{}
+
+TString ZXProcessHandler::getOutputTreeName() const{
+  TString res = Form("T_%s_Tree", getProcessName().Data());
+  return res;
+}
+TString ZXProcessHandler::getTemplateName() const{
+  TString res = Form("T_%s", getProcessName().Data());
+  return res;
+}
+TString ZXProcessHandler::getProcessLabel() const{ return "Z+jets"; }
+int ZXProcessHandler::castHypothesisTypeToInt(ZXProcessHandler::HypothesisType type){ return (int) type; }
+int ZXProcessHandler::castTemplateTypeToInt(ZXProcessHandler::TemplateType type){ return (int) type; }
+ZXProcessHandler::HypothesisType ZXProcessHandler::castIntToHypothesisType(int type){ return (HypothesisType) type; }
+ZXProcessHandler::TemplateType ZXProcessHandler::castIntToTemplateType(int type){ return (TemplateType) type; }
+
+template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals) const{
+  typedef TH1F T;
+  if ((int) vals.size()!=castHypothesisTypeToInt(nZXTypes)) return;
+  for (T*& hh:vals){
+    HelperFunctions::wipeOverUnderFlows<T>(hh);
+    HelperFunctions::divideBinWidth<T>(hh);
+    hh->Scale(xsecScale);
+    hh->SetTitle(getProcessLabel());
+    TemplateHelpers::setTemplateAxisLabels<T>(hh);
+  }
+}
+template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals) const{
+  typedef TH2F T;
+  if ((int) vals.size()!=castHypothesisTypeToInt(nZXTypes)) return;
+  for (T*& hh:vals){
+    HelperFunctions::wipeOverUnderFlows<T>(hh);
+    HelperFunctions::divideBinWidth<T>(hh);
+    hh->Scale(xsecScale);
+    hh->SetTitle(getProcessLabel());
+    TemplateHelpers::setTemplateAxisLabels<T>(hh);
+  }
+}
+template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals) const{
+  typedef TH3F T;
+  if ((int) vals.size()!=castHypothesisTypeToInt(nZXTypes)) return;
   for (T*& hh:vals){
     HelperFunctions::wipeOverUnderFlows<T>(hh);
     HelperFunctions::divideBinWidth<T>(hh);

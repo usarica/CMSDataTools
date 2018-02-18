@@ -67,7 +67,7 @@ namespace SystematicsHelpers{
     eLepSFEleDn, eLepSFEleUp,
     eLepSFMuDn, eLepSFMuUp,
     eJECDn, eJECUp,
-    eZJetsStatsDn, eZJetsStatsUp,
+    eZXStatsDn, eZXStatsUp,
     nSystematicVariations
   };
 
@@ -76,7 +76,7 @@ namespace SystematicsHelpers{
   std::vector<SystematicsHelpers::SystematicVariationTypes> getProcessSystematicVariations(
     CategorizationHelpers::Category const category,
     SampleHelpers::Channel const channel,
-    ProcessHandler::ProcessType const type
+    ProcessHandler::ProcessType const proc
   );
 
   bool systematicAllowed(

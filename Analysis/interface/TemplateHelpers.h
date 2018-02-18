@@ -23,6 +23,7 @@ namespace TemplateHelpers{
   void getCategorizationDiscriminants(const SystematicsHelpers::SystematicVariationTypes syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);
   ExtendedBinning getDiscriminantBinning(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell);
 
+
   /****************/
   /* Gluon fusion */
   /****************/
@@ -37,11 +38,39 @@ namespace TemplateHelpers{
   const VVProcessHandler OffshellVVProcessHandle(true);
 
 
+  /*******/
+  /* VBF */
+  /*******/
+  const VVProcessHandler OnshellVBFProcessHandle(false, ProcessHandler::kVBF);
+  const VVProcessHandler OffshellVBFProcessHandle(true, ProcessHandler::kVBF);
+
+
+  /******/
+  /* ZH */
+  /******/
+  const VVProcessHandler OnshellZHProcessHandle(false, ProcessHandler::kZH);
+  const VVProcessHandler OffshellZHProcessHandle(true, ProcessHandler::kZH);
+
+
+  /******/
+  /* WH */
+  /******/
+  const VVProcessHandler OnshellWHProcessHandle(false, ProcessHandler::kWH);
+  const VVProcessHandler OffshellWHProcessHandle(true, ProcessHandler::kWH);
+
+
   /*****************/
   /* QQ background */
   /*****************/
   const QQBkgProcessHandler OnshellQQBkgProcessHandle(false);
   const QQBkgProcessHandler OffshellQQBkgProcessHandle(true);
+
+
+  /******************/
+  /* Z+X background */
+  /******************/
+  const ZXProcessHandler OnshellZXProcessHandle(false);
+  const ZXProcessHandler OffshellZXProcessHandle(true);
 
 }
 

@@ -118,44 +118,45 @@ int SystematicsHelpers::convertSystematicVariationTypeToInt(SystematicsHelpers::
 std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::getProcessSystematicVariations(
   CategorizationHelpers::Category const category,
   SampleHelpers::Channel const channel,
-  ProcessHandler::ProcessType const type
+  ProcessHandler::ProcessType const proc
 ){
   std::vector<SystematicVariationTypes> res;
 
   res.push_back(sNominal);
 
-  //res.push_back(eZJetsStatsDn);
-  //res.push_back(eZJetsStatsUp);
-
-  // FIXME: Z+X DOES NOT HAVE THESE, BUT WE NEED ZJETS PROCESS FIRST TO TEST
-  if (channel==SampleHelpers::k4e || channel==SampleHelpers::k2e2mu){
-    res.push_back(eLepSFEleDn);
-    res.push_back(eLepSFEleUp);
+  if (proc==ProcessHandler::kZX){
+    res.push_back(eZXStatsDn);
+    res.push_back(eZXStatsUp);
   }
-  if (channel==SampleHelpers::k4mu || channel==SampleHelpers::k2e2mu){
-    res.push_back(eLepSFMuDn);
-    res.push_back(eLepSFMuUp);
+  else{
+    if (channel==SampleHelpers::k4e || channel==SampleHelpers::k2e2mu){
+      res.push_back(eLepSFEleDn);
+      res.push_back(eLepSFEleUp);
+    }
+    if (channel==SampleHelpers::k4mu || channel==SampleHelpers::k2e2mu){
+      res.push_back(eLepSFMuDn);
+      res.push_back(eLepSFMuUp);
+    }
+
+    res.push_back(tPDFScaleDn);
+    res.push_back(tPDFScaleUp);
+    res.push_back(tQCDScaleDn);
+    res.push_back(tQCDScaleUp);
+    res.push_back(tAsMZDn);
+    res.push_back(tAsMZUp);
+    res.push_back(tPDFReplicaDn);
+    res.push_back(tPDFReplicaUp);
+
+    if (proc==ProcessHandler::kQQBkg){
+      res.push_back(tQQBkgEWCorrDn);
+      res.push_back(tQQBkgEWCorrUp);
+    }
+
+    if (category==CategorizationHelpers::JJVBFTagged || category==CategorizationHelpers::HadVHTagged){
+      res.push_back(eJECDn);
+      res.push_back(eJECUp);
+    }
   }
-
-  res.push_back(tPDFScaleDn);
-  res.push_back(tPDFScaleUp);
-  res.push_back(tQCDScaleDn);
-  res.push_back(tQCDScaleUp);
-  res.push_back(tAsMZDn);
-  res.push_back(tAsMZUp);
-  res.push_back(tPDFReplicaDn);
-  res.push_back(tPDFReplicaUp);
-
-  if (type==ProcessHandler::kQQBkg){
-    res.push_back(tQQBkgEWCorrDn);
-    res.push_back(tQQBkgEWCorrUp);
-  }
-
-  if (category==CategorizationHelpers::JJVBFTagged || category==CategorizationHelpers::HadVHTagged){
-    res.push_back(eJECDn);
-    res.push_back(eJECUp);
-  }
-
   return res;
 }
 bool SystematicsHelpers::systematicAllowed(
@@ -337,9 +338,9 @@ TString SystematicsHelpers::getSystematicsName(SystematicsHelpers::SystematicVar
     return "JECDn";
   case eJECUp:
     return "JECUp";
-  case eZJetsStatsDn:
+  case eZXStatsDn:
     return "ZJetsStatsDn";
-  case eZJetsStatsUp:
+  case eZXStatsUp:
     return "ZJetsStatsUp";
   default:
     return "";

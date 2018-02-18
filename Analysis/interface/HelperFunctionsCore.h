@@ -50,6 +50,19 @@ template bool HelperFunctions::getUnorderedMapIterator<float>(TString name, std:
 template bool HelperFunctions::getUnorderedMapIterator<double>(TString name, const std::unordered_map<TString, double>& theMap, std::unordered_map<TString, double>::const_iterator& it);
 template bool HelperFunctions::getUnorderedMapIterator<double>(TString name, std::unordered_map<TString, double>& theMap, std::unordered_map<TString, double>::iterator& it);
 
+template bool HelperFunctions::getUnorderedMapIterator<bool*>(TString name, const std::unordered_map<TString, bool*>& theMap, std::unordered_map<TString, bool*>::const_iterator& it);
+template bool HelperFunctions::getUnorderedMapIterator<bool*>(TString name, std::unordered_map<TString, bool*>& theMap, std::unordered_map<TString, bool*>::iterator& it);
+template bool HelperFunctions::getUnorderedMapIterator<short*>(TString name, const std::unordered_map<TString, short*>& theMap, std::unordered_map<TString, short*>::const_iterator& it);
+template bool HelperFunctions::getUnorderedMapIterator<short*>(TString name, std::unordered_map<TString, short*>& theMap, std::unordered_map<TString, short*>::iterator& it);
+template bool HelperFunctions::getUnorderedMapIterator<unsigned int*>(TString name, const std::unordered_map<TString, unsigned int*>& theMap, std::unordered_map<TString, unsigned int*>::const_iterator& it);
+template bool HelperFunctions::getUnorderedMapIterator<unsigned int*>(TString name, std::unordered_map<TString, unsigned int*>& theMap, std::unordered_map<TString, unsigned int*>::iterator& it);
+template bool HelperFunctions::getUnorderedMapIterator<int*>(TString name, const std::unordered_map<TString, int*>& theMap, std::unordered_map<TString, int*>::const_iterator& it);
+template bool HelperFunctions::getUnorderedMapIterator<int*>(TString name, std::unordered_map<TString, int*>& theMap, std::unordered_map<TString, int*>::iterator& it);
+template bool HelperFunctions::getUnorderedMapIterator<float*>(TString name, const std::unordered_map<TString, float*>& theMap, std::unordered_map<TString, float*>::const_iterator& it);
+template bool HelperFunctions::getUnorderedMapIterator<float*>(TString name, std::unordered_map<TString, float*>& theMap, std::unordered_map<TString, float*>::iterator& it);
+template bool HelperFunctions::getUnorderedMapIterator<double*>(TString name, const std::unordered_map<TString, double*>& theMap, std::unordered_map<TString, double*>::const_iterator& it);
+template bool HelperFunctions::getUnorderedMapIterator<double*>(TString name, std::unordered_map<TString, double*>& theMap, std::unordered_map<TString, double*>::iterator& it);
+
 template bool HelperFunctions::getUnorderedMapIterator<std::vector<bool>>(TString name, const std::unordered_map<TString, std::vector<bool>>& theMap, std::unordered_map<TString, std::vector<bool>>::const_iterator& it);
 template bool HelperFunctions::getUnorderedMapIterator<std::vector<bool>>(TString name, std::unordered_map<TString, std::vector<bool>>& theMap, std::unordered_map<TString, std::vector<bool>>::iterator& it);
 template bool HelperFunctions::getUnorderedMapIterator<std::vector<short>>(TString name, const std::unordered_map<TString, std::vector<short>>& theMap, std::unordered_map<TString, std::vector<short>>::const_iterator& it);

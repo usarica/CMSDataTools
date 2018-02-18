@@ -10,7 +10,11 @@ public:
   enum ProcessType{
     kGG,
     kVV,
+    kVBF,
+    kZH,
+    kWH,
     kQQBkg,
+    kZX,
     nProcessTypes
   };
 
@@ -149,7 +153,7 @@ public:
     nVVTplTypes=9
   };
 
-  VVProcessHandler(bool useOffshell_);
+  VVProcessHandler(bool useOffshell_, ProcessHandler::ProcessType proctype_=ProcessHandler::kVV);
 
   TString getOutputTreeName(VVProcessHandler::HypothesisType type) const;
   TString getTemplateName(VVProcessHandler::TemplateType type) const;
@@ -261,5 +265,44 @@ template<typename T> void QQBkgProcessHandler::conditionalizeTemplates(std::vect
 }
 template void QQBkgProcessHandler::conditionalizeTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
 template void QQBkgProcessHandler::conditionalizeTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+
+class ZXProcessHandler : public ProcessHandler{
+public:
+  enum HypothesisType{
+    ZX=0,
+    nZXTypes
+  };
+  enum TemplateType{
+    ZXTpl=0,
+    nZXTplTypes
+  };
+
+  ZXProcessHandler(bool useOffshell_);
+
+  TString getOutputTreeName() const;
+  TString getTemplateName() const;
+  TString getProcessLabel() const;
+
+  static int castHypothesisTypeToInt(ZXProcessHandler::HypothesisType type);
+  static int castTemplateTypeToInt(ZXProcessHandler::TemplateType type);
+  static ZXProcessHandler::HypothesisType castIntToHypothesisType(int type);
+  static ZXProcessHandler::TemplateType castIntToTemplateType(int type);
+
+  template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals) const;
+
+  template<typename T> void conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+
+};
+template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals) const;
+template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals) const;
+template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals) const;
+
+template<typename T> void ZXProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const{
+  if (vals.empty()) return;
+  for (T& hh:vals) HelperFunctions::conditionalizeHistogram(hh, iaxis);
+}
+template void ZXProcessHandler::conditionalizeTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+template void ZXProcessHandler::conditionalizeTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+
 
 #endif

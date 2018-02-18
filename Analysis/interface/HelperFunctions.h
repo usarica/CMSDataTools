@@ -25,6 +25,9 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TH3F.h"
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TH3D.h"
 #include "TProfile.h"
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
@@ -53,6 +56,7 @@ namespace HelperFunctions{
   template<typename T> bool checkNonNegative(std::vector<T> const& vars, int ibegin=-1, int iend=-1);
   template<typename T> bool checkNonZero(std::vector<T> const& vars, int ibegin=-1, int iend=-1);
   template<typename T> bool checkPositiveDef(std::vector<T> const& vars, int ibegin=-1, int iend=-1);
+  template<typename T> bool checkVarNanInf(T const& var);
   template<typename T> bool checkNanInf(std::vector<T> const& vars);
 
   // TGraph functions
@@ -89,6 +93,11 @@ namespace HelperFunctions{
   template<> float computeIntegral<TH1F>(TH1F* histo, bool useWidth);
   template<> float computeIntegral<TH2F>(TH2F* histo, bool useWidth);
   template<> float computeIntegral<TH3F>(TH3F* histo, bool useWidth);
+
+  template <typename T> void divideHistograms(T* hnum, T* hden, T*& hAssign, bool useEffErr);
+  template<> void divideHistograms<TH1F>(TH1F* hnum, TH1F* hden, TH1F*& hAssign, bool useEffErr);
+  template<> void divideHistograms<TH2F>(TH2F* hnum, TH2F* hden, TH2F*& hAssign, bool useEffErr);
+  template<> void divideHistograms<TH3F>(TH3F* hnum, TH3F* hden, TH3F*& hAssign, bool useEffErr);
 
   template <typename T> void symmetrizeHistogram(T* histo, unsigned int const axis=0);
   template <> void symmetrizeHistogram<TH1F>(TH1F* histo, unsigned int const axis);
@@ -141,9 +150,25 @@ namespace HelperFunctions{
 
   TF1* getFcn_a0plusa1expX(TSpline3* sp, double xmin, double xmax, bool useLowBound);
   TF1* getFcn_a0timesexpa1X(TSpline3* sp, double xmin, double xmax, bool useLowBound);
+  TF1* getFcn_a0plusa1timesexpXovera2(TSpline3* sp, double xmin, double xmax, bool useLowBound);
 
-  void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX=0, double omitbelow=0., double omitabove=0., int nIter_=-1, double threshold_=-1);
-  void regularizeSlice(TGraphErrors* tgSlice, std::vector<double>* fixedX=0, double omitbelow=0., double omitabove=0., int nIter_=-1, double threshold_=-1, double acceleration_=-1);
+  TGraph* genericPatcher(
+    TGraph* tg, const TString newname,
+    double const xmin, double const xmax,
+    TF1* (*lowf)(TSpline3*, double, double, bool),
+    TF1* (*highf)(TSpline3*, double, double, bool),
+    bool useFaithfulSlopeFirst, bool useFaithfulSlopeSecond,
+    vector<pair<pair<double, double>, unsigned int>>* addpoints=nullptr
+  );
+
+  void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX=nullptr, double omitbelow=0., double omitabove=0., int nIter_=-1, double threshold_=-1);
+  void regularizeSlice(TGraphErrors* tgSlice, std::vector<double>* fixedX=nullptr, double omitbelow=0., double omitabove=0., int nIter_=-1, double threshold_=-1, double acceleration_=-1);
+
+  // Function to calculate error in efficiency
+  float calculateEfficiencyError(
+    float const sumW, float const sumWAll,
+    float const sumWsq, float const sumWsqAll
+    );
 
   // Function to copy a file
   void CopyFile(TString fname, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*));
@@ -373,6 +398,9 @@ template<typename T> bool HelperFunctions::checkPositiveDef(std::vector<T> const
   }
   return true;
 }
+template<typename T> bool HelperFunctions::checkVarNanInf(T const& var){
+  return !(std::isnan(var) || std::isinf(var));
+}
 template<typename T> bool HelperFunctions::checkNanInf(std::vector<T> const& vars){
   for (T const& v:vars){ if (std::isnan(v) || std::isinf(v)) return false; }
   return true;
@@ -441,6 +469,9 @@ template<typename T> void HelperFunctions::extractHistogramsFromDirectory(TDirec
     }
     else if (cl->InheritsFrom(T::Class())){
       T* hist = (T*)source->Get(key->GetName());
+      TString histname=hist->GetName();
+      if ((histname=="Graph" && TString(key->GetName())!="Graph") || histname=="") histname=key->GetName(); // Holy jumping monkeys for fake rates
+      hist->SetName(histname);
       bool alreadyCopied=false;
       for (auto& k:copiedKeys){
         if (k==key->GetName()){
@@ -461,6 +492,13 @@ template<typename T> void HelperFunctions::extractHistogramsFromDirectory(TDirec
 template void HelperFunctions::extractHistogramsFromDirectory<TH1F>(TDirectory* source, std::vector<TH1F*>& histolist);
 template void HelperFunctions::extractHistogramsFromDirectory<TH2F>(TDirectory* source, std::vector<TH2F*>& histolist);
 template void HelperFunctions::extractHistogramsFromDirectory<TH3F>(TDirectory* source, std::vector<TH3F*>& histolist);
+template void HelperFunctions::extractHistogramsFromDirectory<TH1D>(TDirectory* source, std::vector<TH1D*>& histolist);
+template void HelperFunctions::extractHistogramsFromDirectory<TH2D>(TDirectory* source, std::vector<TH2D*>& histolist);
+template void HelperFunctions::extractHistogramsFromDirectory<TH3D>(TDirectory* source, std::vector<TH3D*>& histolist);
+// Overloads for TGraph that can be used just like histograms
+template void HelperFunctions::extractHistogramsFromDirectory<TGraphAsymmErrors>(TDirectory* source, std::vector<TGraphAsymmErrors*>& histolist);
+template void HelperFunctions::extractHistogramsFromDirectory<TGraphErrors>(TDirectory* source, std::vector<TGraphErrors*>& histolist);
+template void HelperFunctions::extractHistogramsFromDirectory<TGraph>(TDirectory* source, std::vector<TGraph*>& histolist);
 
 /****************************************************************/
 // Explicit instantiations
@@ -504,6 +542,12 @@ template bool HelperFunctions::checkPositiveDef<unsigned int>(std::vector<unsign
 template bool HelperFunctions::checkPositiveDef<int>(std::vector<int> const& vars, int ibegin, int iend);
 template bool HelperFunctions::checkPositiveDef<float>(std::vector<float> const& vars, int ibegin, int iend);
 template bool HelperFunctions::checkPositiveDef<double>(std::vector<double> const& vars, int ibegin, int iend);
+
+template bool HelperFunctions::checkVarNanInf<short>(short const& var);
+template bool HelperFunctions::checkVarNanInf<unsigned int>(unsigned int const& var);
+template bool HelperFunctions::checkVarNanInf<int>(int const& var);
+template bool HelperFunctions::checkVarNanInf<float>(float const& var);
+template bool HelperFunctions::checkVarNanInf<double>(double const& var);
 
 template bool HelperFunctions::checkNanInf<short>(std::vector<short> const& vars);
 template bool HelperFunctions::checkNanInf<unsigned int>(std::vector<unsigned int> const& vars);

@@ -1,8 +1,8 @@
 #include "CJLSTTree.h"
 
 
-CJLSTTree::CJLSTTree(TString strsample) :
-  BaseTree(CJLSTTree::constructCJLSTSamplePath(strsample), TREE_NAME, TREE_FAILED_NAME, COUNTERS_NAME),
+CJLSTTree::CJLSTTree(TString strsample, const TString treename, const TString failedtreename, const TString countersname) :
+  BaseTree(CJLSTTree::constructCJLSTSamplePath(strsample), treename, failedtreename, countersname),
   associatedSet(nullptr),
   sampleIdentifier(strsample),
   MHVal(-1)

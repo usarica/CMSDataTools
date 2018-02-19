@@ -25,12 +25,12 @@ protected:
   std::unordered_map<CJLSTTree*, float> permanentWeights;
 
 public:
-  CJLSTSet(const TString& strname);
-  CJLSTSet(const std::vector<TString>& strlist);
+  CJLSTSet(const TString& strname, const TString treename=TREE_NAME, const TString failedtreename=TREE_FAILED_NAME, const TString countersname=COUNTERS_NAME);
+  CJLSTSet(const std::vector<TString>& strlist, const TString treename=TREE_NAME, const TString failedtreename=TREE_FAILED_NAME, const TString countersname=COUNTERS_NAME);
   ~CJLSTSet();
 
-  bool addCJLSTTree(const TString& strname);
-  bool addCJLSTTreeList(const std::vector<TString>& strlist);
+  bool addCJLSTTree(const TString& strname, const TString treename=TREE_NAME, const TString failedtreename=TREE_FAILED_NAME, const TString countersname=COUNTERS_NAME);
+  bool addCJLSTTreeList(const std::vector<TString>& strlist, const TString treename=TREE_NAME, const TString failedtreename=TREE_FAILED_NAME, const TString countersname=COUNTERS_NAME);
   bool dissociateCJLSTTree(CJLSTTree*& tree);
   bool associateCJLSTTree(CJLSTTree*& tree);
 

@@ -1651,7 +1651,7 @@ void generic_SmoothKDConstantProducer(
   TF1* (*lowf)(TSpline3*, double, double, bool),
   TF1* (*highf)(TSpline3*, double, double, bool),
   bool useFaithfulSlopeFirst, bool useFaithfulSlopeSecond,
-  vector<pair<pair<double, double>, unsigned int>>* addpoints=0
+  vector<pair<pair<double, double>, unsigned int>>* addpoints=nullptr
 ){
   const double xmin=0;
   const double xmax=(sqrts>0 ? (double) sqrts*1000. : 15000.);

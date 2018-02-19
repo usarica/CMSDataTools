@@ -3,6 +3,7 @@
 
 #include "CJLSTSet.h"
 #include "ReweightingBuilder.h"
+#include "ZXFakeRateHandler.h"
 #include "Discriminant.h"
 #include "SystematicsHelpers.h"
 
@@ -34,6 +35,7 @@ protected:
   // External dependencies
   std::unordered_map<TString, std::pair<Discriminant*, std::vector<TString>>> KDbuilders;
   std::unordered_map<TString, ReweightingBuilder*> Rewgtbuilders;
+  std::unordered_map<TString, ZXFakeRateHandler*> ZXFakeRateHandlers;
   std::unordered_map<TString, void(*)(BaseTreeLooper*, SimpleEntry&)> externalFunctions;
   std::unordered_map<TString, SystematicsHelpers::SystematicsClass*> SystVariations;
 
@@ -64,6 +66,7 @@ public:
   template<typename T> void addConsumed(TString name);
   void addDiscriminantBuilder(TString KDname, Discriminant* KDbuilder, std::vector<TString> const& KDvars);
   void addReweightingBuilder(TString rewgtname, ReweightingBuilder* Rewgtbuilder);
+  void addZXFakeRateHandler(TString frname, ZXFakeRateHandler* ZXFakeRateHandler);
   void addExternalFunction(TString fcnname, void(*fcn)(BaseTreeLooper*, SimpleEntry&));
   void addSystematic(TString systname, SystematicsHelpers::SystematicsClass* systVar);
   void setExternalProductList(std::vector<SimpleEntry>* extProductListRef=nullptr);

@@ -41,6 +41,11 @@ void BaseTreeLooper::addReweightingBuilder(TString rewgtname, ReweightingBuilder
   if (Rewgtbuilders.find(rewgtname)!=Rewgtbuilders.end()) MELAerr << "BaseTreeLooper::addReweightingBuilder: " << rewgtname << " already exists but will override it regardless." << endl;
   Rewgtbuilders[rewgtname] = Rewgtbuilder;
 }
+void BaseTreeLooper::addZXFakeRateHandler(TString frname, ZXFakeRateHandler* ZXFakeRateHandler){
+  if (!ZXFakeRateHandler) return;
+  if (ZXFakeRateHandlers.find(frname)!=ZXFakeRateHandlers.end()) MELAerr << "BaseTreeLooper::addZXFakeRateHandler: " << frname << " already exists but will override it regardless." << endl;
+  ZXFakeRateHandlers[frname] = ZXFakeRateHandler;
+}
 void BaseTreeLooper::addExternalFunction(TString fcnname, void(*fcn)(BaseTreeLooper*, SimpleEntry&)){
   if (!fcn) return;
   if (externalFunctions.find(fcnname)!=externalFunctions.end()) MELAerr << "BaseTreeLooper::addExternalFunction: " << fcnname << " already exists but will override it regardless." << endl;

@@ -5,18 +5,18 @@
 using namespace std;
 
 
-CJLSTSet::CJLSTSet(const TString& strname){
-  addCJLSTTree(strname);
+CJLSTSet::CJLSTSet(const TString& strname, const TString treename, const TString failedtreename, const TString countersname){
+  addCJLSTTree(strname, treename, failedtreename, countersname);
 }
-CJLSTSet::CJLSTSet(const std::vector<TString>& strlist){
-  addCJLSTTreeList(strlist);
+CJLSTSet::CJLSTSet(const std::vector<TString>& strlist, const TString treename, const TString failedtreename, const TString countersname){
+  addCJLSTTreeList(strlist, treename, failedtreename, countersname);
 }
 CJLSTSet::~CJLSTSet(){
   for (auto& tree:treeList) delete tree;
   treeList.clear();
 }
-bool CJLSTSet::addCJLSTTree(const TString& strname){
-  CJLSTTree* tree = new CJLSTTree(strname);
+bool CJLSTSet::addCJLSTTree(const TString& strname, const TString treename, const TString failedtreename, const TString countersname){
+  CJLSTTree* tree = new CJLSTTree(strname, treename, failedtreename, countersname);
   if (tree->isValid()) treeList.push_back(tree);
   else{ delete tree; tree=nullptr; }
   if (!tree) cerr << "CJLSTSet::addCJLSTTree(" << strname << ") is invalid!" << endl;
@@ -24,9 +24,9 @@ bool CJLSTSet::addCJLSTTree(const TString& strname){
   if (tree) tree->setAssociatedSet(this);
   return (tree!=nullptr);
 }
-bool CJLSTSet::addCJLSTTreeList(const std::vector<TString>& strlist){
+bool CJLSTSet::addCJLSTTreeList(const std::vector<TString>& strlist, const TString treename, const TString failedtreename, const TString countersname){
   bool res=true;
-  for (auto const& s:strlist) res &= addCJLSTTree(s);
+  for (auto const& s:strlist) res &= addCJLSTTree(s, treename, failedtreename, countersname);
   return res;
 }
 bool CJLSTSet::dissociateCJLSTTree(CJLSTTree*& tree){

@@ -164,3 +164,52 @@ float ZXFakeRateHandler::eval(short const& Z1Flav, short const& LepId, float con
   }
   return res;
 }
+
+void ZXFakeRateHandler::registerTree(CJLSTTree* tree){
+  if (!tree) return;
+
+  short* Z1FlavRef;
+  vector<short>* const* LepIdRef;
+  vector<float>* const* LepPtRef;
+  vector<float>* const* LepEtaRef;
+  
+  tree->bookBranch<BaseTree::BranchType_short_t>("Z1Flav");
+  tree->bookBranch<BaseTree::BranchType_vshort_t>("LepLepId"); // Still have no idea why it is called LepLep...
+  tree->bookBranch<BaseTree::BranchType_vfloat_t>("LepPt"); // See? This is not called LepLep!
+  tree->bookBranch<BaseTree::BranchType_vfloat_t>("LepEta"); // See? This is not called LepLep either!
+
+  tree->getValRef("Z1Flav", Z1FlavRef);
+  tree->getValRef("LepLepId", LepIdRef);
+  tree->getValRef("LepPtRef", LepPtRef);
+  tree->getValRef("LepEtaRef", LepEtaRef);
+
+  Z1FlavRegistry[tree]=Z1FlavRef;
+  LepIdRegistry[tree]=LepIdRef;
+  LepPtRegistry[tree]=LepPtRef;
+  LepEtaRegistry[tree]=LepEtaRef;
+}
+
+float ZXFakeRateHandler::getFakeRateWeight(CJLSTTree* tree) const{
+  float res=0;
+  unordered_map<CJLSTTree*, short*>::const_iterator it_Z1Flav=Z1FlavRegistry.find(tree);
+  if (it_Z1Flav!=Z1FlavRegistry.cend()){
+    unordered_map<CJLSTTree*, vector<short>* const*>::const_iterator it_LepId=LepIdRegistry.find(tree);
+    unordered_map<CJLSTTree*, vector<float>* const*>::const_iterator it_LepPt=LepPtRegistry.find(tree);
+    unordered_map<CJLSTTree*, vector<float>* const*>::const_iterator it_LepEta=LepEtaRegistry.find(tree);
+
+    short const& Z1Flav = *(it_Z1Flav->second);
+    vector<short>* const& LepId = *(it_LepId->second);
+    vector<float>* const& LepPt = *(it_LepPt->second);
+    vector<float>* const& LepEta = *(it_LepEta->second);
+
+    if (LepId && LepPt && LepEta){
+      if (LepId->size()>=3) res=1;
+      for (unsigned int ilep=3; ilep<LepId->size(); ilep++) res *= eval(Z1Flav, LepId->at(ilep), LepPt->at(ilep), LepEta->at(ilep));
+    }
+    else{
+      MELAerr << "ZXFakeRateHandler::getFakeRateWeight: Something went wrong! Lepton vector references are null." << endl;
+      assert(0);
+    }
+  }
+  return res;
+}

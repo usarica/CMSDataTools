@@ -40,8 +40,13 @@ class StageXBatchManager:
 
       if not hasattr(self.opt, "process"):
          sys.exit("Need to set --process option")
+      else if self.opt.process != "ZX" and not hasattr(self.opt, "generator"):
+         sys.exit("Need to set --generator option")
 
-      strscript="make{}TemplatesFrom{}".format(self.opt.process, self.opt.generator)
+      if self.opt.process != "ZX":
+         strscript="make{}TemplatesFrom{}".format(self.opt.process, self.opt.generator)
+      else:
+         strscript="make{}TemplatesFrom{}".format(self.opt.process, "Data")
       self.scriptname="{}.cc".format(strscript)
       if not os.path.isfile(self.scriptname):
          sys.exit("Script {} does not exist. Exiting...".format(self.scriptname))
@@ -103,9 +108,20 @@ class StageXBatchManager:
 
    def submitJobs(self):
       channels = [ "k2e2mu", "k4e", "k4mu" ]
-      categories = [ "Inclusive", "JJVBFTagged" ] # Not yet ready for tagged categories
+      categories = [ "Inclusive", "JJVBFTagged" ] # Not yet ready for VH-tagged categories
       hypos = [ "kSM", "kL1", "kA2", "kA3" ]
-      systematics = [ "sNominal", "eLepSFEleDn", "eLepSFEleUp", "eLepSFMuDn", "eLepSFMuUp", "tPDFScaleDn", "tPDFScaleUp", "tQCDScaleDn", "tQCDScaleUp", "tAsMZDn", "tAsMZUp", "tPDFReplicaDn", "tPDFReplicaUp", "tQQBkgEWCorrDn", "tQQBkgEWCorrUp", "eJECDn", "eJECUp" ]
+      systematics = [
+         "sNominal",
+         "eLepSFEleDn", "eLepSFEleUp",
+         "eLepSFMuDn", "eLepSFMuUp",
+         "tPDFScaleDn", "tPDFScaleUp",
+         "tQCDScaleDn", "tQCDScaleUp",
+         "tAsMZDn", "tAsMZUp",
+         "tPDFReplicaDn", "tPDFReplicaUp",
+         "tQQBkgEWCorrDn", "tQQBkgEWCorrUp",
+         "eJECDn", "eJECUp",
+         "eZXStatsDn", "eZXStatsUp"
+         ]
 
       for channel in channels:
          if self.opt.customChannels is not None:
@@ -122,15 +138,26 @@ class StageXBatchManager:
                   if not hypo in self.opt.customACHypos:
                      continue
 
-               if (self.opt.process == "QQBkg" and hypo != "kSM" and not self.opt.checkstage): # QQbkg is only kSM
+               if ((self.opt.process == "QQBkg" or self.opt.process == "ZX") and hypo != "kSM" and not self.opt.checkstage): # QQBkg and ZX are only kSM
                   break
 
                for syst in systematics:
                   if self.opt.customSysts is not None:
                      if not syst in self.opt.customSysts:
                         continue
+
+                  # Do not submit unnecessary jobs
+                  if cat == "Inclusive" and "eJEC" in syst:
+                     continue
+                  if self.opt.process == "ZX" and not(syst=="sNominal" or "ZX" in syst):
+                     continue
+                  if self.opt.process != "ZX" and "ZX" in syst:
+                     continue
+                  if self.opt.process != "QQBkg" and "QQBkg" in syst:
+                     continue
+
                   strscrcmd = "{}, {}".format(channel, cat)
-                  if self.opt.process!="QQBkg" or self.opt.checkstage:
+                  if (self.opt.process!="QQBkg" and self.opt.process!="ZX") or self.opt.checkstage:
                      strscrcmd = "{}, {}".format(strscrcmd, hypo)
                   strscrcmd = "{}, {}".format(strscrcmd, syst)
                   if self.opt.checkstage:

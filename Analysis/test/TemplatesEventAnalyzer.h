@@ -51,9 +51,13 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
 
     // Get main observables
     float& ZZMass = *(valfloats["ZZMass"]);
-    float& GenHMass = *(valfloats["GenHMass"]);
     product.setNamedVal("ZZMass", ZZMass);
-    product.setNamedVal("GenHMass", GenHMass);
+    unordered_map<TString, float*>::const_iterator it_GenHMass;
+    HelperFunctions::getUnorderedMapIterator("GenHMass", valfloats, it_GenHMass);
+    if (it_GenHMass!=valfloats.cend()){
+      float const& GenHMass = *(it_GenHMass->second);
+      product.setNamedVal("GenHMass", GenHMass);
+    }
 
     if (!mass_boundaries.empty()){
       bool mass_range_found=false;
@@ -88,6 +92,10 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
         //product.setNamedVal("MELARewgtBin", rewgtBuilder->findBin(tree));
       }
       else wgt *= rewgtBuilder->getPostThresholdWeight(tree);
+    }
+    for (auto zxfr_it=ZXFakeRateHandlers.cbegin(); zxfr_it!=ZXFakeRateHandlers.cend(); zxfr_it++){
+      auto& ZXFRHandle = zxfr_it->second;
+      wgt *= ZXFRHandle->getFakeRateWeight(tree);
     }
     for (auto syst_it=SystVariations.cbegin(); syst_it!=SystVariations.cend(); syst_it++){
       auto& systVar = syst_it->second;

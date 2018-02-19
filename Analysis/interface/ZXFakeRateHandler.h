@@ -2,10 +2,12 @@
 #define ZXFAKERATEHANDLER_H
 
 #include "HelperFunctions.h"
+#include "CJLSTTree.h"
 
 
 class ZXFakeRateHandler{
 protected:
+  // Struct to convert input format to something more sensible
   struct FakeRateInput{
     TGraphErrors* tge;
     TGraphAsymmErrors* tgae;
@@ -17,6 +19,7 @@ protected:
     ~FakeRateInput(){}
   };
 
+  // Data members
   signed char useUpDn;
 
   TSpline3* FakeRateInterpolator_ZeeE_barrel;
@@ -29,13 +32,23 @@ protected:
   TSpline3* FakeRateInterpolator_ZmmM_barrel;
   TSpline3* FakeRateInterpolator_ZmmM_endcap;
 
+  std::unordered_map<CJLSTTree*, short*> Z1FlavRegistry;
+  std::unordered_map<CJLSTTree*, std::vector<short>* const*> LepIdRegistry;
+  std::unordered_map<CJLSTTree*, std::vector<float>* const*> LepPtRegistry;
+  std::unordered_map<CJLSTTree*, std::vector<float>* const*> LepEtaRegistry;
+
+  // Functions
   TSpline3* convertInputToSpline(ZXFakeRateHandler::FakeRateInput const& frinput);
+
+  float eval(short const& Z1Flav, short const& LepId, float const& LepPt, float const& LepEta) const;
 
 public:
   ZXFakeRateHandler(TString cinput, signed char useUpDn_=0);
   ~ZXFakeRateHandler();
 
-  float eval(short const& Z1Flav, short const& LepId, float const& LepPt, float const& LepEta) const;
+  void registerTree(CJLSTTree* tree);
+
+  float getFakeRateWeight(CJLSTTree* tree) const;
 
 };
 

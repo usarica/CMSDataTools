@@ -37,6 +37,9 @@ void acquireMassRatio_ProcessNominalToNominalInclusive(
   case ProcessHandler::kQQBkg:
     thePerProcessHandle = &TemplateHelpers::OffshellQQBkgProcessHandle;
     break;
+  case ProcessHandler::kZX:
+    thePerProcessHandle = &TemplateHelpers::OffshellZXProcessHandle;
+    break;
   default:
     break;
   };
@@ -277,6 +280,9 @@ void acquireMassRatio_ProcessSystToNominal(
     break;
   case ProcessHandler::kQQBkg:
     thePerProcessHandle = &TemplateHelpers::OffshellQQBkgProcessHandle;
+    break;
+  case ProcessHandler::kZX:
+    thePerProcessHandle = &TemplateHelpers::OffshellZXProcessHandle;
     break;
   default:
     break;

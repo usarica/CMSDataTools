@@ -4,6 +4,10 @@
 #include "HostHelpers.h"
 #include <string>
 
+// LHC sqrts and data period
+const unsigned int theSqrts = 13;
+const TString theDataPeriod = "2016";
+
 // CJLST samples directory
 const unsigned int CJLSTversion = 180212;
 //const unsigned int CJLSTversion = 180121;
@@ -19,7 +23,6 @@ const TString COUNTERS_NAME = "ZZTree/Counters";
 const TString COUNTERS_CRZLL_NAME = "CRZLLTree/Counters";
 const TString COUNTERS_CRZL_NAME = "CRZLTree/Counters";
 
-const unsigned int theSqrts = 13;
 const float xsecScale = 1e3;
 
 #endif

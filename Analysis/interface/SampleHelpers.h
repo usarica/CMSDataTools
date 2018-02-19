@@ -44,7 +44,7 @@ namespace SampleHelpers{
   TString getChannelName(const SampleHelpers::Channel chan);
   TString getChannelLabel(const SampleHelpers::Channel chan);
   SampleHelpers::Channel getChannelFromName(const TString channame);
-  bool testChannel(SampleHelpers::Channel const& targetChannel, short const& Z1Flav, short const& Z2Flav);
+  bool testChannel(SampleHelpers::Channel const& targetChannel, short const& Z1Flav, short const& Z2Flav, bool checkSS=false);
 
   std::vector<TString> constructSamplesList(TString strsample, float sqrts);
   void getSamplesList(float sqrts, std::vector<TString> const& s, std::vector<TString>& vs);

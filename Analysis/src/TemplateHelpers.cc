@@ -241,3 +241,15 @@ ExtendedBinning TemplateHelpers::getDiscriminantBinning(const SampleHelpers::Cha
   }
   return res;
 }
+
+
+/******************/
+/* Z+X background */
+/******************/
+ZXFakeRateHandler* TemplateHelpers::getFakeRateHandler(ZXFakeRateHandler::FakeRateMethod FRMethod, SystematicsHelpers::SystematicVariationTypes syst){
+  signed char useUpDn = 1*(syst==SystematicsHelpers::eZXStatsUp) - 1*(syst==SystematicsHelpers::eZXStatsDn);
+  TString fname="../data/FakeRate_";
+  fname += ZXFakeRateHandler::TranslateFakeRateMethodToString(FRMethod) + "_";
+  fname += theDataPeriod + ".root";
+  return new ZXFakeRateHandler(fname, FRMethod, useUpDn);
+}

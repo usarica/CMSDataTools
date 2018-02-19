@@ -71,6 +71,7 @@ namespace TemplateHelpers{
   /******************/
   const ZXProcessHandler OnshellZXProcessHandle(false);
   const ZXProcessHandler OffshellZXProcessHandle(true);
+  ZXFakeRateHandler* getFakeRateHandler(ZXFakeRateHandler::FakeRateMethod FRMethod, SystematicsHelpers::SystematicVariationTypes syst);
 
 }
 

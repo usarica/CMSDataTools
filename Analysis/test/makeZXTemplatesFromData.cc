@@ -8,8 +8,8 @@ typedef ZXProcessHandler ProcessHandleType;
 const ProcessHandleType& theProcess = TemplateHelpers::OffshellZXProcessHandle;
 
 // Process-specific functions
-void makeZXTemplatesFromData_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate="");
-void makeZXTemplatesFromData_two(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate="");
+void makeZXTemplatesFromData_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString FRMethodName, const TString fixedDate="");
+void makeZXTemplatesFromData_two(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString FRMethodName, const TString fixedDate="");
 void makeZXTemplatesFromData_checkstage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate="");
 
 // Constants to affect the template code
@@ -41,7 +41,7 @@ void plotProcessCheckStage_SystPairs(
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeZXTemplatesFromData_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate){
+void makeZXTemplatesFromData_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString FRMethodName, const TString fixedDate){
   typedef TGraphErrors SSFRtype;
 
   if (channel==NChannels) return;
@@ -51,6 +51,7 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
   const TString strSystematics = getSystematicsName(syst);
+  const ZXFakeRateHandler::FakeRateMethod FRMethod = ZXFakeRateHandler::TranslateFakeRateMethodToEnum(FRMethodName);
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -60,17 +61,6 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
   coutput_common+="Stage1/";
   gSystem->Exec("mkdir -p " + coutput_common);
-
-  vector<pair<SSFRtype*, SSFRtype*>> hFR_ZX_SS = getZXFR_SS<SSFRtype>();
-  if (hFR_ZX_SS.size()!=2){
-    MELAerr << "ERROR: ZX FR size " << hFR_ZX_SS.size() << "!=2. Aborting..." << endl;
-    for (auto& hFR:hFR_ZX_SS){
-      if (hFR.first) delete hFR.first;
-      if (hFR.second) delete hFR.second;
-    }
-    return;
-  }
-  MELAout << "Retrieved ZX SS FRs" << endl;
 
   TString OUTPUT_NAME = Form(
     "HtoZZ%s_%s_FinalTemplates_%s_%s_Data",
@@ -93,25 +83,26 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
   MELAout << "===============================" << endl;
   MELAout << endl;
 
+  // Get ZX fake rate estimator
+  ZXFakeRateHandler* ZXFRHandler = getFakeRateHandler(FRMethod, syst);
+
+  // Get the required discriminants
+  vector<KDspecs> KDlist;
+  getLikelihoodDiscriminants(channel, category, syst, KDlist);
+  if (category!=Inclusive) getCategorizationDiscriminants(syst, KDlist);
+
   // Get list of samples
   vector<TString> strSamples;
   vector<TString> strSampleIdentifiers;
   strSampleIdentifiers.push_back("AllData");
   getSamplesList(theSqrts, strSampleIdentifiers, strSamples);
 
-  // Register the discriminants
-  vector<KDspecs> KDlist;
-  getLikelihoodDiscriminants(channel, category, syst, KDlist);
-  if (category!=Inclusive) getCategorizationDiscriminants(syst, KDlist);
-
   // Get the CJLST set
-  CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
-  // Book common variables
-  theSampleSet->bookXS(); // "xsec"
-  theSampleSet->bookOverallEventWgt(); // Gen weights "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
+  CJLSTSet* theSampleSet = new CJLSTSet(strSamples, TREE_CRZLL_NAME, "", COUNTERS_CRZLL_NAME);
   for (auto& tree:theSampleSet->getCJLSTTreeList()){
+    // Book ZX variables
+    ZXFRHandler->registerTree(tree);
     // Book common variables needed for analysis
-    tree->bookBranch<int>("CRflag", -1);
     tree->bookBranch<float>("ZZMass", -1);
     tree->bookBranch<short>("Z1Flav", 0);
     tree->bookBranch<short>("Z2Flav", 0);
@@ -119,7 +110,7 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
     for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
     tree->silenceUnused(); // Will no longer book another branch
   }
-  theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_OneOverNgen, false, true);
+  theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_None, false, false);
 
   std::vector<ReweightingBuilder*> extraEvaluators;
   SystematicsClass* systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators);
@@ -133,39 +124,23 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
     TString treename = theProcess.getOutputTreeName();
     BaseTree* theFinalTree = new BaseTree(treename); // The tree to record into the ROOT file
 
-    /************* Reweighting setup *************/
-    // There are two builders:
-    // 1) Rewighting from MELA (x) K factors, which adjust the cross section
-    // 2) PU and GenHepMCWeight reweighting, which are supposed to keep the cross section the same
-    // Total weight is (1)x(2)
-
-    // Build the possible reweightings
-    vector<TString> strReweightingWeights;
-    for (auto& s:strKfactorVars) strReweightingWeights.push_back(s);
-    SampleHelpers::addXsecBranchNames(strReweightingWeights);
-    ReweightingBuilder* regularewgtBuilder = new ReweightingBuilder(strReweightingWeights, getSimpleWeight);
-    regularewgtBuilder->rejectNegativeWeights(true);
-    regularewgtBuilder->setDivideByNSample(false);
-    regularewgtBuilder->setWeightBinning(ZZMassInclusiveBinning);
-    for (auto& tree:theSampleSet->getCJLSTTreeList()) regularewgtBuilder->setupWeightVariables(tree, -1, 0);
-
     // Build the analyzer and loop over the events
     TemplatesEventAnalyzer theAnalyzer(theSampleSet, channel, category);
     theAnalyzer.setExternalProductTree(theFinalTree);
+    // Loosen channel check if needed
+    theAnalyzer.setAllowSSChannel((FRMethod==ZXFakeRateHandler::mSS));
     // Book common variables needed for analysis
     theAnalyzer.addConsumed<float>("ZZMass");
     theAnalyzer.addConsumed<short>("Z1Flav");
     theAnalyzer.addConsumed<short>("Z2Flav");
     // Add discriminant builders
     for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
-    // Add reweighting builders
-    theAnalyzer.addReweightingBuilder("RegularRewgt", regularewgtBuilder);
+    // Add ZX FR handle
+    theAnalyzer.addZXFakeRateHandler(Form("ZXFR%s", FRMethodName.Data()), ZXFRHandler);
     // Add systematics handle
     theAnalyzer.addSystematic(strSystematics, systhandle);
     // Loop
     theAnalyzer.loop(true, false, true);
-
-    delete regularewgtBuilder;
 
     MELAout << "There are " << theFinalTree->getNEvents() << " products" << endl;
     theFinalTree->writeToFile(foutput);
@@ -176,6 +151,7 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
   for (auto& rb:extraEvaluators) delete rb;
   for (auto& KD:KDlist) delete KD.KD;
   delete theSampleSet;
+  delete ZXFRHandler;
   foutput->Close();
   MELAout.close();
 }

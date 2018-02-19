@@ -9,6 +9,7 @@ protected:
   Channel channel;
   Category category;
 
+  bool allowSSChannel;
   bool recordCategorizationKDs;
   bool recordKDVariables;
 
@@ -23,6 +24,8 @@ public:
   TemplatesEventAnalyzer(CJLSTSet const* inTreeSet, Channel channel_, Category category_);
 
   // Record categorization discriminants
+  void setAllowSSChannel(bool flag){ allowSSChannel=flag; }
+  // Record categorization discriminants
   void setRecordCategorizationKDs(bool flag){ recordCategorizationKDs=flag; }
   // Record discriminant input MEs
   void setRecordKDVariables(bool flag){ recordKDVariables=flag; }
@@ -31,16 +34,16 @@ public:
 };
 
 TemplatesEventAnalyzer::TemplatesEventAnalyzer(Channel channel_, Category category_) :
-  BaseTreeLooper(), channel(channel_), category(category_), recordCategorizationKDs(false), recordKDVariables(false)
+  BaseTreeLooper(), channel(channel_), category(category_), allowSSChannel(false), recordCategorizationKDs(false), recordKDVariables(false)
 {}
 TemplatesEventAnalyzer::TemplatesEventAnalyzer(CJLSTTree* inTree, Channel channel_, Category category_) :
-  BaseTreeLooper(inTree), channel(channel_), category(category_), recordCategorizationKDs(false), recordKDVariables(false)
+  BaseTreeLooper(inTree), channel(channel_), category(category_), allowSSChannel(false), recordCategorizationKDs(false), recordKDVariables(false)
 {}
 TemplatesEventAnalyzer::TemplatesEventAnalyzer(std::vector<CJLSTTree*> const& inTreeList, Channel channel_, Category category_) :
-  BaseTreeLooper(inTreeList), channel(channel_), category(category_), recordCategorizationKDs(false), recordKDVariables(false)
+  BaseTreeLooper(inTreeList), channel(channel_), category(category_), allowSSChannel(false), recordCategorizationKDs(false), recordKDVariables(false)
 {}
 TemplatesEventAnalyzer::TemplatesEventAnalyzer(CJLSTSet const* inTreeSet, Channel channel_, Category category_) :
-  BaseTreeLooper(inTreeSet), channel(channel_), category(category_), recordCategorizationKDs(false), recordKDVariables(false)
+  BaseTreeLooper(inTreeSet), channel(channel_), category(category_), allowSSChannel(false), recordCategorizationKDs(false), recordKDVariables(false)
 {}
 
 bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEntry& product){
@@ -53,8 +56,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
     float& ZZMass = *(valfloats["ZZMass"]);
     product.setNamedVal("ZZMass", ZZMass);
     unordered_map<TString, float*>::const_iterator it_GenHMass;
-    HelperFunctions::getUnorderedMapIterator("GenHMass", valfloats, it_GenHMass);
-    if (it_GenHMass!=valfloats.cend()){
+    if (HelperFunctions::getUnorderedMapIterator("GenHMass", valfloats, it_GenHMass)){
       float const& GenHMass = *(it_GenHMass->second);
       product.setNamedVal("GenHMass", GenHMass);
     }
@@ -77,7 +79,9 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
 
     // Construct the weights
     float wgt = externalWgt;
-    wgt *= (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]))*(*(valfloats["PUWeight"]))*(*(valfloats["genHEPMCweight"]));
+    unordered_map<TString, float*>::const_iterator it_genHEPMCweight;
+    if (HelperFunctions::getUnorderedMapIterator("genHEPMCweight", valfloats, it_genHEPMCweight)) // Probably registered all others as well
+      wgt *= (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]))*(*(valfloats["PUWeight"]))*(*(it_genHEPMCweight->second));
     for (auto rewgt_it=Rewgtbuilders.cbegin(); rewgt_it!=Rewgtbuilders.cend(); rewgt_it++){
       auto& rewgtBuilder = rewgt_it->second;
       if (rewgt_it->first=="MELARewgt"){
@@ -95,7 +99,8 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
     }
     for (auto zxfr_it=ZXFakeRateHandlers.cbegin(); zxfr_it!=ZXFakeRateHandlers.cend(); zxfr_it++){
       auto& ZXFRHandle = zxfr_it->second;
-      wgt *= ZXFRHandle->getFakeRateWeight(tree);
+      float frwgt = ZXFRHandle->getFakeRateWeight(tree);
+      wgt *= frwgt;
     }
     for (auto syst_it=SystVariations.cbegin(); syst_it!=SystVariations.cend(); syst_it++){
       auto& systVar = syst_it->second;
@@ -212,7 +217,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
     if (!validProducts) return validProducts;
 
     // Channel check
-    validProducts &= SampleHelpers::testChannel(channel, *(valshorts["Z1Flav"]), *(valshorts["Z2Flav"]));
+    validProducts &= SampleHelpers::testChannel(channel, *(valshorts["Z1Flav"]), *(valshorts["Z2Flav"]), allowSSChannel);
     if (!validProducts) return validProducts;
   }
 

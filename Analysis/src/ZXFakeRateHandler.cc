@@ -7,7 +7,8 @@ using namespace HelperFunctions;
 using namespace MELAStreamHelpers;
 
 
-ZXFakeRateHandler::ZXFakeRateHandler(TString cinput, signed char useUpDn_):
+ZXFakeRateHandler::ZXFakeRateHandler(TString cinput, ZXFakeRateHandler::FakeRateMethod FRMethod_, signed char useUpDn_):
+  FRMethod(FRMethod_),
   useUpDn(useUpDn_),
   FakeRateInterpolator_ZeeE_barrel(nullptr),
   FakeRateInterpolator_ZeeE_endcap(nullptr),
@@ -129,38 +130,52 @@ TSpline3* ZXFakeRateHandler::convertInputToSpline(ZXFakeRateHandler::FakeRateInp
   return res;
 }
 
-float ZXFakeRateHandler::eval(short const& Z1Flav, short const& LepId, float const& LepPt, float const& LepEta) const{
+float ZXFakeRateHandler::eval(int const& CRFlag, short const& Z1Flav, short const& LepId, float const& LepPt, float const& LepEta) const{
+  enum{
+    CRZLLss=21,
+    CRZLLos_2P2F=22,
+    CRZLLos_3P1F=23
+  };
+
   float res=0;
-  TSpline3* spChosen=nullptr;
-  unsigned short const absZ1Flav=std::abs(Z1Flav);
-  unsigned short const absLepId=std::abs(LepId);
-  if (absZ1Flav==121){ // Zee
-    if (absLepId==11){
-      if (LepEta<1.2) spChosen = FakeRateInterpolator_ZeeE_barrel;
-      else spChosen = FakeRateInterpolator_ZeeE_endcap;
-    }
-    else if (absLepId==13){
-      if (LepEta<1.449) spChosen = FakeRateInterpolator_ZeeM_barrel;
-      else spChosen = FakeRateInterpolator_ZeeM_endcap;
+  if (FRMethod==mSS){
+    if (test_bit(CRFlag, (unsigned int) CRZLLss)){
+      TSpline3* spChosen=nullptr;
+      unsigned short const absZ1Flav=std::abs(Z1Flav);
+      unsigned short const absLepId=std::abs(LepId);
+      if (absZ1Flav==121){ // Zee
+        if (absLepId==11){
+          if (LepEta<1.2) spChosen = FakeRateInterpolator_ZeeE_barrel;
+          else spChosen = FakeRateInterpolator_ZeeE_endcap;
+        }
+        else if (absLepId==13){
+          if (LepEta<1.449) spChosen = FakeRateInterpolator_ZeeM_barrel;
+          else spChosen = FakeRateInterpolator_ZeeM_endcap;
+        }
+      }
+      else{ // Zmm
+        if (absLepId==11){
+          if (LepEta<1.2) spChosen = FakeRateInterpolator_ZmmE_barrel;
+          else spChosen = FakeRateInterpolator_ZmmE_endcap;
+        }
+        else if (absLepId==13){
+          if (LepEta<1.449) spChosen = FakeRateInterpolator_ZmmM_barrel;
+          else spChosen = FakeRateInterpolator_ZmmM_endcap;
+        }
+      }
+      if (spChosen){
+        const float xmin = spChosen->GetXmin();
+        const float xmax = spChosen->GetXmax();
+        float x = LepPt;
+        if (x<xmin) x=xmin;
+        else if (x>xmax) x=xmax;
+        res = spChosen->Eval(x);
+      }
     }
   }
-  else{ // Zmm
-    if (absLepId==11){
-      if (LepEta<1.2) spChosen = FakeRateInterpolator_ZmmE_barrel;
-      else spChosen = FakeRateInterpolator_ZmmE_endcap;
-    }
-    else if (absLepId==13){
-      if (LepEta<1.449) spChosen = FakeRateInterpolator_ZmmM_barrel;
-      else spChosen = FakeRateInterpolator_ZmmM_endcap;
-    }
-  }
-  if (spChosen){
-    const float xmin = spChosen->GetXmin();
-    const float xmax = spChosen->GetXmax();
-    float x = LepPt;
-    if (x<xmin) x=xmin;
-    else if (x>xmax) x=xmax;
-    res = spChosen->Eval(x);
+  else{
+    MELAout << "ZXFakeRateHandler::eval: Only SS method is implemented at this moment!" << endl;
+    assert(0);
   }
   return res;
 }
@@ -168,21 +183,25 @@ float ZXFakeRateHandler::eval(short const& Z1Flav, short const& LepId, float con
 void ZXFakeRateHandler::registerTree(CJLSTTree* tree){
   if (!tree) return;
 
+  int* CRFlagRef;
   short* Z1FlavRef;
   vector<short>* const* LepIdRef;
   vector<float>* const* LepPtRef;
   vector<float>* const* LepEtaRef;
   
+  tree->bookBranch<BaseTree::BranchType_int_t>("CRflag");
   tree->bookBranch<BaseTree::BranchType_short_t>("Z1Flav");
   tree->bookBranch<BaseTree::BranchType_vshort_t>("LepLepId"); // Still have no idea why it is called LepLep...
   tree->bookBranch<BaseTree::BranchType_vfloat_t>("LepPt"); // See? This is not called LepLep!
   tree->bookBranch<BaseTree::BranchType_vfloat_t>("LepEta"); // See? This is not called LepLep either!
 
+  tree->getValRef("CRflag", CRFlagRef);
   tree->getValRef("Z1Flav", Z1FlavRef);
   tree->getValRef("LepLepId", LepIdRef);
-  tree->getValRef("LepPtRef", LepPtRef);
-  tree->getValRef("LepEtaRef", LepEtaRef);
+  tree->getValRef("LepPt", LepPtRef);
+  tree->getValRef("LepEta", LepEtaRef);
 
+  CRFlagRegistry[tree]=CRFlagRef;
   Z1FlavRegistry[tree]=Z1FlavRef;
   LepIdRegistry[tree]=LepIdRef;
   LepPtRegistry[tree]=LepPtRef;
@@ -191,20 +210,21 @@ void ZXFakeRateHandler::registerTree(CJLSTTree* tree){
 
 float ZXFakeRateHandler::getFakeRateWeight(CJLSTTree* tree) const{
   float res=0;
-  unordered_map<CJLSTTree*, short*>::const_iterator it_Z1Flav=Z1FlavRegistry.find(tree);
-  if (it_Z1Flav!=Z1FlavRegistry.cend()){
+  unordered_map<CJLSTTree*, int*>::const_iterator it_CRFlag=CRFlagRegistry.find(tree);
+  if (it_CRFlag!=CRFlagRegistry.cend()){
+    unordered_map<CJLSTTree*, short*>::const_iterator it_Z1Flav=Z1FlavRegistry.find(tree);
     unordered_map<CJLSTTree*, vector<short>* const*>::const_iterator it_LepId=LepIdRegistry.find(tree);
     unordered_map<CJLSTTree*, vector<float>* const*>::const_iterator it_LepPt=LepPtRegistry.find(tree);
     unordered_map<CJLSTTree*, vector<float>* const*>::const_iterator it_LepEta=LepEtaRegistry.find(tree);
 
+    int const& CRFlag = *(it_CRFlag->second);
     short const& Z1Flav = *(it_Z1Flav->second);
     vector<short>* const& LepId = *(it_LepId->second);
     vector<float>* const& LepPt = *(it_LepPt->second);
     vector<float>* const& LepEta = *(it_LepEta->second);
-
     if (LepId && LepPt && LepEta){
       if (LepId->size()>=3) res=1;
-      for (unsigned int ilep=3; ilep<LepId->size(); ilep++) res *= eval(Z1Flav, LepId->at(ilep), LepPt->at(ilep), LepEta->at(ilep));
+      for (unsigned int ilep=3; ilep<LepId->size(); ilep++) res *= eval(CRFlag, Z1Flav, LepId->at(ilep), LepPt->at(ilep), LepEta->at(ilep));
     }
     else{
       MELAerr << "ZXFakeRateHandler::getFakeRateWeight: Something went wrong! Lepton vector references are null." << endl;
@@ -212,4 +232,13 @@ float ZXFakeRateHandler::getFakeRateWeight(CJLSTTree* tree) const{
     }
   }
   return res;
+}
+
+TString ZXFakeRateHandler::TranslateFakeRateMethodToString(ZXFakeRateHandler::FakeRateMethod FRMethod_){
+  if (FRMethod_==ZXFakeRateHandler::mSS) return "SS";
+  else return "OS";
+}
+ZXFakeRateHandler::FakeRateMethod ZXFakeRateHandler::TranslateFakeRateMethodToEnum(TString FRMethodName_){
+  if (FRMethodName_.Contains("SS")) return ZXFakeRateHandler::mSS;
+  else return ZXFakeRateHandler::mOS;
 }

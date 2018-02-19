@@ -116,14 +116,14 @@ SampleHelpers::Channel SampleHelpers::getChannelFromName(const TString channame)
   else if (channame=="2l2l") return k2l2l;
   else return NChannels;
 }
-bool SampleHelpers::testChannel(SampleHelpers::Channel const& targetChannel, short const& Z1Flav, short const& Z2Flav){
+bool SampleHelpers::testChannel(SampleHelpers::Channel const& targetChannel, short const& Z1Flav, short const& Z2Flav, bool checkSS){
   if (targetChannel==NChannels) return true;
   short ZZFlav=Z1Flav*Z2Flav;
   vector<short> matchdecid;
   if (targetChannel==k2e2mu || targetChannel==k2l2l) matchdecid.push_back(121*169);
   if (targetChannel==k4mu || targetChannel==k4l) matchdecid.push_back(169*169);
   if (targetChannel==k4e || targetChannel==k4l) matchdecid.push_back(121*121);
-  for (auto const& mdid:matchdecid){ if (mdid==ZZFlav) return true; }
+  for (auto const& mdid:matchdecid){ if ((!checkSS && mdid==ZZFlav) || (checkSS && mdid==-ZZFlav)) return true; }
   return false;
 }
 

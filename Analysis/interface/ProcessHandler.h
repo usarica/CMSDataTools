@@ -3,6 +3,7 @@
 
 #include "HelperFunctions.h"
 #include "ACHypothesisHelpers.h"
+#include "ZXFakeRateHandler.h"
 
 
 class ProcessHandler{

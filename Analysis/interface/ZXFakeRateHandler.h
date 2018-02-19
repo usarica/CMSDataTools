@@ -6,7 +6,7 @@
 
 
 class ZXFakeRateHandler{
-protected:
+public:
   // Struct to convert input format to something more sensible
   struct FakeRateInput{
     TGraphErrors* tge;
@@ -19,8 +19,16 @@ protected:
     ~FakeRateInput(){}
   };
 
+  enum FakeRateMethod{
+    mSS,
+    mOS
+  };
+
+
+protected:
   // Data members
-  signed char useUpDn;
+  const FakeRateMethod FRMethod;
+  const signed char useUpDn;
 
   TSpline3* FakeRateInterpolator_ZeeE_barrel;
   TSpline3* FakeRateInterpolator_ZeeE_endcap;
@@ -32,6 +40,7 @@ protected:
   TSpline3* FakeRateInterpolator_ZmmM_barrel;
   TSpline3* FakeRateInterpolator_ZmmM_endcap;
 
+  std::unordered_map<CJLSTTree*, int*> CRFlagRegistry;
   std::unordered_map<CJLSTTree*, short*> Z1FlavRegistry;
   std::unordered_map<CJLSTTree*, std::vector<short>* const*> LepIdRegistry;
   std::unordered_map<CJLSTTree*, std::vector<float>* const*> LepPtRegistry;
@@ -40,15 +49,19 @@ protected:
   // Functions
   TSpline3* convertInputToSpline(ZXFakeRateHandler::FakeRateInput const& frinput);
 
-  float eval(short const& Z1Flav, short const& LepId, float const& LepPt, float const& LepEta) const;
+  float eval(int const& CRFlag, short const& Z1Flav, short const& LepId, float const& LepPt, float const& LepEta) const;
+
 
 public:
-  ZXFakeRateHandler(TString cinput, signed char useUpDn_=0);
+  ZXFakeRateHandler(TString cinput, ZXFakeRateHandler::FakeRateMethod FRMethod_, signed char useUpDn_=0);
   ~ZXFakeRateHandler();
 
   void registerTree(CJLSTTree* tree);
 
   float getFakeRateWeight(CJLSTTree* tree) const;
+
+  static TString TranslateFakeRateMethodToString(ZXFakeRateHandler::FakeRateMethod FRMethod_);
+  static ZXFakeRateHandler::FakeRateMethod TranslateFakeRateMethodToEnum(TString FRMethodName_);
 
 };
 

@@ -40,6 +40,9 @@ void plotProcessCheckStage(
   case ProcessHandler::kQQBkg:
     thePerProcessHandle = &TemplateHelpers::OffshellQQBkgProcessHandle;
     break;
+  case ProcessHandler::kZX:
+    thePerProcessHandle = &TemplateHelpers::OffshellZXProcessHandle;
+    break;
   default:
     break;
   };
@@ -542,6 +545,9 @@ void plotProcessCheckStage_SystPairs(
     break;
   case ProcessHandler::kQQBkg:
     thePerProcessHandle = &TemplateHelpers::OffshellQQBkgProcessHandle;
+    break;
+  case ProcessHandler::kZX:
+    thePerProcessHandle = &TemplateHelpers::OffshellZXProcessHandle;
     break;
   default:
     break;

@@ -35,9 +35,11 @@ BaseTree::BaseTree(const TString cinput, const TString treename, const TString f
         valid = (tree!=nullptr);
         if (!valid){ finput->Close(); finput=nullptr; }
         else{
-          failedtree = (TTree*) finput->Get(failedtreename);
-          if (!failedtree) cout << "BaseTree::BaseTree(" << cinput << ") does not contain " << failedtreename << endl;
-          hCounters = (TH1F*) finput->Get(countersname);
+          if (failedtreename!=""){
+            failedtree = (TTree*) finput->Get(failedtreename);
+            if (!failedtree) cout << "BaseTree::BaseTree(" << cinput << ") does not contain " << failedtreename << endl;
+          }
+          if (countersname!="") hCounters = (TH1F*) finput->Get(countersname);
         }
       }
       else if (finput->IsOpen()){ finput->Close(); finput=nullptr; }

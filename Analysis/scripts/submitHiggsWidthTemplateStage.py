@@ -40,7 +40,7 @@ class StageXBatchManager:
 
       if not hasattr(self.opt, "process"):
          sys.exit("Need to set --process option")
-      else if self.opt.process != "ZX" and not hasattr(self.opt, "generator"):
+      elif self.opt.process != "ZX" and not hasattr(self.opt, "generator"):
          sys.exit("Need to set --generator option")
 
       if self.opt.process != "ZX":

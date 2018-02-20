@@ -6,7 +6,7 @@
 
 // LHC sqrts and data period
 const unsigned int theSqrts = 13;
-const TString theDataPeriod = "2016";
+const TString theDataPeriod = "2017";
 
 // CJLST samples directory
 const unsigned int CJLSTversion = 180212;

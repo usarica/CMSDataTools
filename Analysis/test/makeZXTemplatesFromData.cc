@@ -8,8 +8,7 @@ typedef ZXProcessHandler ProcessHandleType;
 const ProcessHandleType& theProcess = TemplateHelpers::OffshellZXProcessHandle;
 
 // Process-specific functions
-void makeZXTemplatesFromData_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString FRMethodName, const TString fixedDate="");
-void makeZXTemplatesFromData_two(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString FRMethodName, const TString fixedDate="");
+void makeZXTemplatesFromData_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const ZXFakeRateHandler::FakeRateMethod FRMethod, const TString fixedDate="");
 void makeZXTemplatesFromData_checkstage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate="");
 
 // Constants to affect the template code
@@ -41,7 +40,7 @@ void plotProcessCheckStage_SystPairs(
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeZXTemplatesFromData_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString FRMethodName, const TString fixedDate){
+void makeZXTemplatesFromData_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const ZXFakeRateHandler::FakeRateMethod FRMethod, const TString fixedDate){
   typedef TGraphErrors SSFRtype;
 
   if (channel==NChannels) return;
@@ -51,7 +50,7 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
   const TString strSystematics = getSystematicsName(syst);
-  const ZXFakeRateHandler::FakeRateMethod FRMethod = ZXFakeRateHandler::TranslateFakeRateMethodToEnum(FRMethodName);
+  const TString FRMethodName = ZXFakeRateHandler::TranslateFakeRateMethodToString(FRMethod);
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -63,9 +62,9 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
   gSystem->Exec("mkdir -p " + coutput_common);
 
   TString OUTPUT_NAME = Form(
-    "HtoZZ%s_%s_FinalTemplates_%s_%s_Data",
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Data",
     strChannel.Data(), strCategory.Data(),
-    theProcess.getProcessName().Data(),
+    theProcess.getProcessName().Data(), FRMethodName.Data(),
     strSystematics.Data()
   );
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
@@ -156,75 +155,6 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
   MELAout.close();
 }
 
-void makeZXTemplatesFromData_two(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate){
-  if (channel==NChannels) return;
-  if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
-
-  const TString strChannel = getChannelName(channel);
-  const TString strCategory = getCategoryName(category);
-  const TString strSystematics = getSystematicsName(syst);
-
-  // Setup the output directories
-  TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
-  TString strdate = todaysdate();
-  if (fixedDate!="") strdate=fixedDate;
-  cout << "Today's date: " << strdate << endl;
-  TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/";
-  TString coutput_common=cinput_common;
-  cinput_common+="Stage1/";
-  coutput_common+="Stage2/";
-
-  TString INPUT_NAME = Form(
-    "HtoZZ%s_%s_FinalTemplates_%s_%s_Data",
-    strChannel.Data(), strCategory.Data(),
-    theProcess.getProcessName().Data(),
-    strSystematics.Data()
-  );
-  INPUT_NAME += ".root";
-  TString cinput = cinput_common + INPUT_NAME;
-  // Test for the presence of the file
-  if (gSystem->AccessPathName(cinput)) makeZXTemplatesFromData_one(channel, category, syst, fixedDate);
-  // Test again and fail if file still doesn't exist
-  if (gSystem->AccessPathName(cinput)){
-    MELAerr << "File " << cinput << " still doesn't exist. Reason is not understood. Quitting..." << endl;
-    return;
-  }
-
-  gSystem->Exec("mkdir -p " + coutput_common);
-  TString OUTPUT_NAME = Form(
-    "HtoZZ%s_%s_FinalTemplates_%s_%s_Data",
-    strChannel.Data(), strCategory.Data(),
-    theProcess.getProcessName().Data(),
-    strSystematics.Data()
-  );
-  TString OUTPUT_LOG_NAME = OUTPUT_NAME;
-  OUTPUT_NAME += ".root";
-  OUTPUT_LOG_NAME += ".log";
-  TString coutput = coutput_common + OUTPUT_NAME;
-  TString coutput_log = coutput_common + OUTPUT_LOG_NAME;
-  MELAout.open(coutput_log.Data());
-  MELAout << "Opened log file " << coutput_log << endl;
-  TFile* foutput = TFile::Open(coutput, "recreate");
-  MELAout << "Opened file " << coutput << endl;
-  MELAout << "===============================" << endl;
-  MELAout << "CoM Energy: " << theSqrts << " TeV" << endl;
-  MELAout << "Decay Channel: " << strChannel << endl;
-  MELAout << "===============================" << endl;
-  MELAout << endl;
-
-  HelperFunctions::CopyFile(cinput, nullptr, nullptr);
-  foutput->ls();
-  foutput->Close();
-
-  MELAout << "===============================" << endl;
-  //MELAout << "Stage 1 file " << cinput << " is no longer needed. Removing the file..." << endl;
-  //gSystem->Exec("rm -f " + cinput);
-  MELAout << "===============================" << endl;
-
-  MELAout.close();
-}
-
 void makeZXTemplatesFromData_checkstage(
   const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
   const unsigned int istage,
@@ -238,6 +168,7 @@ void makeZXTemplatesFromData_checkstage(
   const TString strCategory = getCategoryName(category);
   const TString strSystematics = getSystematicsName(syst);
   const TString strStage = Form("Stage%i", istage);
+  const TString FRMethodName = ZXFakeRateHandler::TranslateFakeRateMethodToString(ZXFakeRateHandler::mSS);
   std::vector<ProcessHandleType::HypothesisType> tplset; tplset.push_back(ProcessHandleType::ZX);
   const unsigned int ntpls = tplset.size();
 
@@ -258,7 +189,7 @@ void makeZXTemplatesFromData_checkstage(
   TString INPUT_NAME = Form(
     "HtoZZ%s_%s_FinalTemplates_%s_%s_Data.root",
     strChannel.Data(), strCategory.Data(),
-    theProcess.getProcessName().Data(),
+    theProcess.getProcessName().Data(), FRMethodName.Data(),
     strSystematics.Data()
   );
   TString cinput = cinput_common + INPUT_NAME;

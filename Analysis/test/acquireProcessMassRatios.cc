@@ -12,7 +12,7 @@ const TString user_output_dir = "output/";
 #endif
 
 
-ExtendedBinning getMassBinning(TTree* tree);
+ExtendedBinning getMassBinning(TTree* tree, bool separateZ4l=false);
 
 void acquireMassRatio_ProcessNominalToNominalInclusive(
   const Channel channel, const Category category, const ACHypothesis hypo,
@@ -45,6 +45,7 @@ void acquireMassRatio_ProcessNominalToNominalInclusive(
   };
   if (!thePerProcessHandle) return;
   if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
+  if (proctype==ProcessHandler::kZX && strGenerator!="Data") return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -63,27 +64,55 @@ void acquireMassRatio_ProcessNominalToNominalInclusive(
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/MassRatios/" + strStage + "/";
 
   gSystem->Exec("mkdir -p " + coutput_common);
-  TString INPUT_INCLUSIVE_NAME="", INPUT_INCLUSIVE_AC_NAME="", INPUT_NAME="", INPUT_AC_NAME="";
+  vector<TString> INPUT_BASELINE_NAME;
+  vector<TString> INPUT_NAME;
   if (proctype==ProcessHandler::kQQBkg){
-    INPUT_INCLUSIVE_NAME = Form(
+    INPUT_BASELINE_NAME.push_back(Form(
       "HtoZZ%s_%s_FinalTemplates_%s_%s_%s%s",
       strChannel.Data(), strCategory_Inclusive.Data(),
       thePerProcessHandle->getProcessName().Data(),
       strSystematics_Nominal.Data(),
       strGenerator.Data(),
       ".root"
+    )
     );
-    INPUT_NAME = Form(
+    INPUT_NAME.push_back(Form(
       "HtoZZ%s_%s_FinalTemplates_%s_%s_%s%s",
       strChannel.Data(), strCategory.Data(),
       thePerProcessHandle->getProcessName().Data(),
       strSystematics.Data(),
       strGenerator.Data(),
       ".root"
+    )
     );
   }
+  else if (proctype==ProcessHandler::kZX){
+    vector<ZXFakeRateHandler::FakeRateMethod> FRMethods;
+    FRMethods.push_back(ZXFakeRateHandler::mSS);
+    for (ZXFakeRateHandler::FakeRateMethod& FRMethod:FRMethods){
+      const TString FRMethodName = ZXFakeRateHandler::TranslateFakeRateMethodToString(FRMethod);
+      INPUT_BASELINE_NAME.push_back(Form(
+        "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_%s%s",
+        strChannel.Data(), strCategory_Inclusive.Data(),
+        thePerProcessHandle->getProcessName().Data(), FRMethodName.Data(),
+        strSystematics_Nominal.Data(),
+        strGenerator.Data(),
+        ".root"
+      )
+      );
+      INPUT_NAME.push_back(Form(
+        "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_%s%s",
+        strChannel.Data(), strCategory.Data(),
+        thePerProcessHandle->getProcessName().Data(), FRMethodName.Data(),
+        strSystematics.Data(),
+        strGenerator.Data(),
+        ".root"
+      )
+      );
+    }
+  }
   else{
-    INPUT_INCLUSIVE_NAME = Form(
+    INPUT_BASELINE_NAME.push_back(Form(
       "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_%s%s",
       strChannel.Data(), strCategory_Inclusive.Data(),
       getACHypothesisName(kSM).Data(),
@@ -91,8 +120,9 @@ void acquireMassRatio_ProcessNominalToNominalInclusive(
       strSystematics_Nominal.Data(),
       strGenerator.Data(),
       ".root"
+    )
     );
-    INPUT_NAME = Form(
+    INPUT_NAME.push_back(Form(
       "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_%s%s",
       strChannel.Data(), strCategory.Data(),
       getACHypothesisName(kSM).Data(),
@@ -100,9 +130,10 @@ void acquireMassRatio_ProcessNominalToNominalInclusive(
       strSystematics.Data(),
       strGenerator.Data(),
       ".root"
+    )
     );
     if (hypo!=kSM){
-      INPUT_INCLUSIVE_AC_NAME = Form(
+      INPUT_BASELINE_NAME.push_back(Form(
         "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_%s%s",
         strChannel.Data(), strCategory_Inclusive.Data(),
         strACHypo.Data(),
@@ -110,8 +141,9 @@ void acquireMassRatio_ProcessNominalToNominalInclusive(
         strSystematics_Nominal.Data(),
         strGenerator.Data(),
         ".root"
+      )
       );
-      INPUT_AC_NAME = Form(
+      INPUT_NAME.push_back(Form(
         "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_%s%s",
         strChannel.Data(), strCategory.Data(),
         strACHypo.Data(),
@@ -119,6 +151,7 @@ void acquireMassRatio_ProcessNominalToNominalInclusive(
         strSystematics.Data(),
         strGenerator.Data(),
         ".root"
+      )
       );
     }
   }
@@ -136,52 +169,47 @@ void acquireMassRatio_ProcessNominalToNominalInclusive(
   OUTPUT_LOG_NAME += ".log";
 
   // Open the input files
-  vector<pair<TString, TString>> cinputList;
-  cinputList.push_back(pair<TString, TString>(cinput_common + INPUT_INCLUSIVE_NAME, cinput_common + INPUT_INCLUSIVE_AC_NAME));
-  cinputList.push_back(pair<TString, TString>(cinput_common + INPUT_NAME, cinput_common + INPUT_AC_NAME));
-  vector<pair<TFile*, TFile*>> finputList;
-  for (auto const& cinput:cinputList){
-    if (gSystem->AccessPathName(cinput.first)){
-      MELAerr << "File " << cinput.first << " is not found! Run " << strStage << " functions first." << endl;
-      for (auto& finput:finputList){
-        if (finput.first) finput.first->Close();
-        if (finput.second) finput.second->Close();
+  const unsigned int InputTypeSize=2; // Inclusive or dedicated category
+  vector<vector<TString>> cinputList; cinputList.assign(InputTypeSize, vector<TString>());
+  vector<vector<TFile*>> finputList; finputList.assign(InputTypeSize, vector<TFile*>());
+  vector<vector<TTree*>> treeLists; treeLists.assign(InputTypeSize, vector<TTree*>());
+
+  for (auto& s:INPUT_BASELINE_NAME) cinputList.at(0).push_back(cinput_common + s);
+  for (auto& s:INPUT_NAME) cinputList.at(1).push_back(cinput_common + s);
+  assert(cinputList.at(0).size()==cinputList.at(1).size());
+
+  for (unsigned int it=0; it<InputTypeSize; it++){
+    for (auto const& cinput:cinputList.at(it)){
+      if (gSystem->AccessPathName(cinput)){
+        MELAerr << "File " << cinput << " is not found! Run " << strStage << " functions first." << endl;
+        for (unsigned int it2=0; it2<InputTypeSize; it2++){ for (auto& finput:finputList.at(it2)) finput->Close(); }
+        return;
       }
+      if (cinput!="") finputList.at(it).push_back(TFile::Open(cinput, "read"));
+    }
+  }
+
+  unsigned int ntreespertype=0;
+  for (unsigned int it=0; it<InputTypeSize; it++){
+    // Extract SM or AC trees
+    for (auto& finput:finputList.at(it)){ if (finput) extractTreesFromDirectory(finput, treeLists.at(it)); }
+    // Check number of trees
+    unsigned int ntrees = treeLists.at(it).size();
+    if (ntreespertype==0) ntreespertype=ntrees;
+    else if (ntreespertype!=ntrees){
+      MELAerr << "Number of trees in type " << it << " (" << ntrees << ") does not match Ntrees=" << ntreespertype << "! Aborting..." << endl;
+      for (unsigned int it2=0; it2<InputTypeSize; it2++){ for (auto& finput2:finputList.at(it2)) finput2->Close(); }
       return;
     }
-    pair<TFile*, TFile*> fnew(nullptr, nullptr);
-    if (cinput.first!="") fnew.first = TFile::Open(cinput.first, "read");
-    if (cinput.second!="") fnew.second = TFile::Open(cinput.second, "read");
-    finputList.push_back(fnew);
   }
-  const unsigned int nfiles=cinputList.size();
-  vector<vector<TTree*>> treeLists; treeLists.assign(nfiles, vector<TTree*>());
-  unsigned int ntreesperfile=0;
-  for (unsigned int ifile=0; ifile<nfiles; ifile++){
-    TFile* finput;
-    // Extract SM trees
-    finput=finputList.at(ifile).first;
-    if (finput) extractTreesFromDirectory(finput, treeLists.at(ifile));
-    // Extract AC trees
-    finput=finputList.at(ifile).second;
-    if (finput) extractTreesFromDirectory(finput, treeLists.at(ifile));
-    if (ntreesperfile==0) ntreesperfile=treeLists.at(ifile).size();
-    else if (ntreesperfile!=treeLists.at(ifile).size()){
-      MELAerr << "Number of trees in files " << cinputList.at(ifile).first << " and " << cinputList.at(ifile).second << " does not match Ntrees=" << ntreesperfile << "! Aborting..." << endl;
-      for (auto& ftmp:finputList){
-        if (ftmp.first) ftmp.first->Close();
-        if (ftmp.second) ftmp.second->Close();
-      }
-      return;
-    }
-    MELAout << "Acquired " << ntreesperfile << " trees..." << endl;
-  }
+  MELAout << "Acquired " << ntreespertype << " trees per type..." << endl;
+
   vector<vector<TTree*>> treeGroups;
-  treeGroups.assign(ntreesperfile, vector<TTree*>());
-  for (auto& treeGroup:treeGroups) treeGroup.assign(nfiles, nullptr);
-  for (unsigned int ifile=0; ifile<nfiles; ifile++){
-    for (unsigned int ihypo=0; ihypo<ntreesperfile; ihypo++){
-      treeGroups.at(ihypo).at(ifile) = treeLists.at(ifile).at(ihypo);
+  treeGroups.assign(ntreespertype, vector<TTree*>());
+  for (auto& treeGroup:treeGroups) treeGroup.assign(InputTypeSize, nullptr);
+  for (unsigned int it=0; it<InputTypeSize; it++){
+    for (unsigned int ihypo=0; ihypo<ntreespertype; ihypo++){
+      treeGroups.at(ihypo).at(it) = treeLists.at(it).at(ihypo);
     }
   }
 
@@ -208,25 +236,31 @@ void acquireMassRatio_ProcessNominalToNominalInclusive(
         nEntriesMin=tree->GetEntries();
       }
     }
-    ExtendedBinning binning=getMassBinning(treeChosen);
+    ExtendedBinning binning=getMassBinning(treeChosen, proctype==ProcessHandler::kQQBkg);
 
-    vector<ExtendedHistogram_1D*> hMass; hMass.assign(nfiles, nullptr);
-    for (unsigned int ifile=0; ifile<nfiles; ifile++){
-      ExtendedHistogram_1D*& hh = hMass.at(ifile);
-      TTree*& tree = treeGroup.at(ifile);
-      hh = new ExtendedHistogram_1D(Form("MassDistribution_%s_%i", tree->GetName(), ifile), "", binning);
+    vector<ExtendedHistogram_1D*> hMass; hMass.assign(InputTypeSize, nullptr);
+    for (unsigned int it=0; it<InputTypeSize; it++){
+      ExtendedHistogram_1D*& hh = hMass.at(it);
+      TTree*& tree = treeGroup.at(it);
+      hh = new ExtendedHistogram_1D(Form("MassDistribution_%s_%i", tree->GetName(), it), "", binning);
+      bool isCategory=(it==0);
       float ZZMass, weight;
       tree->SetBranchAddress("ZZMass", &ZZMass);
       tree->SetBranchAddress("weight", &weight);
+      if (!isCategory){
+        TString catFlagName = TString("is_") + strCategory + TString("_") + getACHypothesisName(hypo);
+        tree->SetBranchAddress(catFlagName, &isCategory);
+      }
       for (int ev=0; ev<tree->GetEntries(); ev++){
         tree->GetEntry(ev);
+        if (!isCategory) continue;
         hh->fill(ZZMass, weight);
       }
     }
     vector<ExtendedHistogram_1D> hRatio;
-    for (unsigned int ifile=1; ifile<nfiles; ifile++){
-      TTree*& tree = treeGroup.at(ifile);
-      ExtendedHistogram_1D*& hh = hMass.at(ifile);
+    for (unsigned int it=1; it<InputTypeSize; it++){
+      TTree*& tree = treeGroup.at(it);
+      ExtendedHistogram_1D*& hh = hMass.at(it);
       ExtendedHistogram_1D*& hi = hMass.at(0);
       hRatio.push_back(ExtendedHistogram_1D::divideHistograms(*hh, *hi, true, Form("MassRatio_%s", tree->GetName())));
     }
@@ -246,15 +280,27 @@ void acquireMassRatio_ProcessNominalToNominalInclusive(
         }
         gr->SetName(Form("%s_Smooth", gr->GetName()));
         foutput->WriteTObject(gr);
+
+        TGraph* grPatched = genericPatcher(
+          gr, Form("%s_Patched", gr->GetName()),
+          70., theSqrts*1000.,
+          getFcn_a0plusa1timesXN<1>, getFcn_a0plusa1overXN<1>,
+          false, true,
+          nullptr
+        );
+        foutput->WriteTObject(grPatched);
+        TSpline3* spPatched = convertGraphToSpline3(grPatched, false, false);
+        TString spname=grPatched->GetName(); replaceString(spname, "gr_", "");
+        spPatched->SetName(spname); spPatched->SetTitle(gr->GetName());
+        foutput->WriteTObject(spPatched);
+        delete spPatched;
+        delete grPatched;
       }
       delete gr;
     }
   }
 
-  for (auto& finput:finputList){
-    if (finput.first) finput.first->Close();
-    if (finput.second) finput.second->Close();
-  }
+  for (unsigned int it=0; it<InputTypeSize; it++){ for (auto& finput:finputList.at(it)) finput->Close(); }
   foutput->Close();
   MELAout.close();
 }
@@ -289,6 +335,7 @@ void acquireMassRatio_ProcessSystToNominal(
   };
   if (!thePerProcessHandle) return;
   if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
+  if (proctype==ProcessHandler::kZX && strGenerator!="Data") return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -306,27 +353,55 @@ void acquireMassRatio_ProcessSystToNominal(
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/MassRatios/" + strStage + "/";
 
   gSystem->Exec("mkdir -p " + coutput_common);
-  TString INPUT_BASELINE_NAME="", INPUT_BASELINE_AC_NAME="", INPUT_NAME="", INPUT_AC_NAME="";
+  vector<TString> INPUT_BASELINE_NAME;
+  vector<TString> INPUT_NAME;
   if (proctype==ProcessHandler::kQQBkg){
-    INPUT_BASELINE_NAME = Form(
+    INPUT_BASELINE_NAME.push_back(Form(
       "HtoZZ%s_%s_FinalTemplates_%s_%s_%s%s",
       strChannel.Data(), strCategory.Data(),
       thePerProcessHandle->getProcessName().Data(),
       strSystematics_Nominal.Data(),
       strGenerator.Data(),
       ".root"
+    )
     );
-    INPUT_NAME = Form(
+    INPUT_NAME.push_back(Form(
       "HtoZZ%s_%s_FinalTemplates_%s_%s_%s%s",
       strChannel.Data(), strCategory.Data(),
       thePerProcessHandle->getProcessName().Data(),
       strSystematics.Data(),
       strGenerator.Data(),
       ".root"
+    )
     );
   }
+  else if (proctype==ProcessHandler::kZX){
+    vector<ZXFakeRateHandler::FakeRateMethod> FRMethods;
+    FRMethods.push_back(ZXFakeRateHandler::mSS);
+    for (ZXFakeRateHandler::FakeRateMethod& FRMethod:FRMethods){
+      const TString FRMethodName = ZXFakeRateHandler::TranslateFakeRateMethodToString(FRMethod);
+      INPUT_BASELINE_NAME.push_back(Form(
+        "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_%s%s",
+        strChannel.Data(), strCategory.Data(),
+        thePerProcessHandle->getProcessName().Data(), FRMethodName.Data(),
+        strSystematics_Nominal.Data(),
+        strGenerator.Data(),
+        ".root"
+      )
+      );
+      INPUT_NAME.push_back(Form(
+        "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_%s%s",
+        strChannel.Data(), strCategory.Data(),
+        thePerProcessHandle->getProcessName().Data(), FRMethodName.Data(),
+        strSystematics.Data(),
+        strGenerator.Data(),
+        ".root"
+      )
+      );
+    }
+  }
   else{
-    INPUT_BASELINE_NAME = Form(
+    INPUT_BASELINE_NAME.push_back(Form(
       "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_%s%s",
       strChannel.Data(), strCategory.Data(),
       getACHypothesisName(kSM).Data(),
@@ -334,8 +409,9 @@ void acquireMassRatio_ProcessSystToNominal(
       strSystematics_Nominal.Data(),
       strGenerator.Data(),
       ".root"
+    )
     );
-    INPUT_NAME = Form(
+    INPUT_NAME.push_back(Form(
       "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_%s%s",
       strChannel.Data(), strCategory.Data(),
       getACHypothesisName(kSM).Data(),
@@ -343,9 +419,10 @@ void acquireMassRatio_ProcessSystToNominal(
       strSystematics.Data(),
       strGenerator.Data(),
       ".root"
+    )
     );
     if (hypo!=kSM){
-      INPUT_BASELINE_AC_NAME = Form(
+      INPUT_BASELINE_NAME.push_back(Form(
         "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_%s%s",
         strChannel.Data(), strCategory.Data(),
         strACHypo.Data(),
@@ -353,8 +430,9 @@ void acquireMassRatio_ProcessSystToNominal(
         strSystematics_Nominal.Data(),
         strGenerator.Data(),
         ".root"
+      )
       );
-      INPUT_AC_NAME = Form(
+      INPUT_NAME.push_back(Form(
         "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_%s%s",
         strChannel.Data(), strCategory.Data(),
         strACHypo.Data(),
@@ -362,6 +440,7 @@ void acquireMassRatio_ProcessSystToNominal(
         strSystematics.Data(),
         strGenerator.Data(),
         ".root"
+      )
       );
     }
   }
@@ -379,52 +458,47 @@ void acquireMassRatio_ProcessSystToNominal(
   OUTPUT_LOG_NAME += ".log";
 
   // Open the input files
-  vector<pair<TString, TString>> cinputList;
-  cinputList.push_back(pair<TString, TString>(cinput_common + INPUT_BASELINE_NAME, cinput_common + INPUT_BASELINE_AC_NAME));
-  cinputList.push_back(pair<TString, TString>(cinput_common + INPUT_NAME, cinput_common + INPUT_AC_NAME));
-  vector<pair<TFile*, TFile*>> finputList;
-  for (auto const& cinput:cinputList){
-    if (gSystem->AccessPathName(cinput.first)){
-      MELAerr << "File " << cinput.first << " is not found! Run " << strStage << " functions first." << endl;
-      for (auto& finput:finputList){
-        if (finput.first) finput.first->Close();
-        if (finput.second) finput.second->Close();
+  const unsigned int InputTypeSize=2; // Inclusive or dedicated category
+  vector<vector<TString>> cinputList; cinputList.assign(InputTypeSize, vector<TString>());
+  vector<vector<TFile*>> finputList; finputList.assign(InputTypeSize, vector<TFile*>());
+  vector<vector<TTree*>> treeLists; treeLists.assign(InputTypeSize, vector<TTree*>());
+
+  for (auto& s:INPUT_BASELINE_NAME) cinputList.at(0).push_back(cinput_common + s);
+  for (auto& s:INPUT_NAME) cinputList.at(1).push_back(cinput_common + s);
+  assert(cinputList.at(0).size()==cinputList.at(1).size());
+
+  for (unsigned int it=0; it<InputTypeSize; it++){
+    for (auto const& cinput:cinputList.at(it)){
+      if (gSystem->AccessPathName(cinput)){
+        MELAerr << "File " << cinput << " is not found! Run " << strStage << " functions first." << endl;
+        for (unsigned int it2=0; it2<InputTypeSize; it2++){ for (auto& finput:finputList.at(it2)) finput->Close(); }
+        return;
       }
+      if (cinput!="") finputList.at(it).push_back(TFile::Open(cinput, "read"));
+    }
+  }
+
+  unsigned int ntreespertype=0;
+  for (unsigned int it=0; it<InputTypeSize; it++){
+    // Extract SM or AC trees
+    for (auto& finput:finputList.at(it)){ if (finput) extractTreesFromDirectory(finput, treeLists.at(it)); }
+    // Check number of trees
+    unsigned int ntrees = treeLists.at(it).size();
+    if (ntreespertype==0) ntreespertype=ntrees;
+    else if (ntreespertype!=ntrees){
+      MELAerr << "Number of trees in type " << it << " (" << ntrees << ") does not match Ntrees=" << ntreespertype << "! Aborting..." << endl;
+      for (unsigned int it2=0; it2<InputTypeSize; it2++){ for (auto& finput2:finputList.at(it2)) finput2->Close(); }
       return;
     }
-    pair<TFile*, TFile*> fnew(nullptr, nullptr);
-    if (cinput.first!="") fnew.first = TFile::Open(cinput.first, "read");
-    if (cinput.second!="") fnew.second = TFile::Open(cinput.second, "read");
-    finputList.push_back(fnew);
   }
-  const unsigned int nfiles=cinputList.size();
-  vector<vector<TTree*>> treeLists; treeLists.assign(nfiles, vector<TTree*>());
-  unsigned int ntreesperfile=0;
-  for (unsigned int ifile=0; ifile<nfiles; ifile++){
-    TFile* finput;
-    // Extract SM trees
-    finput=finputList.at(ifile).first;
-    if (finput) extractTreesFromDirectory(finput, treeLists.at(ifile));
-    // Extract AC trees
-    finput=finputList.at(ifile).second;
-    if (finput) extractTreesFromDirectory(finput, treeLists.at(ifile));
-    if (ntreesperfile==0) ntreesperfile=treeLists.at(ifile).size();
-    else if (ntreesperfile!=treeLists.at(ifile).size()){
-      MELAerr << "Number of trees in files " << cinputList.at(ifile).first << " and " << cinputList.at(ifile).second << " does not match Ntrees=" << ntreesperfile << "! Aborting..." << endl;
-      for (auto& ftmp:finputList){
-        if (ftmp.first) ftmp.first->Close();
-        if (ftmp.second) ftmp.second->Close();
-      }
-      return;
-    }
-    MELAout << "Acquired " << ntreesperfile << " trees..." << endl;
-  }
+  MELAout << "Acquired " << ntreespertype << " trees per type..." << endl;
+
   vector<vector<TTree*>> treeGroups;
-  treeGroups.assign(ntreesperfile, vector<TTree*>());
-  for (auto& treeGroup:treeGroups) treeGroup.assign(nfiles, nullptr);
-  for (unsigned int ifile=0; ifile<nfiles; ifile++){
-    for (unsigned int ihypo=0; ihypo<ntreesperfile; ihypo++){
-      treeGroups.at(ihypo).at(ifile) = treeLists.at(ifile).at(ihypo);
+  treeGroups.assign(ntreespertype, vector<TTree*>());
+  for (auto& treeGroup:treeGroups) treeGroup.assign(InputTypeSize, nullptr);
+  for (unsigned int it=0; it<InputTypeSize; it++){
+    for (unsigned int ihypo=0; ihypo<ntreespertype; ihypo++){
+      treeGroups.at(ihypo).at(it) = treeLists.at(it).at(ihypo);
     }
   }
 
@@ -451,25 +525,31 @@ void acquireMassRatio_ProcessSystToNominal(
         nEntriesMin=tree->GetEntries();
       }
     }
-    ExtendedBinning binning=getMassBinning(treeChosen);
+    ExtendedBinning binning=getMassBinning(treeChosen, proctype==ProcessHandler::kQQBkg);
 
-    vector<ExtendedHistogram_1D*> hMass; hMass.assign(nfiles, nullptr);
-    for (unsigned int ifile=0; ifile<nfiles; ifile++){
-      ExtendedHistogram_1D*& hh = hMass.at(ifile);
-      TTree*& tree = treeGroup.at(ifile);
-      hh = new ExtendedHistogram_1D(Form("MassDistribution_%s_%i", tree->GetName(), ifile), "", binning);
+    vector<ExtendedHistogram_1D*> hMass; hMass.assign(InputTypeSize, nullptr);
+    for (unsigned int it=0; it<InputTypeSize; it++){
+      ExtendedHistogram_1D*& hh = hMass.at(it);
+      TTree*& tree = treeGroup.at(it);
+      hh = new ExtendedHistogram_1D(Form("MassDistribution_%s_%i", tree->GetName(), it), "", binning);
+      bool isCategory=(category==Inclusive);
       float ZZMass, weight;
       tree->SetBranchAddress("ZZMass", &ZZMass);
       tree->SetBranchAddress("weight", &weight);
+      if (!isCategory){
+        TString catFlagName = TString("is_") + strCategory + TString("_") + getACHypothesisName(hypo);
+        tree->SetBranchAddress(catFlagName, &isCategory);
+      }
       for (int ev=0; ev<tree->GetEntries(); ev++){
         tree->GetEntry(ev);
+        if (!isCategory) continue;
         hh->fill(ZZMass, weight);
       }
     }
     vector<ExtendedHistogram_1D> hRatio;
-    for (unsigned int ifile=1; ifile<nfiles; ifile++){
-      TTree*& tree = treeGroup.at(ifile);
-      ExtendedHistogram_1D*& hh = hMass.at(ifile);
+    for (unsigned int it=1; it<InputTypeSize; it++){
+      TTree*& tree = treeGroup.at(it);
+      ExtendedHistogram_1D*& hh = hMass.at(it);
       ExtendedHistogram_1D*& hi = hMass.at(0);
       hRatio.push_back(ExtendedHistogram_1D::divideHistograms(*hh, *hi, true, Form("MassRatio_%s", tree->GetName())));
     }
@@ -509,16 +589,13 @@ void acquireMassRatio_ProcessSystToNominal(
     }
   }
 
-  for (auto& finput:finputList){
-    if (finput.first) finput.first->Close();
-    if (finput.second) finput.second->Close();
-  }
+  for (unsigned int it=0; it<InputTypeSize; it++){ for (auto& finput:finputList.at(it)) finput->Close(); }
   foutput->Close();
   MELAout.close();
 }
 
 
-ExtendedBinning getMassBinning(TTree* tree){
+ExtendedBinning getMassBinning(TTree* tree, bool separateZ4l){
   ExtendedBinning binning("ZZMass");
   if (!tree) return binning;
 
@@ -575,7 +652,7 @@ ExtendedBinning getMassBinning(TTree* tree){
   }
   // Finally, add the low mass boundaries
   binning.addBinBoundary(70.);
-  binning.addBinBoundary(105.);
+  if (separateZ4l) binning.addBinBoundary(105.);
   binning.addBinBoundary(140.);
   //binning.addBinBoundary(185.);
   MELAout << "Final binning for tree " << tree->GetName() << ": nbins=" << binning.getNbins() << " [ " << binning.getBinningVector() << " ] ( " << countThreshold << " / " << nEntries << " )" << endl;

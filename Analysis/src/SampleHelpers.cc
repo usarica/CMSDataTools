@@ -156,7 +156,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
   std::vector<TString> samples;
   if (sqrts!=13) return samples;
 
-  if (CJLSTversion>180212){
+  if (CJLSTversion>180212 && theDataPeriod=="2016"){
     MELAout << "SampleHelpers::constructSamplesList: Check ggH and ZH samples list before proceeding" << endl;
     assert(0);
   }
@@ -165,7 +165,8 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("VBFH115");
     samples.push_back("VBFH120");
     samples.push_back("VBFH124");
-    samples.push_back("VBFH125");
+    if (theDataPeriod=="2017") samples.push_back("VBFH125Combined");
+    else samples.push_back("VBFH125");
     samples.push_back("VBFH126");
     samples.push_back("VBFH130");
     samples.push_back("VBFH135");
@@ -211,7 +212,8 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("WminusH115");
     samples.push_back("WminusH120");
     samples.push_back("WminusH124");
-    samples.push_back("WminusH125");
+    if (theDataPeriod=="2017") samples.push_back("WminusH125Combined");
+    else samples.push_back("WminusH125");
     samples.push_back("WminusH126");
     samples.push_back("WminusH130");
     samples.push_back("WminusH135");
@@ -251,7 +253,8 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("WplusH115");
     samples.push_back("WplusH120");
     samples.push_back("WplusH124");
-    samples.push_back("WplusH125");
+    if (theDataPeriod=="2017") samples.push_back("WplusH125Combined");
+    else samples.push_back("WplusH125");
     samples.push_back("WplusH126");
     samples.push_back("WplusH130");
     samples.push_back("WplusH135");
@@ -292,7 +295,8 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("ZH115");
     samples.push_back("ZH120");
     samples.push_back("ZH124");
-    samples.push_back("ZH125");
+    if (theDataPeriod=="2017") samples.push_back("ZH125Combined");
+    else samples.push_back("ZH125");
     samples.push_back("ZH126");
     samples.push_back("ZH130");
     samples.push_back("ZH135");
@@ -338,7 +342,8 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("ggH115");
     samples.push_back("ggH120");
     samples.push_back("ggH124");
-    samples.push_back("ggH125");
+    if (theDataPeriod=="2017") samples.push_back("ggH125Combined");
+    else samples.push_back("ggH125");
     samples.push_back("ggH126");
     samples.push_back("ggH130");
     samples.push_back("ggH135");

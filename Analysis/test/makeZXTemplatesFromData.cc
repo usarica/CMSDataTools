@@ -187,7 +187,7 @@ void makeZXTemplatesFromData_checkstage(
   TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Check_" + strStage + "/";
 
   TString INPUT_NAME = Form(
-    "HtoZZ%s_%s_FinalTemplates_%s_%s_Data.root",
+    "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_Data.root",
     strChannel.Data(), strCategory.Data(),
     theProcess.getProcessName().Data(), FRMethodName.Data(),
     strSystematics.Data()

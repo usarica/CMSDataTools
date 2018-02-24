@@ -1603,8 +1603,8 @@ template <> void HelperFunctions::translateCumulantToHistogram<TH1F>(TH1F const*
     double sumw=histo->GetBinContent(ix);
     double sumw2=pow(histo->GetBinError(ix), 2);
     if (ix>0){
-      sumw -= res->GetBinContent(ix-1);
-      sumw2 -= pow(res->GetBinError(ix-1), 2);
+      sumw -= histo->GetBinContent(ix-1);
+      sumw2 -= pow(histo->GetBinError(ix-1), 2);
     }
     res->SetBinContent(ix, sumw);
     res->SetBinError(ix, sqrt(sumw2));
@@ -1622,21 +1622,21 @@ template <> void HelperFunctions::translateCumulantToHistogram<TH2F>(TH2F const*
       double sumw=histo->GetBinContent(ix, iy);
       double sumw2=pow(histo->GetBinError(ix, iy), 2);
       if (ix>0 && iy>0){
-        sumw -= res->GetBinContent(ix-1, iy);
-        sumw2 -= pow(res->GetBinError(ix-1, iy), 2);
-        sumw -= res->GetBinContent(ix, iy-1);
-        sumw2 -= pow(res->GetBinError(ix, iy-1), 2);
+        sumw -= histo->GetBinContent(ix-1, iy);
+        sumw2 -= pow(histo->GetBinError(ix-1, iy), 2);
+        sumw -= histo->GetBinContent(ix, iy-1);
+        sumw2 -= pow(histo->GetBinError(ix, iy-1), 2);
 
-        sumw += res->GetBinContent(ix-1, iy-1);
-        sumw2 += pow(res->GetBinError(ix-1, iy-1), 2);
+        sumw += histo->GetBinContent(ix-1, iy-1);
+        sumw2 += pow(histo->GetBinError(ix-1, iy-1), 2);
       }
       else if (ix>0){
-        sumw -= res->GetBinContent(ix-1, iy);
-        sumw2 -= pow(res->GetBinError(ix-1, iy), 2);
+        sumw -= histo->GetBinContent(ix-1, iy);
+        sumw2 -= pow(histo->GetBinError(ix-1, iy), 2);
       }
       else if (iy>0){
-        sumw -= res->GetBinContent(ix, iy-1);
-        sumw2 -= pow(res->GetBinError(ix, iy-1), 2);
+        sumw -= histo->GetBinContent(ix, iy-1);
+        sumw2 -= pow(histo->GetBinError(ix, iy-1), 2);
       }
       res->SetBinContent(ix, iy, sumw);
       res->SetBinError(ix, iy, sqrt(sumw2));
@@ -1652,65 +1652,65 @@ template <> void HelperFunctions::translateCumulantToHistogram<TH3F>(TH3F const*
   res->Reset("ICES");
   for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
     for (int iy=0; iy<=res->GetNbinsY()+1; iy++){
-      for (int iz=0; iz<=res->GetNbinsZ()+1; iz++){
+      for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
         double sumw=histo->GetBinContent(ix, iy, iz);
         double sumw2=pow(histo->GetBinError(ix, iy, iz), 2);
         if (ix>0 && iy>0 && iz>0){
-          sumw -= res->GetBinContent(ix-1, iy, iz);
-          sumw2 -= pow(res->GetBinError(ix-1, iy, iz), 2);
-          sumw -= res->GetBinContent(ix, iy-1, iz);
-          sumw2 -= pow(res->GetBinError(ix, iy-1, iz), 2);
-          sumw -= res->GetBinContent(ix, iy, iz-1);
-          sumw2 -= pow(res->GetBinError(ix, iy, iz-1), 2);
+          sumw -= histo->GetBinContent(ix-1, iy, iz);
+          sumw2 -= pow(histo->GetBinError(ix-1, iy, iz), 2);
+          sumw -= histo->GetBinContent(ix, iy-1, iz);
+          sumw2 -= pow(histo->GetBinError(ix, iy-1, iz), 2);
+          sumw -= histo->GetBinContent(ix, iy, iz-1);
+          sumw2 -= pow(histo->GetBinError(ix, iy, iz-1), 2);
 
-          sumw += res->GetBinContent(ix-1, iy-1, iz);
-          sumw2 += pow(res->GetBinError(ix-1, iy-1, iz), 2);
-          sumw += res->GetBinContent(ix-1, iy, iz-1);
-          sumw2 += pow(res->GetBinError(ix-1, iy, iz-1), 2);
-          sumw += res->GetBinContent(ix, iy-1, iz-1);
-          sumw2 += pow(res->GetBinError(ix, iy-1, iz-1), 2);
+          sumw += histo->GetBinContent(ix-1, iy-1, iz);
+          sumw2 += pow(histo->GetBinError(ix-1, iy-1, iz), 2);
+          sumw += histo->GetBinContent(ix-1, iy, iz-1);
+          sumw2 += pow(histo->GetBinError(ix-1, iy, iz-1), 2);
+          sumw += histo->GetBinContent(ix, iy-1, iz-1);
+          sumw2 += pow(histo->GetBinError(ix, iy-1, iz-1), 2);
 
-          sumw -= res->GetBinContent(ix-1, iy-1, iz-1);
-          sumw2 -= pow(res->GetBinError(ix-1, iy-1, iz-1), 2);
+          sumw -= histo->GetBinContent(ix-1, iy-1, iz-1);
+          sumw2 -= pow(histo->GetBinError(ix-1, iy-1, iz-1), 2);
         }
         else if (ix>0 && iy>0){
-          sumw -= res->GetBinContent(ix-1, iy, iz);
-          sumw2 -= pow(res->GetBinError(ix-1, iy, iz), 2);
-          sumw -= res->GetBinContent(ix, iy-1, iz);
-          sumw2 -= pow(res->GetBinError(ix, iy-1, iz), 2);
+          sumw -= histo->GetBinContent(ix-1, iy, iz);
+          sumw2 -= pow(histo->GetBinError(ix-1, iy, iz), 2);
+          sumw -= histo->GetBinContent(ix, iy-1, iz);
+          sumw2 -= pow(histo->GetBinError(ix, iy-1, iz), 2);
 
-          sumw += res->GetBinContent(ix-1, iy-1, iz);
-          sumw2 += pow(res->GetBinError(ix-1, iy-1, iz), 2);
+          sumw += histo->GetBinContent(ix-1, iy-1, iz);
+          sumw2 += pow(histo->GetBinError(ix-1, iy-1, iz), 2);
         }
         else if (ix>0 && iz>0){
-          sumw -= res->GetBinContent(ix-1, iy, iz);
-          sumw2 -= pow(res->GetBinError(ix-1, iy, iz), 2);
-          sumw -= res->GetBinContent(ix, iy, iz-1);
-          sumw2 -= pow(res->GetBinError(ix, iy, iz-1), 2);
+          sumw -= histo->GetBinContent(ix-1, iy, iz);
+          sumw2 -= pow(histo->GetBinError(ix-1, iy, iz), 2);
+          sumw -= histo->GetBinContent(ix, iy, iz-1);
+          sumw2 -= pow(histo->GetBinError(ix, iy, iz-1), 2);
 
-          sumw += res->GetBinContent(ix-1, iy, iz-1);
-          sumw2 += pow(res->GetBinError(ix-1, iy, iz-1), 2);
+          sumw += histo->GetBinContent(ix-1, iy, iz-1);
+          sumw2 += pow(histo->GetBinError(ix-1, iy, iz-1), 2);
         }
         else if (iy>0 && iz>0){
-          sumw -= res->GetBinContent(ix, iy-1, iz);
-          sumw2 -= pow(res->GetBinError(ix, iy-1, iz), 2);
-          sumw -= res->GetBinContent(ix, iy, iz-1);
-          sumw2 -= pow(res->GetBinError(ix, iy, iz-1), 2);
+          sumw -= histo->GetBinContent(ix, iy-1, iz);
+          sumw2 -= pow(histo->GetBinError(ix, iy-1, iz), 2);
+          sumw -= histo->GetBinContent(ix, iy, iz-1);
+          sumw2 -= pow(histo->GetBinError(ix, iy, iz-1), 2);
 
-          sumw += res->GetBinContent(ix, iy-1, iz-1);
-          sumw2 += pow(res->GetBinError(ix, iy-1, iz-1), 2);
+          sumw += histo->GetBinContent(ix, iy-1, iz-1);
+          sumw2 += pow(histo->GetBinError(ix, iy-1, iz-1), 2);
         }
         else if (ix>0){
-          sumw -= res->GetBinContent(ix-1, iy, iz);
-          sumw2 -= pow(res->GetBinError(ix-1, iy, iz), 2);
+          sumw -= histo->GetBinContent(ix-1, iy, iz);
+          sumw2 -= pow(histo->GetBinError(ix-1, iy, iz), 2);
         }
         else if (iy>0){
-          sumw -= res->GetBinContent(ix, iy-1, iz);
-          sumw2 -= pow(res->GetBinError(ix, iy-1, iz), 2);
+          sumw -= histo->GetBinContent(ix, iy-1, iz);
+          sumw2 -= pow(histo->GetBinError(ix, iy-1, iz), 2);
         }
         else if (iz>0){
-          sumw -= res->GetBinContent(ix, iy, iz-1);
-          sumw2 -= pow(res->GetBinError(ix, iy, iz-1), 2);
+          sumw -= histo->GetBinContent(ix, iy, iz-1);
+          sumw2 -= pow(histo->GetBinError(ix, iy, iz-1), 2);
         }
         res->SetBinContent(ix, iy, iz, sumw);
         res->SetBinError(ix, iy, iz, sqrt(sumw2));

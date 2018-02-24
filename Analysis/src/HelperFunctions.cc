@@ -327,6 +327,25 @@ TGraphErrors* HelperFunctions::makeGraphFromTH1(TH1* hx, TH1* hy, TString name){
   return tg;
 }
 
+TGraphErrors* HelperFunctions::makeGraphFromCumulantHistogram(TH1* histo, TString name){
+  if (!histo) return nullptr;
+  if (name=="") name = Form("tg_%s", histo->GetName());
+  unsigned int npoints = histo->GetNbinsX()+1;
+  double* xexyey[4];
+  for (unsigned int ix=0; ix<4; ix++) xexyey[ix] = new double[npoints];
+  for (unsigned int bin=0; bin<npoints; bin++){
+    xexyey[0][bin] = histo->GetXaxis()->GetBinUpEdge(bin);
+    xexyey[1][bin] = 0;
+
+    xexyey[2][bin] = histo->GetBinContent(bin);
+    xexyey[3][bin] = histo->GetBinError(bin);
+  }
+  TGraphErrors* tg = new TGraphErrors(npoints, xexyey[0], xexyey[2], xexyey[1], xexyey[3]);
+  tg->SetName(name);
+  for (unsigned int ix=0; ix<4; ix++) delete[] xexyey[ix];
+  return tg;
+}
+
 TGraph* HelperFunctions::addTGraphs(TGraph* tgfirst, TGraph* tgsecond){
   TSpline3* spfirst = convertGraphToSpline3(tgfirst);
   TSpline3* spsecond = convertGraphToSpline3(tgsecond);
@@ -1445,6 +1464,261 @@ template <> void HelperFunctions::antisymmetrizeHistogram<TH3F>(TH3F* histo, uns
     }
   }
 }
+
+template <> void HelperFunctions::getCumulantHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname){
+  if (!histo) return;
+  if (newname=="") newname=Form("Cumulant_%s", histo->GetName());
+  delete res;
+  res = new TH1F(*histo);
+  res->SetName(newname);
+  res->Reset("ICES");
+  for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
+    double sumw=histo->GetBinContent(ix);
+    double sumw2=pow(histo->GetBinError(ix), 2);
+    if (ix>0){
+      sumw += res->GetBinContent(ix-1);
+      sumw2 += pow(res->GetBinError(ix-1), 2);
+    }
+    res->SetBinContent(ix, sumw);
+    res->SetBinError(ix, sqrt(sumw2));
+  }
+}
+template <> void HelperFunctions::getCumulantHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname){
+  if (!histo) return;
+  if (newname=="") newname=Form("Cumulant_%s", histo->GetName());
+  delete res;
+  res = new TH2F(*histo);
+  res->SetName(newname);
+  res->Reset("ICES");
+  for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
+    for (int iy=0; iy<=res->GetNbinsY()+1; iy++){
+      double sumw=histo->GetBinContent(ix, iy);
+      double sumw2=pow(histo->GetBinError(ix, iy), 2);
+      if (ix>0 && iy>0){
+        sumw += res->GetBinContent(ix-1, iy);
+        sumw2 += pow(res->GetBinError(ix-1, iy), 2);
+        sumw += res->GetBinContent(ix, iy-1);
+        sumw2 += pow(res->GetBinError(ix, iy-1), 2);
+
+        sumw -= res->GetBinContent(ix-1, iy-1);
+        sumw2 -= pow(res->GetBinError(ix-1, iy-1), 2);
+      }
+      else if (ix>0){
+        sumw += res->GetBinContent(ix-1, iy);
+        sumw2 += pow(res->GetBinError(ix-1, iy), 2);
+      }
+      else if (iy>0){
+        sumw += res->GetBinContent(ix, iy-1);
+        sumw2 += pow(res->GetBinError(ix, iy-1), 2);
+      }
+      res->SetBinContent(ix, iy, sumw);
+      res->SetBinError(ix, iy, sqrt(sumw2));
+    }
+  }
+}
+template <> void HelperFunctions::getCumulantHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname){
+  if (!histo) return;
+  if (newname=="") newname=Form("Cumulant_%s", histo->GetName());
+  delete res;
+  res = new TH3F(*histo);
+  res->SetName(newname);
+  res->Reset("ICES");
+  for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
+    for (int iy=0; iy<=res->GetNbinsY()+1; iy++){
+      for (int iz=0; iz<=res->GetNbinsZ()+1; iz++){
+        double sumw=histo->GetBinContent(ix, iy, iz);
+        double sumw2=pow(histo->GetBinError(ix, iy, iz), 2);
+        if (ix>0 && iy>0 && iz>0){
+          sumw += res->GetBinContent(ix-1, iy, iz);
+          sumw2 += pow(res->GetBinError(ix-1, iy, iz), 2);
+          sumw += res->GetBinContent(ix, iy-1, iz);
+          sumw2 += pow(res->GetBinError(ix, iy-1, iz), 2);
+          sumw += res->GetBinContent(ix, iy, iz-1);
+          sumw2 += pow(res->GetBinError(ix, iy, iz-1), 2);
+
+          sumw -= res->GetBinContent(ix-1, iy-1, iz);
+          sumw2 -= pow(res->GetBinError(ix-1, iy-1, iz), 2);
+          sumw -= res->GetBinContent(ix-1, iy, iz-1);
+          sumw2 -= pow(res->GetBinError(ix-1, iy, iz-1), 2);
+          sumw -= res->GetBinContent(ix, iy-1, iz-1);
+          sumw2 -= pow(res->GetBinError(ix, iy-1, iz-1), 2);
+
+          sumw += res->GetBinContent(ix-1, iy-1, iz-1);
+          sumw2 += pow(res->GetBinError(ix-1, iy-1, iz-1), 2);
+        }
+        else if (ix>0 && iy>0){
+          sumw += res->GetBinContent(ix-1, iy, iz);
+          sumw2 += pow(res->GetBinError(ix-1, iy, iz), 2);
+          sumw += res->GetBinContent(ix, iy-1, iz);
+          sumw2 += pow(res->GetBinError(ix, iy-1, iz), 2);
+
+          sumw -= res->GetBinContent(ix-1, iy-1, iz);
+          sumw2 -= pow(res->GetBinError(ix-1, iy-1, iz), 2);
+        }
+        else if (ix>0 && iz>0){
+          sumw += res->GetBinContent(ix-1, iy, iz);
+          sumw2 += pow(res->GetBinError(ix-1, iy, iz), 2);
+          sumw += res->GetBinContent(ix, iy, iz-1);
+          sumw2 += pow(res->GetBinError(ix, iy, iz-1), 2);
+
+          sumw -= res->GetBinContent(ix-1, iy, iz-1);
+          sumw2 -= pow(res->GetBinError(ix-1, iy, iz-1), 2);
+        }
+        else if (iy>0 && iz>0){
+          sumw += res->GetBinContent(ix, iy-1, iz);
+          sumw2 += pow(res->GetBinError(ix, iy-1, iz), 2);
+          sumw += res->GetBinContent(ix, iy, iz-1);
+          sumw2 += pow(res->GetBinError(ix, iy, iz-1), 2);
+
+          sumw -= res->GetBinContent(ix, iy-1, iz-1);
+          sumw2 -= pow(res->GetBinError(ix, iy-1, iz-1), 2);
+        }
+        else if (ix>0){
+          sumw += res->GetBinContent(ix-1, iy, iz);
+          sumw2 += pow(res->GetBinError(ix-1, iy, iz), 2);
+        }
+        else if (iy>0){
+          sumw += res->GetBinContent(ix, iy-1, iz);
+          sumw2 += pow(res->GetBinError(ix, iy-1, iz), 2);
+        }
+        else if (iz>0){
+          sumw += res->GetBinContent(ix, iy, iz-1);
+          sumw2 += pow(res->GetBinError(ix, iy, iz-1), 2);
+        }
+        res->SetBinContent(ix, iy, iz, sumw);
+        res->SetBinError(ix, iy, iz, sqrt(sumw2));
+      }
+    }
+  }
+}
+
+template <> void HelperFunctions::translateCumulantToHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname){
+  if (!histo) return;
+  if (newname=="") newname=Form("h_%s", histo->GetName());
+  delete res;
+  res = new TH1F(*histo);
+  res->SetName(newname);
+  res->Reset("ICES");
+  for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
+    double sumw=histo->GetBinContent(ix);
+    double sumw2=pow(histo->GetBinError(ix), 2);
+    if (ix>0){
+      sumw -= res->GetBinContent(ix-1);
+      sumw2 -= pow(res->GetBinError(ix-1), 2);
+    }
+    res->SetBinContent(ix, sumw);
+    res->SetBinError(ix, sqrt(sumw2));
+  }
+}
+template <> void HelperFunctions::translateCumulantToHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname){
+  if (!histo) return;
+  if (newname=="") newname=Form("h_%s", histo->GetName());
+  delete res;
+  res = new TH2F(*histo);
+  res->SetName(newname);
+  res->Reset("ICES");
+  for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
+    for (int iy=0; iy<=res->GetNbinsY()+1; iy++){
+      double sumw=histo->GetBinContent(ix, iy);
+      double sumw2=pow(histo->GetBinError(ix, iy), 2);
+      if (ix>0 && iy>0){
+        sumw -= res->GetBinContent(ix-1, iy);
+        sumw2 -= pow(res->GetBinError(ix-1, iy), 2);
+        sumw -= res->GetBinContent(ix, iy-1);
+        sumw2 -= pow(res->GetBinError(ix, iy-1), 2);
+
+        sumw += res->GetBinContent(ix-1, iy-1);
+        sumw2 += pow(res->GetBinError(ix-1, iy-1), 2);
+      }
+      else if (ix>0){
+        sumw -= res->GetBinContent(ix-1, iy);
+        sumw2 -= pow(res->GetBinError(ix-1, iy), 2);
+      }
+      else if (iy>0){
+        sumw -= res->GetBinContent(ix, iy-1);
+        sumw2 -= pow(res->GetBinError(ix, iy-1), 2);
+      }
+      res->SetBinContent(ix, iy, sumw);
+      res->SetBinError(ix, iy, sqrt(sumw2));
+    }
+  }
+}
+template <> void HelperFunctions::translateCumulantToHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname){
+  if (!histo) return;
+  if (newname=="") newname=Form("h_%s", histo->GetName());
+  delete res;
+  res = new TH3F(*histo);
+  res->SetName(newname);
+  res->Reset("ICES");
+  for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
+    for (int iy=0; iy<=res->GetNbinsY()+1; iy++){
+      for (int iz=0; iz<=res->GetNbinsZ()+1; iz++){
+        double sumw=histo->GetBinContent(ix, iy, iz);
+        double sumw2=pow(histo->GetBinError(ix, iy, iz), 2);
+        if (ix>0 && iy>0 && iz>0){
+          sumw -= res->GetBinContent(ix-1, iy, iz);
+          sumw2 -= pow(res->GetBinError(ix-1, iy, iz), 2);
+          sumw -= res->GetBinContent(ix, iy-1, iz);
+          sumw2 -= pow(res->GetBinError(ix, iy-1, iz), 2);
+          sumw -= res->GetBinContent(ix, iy, iz-1);
+          sumw2 -= pow(res->GetBinError(ix, iy, iz-1), 2);
+
+          sumw += res->GetBinContent(ix-1, iy-1, iz);
+          sumw2 += pow(res->GetBinError(ix-1, iy-1, iz), 2);
+          sumw += res->GetBinContent(ix-1, iy, iz-1);
+          sumw2 += pow(res->GetBinError(ix-1, iy, iz-1), 2);
+          sumw += res->GetBinContent(ix, iy-1, iz-1);
+          sumw2 += pow(res->GetBinError(ix, iy-1, iz-1), 2);
+
+          sumw -= res->GetBinContent(ix-1, iy-1, iz-1);
+          sumw2 -= pow(res->GetBinError(ix-1, iy-1, iz-1), 2);
+        }
+        else if (ix>0 && iy>0){
+          sumw -= res->GetBinContent(ix-1, iy, iz);
+          sumw2 -= pow(res->GetBinError(ix-1, iy, iz), 2);
+          sumw -= res->GetBinContent(ix, iy-1, iz);
+          sumw2 -= pow(res->GetBinError(ix, iy-1, iz), 2);
+
+          sumw += res->GetBinContent(ix-1, iy-1, iz);
+          sumw2 += pow(res->GetBinError(ix-1, iy-1, iz), 2);
+        }
+        else if (ix>0 && iz>0){
+          sumw -= res->GetBinContent(ix-1, iy, iz);
+          sumw2 -= pow(res->GetBinError(ix-1, iy, iz), 2);
+          sumw -= res->GetBinContent(ix, iy, iz-1);
+          sumw2 -= pow(res->GetBinError(ix, iy, iz-1), 2);
+
+          sumw += res->GetBinContent(ix-1, iy, iz-1);
+          sumw2 += pow(res->GetBinError(ix-1, iy, iz-1), 2);
+        }
+        else if (iy>0 && iz>0){
+          sumw -= res->GetBinContent(ix, iy-1, iz);
+          sumw2 -= pow(res->GetBinError(ix, iy-1, iz), 2);
+          sumw -= res->GetBinContent(ix, iy, iz-1);
+          sumw2 -= pow(res->GetBinError(ix, iy, iz-1), 2);
+
+          sumw += res->GetBinContent(ix, iy-1, iz-1);
+          sumw2 += pow(res->GetBinError(ix, iy-1, iz-1), 2);
+        }
+        else if (ix>0){
+          sumw -= res->GetBinContent(ix-1, iy, iz);
+          sumw2 -= pow(res->GetBinError(ix-1, iy, iz), 2);
+        }
+        else if (iy>0){
+          sumw -= res->GetBinContent(ix, iy-1, iz);
+          sumw2 -= pow(res->GetBinError(ix, iy-1, iz), 2);
+        }
+        else if (iz>0){
+          sumw -= res->GetBinContent(ix, iy, iz-1);
+          sumw2 -= pow(res->GetBinError(ix, iy, iz-1), 2);
+        }
+        res->SetBinContent(ix, iy, iz, sumw);
+        res->SetBinError(ix, iy, iz, sqrt(sumw2));
+      }
+    }
+  }
+}
+
 
 void HelperFunctions::CopyFile(TString fname, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*)){
   // Copy all objects and subdirs of file fname as a subdir of the current directory

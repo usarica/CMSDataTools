@@ -28,7 +28,8 @@ public:
   virtual void build();
 
   TH1F*& getHistogram(){ return histo; }
-  const TH1F* getHistogram()const{ return histo; }
+  const TH1F* getHistogram() const{ return histo; }
+  TH1F* getCumulantHistogram(TString newname="") const;
 
   TProfile*& getProfileX(){ return prof_x; }
   const TProfile* getProfileX() const{ return prof_x; }

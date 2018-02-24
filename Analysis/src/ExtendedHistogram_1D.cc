@@ -66,6 +66,14 @@ TGraphErrors* ExtendedHistogram_1D::getGraph(TString newname) const{
   return HelperFunctions::makeGraphFromTH1(prof_x, histo, newname);
 }
 
+TH1F* ExtendedHistogram_1D::getCumulantHistogram(TString newname) const{
+  if (!histo || !prof_x) return nullptr;
+  if (newname=="") newname=Form("Cumulant_%s_vs_%s", histo->GetName(), prof_x->GetName());
+  TH1F* res = nullptr;
+  HelperFunctions::getCumulantHistogram(histo, res, newname);
+  return res;
+}
+
 ExtendedHistogram_1D ExtendedHistogram_1D::divideHistograms(ExtendedHistogram_1D const& h1, ExtendedHistogram_1D const& h2, bool useEffErr, TString newname){
   if (newname=="") newname=Form("h_%s_over_%s", h1.name.Data(), h2.name.Data());
   ExtendedHistogram_1D res(h2); res.setNameTitle(newname); res.histo->Reset("ICES");

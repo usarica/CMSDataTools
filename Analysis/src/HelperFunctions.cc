@@ -1,6 +1,9 @@
 #include <cstring>
 #include "HelperFunctions.h"
 #include "MELAStreamHelpers.hh"
+#include "MELANCSplineFactory_1D.h"
+#include "MELANCSplineFactory_2D.h"
+#include "MELANCSplineFactory_3D.h"
 
 
 using namespace std;
@@ -577,7 +580,12 @@ TGraph* HelperFunctions::genericPatcher(
 }
 
 
-void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX, double omitbelow, double omitabove, int nIter_, double threshold_){
+void HelperFunctions::regularizeSlice(
+  TGraph* tgSlice,
+  std::vector<double>* fixedX, double omitbelow, double omitabove,
+  int nIter_, double threshold_,
+  signed char forceUseFaithfulSlopeFirst, signed char forceUseFaithfulSlopeSecond
+  ){
   unsigned int nbins_slice = tgSlice->GetN();
   double* xy_slice[2]={
     tgSlice->GetX(),
@@ -639,7 +647,11 @@ void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixe
       //double derivative_first = (yy_second[1]-yy_second[0])/(xx_second[1]-xx_second[0]);
       //double derivative_last = (yy_second[nbins_second-1]-yy_second[nbins_second-2])/(xx_second[nbins_second-1]-xx_second[nbins_second-2]);
       //TSpline3* spline = new TSpline3("spline", interpolator, "b1e1", derivative_first, derivative_last);
-      TSpline3* spline = new TSpline3("spline", interpolator, "b2e2", 0, 0);
+      TSpline3* spline = convertGraphToSpline3(
+        interpolator,
+        forceUseFaithfulSlopeFirst==1,
+        forceUseFaithfulSlopeSecond==1
+      );
 
       double center = xy_mod[0][binIt-1];
       double val = spline->Eval(center);
@@ -656,7 +668,12 @@ void HelperFunctions::regularizeSlice(TGraph* tgSlice, std::vector<double>* fixe
   for (unsigned int iy=0; iy<nbins_slice; iy++) xy_slice[1][iy] = xy_mod[1][iy];
   for (unsigned int ix=0; ix<2; ix++) delete[] xy_mod[ix];
 }
-void HelperFunctions::regularizeSlice(TGraphErrors* tgSlice, std::vector<double>* fixedX, double omitbelow, double omitabove, int nIter_, double threshold_, double acceleration_){
+void HelperFunctions::regularizeSlice(
+  TGraphErrors* tgSlice,
+  std::vector<double>* fixedX, double omitbelow, double omitabove,
+  int nIter_, double threshold_, double acceleration_,
+  signed char forceUseFaithfulSlopeFirst, signed char forceUseFaithfulSlopeSecond
+){
   const unsigned int ndim=4;
   unsigned int nbins_slice = tgSlice->GetN();
   double* xy_slice[ndim]={
@@ -716,7 +733,12 @@ void HelperFunctions::regularizeSlice(TGraphErrors* tgSlice, std::vector<double>
         }
 
         TGraph* interpolator = new TGraph(nbins_second, xx_second, yy_second);
-        TSpline3* spline = convertGraphToSpline3(interpolator, (binIt!=bin_first), (binIt!=bin_last)); spline->SetName("tmpspline");
+        TSpline3* spline = convertGraphToSpline3(
+          interpolator,
+          (binIt!=bin_first && forceUseFaithfulSlopeFirst==-1) || forceUseFaithfulSlopeFirst==1,
+          (binIt!=bin_last && forceUseFaithfulSlopeSecond==-1) || forceUseFaithfulSlopeSecond==1
+        );
+        spline->SetName("tmpspline");
 
         double center = xy_mod[0][binIt];
         double val;
@@ -872,211 +894,144 @@ template<> double HelperFunctions::evaluateTObject<TGraph>(TGraph* obj, float va
   else if (val<xx[0]) val=xx[0];
   return obj->Eval(val);
 }
-
-template<> void HelperFunctions::regularizeHistogram<TH1F>(TH1F* histo, int nIter_, double threshold_, double acceleration_, unsigned int /*iaxis_*/){
-  const int nbinsx = histo->GetNbinsX();
-
-  double xy[4][nbinsx]={ { 0 } };
-  double abssumerr=0;
-  for (int ix=1; ix<=nbinsx; ix++){
-    xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
-    xy[1][ix-1] = histo->GetBinContent(ix);
-    xy[3][ix-1] = histo->GetBinError(ix);
-    abssumerr += xy[3][ix-1];
-  }
-  if (abssumerr==0.){
-    TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
-    tg->SetName("tg_tmp");
-    regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsx-2]+xy[0][nbinsx-1])*0.5, nIter_, threshold_);
-    for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, tg->GetY()[ix-1]);
-    delete tg;
-  }
-  else{
-    TGraphErrors* tg = new TGraphErrors(nbinsx, xy[0], xy[1], xy[2], xy[3]);
-    tg->SetName("tg_tmp");
-    regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsx-2]+xy[0][nbinsx-1])*0.5, nIter_, threshold_, acceleration_);
-    for (int ix=1; ix<=nbinsx; ix++){
-      histo->SetBinContent(ix, tg->GetY()[ix-1]);
-      histo->SetBinError(ix, tg->GetEY()[ix-1]);
-    }
-    delete tg;
-  }
+template<> double HelperFunctions::evaluateTObject<TSpline3>(TSpline3* obj, float val){
+  float xmin=obj->GetXmin();
+  float xmax=obj->GetXmax();
+  if (val>xmax) val=xmax;
+  else if (val<xmin) val=xmin;
+  return obj->Eval(val);
 }
-template<> void HelperFunctions::regularizeHistogram<TH2F>(TH2F* histo, int nIter_, double threshold_, double acceleration_, unsigned int iaxis_){
-  const int nbinsx = histo->GetNbinsX();
-  const int nbinsy = histo->GetNbinsY();
 
-  switch (iaxis_){
-  case 0:
-  {
-    for (int iy=1; iy<=nbinsy; iy++){
-      double xy[4][nbinsx]={ { 0 } };
-      double abssumerr=0;
-      for (int ix=1; ix<=nbinsx; ix++){
-        xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
-        xy[1][ix-1] = histo->GetBinContent(ix, iy);
-        xy[3][ix-1] = histo->GetBinError(ix, iy);
-        abssumerr += xy[3][ix-1];
+template<> void HelperFunctions::regularizeHistogram<TH1F>(TH1F*& histo, int nIter_, double threshold_, double acceleration_){
+  if (!histo) return;
+  const TString histoname=histo->GetName();
+
+  TH1F* cumulant=nullptr;
+  getCumulantHistogram(histo, cumulant);
+  TGraphErrors* grCumulant=makeGraphFromCumulantHistogram(cumulant, "");
+
+  if (grCumulant->GetN()>1){
+    regularizeSlice(
+      grCumulant,
+      nullptr,
+      (grCumulant->GetX()[0]+grCumulant->GetX()[1])/2., (grCumulant->GetX()[grCumulant->GetN()-1]+grCumulant->GetX()[grCumulant->GetN()-2])/2.,
+      nIter_, threshold_, acceleration_,
+      false, false
+    );
+  }
+  for (int ix=0; ix<grCumulant->GetN()+1; ix++){
+    if (ix<grCumulant->GetN()){
+      cumulant->SetBinContent(ix, grCumulant->GetY()[ix]);
+      cumulant->SetBinError(ix, grCumulant->GetEY()[ix]);
+    }
+    else{
+      cumulant->SetBinContent(ix, cumulant->GetBinContent(ix-1));
+      cumulant->SetBinError(ix, cumulant->GetBinError(ix-1));
+    }
+  }
+
+  translateCumulantToHistogram(cumulant, histo, histoname);
+
+  delete grCumulant;
+  delete cumulant;
+}
+template<> void HelperFunctions::regularizeHistogram<TH2F>(TH2F*& histo, int nIter_, double threshold_, double acceleration_){
+  if (!histo) return;
+  const TString histoname=histo->GetName();
+
+  TH2F* cumulant=nullptr;
+  getCumulantHistogram(histo, cumulant);
+  vector<TGraphErrors*> grCumulantX;
+  vector<TGraphErrors*> grCumulantY;
+  for (int ix=0; ix<=cumulant->GetNbinsX(); ix++){
+    TH1F* cumulantSlice=new TH1F("cumulantSlice", "", cumulant->GetNbinsY(), cumulant->GetYaxis()->GetBinLowEdge(1), cumulant->GetYaxis()->GetBinLowEdge(cumulant->GetNbinsY()+1));
+    for (int iy=0; iy<=cumulant->GetNbinsY()+1; iy++){
+      cumulantSlice->SetBinContent(iy, cumulant->GetBinContent(ix, iy));
+      cumulantSlice->SetBinError(iy, cumulant->GetBinError(ix, iy));
+    }
+    TGraphErrors* grCumulant = makeGraphFromCumulantHistogram(cumulantSlice, Form("grCumulant_xbin_%i", ix));
+    grCumulantX.push_back(grCumulant);
+    delete cumulantSlice;
+  }
+  for (int iy=0; iy<=cumulant->GetNbinsY(); iy++){
+    TH1F* cumulantSlice=new TH1F("cumulantSlice", "", cumulant->GetNbinsX(), cumulant->GetXaxis()->GetBinLowEdge(1), cumulant->GetXaxis()->GetBinLowEdge(cumulant->GetNbinsX()+1));
+    for (int ix=0; ix<=cumulant->GetNbinsX()+1; ix++){
+      cumulantSlice->SetBinContent(ix, cumulant->GetBinContent(ix, iy));
+      cumulantSlice->SetBinError(ix, cumulant->GetBinError(ix, iy));
+    }
+    TGraphErrors* grCumulant = makeGraphFromCumulantHistogram(cumulantSlice, Form("grCumulant_ybin_%i", iy));
+    grCumulantY.push_back(grCumulant);
+    delete cumulantSlice;
+  }
+
+  for (int iter=0; iter<nIter_; iter++){
+    for (auto& grCumulant:grCumulantX){
+      if (grCumulant->GetN()>1){
+        regularizeSlice(
+          grCumulant,
+          nullptr,
+          (grCumulant->GetX()[0]+grCumulant->GetX()[1])/2., (grCumulant->GetX()[grCumulant->GetN()-1]+grCumulant->GetX()[grCumulant->GetN()-2])/2.,
+          1, threshold_, acceleration_,
+          false, false
+        );
       }
-      if (abssumerr==0.){
-        TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
-        tg->SetName("tg_tmp");
-        regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsx-2]+xy[0][nbinsx-1])*0.5, nIter_, threshold_);
-        for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, iy, tg->GetY()[ix-1]);
-        delete tg;
+    }
+    for (auto& grCumulant:grCumulantY){
+      if (grCumulant->GetN()>1){
+        regularizeSlice(
+          grCumulant,
+          nullptr,
+          (grCumulant->GetX()[0]+grCumulant->GetX()[1])/2., (grCumulant->GetX()[grCumulant->GetN()-1]+grCumulant->GetX()[grCumulant->GetN()-2])/2.,
+          1, threshold_, acceleration_,
+          false, false
+        );
+      }
+    }
+    for (int ix=0; ix<=cumulant->GetNbinsX(); ix++){
+      for (int iy=0; iy<=cumulant->GetNbinsY(); iy++){
+        double valXiter=grCumulantX.at(ix)->GetY()[iy];
+        double errXiter=grCumulantX.at(ix)->GetEY()[iy];
+        
+        double valYiter=grCumulantY.at(iy)->GetY()[ix];
+        double errYiter=grCumulantY.at(iy)->GetEY()[ix];
+
+        double val=(valXiter+valYiter)/2.;
+        double err=sqrt((pow(errXiter, 2)+pow(errYiter, 2))/4.);
+
+        grCumulantX.at(ix)->GetY()[iy]=val;
+        grCumulantY.at(iy)->GetY()[ix]=val;
+        grCumulantX.at(ix)->GetEY()[iy]=err;
+        grCumulantY.at(iy)->GetEY()[ix]=err;
+      }
+    }
+  }
+
+  for (int ix=0; ix<=cumulant->GetNbinsX()+1; ix++){
+    for (int iy=0; iy<=cumulant->GetNbinsY()+1; iy++){
+      if (ix<cumulant->GetNbinsX()+1 && iy<cumulant->GetNbinsY()+1){
+        cumulant->SetBinContent(ix, iy, grCumulantX.at(ix)->GetY()[iy]);
+        cumulant->SetBinError(ix, iy, grCumulantX.at(ix)->GetEY()[iy]);
+      }
+      else if (ix<cumulant->GetNbinsX()+1){
+        cumulant->SetBinContent(ix, iy, cumulant->GetBinContent(ix, iy-1));
+        cumulant->SetBinError(ix, iy, cumulant->GetBinError(ix, iy-1));
+      }
+      else if (iy<cumulant->GetNbinsY()+1){
+        cumulant->SetBinContent(ix, iy, cumulant->GetBinContent(ix-1, iy));
+        cumulant->SetBinError(ix, iy, cumulant->GetBinError(ix-1, iy));
       }
       else{
-        TGraphErrors* tg = new TGraphErrors(nbinsx, xy[0], xy[1], xy[2], xy[3]);
-        tg->SetName("tg_tmp");
-        regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsx-2]+xy[0][nbinsx-1])*0.5, nIter_, threshold_, acceleration_);
-        for (int ix=1; ix<=nbinsx; ix++){
-          histo->SetBinContent(ix, iy, tg->GetY()[ix-1]);
-          histo->SetBinError(ix, iy, tg->GetEY()[ix-1]);
-        }
-        delete tg;
+        cumulant->SetBinContent(ix, iy, cumulant->GetBinContent(ix-1, iy-1));
+        cumulant->SetBinError(ix, iy, cumulant->GetBinError(ix-1, iy-1));
       }
     }
-    break;
   }
-  case 1:
-  {
-    for (int ix=1; ix<=nbinsx; ix++){
-      double xy[4][nbinsy]={ { 0 } };
-      double abssumerr=0;
-      for (int iy=1; iy<=nbinsy; iy++){
-        xy[0][iy-1] = histo->GetYaxis()->GetBinCenter(iy);
-        xy[1][iy-1] = histo->GetBinContent(ix, iy);
-        xy[3][iy-1] = histo->GetBinError(ix, iy);
-        abssumerr += xy[3][iy-1];
-      }
-      if (abssumerr==0.){
-        TGraph* tg = new TGraph(nbinsy, xy[0], xy[1]);
-        tg->SetName("tg_tmp");
-        regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsy-2]+xy[0][nbinsy-1])*0.5, nIter_, threshold_);
-        for (int iy=1; iy<=nbinsy; iy++) histo->SetBinContent(ix, iy, tg->GetY()[iy-1]);
-        delete tg;
-      }
-      else{
-        TGraphErrors* tg = new TGraphErrors(nbinsx, xy[0], xy[1], xy[2], xy[3]);
-        tg->SetName("tg_tmp");
-        regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsy-2]+xy[0][nbinsy-1])*0.5, nIter_, threshold_, acceleration_);
-        for (int iy=1; iy<=nbinsy; iy++){
-          histo->SetBinContent(ix, iy, tg->GetY()[iy-1]);
-          histo->SetBinError(ix, iy, tg->GetEY()[iy-1]);
-        }
-        delete tg;
-      }
-    }
-    break;
-  }
-  }
-}
-template<> void HelperFunctions::regularizeHistogram<TH3F>(TH3F* histo, int nIter_, double threshold_, double acceleration_, unsigned int iaxis_){
-  const int nbinsx = histo->GetNbinsX();
-  const int nbinsy = histo->GetNbinsY();
-  const int nbinsz = histo->GetNbinsZ();
 
-  switch (iaxis_){
-  case 0:
-  {
-    for (int iy=1; iy<=nbinsy; iy++){
-      for (int iz=1; iz<=nbinsz; iz++){
-        double xy[4][nbinsx]={ { 0 } };
-        double abssumerr=0;
-        for (int ix=1; ix<=nbinsx; ix++){
-          xy[0][ix-1] = histo->GetXaxis()->GetBinCenter(ix);
-          xy[1][ix-1] = histo->GetBinContent(ix, iy, iz);
-          xy[3][ix-1] = histo->GetBinError(ix, iy, iz);
-          abssumerr += xy[3][ix-1];
-        }
-        if (abssumerr==0.){
-          TGraph* tg = new TGraph(nbinsx, xy[0], xy[1]);
-          tg->SetName("tg_tmp");
-          regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsx-2]+xy[0][nbinsx-1])*0.5, nIter_, threshold_);
-          for (int ix=1; ix<=nbinsx; ix++) histo->SetBinContent(ix, iy, iz, tg->GetY()[ix-1]);
-          delete tg;
-        }
-        else{
-          TGraphErrors* tg = new TGraphErrors(nbinsx, xy[0], xy[1], xy[2], xy[3]);
-          tg->SetName("tg_tmp");
-          regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsx-2]+xy[0][nbinsx-1])*0.5, nIter_, threshold_, acceleration_);
-          for (int ix=1; ix<=nbinsx; ix++){
-            histo->SetBinContent(ix, iy, iz, tg->GetY()[ix-1]);
-            histo->SetBinError(ix, iy, iz, tg->GetEY()[ix-1]);
-          }
-          delete tg;
-        }
-      }
-    }
-    break;
-  }
-  case 1:
-  {
-    for (int iz=1; iz<=nbinsz; iz++){
-      for (int ix=1; ix<=nbinsx; ix++){
-        double xy[4][nbinsy]={ { 0 } };
-        double abssumerr=0;
-        for (int iy=1; iy<=nbinsy; iy++){
-          xy[0][iy-1] = histo->GetYaxis()->GetBinCenter(iy);
-          xy[1][iy-1] = histo->GetBinContent(ix, iy);
-          xy[3][iy-1] = histo->GetBinError(ix, iy, iz);
-          abssumerr += xy[3][iy-1];
-        }
-        if (abssumerr==0.){
-          TGraph* tg = new TGraph(nbinsy, xy[0], xy[1]);
-          tg->SetName("tg_tmp");
-          regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsy-2]+xy[0][nbinsy-1])*0.5, nIter_, threshold_);
-          for (int iy=1; iy<=nbinsy; iy++) histo->SetBinContent(ix, iy, tg->GetY()[iy-1]);
-          delete tg;
-        }
-        else{
-          TGraphErrors* tg = new TGraphErrors(nbinsx, xy[0], xy[1], xy[2], xy[3]);
-          tg->SetName("tg_tmp");
-          regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsy-2]+xy[0][nbinsy-1])*0.5, nIter_, threshold_, acceleration_);
-          for (int iy=1; iy<=nbinsy; iy++){
-            histo->SetBinContent(ix, iy, iz, tg->GetY()[iy-1]);
-            histo->SetBinError(ix, iy, iz, tg->GetEY()[iy-1]);
-          }
-          delete tg;
-        }
-      }
-    }
-    break;
-  }
-  case 2:
-  {
-    for (int ix=1; ix<=nbinsx; ix++){
-      for (int iy=1; iy<=nbinsy; iy++){
-        double xy[4][nbinsz]={ { 0 } };
-        double abssumerr=0;
-        for (int iz=1; iz<=nbinsz; iz++){
-          xy[0][iz-1] = histo->GetZaxis()->GetBinCenter(iz);
-          xy[1][iz-1] = histo->GetBinContent(ix, iy, iz);
-          xy[3][iz-1] = histo->GetBinError(ix, iy, iz);
-          abssumerr += xy[3][iz-1];
-        }
-        if (abssumerr==0.){
-          TGraph* tg = new TGraph(nbinsz, xy[0], xy[1]);
-          tg->SetName("tg_tmp");
-          regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsz-2]+xy[0][nbinsz-1])*0.5, nIter_, threshold_);
-          for (int iz=1; iz<=nbinsz; iz++) histo->SetBinContent(ix, iy, iz, tg->GetY()[iz-1]);
-          delete tg;
-        }
-        else{
-          TGraphErrors* tg = new TGraphErrors(nbinsx, xy[0], xy[1], xy[2], xy[3]);
-          tg->SetName("tg_tmp");
-          regularizeSlice(tg, 0, (xy[0][0]+xy[0][1])*0.5, (xy[0][nbinsz-2]+xy[0][nbinsz-1])*0.5, nIter_, threshold_, acceleration_);
-          for (int iz=1; iz<=nbinsz; iz++){
-            histo->SetBinContent(ix, iy, iz, tg->GetY()[iz-1]);
-            histo->SetBinError(ix, iy, iz, tg->GetEY()[iz-1]);
-          }
-          delete tg;
-        }
-      }
-    }
-    break;
-  }
-  }
+  translateCumulantToHistogram(cumulant, histo, histoname);
+
+  for (auto& grCumulant:grCumulantY) delete grCumulant;
+  for (auto& grCumulant:grCumulantX) delete grCumulant;
+  delete cumulant;
 }
 
 template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference){
@@ -1364,8 +1319,13 @@ template <> void HelperFunctions::symmetrizeHistogram<TH1F>(TH1F* histo, unsigne
     float cfirst = histo->GetBinContent(ix);
     float csecond = histo->GetBinContent(jx);
     float c = (cfirst+csecond)/2.;
+    float efirst = histo->GetBinError(ix);
+    float esecond = histo->GetBinError(jx);
+    float e = sqrt(pow(efirst, 2)+pow(esecond, 2))/2.;
     histo->SetBinContent(ix, c);
     histo->SetBinContent(jx, c);
+    histo->SetBinError(ix, e);
+    histo->SetBinError(jx, e);
   }
 }
 template <> void HelperFunctions::symmetrizeHistogram<TH2F>(TH2F* histo, unsigned int const axis){
@@ -1381,8 +1341,13 @@ template <> void HelperFunctions::symmetrizeHistogram<TH2F>(TH2F* histo, unsigne
       float cfirst = histo->GetBinContent(ix, iy);
       float csecond = histo->GetBinContent(jx, jy);
       float c = (cfirst+csecond)/2.;
+      float efirst = histo->GetBinError(ix, iy);
+      float esecond = histo->GetBinError(jx, jy);
+      float e = sqrt(pow(efirst, 2)+pow(esecond, 2))/2.;
       histo->SetBinContent(ix, iy, c);
       histo->SetBinContent(jx, jy, c);
+      histo->SetBinError(ix, iy, e);
+      histo->SetBinError(jx, jy, e);
     }
   }
 }
@@ -1403,8 +1368,13 @@ template <> void HelperFunctions::symmetrizeHistogram<TH3F>(TH3F* histo, unsigne
         float cfirst = histo->GetBinContent(ix, iy, iz);
         float csecond = histo->GetBinContent(jx, jy, jz);
         float c = (cfirst+csecond)/2.;
+        float efirst = histo->GetBinError(ix, iy, iz);
+        float esecond = histo->GetBinError(jx, jy, jz);
+        float e = sqrt(pow(efirst, 2)+pow(esecond, 2))/2.;
         histo->SetBinContent(ix, iy, iz, c);
         histo->SetBinContent(jx, jy, jz, c);
+        histo->SetBinError(ix, iy, iz, e);
+        histo->SetBinError(jx, jy, jz, e);
       }
     }
   }
@@ -1419,8 +1389,13 @@ template <> void HelperFunctions::antisymmetrizeHistogram<TH1F>(TH1F* histo, uns
     float cfirst = histo->GetBinContent(ix);
     float csecond = histo->GetBinContent(jx);
     float c = (cfirst-csecond)/2.;
+    float efirst = histo->GetBinError(ix);
+    float esecond = histo->GetBinError(jx);
+    float e = sqrt(pow(efirst, 2)+pow(esecond, 2))/2.;
     histo->SetBinContent(ix, c);
     histo->SetBinContent(jx, -c);
+    histo->SetBinError(ix, e);
+    histo->SetBinError(jx, e);
   }
 }
 template <> void HelperFunctions::antisymmetrizeHistogram<TH2F>(TH2F* histo, unsigned int const axis){
@@ -1436,8 +1411,13 @@ template <> void HelperFunctions::antisymmetrizeHistogram<TH2F>(TH2F* histo, uns
       float cfirst = histo->GetBinContent(ix, iy);
       float csecond = histo->GetBinContent(jx, jy);
       float c = (cfirst-csecond)/2.;
+      float efirst = histo->GetBinError(ix, iy);
+      float esecond = histo->GetBinError(jx, jy);
+      float e = sqrt(pow(efirst, 2)+pow(esecond, 2))/2.;
       histo->SetBinContent(ix, iy, c);
       histo->SetBinContent(jx, jy, -c);
+      histo->SetBinError(ix, iy, e);
+      histo->SetBinError(jx, jy, e);
     }
   }
 }
@@ -1458,8 +1438,13 @@ template <> void HelperFunctions::antisymmetrizeHistogram<TH3F>(TH3F* histo, uns
         float cfirst = histo->GetBinContent(ix, iy, iz);
         float csecond = histo->GetBinContent(jx, jy, jz);
         float c = (cfirst-csecond)/2.;
+        float efirst = histo->GetBinError(ix, iy, iz);
+        float esecond = histo->GetBinError(jx, jy, jz);
+        float e = sqrt(pow(efirst, 2)+pow(esecond, 2))/2.;
         histo->SetBinContent(ix, iy, iz, c);
         histo->SetBinContent(jx, jy, jz, -c);
+        histo->SetBinError(ix, iy, iz, e);
+        histo->SetBinError(jx, jy, jz, e);
       }
     }
   }
@@ -1717,6 +1702,173 @@ template <> void HelperFunctions::translateCumulantToHistogram<TH3F>(TH3F const*
       }
     }
   }
+}
+
+void HelperFunctions::rebinCumulant(TH1F*& histo, const ExtendedBinning& binningX){
+  if (!histo) return;
+  const TString hname=histo->GetName();
+  const TString htitle=histo->GetTitle();
+  RooRealVar xvar("xvar", "", histo->GetXaxis()->GetBinLowEdge(1), histo->GetXaxis()->GetBinLowEdge(histo->GetNbinsX()+1));
+
+  MELANCSplineFactory_1D spFac(xvar, "tmpSpline");
+  MELANCSplineFactory_1D spErrFac(xvar, "tmpSplineErr");
+  vector<pair<MELANCSplineCore::T, MELANCSplineCore::T>> pList, pErrList;
+  for (int ix=0; ix<=histo->GetNbinsX(); ix++){
+    pList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), histo->GetBinContent(ix));
+    pErrList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), histo->GetBinError(ix));
+  }
+  spFac.setPoints(pList);
+  spErrFac.setPoints(pErrList);
+  const MELANCSpline_1D_fast* sp = spFac.getFunc();
+  const MELANCSpline_1D_fast* spErr = spErrFac.getFunc();
+
+  // Once cumulant is rebinned, errors are lost
+  delete histo;
+  histo = new TH1F(hname, htitle, binningX.getNbins(), binningX.getBinning());
+  for (unsigned int ix=0; ix<=binningX.getNbins(); ix++){
+    double xval=binningX.getBinLowEdge(ix);
+    double cval=0;
+    double errval=0;
+    if (xval>=xvar.getMin() && xval<=xvar.getMax()){
+      xvar.setVal(xval);
+      cval = sp->getVal();
+      errval = spErr->getVal();
+      if (errval<0.) errval=0.;
+    }
+    histo->SetBinContent(ix, cval);
+    histo->SetBinError(ix, errval);
+  }
+}
+void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY){
+  if (!histo) return;
+  const TString hname=histo->GetName();
+  const TString htitle=histo->GetTitle();
+  RooRealVar xvar("xvar", "", histo->GetXaxis()->GetBinLowEdge(1), histo->GetXaxis()->GetBinLowEdge(histo->GetNbinsX()+1));
+  RooRealVar yvar("yvar", "", histo->GetYaxis()->GetBinLowEdge(1), histo->GetYaxis()->GetBinLowEdge(histo->GetNbinsY()+1));
+
+  MELANCSplineFactory_2D spFac(xvar, yvar, "tmpSpline");
+  MELANCSplineFactory_2D spErrFac(xvar, yvar, "tmpSplineErr");
+  vector<splineTriplet_t> pList, pErrList;
+  for (int ix=0; ix<=histo->GetNbinsX(); ix++){
+    for (int iy=0; iy<=histo->GetNbinsY(); iy++){
+      pList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), histo->GetYaxis()->GetBinUpEdge(iy), histo->GetBinContent(ix, iy));
+      pErrList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), histo->GetYaxis()->GetBinUpEdge(iy), histo->GetBinError(ix, iy));
+    }
+  }
+  spFac.setPoints(pList);
+  spErrFac.setPoints(pErrList);
+  const MELANCSpline_2D_fast* sp = spFac.getFunc();
+  const MELANCSpline_2D_fast* spErr = spErrFac.getFunc();
+
+  // Once cumulant is rebinned, errors are lost
+  delete histo;
+  histo = new TH2F(hname, htitle, binningX.getNbins(), binningX.getBinning(), binningY.getNbins(), binningY.getBinning());
+  for (unsigned int ix=0; ix<=binningX.getNbins(); ix++){
+    double xval=binningX.getBinLowEdge(ix);
+    for (unsigned int iy=0; iy<=binningY.getNbins(); iy++){
+      double yval=binningY.getBinLowEdge(iy);
+      double cval=0;
+      double errval=0;
+      if (xval>=xvar.getMin() && xval<=xvar.getMax() && yval>=yvar.getMin() && yval<=yvar.getMax()){
+        xvar.setVal(xval);
+        yvar.setVal(yval);
+        cval = sp->getVal();
+        errval = spErr->getVal();
+        if (errval<0.) errval=0.;
+      }
+      histo->SetBinContent(ix, iy, cval);
+      histo->SetBinError(ix, iy, errval);
+    }
+  }
+}
+void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ){
+  if (!histo) return;
+  const TString hname=histo->GetName();
+  const TString htitle=histo->GetTitle();
+  RooRealVar xvar("xvar", "", histo->GetXaxis()->GetBinLowEdge(1), histo->GetXaxis()->GetBinLowEdge(histo->GetNbinsX()+1));
+  RooRealVar yvar("yvar", "", histo->GetYaxis()->GetBinLowEdge(1), histo->GetYaxis()->GetBinLowEdge(histo->GetNbinsY()+1));
+  RooRealVar zvar("zvar", "", histo->GetZaxis()->GetBinLowEdge(1), histo->GetZaxis()->GetBinLowEdge(histo->GetNbinsZ()+1));
+
+  MELANCSplineFactory_3D spFac(xvar, yvar, zvar, "tmpSpline");
+  MELANCSplineFactory_3D spErrFac(xvar, yvar, zvar, "tmpSplineErr");
+  vector<splineQuadruplet_t> pList, pErrList;
+  for (int ix=0; ix<=histo->GetNbinsX(); ix++){
+    for (int iy=0; iy<=histo->GetNbinsY(); iy++){
+      for (int iz=0; iz<=histo->GetNbinsZ(); iz++){
+        pList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), histo->GetYaxis()->GetBinUpEdge(iy), histo->GetZaxis()->GetBinUpEdge(iz), histo->GetBinContent(ix, iy, iz));
+        pErrList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), histo->GetYaxis()->GetBinUpEdge(iy), histo->GetZaxis()->GetBinUpEdge(iz), histo->GetBinError(ix, iy, iz));
+      }
+    }
+  }
+  spFac.setPoints(pList);
+  spErrFac.setPoints(pErrList);
+  const MELANCSpline_3D_fast* sp = spFac.getFunc();
+  const MELANCSpline_3D_fast* spErr = spErrFac.getFunc();
+
+  // Once cumulant is rebinned, errors are lost
+  delete histo;
+  histo = new TH3F(hname, htitle, binningX.getNbins(), binningX.getBinning(), binningY.getNbins(), binningY.getBinning(), binningZ.getNbins(), binningZ.getBinning());
+  for (unsigned int ix=0; ix<=binningX.getNbins(); ix++){
+    double xval=binningX.getBinLowEdge(ix);
+    for (unsigned int iy=0; iy<=binningY.getNbins(); iy++){
+      double yval=binningY.getBinLowEdge(iy);
+      for (unsigned int iz=0; iz<=binningZ.getNbins(); iz++){
+        double zval=binningZ.getBinLowEdge(iz);
+        double cval=0;
+        double errval=0;
+        if (xval>=xvar.getMin() && xval<=xvar.getMax() && yval>=yvar.getMin() && yval<=yvar.getMax() && zval>=zvar.getMin() && zval<=zvar.getMax()){
+          xvar.setVal(xval);
+          yvar.setVal(yval);
+          zvar.setVal(zval);
+          cval = sp->getVal();
+          errval = spErr->getVal();
+          if (errval<0.) errval=0.;
+        }
+        histo->SetBinContent(ix, iy, iz, cval);
+        histo->SetBinError(ix, iy, iz, errval);
+      }
+    }
+  }
+}
+
+void HelperFunctions::rebinHistogram(TH1F*& histo, const ExtendedBinning& binningX){
+  if (!histo) return;
+  const TString hname=histo->GetName();
+  const TString htitle=histo->GetTitle();
+
+  TH1F* htmp_cumulant=nullptr;
+  getCumulantHistogram(histo, htmp_cumulant);
+  delete histo;
+  rebinCumulant(htmp_cumulant, binningX);
+  translateCumulantToHistogram(htmp_cumulant, histo, hname);
+  histo->SetTitle(htitle);
+  delete htmp_cumulant;
+}
+void HelperFunctions::rebinHistogram(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY){
+  if (!histo) return;
+  const TString hname=histo->GetName();
+  const TString htitle=histo->GetTitle();
+
+  TH2F* htmp_cumulant=nullptr;
+  getCumulantHistogram(histo, htmp_cumulant);
+  delete histo;
+  rebinCumulant(htmp_cumulant, binningX, binningY);
+  translateCumulantToHistogram(htmp_cumulant, histo, hname);
+  histo->SetTitle(htitle);
+  delete htmp_cumulant;
+}
+void HelperFunctions::rebinHistogram(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ){
+  if (!histo) return;
+  const TString hname=histo->GetName();
+  const TString htitle=histo->GetTitle();
+
+  TH3F* htmp_cumulant=nullptr;
+  getCumulantHistogram(histo, htmp_cumulant);
+  delete histo;
+  rebinCumulant(htmp_cumulant, binningX, binningY, binningZ);
+  translateCumulantToHistogram(htmp_cumulant, histo, hname);
+  histo->SetTitle(htitle);
+  delete htmp_cumulant;
 }
 
 

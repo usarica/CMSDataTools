@@ -67,8 +67,8 @@ TGraphErrors* ExtendedHistogram_1D::getGraph(TString newname) const{
 }
 
 TH1F* ExtendedHistogram_1D::getCumulantHistogram(TString newname) const{
-  if (!histo || !prof_x) return nullptr;
-  if (newname=="") newname=Form("Cumulant_%s_vs_%s", histo->GetName(), prof_x->GetName());
+  if (!histo) return nullptr;
+  if (newname=="") newname=Form("Cumulant_%s", histo->GetName());
   TH1F* res = nullptr;
   HelperFunctions::getCumulantHistogram(histo, res, newname);
   return res;

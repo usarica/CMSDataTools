@@ -32,6 +32,7 @@
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
 #include "HelperFunctionsCore.h"
+#include "ExtendedBinning.h"
 #include "SimpleEntry.h"
 #include "Mela.h"
 
@@ -69,11 +70,12 @@ namespace HelperFunctions{
   template <typename T> double evaluateTObject(T* obj, float val);
   template<> double evaluateTObject<TH1F>(TH1F* obj, float val);
   template<> double evaluateTObject<TGraph>(TGraph* obj, float val);
+  template<> double evaluateTObject<TSpline3>(TSpline3* obj, float val);
 
-  template <typename T> void regularizeHistogram(T* histo, int nIter_, double threshold_, double acceleration_, unsigned int iaxis_);
-  template<> void regularizeHistogram<TH1F>(TH1F* histo, int nIter_, double threshold_, double acceleration_, unsigned int iaxis_);
-  template<> void regularizeHistogram<TH2F>(TH2F* histo, int nIter_, double threshold_, double acceleration_, unsigned int iaxis_);
-  template<> void regularizeHistogram<TH3F>(TH3F* histo, int nIter_, double threshold_, double acceleration_, unsigned int iaxis_);
+  template <typename T> void regularizeHistogram(T*& histo, int nIter_, double threshold_, double acceleration_);
+  template<> void regularizeHistogram<TH1F>(TH1F*& histo, int nIter_, double threshold_, double acceleration_);
+  template<> void regularizeHistogram<TH2F>(TH2F*& histo, int nIter_, double threshold_, double acceleration_);
+  //template<> void regularizeHistogram<TH3F>(TH3F*& histo, int nIter_, double threshold_, double acceleration_);
 
   template <typename T> void conditionalizeHistogram(T* histo, unsigned int axis, std::vector<std::pair<T*, float>> const* conditionalsReference=nullptr);
   template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference);
@@ -118,6 +120,14 @@ namespace HelperFunctions{
   template <> void translateCumulantToHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname);
   template <> void translateCumulantToHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname);
   template <> void translateCumulantToHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname);
+
+  void rebinCumulant(TH1F*& histo, const ExtendedBinning& binningX);
+  void rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY);
+  void rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ);
+
+  void rebinHistogram(TH1F*& histo, const ExtendedBinning& binningX);
+  void rebinHistogram(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY);
+  void rebinHistogram(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ);
 
   // Spline functions
   template<int N> TF1* getFcn_a0plusa1overXN(TSpline3* sp, double xmin, double xmax, bool useLowBound);
@@ -173,8 +183,18 @@ namespace HelperFunctions{
     vector<pair<pair<double, double>, unsigned int>>* addpoints=nullptr
   );
 
-  void regularizeSlice(TGraph* tgSlice, std::vector<double>* fixedX=nullptr, double omitbelow=0., double omitabove=0., int nIter_=-1, double threshold_=-1);
-  void regularizeSlice(TGraphErrors* tgSlice, std::vector<double>* fixedX=nullptr, double omitbelow=0., double omitabove=0., int nIter_=-1, double threshold_=-1, double acceleration_=-1);
+  void regularizeSlice(
+    TGraph* tgSlice,
+    std::vector<double>* fixedX=nullptr, double omitbelow=0., double omitabove=0.,
+    int nIter_=-1, double threshold_=-1,
+    signed char forceUseFaithfulSlopeFirst=-1, signed char forceUseFaithfulSlopeSecond=-1
+  );
+  void regularizeSlice(
+    TGraphErrors* tgSlice,
+    std::vector<double>* fixedX=nullptr, double omitbelow=0., double omitabove=0.,
+    int nIter_=-1, double threshold_=-1, double acceleration_=-1,
+    signed char forceUseFaithfulSlopeFirst=-1, signed char forceUseFaithfulSlopeSecond=-1
+  );
 
   // Function to calculate error in efficiency
   float calculateEfficiencyError(

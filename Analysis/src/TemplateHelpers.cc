@@ -197,7 +197,49 @@ void TemplateHelpers::getCategorizationDiscriminants(const SystematicsHelpers::S
 
   SystematicsHelpers::adjustDiscriminantJECVariables(syst, KDlist);
 }
-ExtendedBinning TemplateHelpers::getDiscriminantBinning(const SampleHelpers::Channel /*channel*/, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell){
+ExtendedBinning TemplateHelpers::getDiscriminantFineBinning(const SampleHelpers::Channel /*channel*/, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell){
+  ExtendedBinning res(strKD);
+  if (strKD=="ZZMass"){
+    if (useOffshell){
+      res.addBinBoundary(theSqrts*1000.);
+      res.addBinBoundary(220);
+      res.addBinBoundary(230);
+      res.addBinBoundary(240);
+      res.addBinBoundary(250);
+      res.addBinBoundary(260);
+      res.addBinBoundary(280);
+      res.addBinBoundary(310);
+      res.addBinBoundary(340);
+      res.addBinBoundary(370);
+      res.addBinBoundary(400);
+      res.addBinBoundary(450);
+      res.addBinBoundary(550);
+      res.addBinBoundary(600);
+      res.addBinBoundary(650);
+      res.addBinBoundary(700);
+      res.addBinBoundary(800);
+      res.addBinBoundary(900);
+      res.addBinBoundary(1000);
+      res.addBinBoundary(1200);
+      res.addBinBoundary(1600);
+      res.addBinBoundary(2000);
+      res.addBinBoundary(3000);
+    }
+    else{ for (unsigned int i=105; i<=140; i++) res.addBinBoundary(i); }
+  }
+  else if (strKD.Contains("int")){
+    unsigned int nbins=30;
+    double stepsize=2./double(nbins);
+    for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(-1.+double(i)*stepsize);
+  }
+  else{
+    unsigned int nbins=30;
+    double stepsize=1./double(nbins);
+    for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(double(i)*stepsize);
+  }
+  return res;
+}
+ExtendedBinning TemplateHelpers::getDiscriminantCoarseBinning(const SampleHelpers::Channel /*channel*/, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell){
   ExtendedBinning res(strKD);
   if (strKD=="ZZMass"){
     if (useOffshell){
@@ -223,19 +265,19 @@ ExtendedBinning TemplateHelpers::getDiscriminantBinning(const SampleHelpers::Cha
         res.addBinBoundary(750);
       }
       else{
-        MELAerr << "TemplateHelpers::getDiscriminantBinning: Category " << CategorizationHelpers::getCategoryName(category)  << " not yet implemented!" << endl;
+        MELAerr << "TemplateHelpers::getDiscriminantCoarseBinning: Category " << CategorizationHelpers::getCategoryName(category)  << " not yet implemented!" << endl;
         assert(0);
       }
     }
-    else{ for (unsigned int i=105; i<=140; i++) res.addBinBoundary(i); }
+    else{ for (unsigned int i=105; i<=140; i+=5) res.addBinBoundary(i); }
   }
   else if (strKD.Contains("int")){
-    unsigned int nbins=30;
+    unsigned int nbins=15+5*(category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged);
     double stepsize=2./double(nbins);
     for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(-1.+double(i)*stepsize);
   }
   else{
-    unsigned int nbins=30;
+    unsigned int nbins=15+5*(category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged);
     double stepsize=1./double(nbins);
     for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(double(i)*stepsize);
   }

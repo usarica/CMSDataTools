@@ -642,7 +642,7 @@ ExtendedBinning getMassBinning(TTree* tree, bool separateZ4l){
     counts.erase(counts.begin());
     binning.removeBinLowEdge(1);
   }
-  // Merge every wo bins except the last one
+  // Merge every two bins except the last one
   {
     unsigned int nbins_old=binning.getNbins();
     for (unsigned int bin=0; bin<nbins_old-2; bin++){

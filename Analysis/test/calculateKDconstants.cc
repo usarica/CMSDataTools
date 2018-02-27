@@ -839,9 +839,13 @@ void getKDConstant_DjjZH(float sqrts=13, const bool writeFinalTree=false){
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
   {
-    pair<float, float> valrange(70, 120);
+    pair<float, float> valrange(70, 145);
     vector<float> manualboundaries;
     manualboundaries.push_back(105);
+    manualboundaries.push_back(119);
+    manualboundaries.push_back(124.7);
+    manualboundaries.push_back(131.4);
+    manualboundaries.push_back(144.15);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
   }
   {
@@ -885,12 +889,22 @@ void getKDConstant_DjjWH(float sqrts=13, const bool writeFinalTree=false){
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
   {
-    pair<float, float> valrange(70, 120);
+    pair<float, float> valrange(70, 125);
     vector<float> manualboundaries;
     manualboundaries.push_back(105);
+    manualboundaries.push_back(119);
+    manualboundaries.push_back(124.37);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(
       manualboundaries, valrange
-    ));
+      ));
+  }
+  {
+    pair<float, float> valrange(129, 135);
+    vector<float> manualboundaries;
+    manualboundaries.push_back(132.3);
+    manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(
+      manualboundaries, valrange
+      ));
   }
   {
     pair<float, float> valrange(2600, sqrts*1000.);
@@ -1732,6 +1746,10 @@ void generic_SmoothKDConstantProducer(
 void SmoothKDConstantProducer_DjjZH(){
   vector<pair<pair<double, double>, unsigned int>> addpoints;
   {
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(103, 114), 10);
+    addpoints.push_back(points);
+  }
+  {
     pair<pair<double, double>, unsigned int> points(pair<double, double>(150, 155), 5);
     addpoints.push_back(points);
   }
@@ -1739,6 +1757,15 @@ void SmoothKDConstantProducer_DjjZH(){
     pair<pair<double, double>, unsigned int> points(pair<double, double>(155.1, 158), 4);
     addpoints.push_back(points);
   }
+  {
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(140, 146), 10);
+    addpoints.push_back(points);
+  }
+  {
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(138.5, 139.9), 3);
+    addpoints.push_back(points);
+  }
+  /*
   {
     pair<pair<double, double>, unsigned int> points(pair<double, double>(100, 117.8), 10);
     addpoints.push_back(points);
@@ -1751,9 +1778,10 @@ void SmoothKDConstantProducer_DjjZH(){
     pair<pair<double, double>, unsigned int> points(pair<double, double>(117, 118), 3);
     addpoints.push_back(points);
   }
+  */
   generic_SmoothKDConstantProducer(
     13, "DjjZH", "",
-    &getFcn_a0plusa1timesXN<1>,
+    &getFcn_a0timesexpa1X,
     &getFcn_a0plusa1timesXN<3>,
     true, true,
     &addpoints
@@ -1763,28 +1791,24 @@ void SmoothKDConstantProducer_DjjZH(){
 void SmoothKDConstantProducer_DjjWH(){
   vector<pair<pair<double, double>, unsigned int>> addpoints;
   {
-    pair<pair<double, double>, unsigned int> points(pair<double, double>(145, 155), 10);
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(103, 114), 10);
     addpoints.push_back(points);
   }
   {
-    pair<pair<double, double>, unsigned int> points(pair<double, double>(155.1, 158), 4);
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(113.5, 114.5), 10);
     addpoints.push_back(points);
   }
   {
-    pair<pair<double, double>, unsigned int> points(pair<double, double>(100, 118), 10);
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(115, 119), 10);
     addpoints.push_back(points);
   }
   {
-    pair<pair<double, double>, unsigned int> points(pair<double, double>(118.4, 120), 10);
-    addpoints.push_back(points);
-  }
-  {
-    pair<pair<double, double>, unsigned int> points(pair<double, double>(116.37, 118.4), 3);
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(119.2, 122.2), 3);
     addpoints.push_back(points);
   }
   generic_SmoothKDConstantProducer(
     13, "DjjWH", "",
-    &getFcn_a0plusa1timesXN<1>,
+    &getFcn_a0timesexpa1X,
     &getFcn_a0plusa1timesXN<3>,
     true, true,
     &addpoints

@@ -33,6 +33,7 @@ public:
   int getBin(double val) const; // = [ -1,0,...,vbinlow.size() ]
   double getBinLowEdge(const int bin) const;
   double getBinHighEdge(const int bin) const;
+  double getBinCenter(const int bin) const;
 
   void addBinBoundary(double boundary);
   void removeBinLowEdge(const int bin);

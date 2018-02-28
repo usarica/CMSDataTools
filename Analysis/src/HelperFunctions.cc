@@ -301,7 +301,7 @@ TGraph* HelperFunctions::createROCFromDistributions(TH1* hA, TH1* hB, TString na
   return tg;
 }
 
-TGraphErrors* HelperFunctions::makeGraphFromTH1(TH1* hx, TH1* hy, TString name){
+TGraphErrors* HelperFunctions::makeGraphFromTH1(TH1 const* hx, TH1 const* hy, TString name){
   if (!hy) return nullptr;
   if (hx && hx->GetNbinsX()!=hy->GetNbinsX()){
     MELAerr << "Number of bins for x coordinate != those for y" << endl;
@@ -330,7 +330,7 @@ TGraphErrors* HelperFunctions::makeGraphFromTH1(TH1* hx, TH1* hy, TString name){
   return tg;
 }
 
-TGraphErrors* HelperFunctions::makeGraphFromCumulantHistogram(TH1* histo, TString name){
+TGraphErrors* HelperFunctions::makeGraphFromCumulantHistogram(TH1 const* histo, TString name){
   if (!histo) return nullptr;
   if (name=="") name = Form("tg_%s", histo->GetName());
   unsigned int npoints = histo->GetNbinsX()+1;
@@ -1450,7 +1450,7 @@ template <> void HelperFunctions::antisymmetrizeHistogram<TH3F>(TH3F* histo, uns
   }
 }
 
-template <> void HelperFunctions::getCumulantHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname){
+template <> void HelperFunctions::getCumulantHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname, std::vector<unsigned int>* /*condDims*/){
   if (!histo) return;
   if (newname=="") newname=Form("Cumulant_%s", histo->GetName());
   delete res;
@@ -1468,116 +1468,184 @@ template <> void HelperFunctions::getCumulantHistogram<TH1F>(TH1F const* histo, 
     res->SetBinError(ix, sqrt(sumw2));
   }
 }
-template <> void HelperFunctions::getCumulantHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname){
+template <> void HelperFunctions::getCumulantHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname, std::vector<unsigned int>* condDims){
   if (!histo) return;
   if (newname=="") newname=Form("Cumulant_%s", histo->GetName());
   delete res;
   res = new TH2F(*histo);
   res->SetName(newname);
-  res->Reset("ICES");
-  for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
-    for (int iy=0; iy<=res->GetNbinsY()+1; iy++){
-      double sumw=histo->GetBinContent(ix, iy);
-      double sumw2=pow(histo->GetBinError(ix, iy), 2);
-      if (ix>0 && iy>0){
-        sumw += res->GetBinContent(ix-1, iy);
-        sumw2 += pow(res->GetBinError(ix-1, iy), 2);
-        sumw += res->GetBinContent(ix, iy-1);
-        sumw2 += pow(res->GetBinError(ix, iy-1), 2);
 
-        sumw -= res->GetBinContent(ix-1, iy-1);
-        sumw2 -= pow(res->GetBinError(ix-1, iy-1), 2);
+  bool isXcond=false;
+  bool isYcond=false;
+  if (condDims){
+    for (unsigned int const& idim:*condDims){
+      isXcond |= (idim==0);
+      isYcond |= (idim==1);
+    }
+  }
+  if (!(isXcond && isYcond)){
+    res->Reset("ICES");
+    for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
+      for (int iy=0; iy<=res->GetNbinsY()+1; iy++){
+        double sumw=histo->GetBinContent(ix, iy);
+        double sumw2=pow(histo->GetBinError(ix, iy), 2);
+        if (ix>0 && iy>0){
+          if (!isXcond){
+            sumw += res->GetBinContent(ix-1, iy);
+            sumw2 += pow(res->GetBinError(ix-1, iy), 2);
+          }
+          if (!isYcond){
+            sumw += res->GetBinContent(ix, iy-1);
+            sumw2 += pow(res->GetBinError(ix, iy-1), 2);
+          }
+          if (!isXcond && !isYcond){
+            sumw -= res->GetBinContent(ix-1, iy-1);
+            sumw2 -= pow(res->GetBinError(ix-1, iy-1), 2);
+          }
+        }
+        else if (ix>0){
+          if (!isXcond){
+            sumw += res->GetBinContent(ix-1, iy);
+            sumw2 += pow(res->GetBinError(ix-1, iy), 2);
+          }
+        }
+        else if (iy>0){
+          if (!isYcond){
+            sumw += res->GetBinContent(ix, iy-1);
+            sumw2 += pow(res->GetBinError(ix, iy-1), 2);
+          }
+        }
+        res->SetBinContent(ix, iy, sumw);
+        res->SetBinError(ix, iy, sqrt(sumw2));
       }
-      else if (ix>0){
-        sumw += res->GetBinContent(ix-1, iy);
-        sumw2 += pow(res->GetBinError(ix-1, iy), 2);
-      }
-      else if (iy>0){
-        sumw += res->GetBinContent(ix, iy-1);
-        sumw2 += pow(res->GetBinError(ix, iy-1), 2);
-      }
-      res->SetBinContent(ix, iy, sumw);
-      res->SetBinError(ix, iy, sqrt(sumw2));
     }
   }
 }
-template <> void HelperFunctions::getCumulantHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname){
+template <> void HelperFunctions::getCumulantHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname, std::vector<unsigned int>* condDims){
   if (!histo) return;
   if (newname=="") newname=Form("Cumulant_%s", histo->GetName());
   delete res;
   res = new TH3F(*histo);
   res->SetName(newname);
-  res->Reset("ICES");
-  for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
-    for (int iy=0; iy<=res->GetNbinsY()+1; iy++){
-      for (int iz=0; iz<=res->GetNbinsZ()+1; iz++){
-        double sumw=histo->GetBinContent(ix, iy, iz);
-        double sumw2=pow(histo->GetBinError(ix, iy, iz), 2);
-        if (ix>0 && iy>0 && iz>0){
-          sumw += res->GetBinContent(ix-1, iy, iz);
-          sumw2 += pow(res->GetBinError(ix-1, iy, iz), 2);
-          sumw += res->GetBinContent(ix, iy-1, iz);
-          sumw2 += pow(res->GetBinError(ix, iy-1, iz), 2);
-          sumw += res->GetBinContent(ix, iy, iz-1);
-          sumw2 += pow(res->GetBinError(ix, iy, iz-1), 2);
 
-          sumw -= res->GetBinContent(ix-1, iy-1, iz);
-          sumw2 -= pow(res->GetBinError(ix-1, iy-1, iz), 2);
-          sumw -= res->GetBinContent(ix-1, iy, iz-1);
-          sumw2 -= pow(res->GetBinError(ix-1, iy, iz-1), 2);
-          sumw -= res->GetBinContent(ix, iy-1, iz-1);
-          sumw2 -= pow(res->GetBinError(ix, iy-1, iz-1), 2);
+  bool isXcond=false;
+  bool isYcond=false;
+  bool isZcond=false;
+  if (condDims){
+    for (unsigned int const& idim:*condDims){
+      isXcond |= (idim==0);
+      isYcond |= (idim==1);
+      isZcond |= (idim==2);
+    }
+  }
+  if (!(isXcond && isYcond && isZcond)){
+    res->Reset("ICES");
+    for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
+      for (int iy=0; iy<=res->GetNbinsY()+1; iy++){
+        for (int iz=0; iz<=res->GetNbinsZ()+1; iz++){
+          double sumw=histo->GetBinContent(ix, iy, iz);
+          double sumw2=pow(histo->GetBinError(ix, iy, iz), 2);
+          if (ix>0 && iy>0 && iz>0){
+            if (!isXcond){
+              sumw += res->GetBinContent(ix-1, iy, iz);
+              sumw2 += pow(res->GetBinError(ix-1, iy, iz), 2);
+            }
+            if (!isYcond){
+              sumw += res->GetBinContent(ix, iy-1, iz);
+              sumw2 += pow(res->GetBinError(ix, iy-1, iz), 2);
+            }
+            if (!isZcond){
+              sumw += res->GetBinContent(ix, iy, iz-1);
+              sumw2 += pow(res->GetBinError(ix, iy, iz-1), 2);
+            }
 
-          sumw += res->GetBinContent(ix-1, iy-1, iz-1);
-          sumw2 += pow(res->GetBinError(ix-1, iy-1, iz-1), 2);
-        }
-        else if (ix>0 && iy>0){
-          sumw += res->GetBinContent(ix-1, iy, iz);
-          sumw2 += pow(res->GetBinError(ix-1, iy, iz), 2);
-          sumw += res->GetBinContent(ix, iy-1, iz);
-          sumw2 += pow(res->GetBinError(ix, iy-1, iz), 2);
+            if (!isXcond && !isYcond){
+              sumw -= res->GetBinContent(ix-1, iy-1, iz);
+              sumw2 -= pow(res->GetBinError(ix-1, iy-1, iz), 2);
+            }
+            if (!isXcond && !isZcond){
+              sumw -= res->GetBinContent(ix-1, iy, iz-1);
+              sumw2 -= pow(res->GetBinError(ix-1, iy, iz-1), 2);
+            }
+            if (!isYcond && !isZcond){
+              sumw -= res->GetBinContent(ix, iy-1, iz-1);
+              sumw2 -= pow(res->GetBinError(ix, iy-1, iz-1), 2);
+            }
 
-          sumw -= res->GetBinContent(ix-1, iy-1, iz);
-          sumw2 -= pow(res->GetBinError(ix-1, iy-1, iz), 2);
+            if (!isXcond && !isYcond && !isZcond){
+              sumw += res->GetBinContent(ix-1, iy-1, iz-1);
+              sumw2 += pow(res->GetBinError(ix-1, iy-1, iz-1), 2);
+            }
+          }
+          else if (ix>0 && iy>0){
+            if (!isXcond){
+              sumw += res->GetBinContent(ix-1, iy, iz);
+              sumw2 += pow(res->GetBinError(ix-1, iy, iz), 2);
+            }
+            if (!isYcond){
+              sumw += res->GetBinContent(ix, iy-1, iz);
+              sumw2 += pow(res->GetBinError(ix, iy-1, iz), 2);
+            }
+            if (!isXcond && !isYcond){
+              sumw -= res->GetBinContent(ix-1, iy-1, iz);
+              sumw2 -= pow(res->GetBinError(ix-1, iy-1, iz), 2);
+            }
+          }
+          else if (ix>0 && iz>0){
+            if (!isXcond){
+              sumw += res->GetBinContent(ix-1, iy, iz);
+              sumw2 += pow(res->GetBinError(ix-1, iy, iz), 2);
+            }
+            if (!isZcond){
+              sumw += res->GetBinContent(ix, iy, iz-1);
+              sumw2 += pow(res->GetBinError(ix, iy, iz-1), 2);
+            }
+            if (!isXcond && !isZcond){
+              sumw -= res->GetBinContent(ix-1, iy, iz-1);
+              sumw2 -= pow(res->GetBinError(ix-1, iy, iz-1), 2);
+            }
+          }
+          else if (iy>0 && iz>0){
+            if (!isYcond){
+              sumw += res->GetBinContent(ix, iy-1, iz);
+              sumw2 += pow(res->GetBinError(ix, iy-1, iz), 2);
+            }
+            if (!isZcond){
+              sumw += res->GetBinContent(ix, iy, iz-1);
+              sumw2 += pow(res->GetBinError(ix, iy, iz-1), 2);
+            }
+            if (!isYcond && !isZcond){
+              sumw -= res->GetBinContent(ix, iy-1, iz-1);
+              sumw2 -= pow(res->GetBinError(ix, iy-1, iz-1), 2);
+            }
+          }
+          else if (ix>0){
+            if (!isXcond){
+              sumw += res->GetBinContent(ix-1, iy, iz);
+              sumw2 += pow(res->GetBinError(ix-1, iy, iz), 2);
+            }
+          }
+          else if (iy>0){
+            if (!isYcond){
+              sumw += res->GetBinContent(ix, iy-1, iz);
+              sumw2 += pow(res->GetBinError(ix, iy-1, iz), 2);
+            }
+          }
+          else if (iz>0){
+            if (!isZcond){
+              sumw += res->GetBinContent(ix, iy, iz-1);
+              sumw2 += pow(res->GetBinError(ix, iy, iz-1), 2);
+            }
+          }
+          res->SetBinContent(ix, iy, iz, sumw);
+          res->SetBinError(ix, iy, iz, sqrt(sumw2));
         }
-        else if (ix>0 && iz>0){
-          sumw += res->GetBinContent(ix-1, iy, iz);
-          sumw2 += pow(res->GetBinError(ix-1, iy, iz), 2);
-          sumw += res->GetBinContent(ix, iy, iz-1);
-          sumw2 += pow(res->GetBinError(ix, iy, iz-1), 2);
-
-          sumw -= res->GetBinContent(ix-1, iy, iz-1);
-          sumw2 -= pow(res->GetBinError(ix-1, iy, iz-1), 2);
-        }
-        else if (iy>0 && iz>0){
-          sumw += res->GetBinContent(ix, iy-1, iz);
-          sumw2 += pow(res->GetBinError(ix, iy-1, iz), 2);
-          sumw += res->GetBinContent(ix, iy, iz-1);
-          sumw2 += pow(res->GetBinError(ix, iy, iz-1), 2);
-
-          sumw -= res->GetBinContent(ix, iy-1, iz-1);
-          sumw2 -= pow(res->GetBinError(ix, iy-1, iz-1), 2);
-        }
-        else if (ix>0){
-          sumw += res->GetBinContent(ix-1, iy, iz);
-          sumw2 += pow(res->GetBinError(ix-1, iy, iz), 2);
-        }
-        else if (iy>0){
-          sumw += res->GetBinContent(ix, iy-1, iz);
-          sumw2 += pow(res->GetBinError(ix, iy-1, iz), 2);
-        }
-        else if (iz>0){
-          sumw += res->GetBinContent(ix, iy, iz-1);
-          sumw2 += pow(res->GetBinError(ix, iy, iz-1), 2);
-        }
-        res->SetBinContent(ix, iy, iz, sumw);
-        res->SetBinError(ix, iy, iz, sqrt(sumw2));
       }
     }
   }
 }
 
-template <> void HelperFunctions::translateCumulantToHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname){
+template <> void HelperFunctions::translateCumulantToHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname, std::vector<unsigned int>* /*condDims*/){
   if (!histo) return;
   if (newname=="") newname=Form("h_%s", histo->GetName());
   delete res;
@@ -1591,114 +1659,185 @@ template <> void HelperFunctions::translateCumulantToHistogram<TH1F>(TH1F const*
       sumw -= histo->GetBinContent(ix-1);
       sumw2 -= pow(histo->GetBinError(ix-1), 2);
     }
+    if (sumw2<0.) sumw2=0;
     res->SetBinContent(ix, sumw);
     res->SetBinError(ix, sqrt(sumw2));
   }
 }
-template <> void HelperFunctions::translateCumulantToHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname){
+template <> void HelperFunctions::translateCumulantToHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname, std::vector<unsigned int>* condDims){
   if (!histo) return;
   if (newname=="") newname=Form("h_%s", histo->GetName());
   delete res;
   res = new TH2F(*histo);
   res->SetName(newname);
-  res->Reset("ICES");
-  for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
-    for (int iy=0; iy<=res->GetNbinsY()+1; iy++){
-      double sumw=histo->GetBinContent(ix, iy);
-      double sumw2=pow(histo->GetBinError(ix, iy), 2);
-      if (ix>0 && iy>0){
-        sumw -= histo->GetBinContent(ix-1, iy);
-        sumw2 -= pow(histo->GetBinError(ix-1, iy), 2);
-        sumw -= histo->GetBinContent(ix, iy-1);
-        sumw2 -= pow(histo->GetBinError(ix, iy-1), 2);
 
-        sumw += histo->GetBinContent(ix-1, iy-1);
-        sumw2 += pow(histo->GetBinError(ix-1, iy-1), 2);
+  bool isXcond=false;
+  bool isYcond=false;
+  if (condDims){
+    for (unsigned int const& idim:*condDims){
+      isXcond |= (idim==0);
+      isYcond |= (idim==1);
+    }
+  }
+  if (!(isXcond && isYcond)){
+    res->Reset("ICES");
+    for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
+      for (int iy=0; iy<=res->GetNbinsY()+1; iy++){
+        double sumw=histo->GetBinContent(ix, iy);
+        double sumw2=pow(histo->GetBinError(ix, iy), 2);
+        if (ix>0 && iy>0){
+          if (!isXcond){
+            sumw -= histo->GetBinContent(ix-1, iy);
+            sumw2 -= pow(histo->GetBinError(ix-1, iy), 2);
+          }
+          if (!isYcond){
+            sumw -= histo->GetBinContent(ix, iy-1);
+            sumw2 -= pow(histo->GetBinError(ix, iy-1), 2);
+          }
+          if (!isXcond && !isYcond){
+            sumw += histo->GetBinContent(ix-1, iy-1);
+            sumw2 += pow(histo->GetBinError(ix-1, iy-1), 2);
+          }
+        }
+        else if (ix>0){
+          if (!isXcond){
+            sumw -= histo->GetBinContent(ix-1, iy);
+            sumw2 -= pow(histo->GetBinError(ix-1, iy), 2);
+          }
+        }
+        else if (iy>0){
+          if (!isYcond){
+            sumw -= histo->GetBinContent(ix, iy-1);
+            sumw2 -= pow(histo->GetBinError(ix, iy-1), 2);
+          }
+        }
+        if (sumw2<0.) sumw2=0;
+        res->SetBinContent(ix, iy, sumw);
+        res->SetBinError(ix, iy, sqrt(sumw2));
       }
-      else if (ix>0){
-        sumw -= histo->GetBinContent(ix-1, iy);
-        sumw2 -= pow(histo->GetBinError(ix-1, iy), 2);
-      }
-      else if (iy>0){
-        sumw -= histo->GetBinContent(ix, iy-1);
-        sumw2 -= pow(histo->GetBinError(ix, iy-1), 2);
-      }
-      res->SetBinContent(ix, iy, sumw);
-      res->SetBinError(ix, iy, sqrt(sumw2));
     }
   }
 }
-template <> void HelperFunctions::translateCumulantToHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname){
+template <> void HelperFunctions::translateCumulantToHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname, std::vector<unsigned int>* condDims){
   if (!histo) return;
   if (newname=="") newname=Form("h_%s", histo->GetName());
   delete res;
   res = new TH3F(*histo);
   res->SetName(newname);
-  res->Reset("ICES");
-  for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
-    for (int iy=0; iy<=res->GetNbinsY()+1; iy++){
-      for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
-        double sumw=histo->GetBinContent(ix, iy, iz);
-        double sumw2=pow(histo->GetBinError(ix, iy, iz), 2);
-        if (ix>0 && iy>0 && iz>0){
-          sumw -= histo->GetBinContent(ix-1, iy, iz);
-          sumw2 -= pow(histo->GetBinError(ix-1, iy, iz), 2);
-          sumw -= histo->GetBinContent(ix, iy-1, iz);
-          sumw2 -= pow(histo->GetBinError(ix, iy-1, iz), 2);
-          sumw -= histo->GetBinContent(ix, iy, iz-1);
-          sumw2 -= pow(histo->GetBinError(ix, iy, iz-1), 2);
 
-          sumw += histo->GetBinContent(ix-1, iy-1, iz);
-          sumw2 += pow(histo->GetBinError(ix-1, iy-1, iz), 2);
-          sumw += histo->GetBinContent(ix-1, iy, iz-1);
-          sumw2 += pow(histo->GetBinError(ix-1, iy, iz-1), 2);
-          sumw += histo->GetBinContent(ix, iy-1, iz-1);
-          sumw2 += pow(histo->GetBinError(ix, iy-1, iz-1), 2);
+  bool isXcond=false;
+  bool isYcond=false;
+  bool isZcond=false;
+  if (condDims){
+    for (unsigned int const& idim:*condDims){
+      isXcond |= (idim==0);
+      isYcond |= (idim==1);
+      isZcond |= (idim==2);
+    }
+  }
+  if (!(isXcond && isYcond && isZcond)){
+    res->Reset("ICES");
+    for (int ix=0; ix<=res->GetNbinsX()+1; ix++){
+      for (int iy=0; iy<=res->GetNbinsY()+1; iy++){
+        for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
+          double sumw=histo->GetBinContent(ix, iy, iz);
+          double sumw2=pow(histo->GetBinError(ix, iy, iz), 2);
+          if (ix>0 && iy>0 && iz>0){
+            if (!isXcond){
+              sumw -= histo->GetBinContent(ix-1, iy, iz);
+              sumw2 -= pow(histo->GetBinError(ix-1, iy, iz), 2);
+            }
+            if (!isYcond){
+              sumw -= histo->GetBinContent(ix, iy-1, iz);
+              sumw2 -= pow(histo->GetBinError(ix, iy-1, iz), 2);
+            }
+            if (!isZcond){
+              sumw -= histo->GetBinContent(ix, iy, iz-1);
+              sumw2 -= pow(histo->GetBinError(ix, iy, iz-1), 2);
+            }
 
-          sumw -= histo->GetBinContent(ix-1, iy-1, iz-1);
-          sumw2 -= pow(histo->GetBinError(ix-1, iy-1, iz-1), 2);
-        }
-        else if (ix>0 && iy>0){
-          sumw -= histo->GetBinContent(ix-1, iy, iz);
-          sumw2 -= pow(histo->GetBinError(ix-1, iy, iz), 2);
-          sumw -= histo->GetBinContent(ix, iy-1, iz);
-          sumw2 -= pow(histo->GetBinError(ix, iy-1, iz), 2);
+            if (!isXcond && !isYcond){
+              sumw += histo->GetBinContent(ix-1, iy-1, iz);
+              sumw2 += pow(histo->GetBinError(ix-1, iy-1, iz), 2);
+            }
+            if (!isXcond && !isZcond){
+              sumw += histo->GetBinContent(ix-1, iy, iz-1);
+              sumw2 += pow(histo->GetBinError(ix-1, iy, iz-1), 2);
+            }
+            if (!isYcond && !isZcond){
+              sumw += histo->GetBinContent(ix, iy-1, iz-1);
+              sumw2 += pow(histo->GetBinError(ix, iy-1, iz-1), 2);
+            }
 
-          sumw += histo->GetBinContent(ix-1, iy-1, iz);
-          sumw2 += pow(histo->GetBinError(ix-1, iy-1, iz), 2);
+            if (!isXcond && !isYcond && !isZcond){
+              sumw -= histo->GetBinContent(ix-1, iy-1, iz-1);
+              sumw2 -= pow(histo->GetBinError(ix-1, iy-1, iz-1), 2);
+            }
+          }
+          else if (ix>0 && iy>0){
+            if (!isXcond){
+              sumw -= histo->GetBinContent(ix-1, iy, iz);
+              sumw2 -= pow(histo->GetBinError(ix-1, iy, iz), 2);
+            }
+            if (!isYcond){
+              sumw -= histo->GetBinContent(ix, iy-1, iz);
+              sumw2 -= pow(histo->GetBinError(ix, iy-1, iz), 2);
+            }
+            if (!isXcond && !isYcond){
+              sumw += histo->GetBinContent(ix-1, iy-1, iz);
+              sumw2 += pow(histo->GetBinError(ix-1, iy-1, iz), 2);
+            }
+          }
+          else if (ix>0 && iz>0){
+            if (!isXcond){
+              sumw -= histo->GetBinContent(ix-1, iy, iz);
+              sumw2 -= pow(histo->GetBinError(ix-1, iy, iz), 2);
+            }
+            if (!isZcond){
+              sumw -= histo->GetBinContent(ix, iy, iz-1);
+              sumw2 -= pow(histo->GetBinError(ix, iy, iz-1), 2);
+            }
+            if (!isXcond && !isZcond){
+              sumw += histo->GetBinContent(ix-1, iy, iz-1);
+              sumw2 += pow(histo->GetBinError(ix-1, iy, iz-1), 2);
+            }
+          }
+          else if (iy>0 && iz>0){
+            if (!isYcond){
+              sumw -= histo->GetBinContent(ix, iy-1, iz);
+              sumw2 -= pow(histo->GetBinError(ix, iy-1, iz), 2);
+            }
+            if (!isZcond){
+              sumw -= histo->GetBinContent(ix, iy, iz-1);
+              sumw2 -= pow(histo->GetBinError(ix, iy, iz-1), 2);
+            }
+            if (!isYcond && !isZcond){
+              sumw += histo->GetBinContent(ix, iy-1, iz-1);
+              sumw2 += pow(histo->GetBinError(ix, iy-1, iz-1), 2);
+            }
+          }
+          else if (ix>0){
+            if (!isXcond){
+              sumw -= histo->GetBinContent(ix-1, iy, iz);
+              sumw2 -= pow(histo->GetBinError(ix-1, iy, iz), 2);
+            }
+          }
+          else if (iy>0){
+            if (!isYcond){
+              sumw -= histo->GetBinContent(ix, iy-1, iz);
+              sumw2 -= pow(histo->GetBinError(ix, iy-1, iz), 2);
+            }
+          }
+          else if (iz>0){
+            if (!isZcond){
+              sumw -= histo->GetBinContent(ix, iy, iz-1);
+              sumw2 -= pow(histo->GetBinError(ix, iy, iz-1), 2);
+            }
+          }
+          if (sumw2<0.) sumw2=0;
+          res->SetBinContent(ix, iy, iz, sumw);
+          res->SetBinError(ix, iy, iz, sqrt(sumw2));
         }
-        else if (ix>0 && iz>0){
-          sumw -= histo->GetBinContent(ix-1, iy, iz);
-          sumw2 -= pow(histo->GetBinError(ix-1, iy, iz), 2);
-          sumw -= histo->GetBinContent(ix, iy, iz-1);
-          sumw2 -= pow(histo->GetBinError(ix, iy, iz-1), 2);
-
-          sumw += histo->GetBinContent(ix-1, iy, iz-1);
-          sumw2 += pow(histo->GetBinError(ix-1, iy, iz-1), 2);
-        }
-        else if (iy>0 && iz>0){
-          sumw -= histo->GetBinContent(ix, iy-1, iz);
-          sumw2 -= pow(histo->GetBinError(ix, iy-1, iz), 2);
-          sumw -= histo->GetBinContent(ix, iy, iz-1);
-          sumw2 -= pow(histo->GetBinError(ix, iy, iz-1), 2);
-
-          sumw += histo->GetBinContent(ix, iy-1, iz-1);
-          sumw2 += pow(histo->GetBinError(ix, iy-1, iz-1), 2);
-        }
-        else if (ix>0){
-          sumw -= histo->GetBinContent(ix-1, iy, iz);
-          sumw2 -= pow(histo->GetBinError(ix-1, iy, iz), 2);
-        }
-        else if (iy>0){
-          sumw -= histo->GetBinContent(ix, iy-1, iz);
-          sumw2 -= pow(histo->GetBinError(ix, iy-1, iz), 2);
-        }
-        else if (iz>0){
-          sumw -= histo->GetBinContent(ix, iy, iz-1);
-          sumw2 -= pow(histo->GetBinError(ix, iy, iz-1), 2);
-        }
-        res->SetBinContent(ix, iy, iz, sumw);
-        res->SetBinError(ix, iy, iz, sqrt(sumw2));
       }
     }
   }
@@ -1715,7 +1854,7 @@ void HelperFunctions::rebinCumulant(TH1F*& histo, const ExtendedBinning& binning
   vector<pair<MELANCSplineCore::T, MELANCSplineCore::T>> pList, pErrList;
   for (int ix=0; ix<=histo->GetNbinsX(); ix++){
     pList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), histo->GetBinContent(ix));
-    pErrList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), histo->GetBinError(ix));
+    pErrList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), pow(histo->GetBinError(ix), 2));
   }
   spFac.setPoints(pList);
   spErrFac.setPoints(pErrList);
@@ -1736,23 +1875,44 @@ void HelperFunctions::rebinCumulant(TH1F*& histo, const ExtendedBinning& binning
       if (errval<0.) errval=0.;
     }
     histo->SetBinContent(ix, cval);
-    histo->SetBinError(ix, errval);
+    histo->SetBinError(ix, sqrt(std::max(0., errval)));
   }
 }
-void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY){
+void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs){
   if (!histo) return;
   const TString hname=histo->GetName();
   const TString htitle=histo->GetTitle();
   RooRealVar xvar("xvar", "", histo->GetXaxis()->GetBinLowEdge(1), histo->GetXaxis()->GetBinLowEdge(histo->GetNbinsX()+1));
   RooRealVar yvar("yvar", "", histo->GetYaxis()->GetBinLowEdge(1), histo->GetYaxis()->GetBinLowEdge(histo->GetNbinsY()+1));
 
+  const TProfile* prof_x=nullptr;
+  const TProfile* prof_y=nullptr;
+  if (condProfs){
+    for (std::pair<TProfile const*, unsigned int> prof_dim:*condProfs){
+      if (prof_dim.second==0) prof_x=prof_dim.first;
+      if (prof_dim.second==1) prof_y=prof_dim.first;
+    }
+  }
+  TGraphErrors* tgprof_x=nullptr; TSpline3* spprof_x=nullptr;
+  TGraphErrors* tgprof_y=nullptr; TSpline3* spprof_y=nullptr;
+  if (prof_x) tgprof_x=makeGraphFromTH1(nullptr, prof_x, "");
+  if (prof_y) tgprof_y=makeGraphFromTH1(nullptr, prof_y, "");
+  if (tgprof_x) spprof_x=convertGraphToSpline3(tgprof_x);
+  if (tgprof_y) spprof_y=convertGraphToSpline3(tgprof_y);
+
   MELANCSplineFactory_2D spFac(xvar, yvar, "tmpSpline");
   MELANCSplineFactory_2D spErrFac(xvar, yvar, "tmpSplineErr");
   vector<splineTriplet_t> pList, pErrList;
   for (int ix=0; ix<=histo->GetNbinsX(); ix++){
     for (int iy=0; iy<=histo->GetNbinsY(); iy++){
-      pList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), histo->GetYaxis()->GetBinUpEdge(iy), histo->GetBinContent(ix, iy));
-      pErrList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), histo->GetYaxis()->GetBinUpEdge(iy), histo->GetBinError(ix, iy));
+      double xval = histo->GetXaxis()->GetBinUpEdge(ix);
+      double yval = histo->GetYaxis()->GetBinUpEdge(iy);
+      double wval = histo->GetBinContent(ix, iy);
+      double errsqval = pow(histo->GetBinError(ix, iy), 2);
+      if (prof_x && ix>0) xval = prof_x->GetBinContent(ix);
+      if (prof_y && iy>0) yval = prof_y->GetBinContent(iy);
+      pList.emplace_back(xval, yval, wval);
+      pErrList.emplace_back(xval, yval, errsqval);
     }
   }
   spFac.setPoints(pList);
@@ -1765,8 +1925,10 @@ void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binning
   histo = new TH2F(hname, htitle, binningX.getNbins(), binningX.getBinning(), binningY.getNbins(), binningY.getBinning());
   for (unsigned int ix=0; ix<=binningX.getNbins(); ix++){
     double xval=binningX.getBinLowEdge(ix);
+    if (spprof_x) xval=spprof_x->Eval(binningX.getBinCenter(ix));
     for (unsigned int iy=0; iy<=binningY.getNbins(); iy++){
       double yval=binningY.getBinLowEdge(iy);
+      if (spprof_y) yval=spprof_y->Eval(binningY.getBinCenter(iy));
       double cval=0;
       double errval=0;
       if (xval>=xvar.getMin() && xval<=xvar.getMax() && yval>=yvar.getMin() && yval<=yvar.getMax()){
@@ -1777,11 +1939,16 @@ void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binning
         if (errval<0.) errval=0.;
       }
       histo->SetBinContent(ix, iy, cval);
-      histo->SetBinError(ix, iy, errval);
+      histo->SetBinError(ix, iy, sqrt(std::max(0., errval)));
     }
   }
+
+  delete tgprof_x;
+  delete tgprof_y;
+  delete spprof_x;
+  delete spprof_y;
 }
-void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ){
+void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs){
   if (!histo) return;
   const TString hname=histo->GetName();
   const TString htitle=histo->GetTitle();
@@ -1789,14 +1956,42 @@ void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binning
   RooRealVar yvar("yvar", "", histo->GetYaxis()->GetBinLowEdge(1), histo->GetYaxis()->GetBinLowEdge(histo->GetNbinsY()+1));
   RooRealVar zvar("zvar", "", histo->GetZaxis()->GetBinLowEdge(1), histo->GetZaxis()->GetBinLowEdge(histo->GetNbinsZ()+1));
 
+  const TProfile* prof_x=nullptr;
+  const TProfile* prof_y=nullptr;
+  const TProfile* prof_z=nullptr;
+  if (condProfs){
+    for (std::pair<TProfile const*, unsigned int> prof_dim:*condProfs){
+      if (prof_dim.second==0) prof_x=prof_dim.first;
+      if (prof_dim.second==1) prof_y=prof_dim.first;
+      if (prof_dim.second==2) prof_z=prof_dim.first;
+    }
+  }
+  TGraphErrors* tgprof_x=nullptr; TSpline3* spprof_x=nullptr;
+  TGraphErrors* tgprof_y=nullptr; TSpline3* spprof_y=nullptr;
+  TGraphErrors* tgprof_z=nullptr; TSpline3* spprof_z=nullptr;
+  if (prof_x) tgprof_x=makeGraphFromTH1(nullptr, prof_x, "");
+  if (prof_y) tgprof_y=makeGraphFromTH1(nullptr, prof_y, "");
+  if (prof_z) tgprof_z=makeGraphFromTH1(nullptr, prof_z, "");
+  if (tgprof_x) spprof_x=convertGraphToSpline3(tgprof_x);
+  if (tgprof_y) spprof_y=convertGraphToSpline3(tgprof_y);
+  if (tgprof_z) spprof_z=convertGraphToSpline3(tgprof_z);
+
   MELANCSplineFactory_3D spFac(xvar, yvar, zvar, "tmpSpline");
   MELANCSplineFactory_3D spErrFac(xvar, yvar, zvar, "tmpSplineErr");
   vector<splineQuadruplet_t> pList, pErrList;
   for (int ix=0; ix<=histo->GetNbinsX(); ix++){
     for (int iy=0; iy<=histo->GetNbinsY(); iy++){
       for (int iz=0; iz<=histo->GetNbinsZ(); iz++){
-        pList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), histo->GetYaxis()->GetBinUpEdge(iy), histo->GetZaxis()->GetBinUpEdge(iz), histo->GetBinContent(ix, iy, iz));
-        pErrList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), histo->GetYaxis()->GetBinUpEdge(iy), histo->GetZaxis()->GetBinUpEdge(iz), histo->GetBinError(ix, iy, iz));
+        double xval = histo->GetXaxis()->GetBinUpEdge(ix);
+        double yval = histo->GetYaxis()->GetBinUpEdge(iy);
+        double zval = histo->GetZaxis()->GetBinUpEdge(iz);
+        double wval = histo->GetBinContent(ix, iy, iz);
+        double errsqval = pow(histo->GetBinError(ix, iy, iz), 2);
+        if (prof_x && ix>0) xval = prof_x->GetBinContent(ix);
+        if (prof_y && iy>0) yval = prof_y->GetBinContent(iy);
+        if (prof_z && iz>0) zval = prof_z->GetBinContent(iz);
+        pList.emplace_back(xval, yval, zval, wval);
+        pErrList.emplace_back(xval, yval, zval, errsqval);
       }
     }
   }
@@ -1810,10 +2005,13 @@ void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binning
   histo = new TH3F(hname, htitle, binningX.getNbins(), binningX.getBinning(), binningY.getNbins(), binningY.getBinning(), binningZ.getNbins(), binningZ.getBinning());
   for (unsigned int ix=0; ix<=binningX.getNbins(); ix++){
     double xval=binningX.getBinLowEdge(ix);
+    if (spprof_x) xval=spprof_x->Eval(binningX.getBinCenter(ix));
     for (unsigned int iy=0; iy<=binningY.getNbins(); iy++){
       double yval=binningY.getBinLowEdge(iy);
+      if (spprof_y) yval=spprof_y->Eval(binningY.getBinCenter(iy));
       for (unsigned int iz=0; iz<=binningZ.getNbins(); iz++){
         double zval=binningZ.getBinLowEdge(iz);
+        if (spprof_z) zval=spprof_z->Eval(binningZ.getBinCenter(iz));
         double cval=0;
         double errval=0;
         if (xval>=xvar.getMin() && xval<=xvar.getMax() && yval>=yvar.getMin() && yval<=yvar.getMax() && zval>=zvar.getMin() && zval<=zvar.getMax()){
@@ -1825,10 +2023,18 @@ void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binning
           if (errval<0.) errval=0.;
         }
         histo->SetBinContent(ix, iy, iz, cval);
-        histo->SetBinError(ix, iy, iz, errval);
+        histo->SetBinError(ix, iy, iz, sqrt(std::max(0., errval)));
       }
     }
   }
+
+
+  delete tgprof_x;
+  delete tgprof_y;
+  delete tgprof_z;
+  delete spprof_x;
+  delete spprof_y;
+  delete spprof_z;
 }
 
 void HelperFunctions::rebinHistogram(TH1F*& histo, const ExtendedBinning& binningX){
@@ -1838,37 +2044,175 @@ void HelperFunctions::rebinHistogram(TH1F*& histo, const ExtendedBinning& binnin
 
   TH1F* htmp_cumulant=nullptr;
   getCumulantHistogram(histo, htmp_cumulant);
-  delete histo;
   rebinCumulant(htmp_cumulant, binningX);
+  delete histo; histo=nullptr;
   translateCumulantToHistogram(htmp_cumulant, histo, hname);
   histo->SetTitle(htitle);
   delete htmp_cumulant;
 }
-void HelperFunctions::rebinHistogram(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY){
+void HelperFunctions::rebinHistogram(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs){
   if (!histo) return;
   const TString hname=histo->GetName();
   const TString htitle=histo->GetTitle();
 
   TH2F* htmp_cumulant=nullptr;
   getCumulantHistogram(histo, htmp_cumulant);
-  delete histo;
-  rebinCumulant(htmp_cumulant, binningX, binningY);
+  rebinCumulant(htmp_cumulant, binningX, binningY, condProfs);
+  delete histo; histo=nullptr;
   translateCumulantToHistogram(htmp_cumulant, histo, hname);
   histo->SetTitle(htitle);
   delete htmp_cumulant;
 }
-void HelperFunctions::rebinHistogram(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ){
+void HelperFunctions::rebinHistogram(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs){
   if (!histo) return;
   const TString hname=histo->GetName();
   const TString htitle=histo->GetTitle();
 
   TH3F* htmp_cumulant=nullptr;
   getCumulantHistogram(histo, htmp_cumulant);
-  delete histo;
-  rebinCumulant(htmp_cumulant, binningX, binningY, binningZ);
+  rebinCumulant(htmp_cumulant, binningX, binningY, binningZ, condProfs);
+  delete histo; histo=nullptr;
   translateCumulantToHistogram(htmp_cumulant, histo, hname);
   histo->SetTitle(htitle);
   delete htmp_cumulant;
+}
+
+TH1F* HelperFunctions::getHistogramSlice(TH2F const* histo, unsigned char XDirection, int iy, int jy, TString newname){
+  if (!histo || XDirection>=2) return nullptr;
+  if (newname=="") newname=Form("Slice_%s_%i_%i_%s", (XDirection==0 ? "X" : "Y"), iy, jy, histo->GetName());
+
+  const TAxis* xaxis=histo->GetXaxis();
+  const TAxis* yaxis=histo->GetYaxis();
+  vector<float> bins;
+  if (XDirection==0){
+    for (int i=1; i<=xaxis->GetNbins()+1; i++) bins.push_back(xaxis->GetBinLowEdge(i));
+    iy = std::max(0, iy); jy = std::min(yaxis->GetNbins(), jy);
+  }
+  else{
+    for (int i=1; i<=yaxis->GetNbins()+1; i++) bins.push_back(yaxis->GetBinLowEdge(i));
+    iy = std::max(0, iy); jy = std::min(xaxis->GetNbins(), jy);
+  }
+  if (iy>jy) MELAerr << "HelperFunctions::getHistogramSlice: iy>jy!" << endl;
+  TH1F* res = new TH1F(newname, "", bins.size()-1, bins.data());
+
+  if (XDirection==0){
+    for (int ii=0; ii<=xaxis->GetNbins()+1; ii++){
+      double integral=0, integralerror=0;
+      integral = histo->IntegralAndError(ii, ii, iy, jy, integralerror);
+      res->SetBinContent(ii, integral);
+      res->SetBinError(ii, integralerror);
+    }
+  }
+  else{
+    for (int ii=0; ii<=yaxis->GetNbins()+1; ii++){
+      double integral=0, integralerror=0;
+      integral = histo->IntegralAndError(iy, jy, ii, ii, integralerror);
+      res->SetBinContent(ii, integral);
+      res->SetBinError(ii, integralerror);
+    }
+  }
+
+  return res;
+}
+TH1F* HelperFunctions::getHistogramSlice(TH3F const* histo, unsigned char XDirection, int iy, int jy, int iz, int jz, TString newname){
+  if (!histo || XDirection>=3) return nullptr;
+  if (newname=="") newname=Form("Slice_%s_%i_%i_%i_%i_%s", (XDirection==0 ? "X" : (XDirection==1 ? "Y" : "Z")), iy, jy, iz, jz, histo->GetName());
+
+  const TAxis* xaxis;
+  const TAxis* yaxis;
+  const TAxis* zaxis;
+  vector<float> bins;
+  if (XDirection==0){
+    xaxis=histo->GetXaxis();
+    yaxis=histo->GetYaxis();
+    zaxis=histo->GetZaxis();
+  }
+  else if (XDirection==1){
+    xaxis=histo->GetYaxis();
+    yaxis=histo->GetZaxis();
+    zaxis=histo->GetXaxis();
+  }
+  else{
+    xaxis=histo->GetZaxis();
+    yaxis=histo->GetXaxis();
+    zaxis=histo->GetYaxis();
+  }
+  for (int i=1; i<=xaxis->GetNbins()+1; i++) bins.push_back(xaxis->GetBinLowEdge(i));
+  iy = std::max(0, iy); jy = std::min(yaxis->GetNbins(), jy);
+  iz = std::max(0, iz); jz = std::min(zaxis->GetNbins(), jz);
+  if (iy>jy) MELAerr << "HelperFunctions::getHistogramSlice: iy>jy!" << endl;
+  if (iz>jz) MELAerr << "HelperFunctions::getHistogramSlice: iz>jz!" << endl;
+  TH1F* res = new TH1F(newname, "", bins.size()-1, bins.data());
+
+  for (int ii=0; ii<=xaxis->GetNbins()+1; ii++){
+    double integral=0, integralerror=0;
+    int IX, JX, IY, JY, IZ, JZ;
+    if (XDirection==0){
+      IX=ii; JX=ii;
+      IY=iy; JY=jy;
+      IZ=iz; JZ=jz;
+    }
+    else if (XDirection==1){
+      IX=iz; JX=jz;
+      IY=ii; JY=ii;
+      IZ=iy; JZ=jy;
+    }
+    else{
+      IX=iy; JX=jy;
+      IY=iz; JY=jz;
+      IZ=ii; JZ=ii;
+    }
+    integral = histo->IntegralAndError(IX, JX, IY, JY, IZ, JZ, integralerror);
+    res->SetBinContent(ii, integral);
+    res->SetBinError(ii, integralerror);
+  }
+
+  return res;
+}
+TH2F* HelperFunctions::getHistogramSlice(TH3F const* histo, unsigned char XDirection, unsigned char YDirection, int iz, int jz, TString newname){
+  if (!histo || XDirection==YDirection || XDirection>=3 || YDirection>=3) return nullptr;
+  if (newname=="") newname=Form("Slice_%s%s_%i_%i_%s", (XDirection==0 ? "X" : (XDirection==1 ? "Y" : "Z")), (YDirection==0 ? "X" : (YDirection==1 ? "Y" : "Z")), iz, jz, histo->GetName());
+
+  unsigned char ZDirection=3-XDirection-YDirection; // 0+1+2=3
+  const TAxis* xaxis;
+  const TAxis* yaxis;
+  const TAxis* zaxis;
+  vector<float> xbins, ybins;
+  if (XDirection==0) xaxis=histo->GetXaxis();
+  else if (XDirection==1) xaxis=histo->GetYaxis();
+  else xaxis=histo->GetZaxis();
+  if (YDirection==0) yaxis=histo->GetXaxis();
+  else if (YDirection==1) yaxis=histo->GetYaxis();
+  else yaxis=histo->GetZaxis();
+  if (ZDirection==0) zaxis=histo->GetXaxis();
+  else if (ZDirection==1) zaxis=histo->GetYaxis();
+  else zaxis=histo->GetZaxis();
+
+  for (int i=1; i<=xaxis->GetNbins()+1; i++) xbins.push_back(xaxis->GetBinLowEdge(i));
+  for (int i=1; i<=yaxis->GetNbins()+1; i++) ybins.push_back(yaxis->GetBinLowEdge(i));
+  iz = std::max(0, iz); std::min(zaxis->GetNbins(), jz);
+  TH2F* res = new TH2F(newname, "", xbins.size()-1, xbins.data(), ybins.size()-1, ybins.data());
+
+  for (int ii=0; ii<=xaxis->GetNbins()+1; ii++){
+    for (int jj=0; jj<=yaxis->GetNbins()+1; jj++){
+      double integral=0, integralerror=0;
+      int IX=0, JX=0, IY=0, JY=0, IZ=0, JZ=0;
+      if (XDirection==0){ IX=ii; JX=ii; }
+      else if (XDirection==1){ IY=ii; JY=ii; }
+      else{ IZ=ii; JZ=ii; }
+      if (YDirection==0){ IX=jj; JX=jj; }
+      else if (YDirection==1){ IY=jj; JY=jj; }
+      else{ IZ=jj; JZ=jj; }
+      if (ZDirection==0){ IX=iz; JX=jz; }
+      else if (ZDirection==1){ IY=iz; JY=jz; }
+      else{ IZ=iz; JZ=jz; }
+      integral = histo->IntegralAndError(IX, JX, IY, JY, IZ, JZ, integralerror);
+      res->SetBinContent(ii, jj, integral);
+      res->SetBinError(ii, jj, integralerror);
+    }
+  }
+
+  return res;
 }
 
 

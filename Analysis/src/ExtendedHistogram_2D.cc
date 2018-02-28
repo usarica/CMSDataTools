@@ -40,11 +40,9 @@ ExtendedHistogram_2D& ExtendedHistogram_2D::operator=(const ExtendedHistogram_2D
 
 void ExtendedHistogram_2D::setNameTitle(const TString name_, const TString title_){
   ExtendedHistogram::setNameTitle(name, title);
-  if (histo && prof_x && prof_y){
-    histo->SetName(name); histo->SetTitle(title);
-    prof_x->SetName(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data())); prof_x->SetTitle(title);
-    prof_y->SetName(Form("%s_prof_%s", name.Data(), ybinning.getLabel().Data())); prof_y->SetTitle(title);
-  }
+  if (histo){ histo->SetName(name); histo->SetTitle(title); }
+  if (prof_x){ prof_x->SetName(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data())); prof_x->SetTitle(title); }
+  if (prof_y){ prof_y->SetName(Form("%s_prof_%s", name.Data(), ybinning.getLabel().Data())); prof_y->SetTitle(title); }
 }
 void ExtendedHistogram_2D::setBinning(const ExtendedBinning& binning, const int xyz, const TString label){
   if (xyz==0){
@@ -69,11 +67,9 @@ void ExtendedHistogram_2D::build(){
 }
 
 void ExtendedHistogram_2D::fill(double x, double y, double wgt){
-  if (histo && prof_x && prof_y){
-    histo->Fill(x, y, wgt);
-    prof_x->Fill(x, x, wgt);
-    prof_y->Fill(y, y, wgt);
-  }
+  if (histo) histo->Fill(x, y, wgt);
+  if (prof_x) prof_x->Fill(x, x, wgt);
+  if (prof_y) prof_y->Fill(y, y, wgt);
 }
 
 TH2F* ExtendedHistogram_2D::getCumulantHistogram(TString newname) const{
@@ -87,7 +83,35 @@ TH2F* ExtendedHistogram_2D::getCumulantHistogram(TString newname) const{
 ExtendedHistogram_2D ExtendedHistogram_2D::divideHistograms(ExtendedHistogram_2D const& h1, ExtendedHistogram_2D const& h2, bool useEffErr, TString newname){
   if (newname=="") newname=Form("h_%s_over_%s", h1.name.Data(), h2.name.Data());
   ExtendedHistogram_2D res(h2); res.setNameTitle(newname); res.histo->Reset("ICES");
-  if (!h1.histo || !h1.prof_x || !h1.prof_y || !h2.histo || !h2.prof_x || !h2.prof_y) return res;
+  if (!h1.histo || !h2.histo) return res;
   HelperFunctions::divideHistograms(h1.histo, h2.histo, res.histo, useEffErr);
+  if (!useEffErr){
+    if (h1.prof_x && h2.prof_x){
+      for (unsigned int bin=0; bin<=h2.xbinning.getNbins()+1; bin++){
+        double val[2]={ h1.prof_x->GetBinContent(bin), h2.prof_x->GetBinContent(bin) };
+        double errsq[2]={ pow(h1.prof_x->GetBinError(bin), 2), pow(h2.prof_x->GetBinError(bin), 2) };
+        double valnew=0;
+        double wnew=0;
+        for (unsigned int ii=0; ii<2; ii++){ if (errsq[ii]!=0.){ valnew += val[ii]/errsq[ii]; wnew += 1./errsq[ii]; } }
+        if (wnew==0.) valnew = 0;
+        else valnew /= wnew;
+        res.prof_x->SetBinContent(bin, valnew);
+        res.prof_x->SetBinError(bin, sqrt(1./wnew));
+      }
+    }
+    if (h1.prof_y && h2.prof_y){
+      for (unsigned int bin=0; bin<=h2.ybinning.getNbins()+1; bin++){
+        double val[2]={ h1.prof_y->GetBinContent(bin), h2.prof_y->GetBinContent(bin) };
+        double errsq[2]={ pow(h1.prof_y->GetBinError(bin), 2), pow(h2.prof_y->GetBinError(bin), 2) };
+        double valnew=0;
+        double wnew=0;
+        for (unsigned int ii=0; ii<2; ii++){ if (errsq[ii]!=0.){ valnew += val[ii]/errsq[ii]; wnew += 1./errsq[ii]; } }
+        if (wnew==0.) valnew = 0;
+        else valnew /= wnew;
+        res.prof_y->SetBinContent(bin, valnew);
+        res.prof_y->SetBinError(bin, sqrt(1./wnew));
+      }
+    }
+  }
   return res;
 }

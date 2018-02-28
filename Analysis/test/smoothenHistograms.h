@@ -10,62 +10,68 @@ ExtendedBinning getFinestBinning(ExtendedBinning const& finalBinning, unsigned i
   float varmax=finalBinning.getBinLowEdge(finalNbins);
 
   TString varname=finalBinning.getLabel(); TString varnamelower=varname; varnamelower.ToLower();
-  unsigned int nBinsIntermediate=1000*finalNbins;
-  if (varnamelower.Contains("mass")) nBinsIntermediate = (varmax-varmin)*100.; // Bin mass every 1 MeV, notice mass unit is GeV
+  unsigned int nBinsIntermediate;
+  if (varnamelower.Contains("mass")) nBinsIntermediate = 1000*finalNbins;
+  else nBinsIntermediate = 100*finalNbins;
   return ExtendedBinning(nBinsIntermediate, varmin, varmax, varname);
 }
 
-ExtendedBinning getIntermediateBinning(TH1F const* fineHisto, unsigned int finalNbinsRequested){
+ExtendedBinning getIntermediateBinning(TH1F const* fineHisto, int effectiveN){
   ExtendedBinning res;
-  double integral=fineHisto->Integral(1, fineHisto->GetNbinsX()); // Do not include underflow/overflow bins; they are not relevant for the binning of the cumulant
-  double sumThreshold;
-  unsigned int nDivisions = std::min(finalNbinsRequested, (unsigned int) 20);
-  sumThreshold=integral/double(nDivisions);
+  double integralerror=0;
+  double integral=fineHisto->IntegralAndError(1, fineHisto->GetNbinsX(), integralerror); // Do not include underflow/overflow bins; they are not relevant for the binning of the cumulant
+  double effectiveNtotal=(integralerror>0. ? pow(integral/integralerror, 2) : fineHisto->GetEntries());
+  double effNThreshold;
+  if (effectiveN>0 && effectiveNtotal>2.*double(effectiveN)) effNThreshold = effectiveN;
+  else effNThreshold=effectiveNtotal/20.;
+  MELAout << "Effective total N = " << effectiveNtotal << ", requested effective N = " << effectiveN << ", threshold = " << effNThreshold << endl;
 
-  res.addBinBoundary(fineHisto->GetXaxis()->GetBinLowEdge(0));
-  vector<float> sums;
-  float sum=0;
+  res.addBinBoundary(fineHisto->GetXaxis()->GetBinLowEdge(1));
+  vector<float> effNs;
+  float sum=0, sumerrsq=0;
   for (int bin=1; bin<=fineHisto->GetNbinsX(); bin++){
     sum += fineHisto->GetBinContent(bin);
-    if (sum>sumThreshold || bin==fineHisto->GetNbinsX()){
-      sums.push_back(sum);
+    sumerrsq += pow(fineHisto->GetBinError(bin), 2);
+    double effN=(sumerrsq>0. ? pow(sum, 2)/sumerrsq : sum/integral*effectiveNtotal);
+    if (effN>effNThreshold || bin==fineHisto->GetNbinsX()){
+      effNs.push_back(effN);
       res.addBinBoundary(fineHisto->GetXaxis()->GetBinLowEdge(bin+1));
       sum=0;
+      sumerrsq=0;
     }
   }
   // These lines guarantee sum>sumThreshold in every bin
-  if (sums.size()>1 && sums.at(sums.size()-1)<sumThreshold){
-    sums.at(sums.size()-1) += sums.at(sums.size()-2);
-    sums.erase(sums.begin()+sums.size()-2);
-    res.removeBinLowEdge(res.getNbins());
+  if (effNs.size()>1 && effNs.at(effNs.size()-1)<effNThreshold){
+    effNs.at(effNs.size()-1) += effNs.at(effNs.size()-2);
+    effNs.erase(effNs.begin()+effNs.size()-2);
+    res.removeBinLowEdge(res.getNbins()-1);
+  }
+  // Loop over histogram from the beginning to get first non-zero bin
+  for (int bin=1; bin<=fineHisto->GetNbinsX(); bin++){
+    double val = fineHisto->GetBinContent(bin);
+    double valerr = fineHisto->GetBinError(bin);
+    if (val==0. && valerr==0.) continue;
+    if (bin!=1) res.addBinBoundary(fineHisto->GetXaxis()->GetBinLowEdge(bin));
+    break;
+  }
+  // Loop over histogram from the end to get last non-zero bin
+  for (int bin=fineHisto->GetNbinsX(); bin>=1; bin--){
+    double val = fineHisto->GetBinContent(bin);
+    double valerr = fineHisto->GetBinError(bin);
+    if (val==0. && valerr==0.) continue;
+    if (bin!=fineHisto->GetNbinsX()) res.addBinBoundary(fineHisto->GetXaxis()->GetBinLowEdge(bin+1));
+    break;
   }
   return res;
 }
 
-void getIntermediateBinning(TH2F const* fineHisto, ExtendedBinning& xbinning, ExtendedBinning& ybinning, unsigned int finalNbinsRequestedX, unsigned int finalNbinsRequestedY){
-  const TAxis* xaxis=fineHisto->GetXaxis();
-  const TAxis* yaxis=fineHisto->GetYaxis();
-  vector<float> xbins, ybins;
-  for (int ix=1; ix<=xaxis->GetNbins()+1; ix++) xbins.push_back(xaxis->GetBinLowEdge(ix));
-  for (int iy=1; iy<=yaxis->GetNbins()+1; iy++) ybins.push_back(yaxis->GetBinLowEdge(iy));
+void getIntermediateBinning(TH2F const* fineHisto, ExtendedBinning& xbinning, ExtendedBinning& ybinning, int effectiveNx, int effectiveNy){
+  // Do not include overflow/underflow bins; they should not be used for determining the intermediate binning, which doesn't cover the under/overflows.
+  TH1F* fineHistoX = getHistogramSlice(fineHisto, 0, 1, fineHisto->GetNbinsY(), "fineHistoX");
+  TH1F* fineHistoY = getHistogramSlice(fineHisto, 1, 1, fineHisto->GetNbinsX(), "fineHistoY");
 
-  TH1F* fineHistoX = new TH1F("fineHistoX", "", xbins.size()-1, xbins.data());
-  for (int ix=0; ix<=xaxis->GetNbins()+1; ix++){
-    double integral=0, integralerror=0;
-    integral = fineHisto->IntegralAndError(ix, ix, 0, yaxis->GetNbins()+1, integralerror);
-    fineHistoX->SetBinContent(ix, integral);
-    fineHistoX->SetBinError(ix, integralerror);
-  }
-  TH1F* fineHistoY = new TH1F("fineHistoY", "", ybins.size()-1, ybins.data());
-  for (int iy=0; iy<=yaxis->GetNbins()+1; iy++){
-    double integral=0, integralerror=0;
-    integral = fineHisto->IntegralAndError(0, xaxis->GetNbins()+1, iy, iy, integralerror);
-    fineHistoY->SetBinContent(iy, integral);
-    fineHistoY->SetBinError(iy, integralerror);
-  }
-
-  xbinning=getIntermediateBinning(fineHistoX, finalNbinsRequestedX);
-  ybinning=getIntermediateBinning(fineHistoY, finalNbinsRequestedY);
+  xbinning=getIntermediateBinning(fineHistoX, effectiveNx);
+  ybinning=getIntermediateBinning(fineHistoY, effectiveNy);
 
   delete fineHistoY;
   delete fineHistoX;
@@ -74,7 +80,8 @@ void getIntermediateBinning(TH2F const* fineHisto, ExtendedBinning& xbinning, Ex
 
 TH1F* getSmoothHistogram(
   TTree* tree, TString const hname, TString const htitle, float& weight,
-  float& xvar, ExtendedBinning const& finalXBinning
+  float& xvar, ExtendedBinning const& finalXBinning,
+  int effectiveN=-1
 ){
   if (!tree) return nullptr;
 
@@ -86,17 +93,23 @@ TH1F* getSmoothHistogram(
   TH1F* res=nullptr;
   // Construct fine histogram to determine intermediate binning
   res = new TH1F("fineHisto", finestXBinning.getLabel(), finestXBinning.getNbins(), finestXBinning.getBinning());
-  // Loop over the tree. Notice that the tree is supposed to only contain events that should finally go into the histogram, so create an intermediate tree if necessary
+  res->Sumw2();
+  // First loop over the tree. Notice that the tree is supposed to only contain events that should finally go into the histogram, so create an intermediate tree if necessary
   // xvar and weight should already be pointed by the tree
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
     res->Fill(xvar, weight);
   }
-  ExtendedBinning intermediateXBinning = getIntermediateBinning(res, finalNbinsX);
+  ExtendedBinning intermediateXBinning = getIntermediateBinning(res, effectiveN);
   delete res;
 
   res = new TH1F(hname, htitle, intermediateXBinning.getNbins(), intermediateXBinning.getBinning());
-
+  res->Sumw2();
+  // Second loop over the tree
+  for (int ev=0; ev<tree->GetEntries(); ev++){
+    tree->GetEntry(ev);
+    res->Fill(xvar, weight);
+  }
   rebinHistogram(res, finalXBinning);
 
   return res;
@@ -105,7 +118,8 @@ TH1F* getSmoothHistogram(
 TH2F* getSmoothHistogram(
   TTree* tree, TString const hname, TString const htitle, float& weight,
   float& xvar, ExtendedBinning const& finalXBinning,
-  float& yvar, ExtendedBinning const& finalYBinning
+  float& yvar, ExtendedBinning const& finalYBinning,
+  int effectiveNx=-1, int effectiveNy=-1
 ){
   if (!tree) return nullptr;
 
@@ -118,21 +132,35 @@ TH2F* getSmoothHistogram(
   unsigned int finalNbinsY;
   ExtendedBinning finestYBinning = getFinestBinning(finalYBinning, finalNbinsY);
 
+  MELAout << "getSmoothHistogram: Final X binning requested: [ " << finalXBinning.getBinningVector() << " ]" << endl;
+  //MELAout << "\t- Fine X binning: [ " << finestXBinning.getBinningVector() << " ]" << endl;
+  MELAout << "getSmoothHistogram: Final Y binning requested: [ " << finalYBinning.getBinningVector() << " ]" << endl;
+  //MELAout << "\t- Fine Y binning: [ " << finestYBinning.getBinningVector() << " ]" << endl;
+
   TH2F* res=nullptr;
   // Construct fine histogram to determine intermediate binning
   res = new TH2F("fineHisto", finestXBinning.getLabel()+":"+finestYBinning.getLabel(), finestXBinning.getNbins(), finestXBinning.getBinning(), finestYBinning.getNbins(), finestYBinning.getBinning());
-  // Loop over the tree. Notice that the tree is supposed to only contain events that should finally go into the histogram, so create an intermediate tree if necessary
+  res->Sumw2();
+  // First loop over the tree. Notice that the tree is supposed to only contain events that should finally go into the histogram, so create an intermediate tree if necessary
   // xvar and weight should already be pointed by the tree
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
     res->Fill(xvar, yvar, weight);
   }
   ExtendedBinning intermediateXBinning(finestXBinning.getLabel()), intermediateYBinning(finestYBinning.getLabel());
-  getIntermediateBinning(res, intermediateXBinning, intermediateYBinning, finalNbinsX, finalNbinsY);
+  getIntermediateBinning(res, intermediateXBinning, intermediateYBinning, effectiveNx, effectiveNy);
   delete res;
 
-  res = new TH2F(hname, htitle, intermediateXBinning.getNbins(), intermediateXBinning.getBinning(), intermediateYBinning.getNbins(), intermediateYBinning.getBinning());
+  MELAout << "getSmoothHistogram: Intermediate X binning: [ " << intermediateXBinning.getBinningVector() << " ]" << endl;
+  MELAout << "getSmoothHistogram: Intermediate Y binning: [ " << intermediateYBinning.getBinningVector() << " ]" << endl;
 
+  res = new TH2F(hname, htitle, intermediateXBinning.getNbins(), intermediateXBinning.getBinning(), intermediateYBinning.getNbins(), intermediateYBinning.getBinning());
+  res->Sumw2();
+  // Second loop over the tree
+  for (int ev=0; ev<tree->GetEntries(); ev++){
+    tree->GetEntry(ev);
+    res->Fill(xvar, yvar, weight);
+  }
   rebinHistogram(res, finalXBinning, finalYBinning);
 
   return res;

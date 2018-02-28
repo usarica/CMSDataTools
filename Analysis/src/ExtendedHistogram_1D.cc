@@ -35,10 +35,8 @@ ExtendedHistogram_1D& ExtendedHistogram_1D::operator=(const ExtendedHistogram_1D
 
 void ExtendedHistogram_1D::setNameTitle(const TString name_, const TString title_){
   ExtendedHistogram::setNameTitle(name, title);
-  if (histo && prof_x){
-    histo->SetName(name); histo->SetTitle(title);
-    prof_x->SetName(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data())); prof_x->SetTitle(title);
-  }
+  if (histo){ histo->SetName(name); histo->SetTitle(title); }
+  if (prof_x){ prof_x->SetName(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data())); prof_x->SetTitle(title); }
 }
 void ExtendedHistogram_1D::setBinning(const ExtendedBinning& binning, const int xyz, const TString label){
   xbinning = binning;
@@ -54,10 +52,8 @@ void ExtendedHistogram_1D::build(){
 }
 
 void ExtendedHistogram_1D::fill(double x, double wgt){
-  if (histo && prof_x){
-    histo->Fill(x, wgt);
-    prof_x->Fill(x, x, wgt);
-  }
+  if (histo) histo->Fill(x, wgt);
+  if (prof_x) prof_x->Fill(x, x, wgt);
 }
 
 TGraphErrors* ExtendedHistogram_1D::getGraph(TString newname) const{
@@ -77,7 +73,22 @@ TH1F* ExtendedHistogram_1D::getCumulantHistogram(TString newname) const{
 ExtendedHistogram_1D ExtendedHistogram_1D::divideHistograms(ExtendedHistogram_1D const& h1, ExtendedHistogram_1D const& h2, bool useEffErr, TString newname){
   if (newname=="") newname=Form("h_%s_over_%s", h1.name.Data(), h2.name.Data());
   ExtendedHistogram_1D res(h2); res.setNameTitle(newname); res.histo->Reset("ICES");
-  if (!h1.histo || !h1.prof_x || !h2.histo || !h2.prof_x) return res;
+  if (!h1.histo || !h2.histo) return res;
   HelperFunctions::divideHistograms(h1.histo, h2.histo, res.histo, useEffErr);
+  if (!useEffErr){
+    if (h1.prof_x && h2.prof_x){
+      for (unsigned int bin=0; bin<=h2.xbinning.getNbins()+1; bin++){
+        double val[2]={ h1.prof_x->GetBinContent(bin), h2.prof_x->GetBinContent(bin) };
+        double errsq[2]={ pow(h1.prof_x->GetBinError(bin), 2), pow(h2.prof_x->GetBinError(bin), 2) };
+        double valnew=0;
+        double wnew=0;
+        for (unsigned int ii=0; ii<2; ii++){ if (errsq[ii]!=0.){ valnew += val[ii]/errsq[ii]; wnew += 1./errsq[ii]; } }
+        if (wnew==0.) valnew = 0;
+        else valnew /= wnew;
+        res.prof_x->SetBinContent(bin, valnew);
+        res.prof_x->SetBinError(bin, sqrt(1./wnew));
+      }
+    }
+  }
   return res;
 }

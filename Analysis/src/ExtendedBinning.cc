@@ -44,7 +44,7 @@ int ExtendedBinning::getBin(double val) const{
   else return -1;
 }
 double ExtendedBinning::getBinLowEdge(const int bin) const{
-  if (bin>=0 && bin<(int)vbinlow.size()) return vbinlow.at(bin);
+  if (bin>=0 && bin<(int) vbinlow.size()) return vbinlow.at(bin);
   else if (bin<0 && vbinlow.size()>0) return vbinlow.at(0);
   else if (vbinlow.size()>0) return vbinlow.at(vbinlow.size()-1);
   else return -1;
@@ -55,6 +55,7 @@ double ExtendedBinning::getBinHighEdge(const int bin) const{
   else if (vbinlow.size()>0) return vbinlow.at(vbinlow.size()-1);
   else return -1;
 }
+double ExtendedBinning::getBinCenter(const int bin) const{ return (getBinLowEdge(bin)+getBinHighEdge(bin))/2.; }
 
 void ExtendedBinning::addBinBoundary(double boundary){
   HelperFunctions::addByLowest<double>(vbinlow, boundary, true);

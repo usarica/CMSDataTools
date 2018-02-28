@@ -2,6 +2,7 @@
 #define EXTENDEDHISTOGRAM_2D_H
 
 #include "ExtendedHistogram.h"
+#include "TH1F.h"
 #include "TH2F.h"
 #include "TProfile.h"
 #include "TGraphErrors.h"

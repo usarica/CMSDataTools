@@ -111,23 +111,15 @@ namespace HelperFunctions{
   template <> void antisymmetrizeHistogram<TH2F>(TH2F* histo, unsigned int const axis);
   template <> void antisymmetrizeHistogram<TH3F>(TH3F* histo, unsigned int const axis);
 
-  template <typename T> void getCumulantHistogram(T const* histo, T*& res, TString newname="");
-  template <> void getCumulantHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname);
-  template <> void getCumulantHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname);
-  template <> void getCumulantHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname);
+  template <typename T> void getCumulantHistogram(T const* histo, T*& res, TString newname="", std::vector<unsigned int>* condDims=nullptr);
+  template <> void getCumulantHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname, std::vector<unsigned int>* condDims);
+  template <> void getCumulantHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname, std::vector<unsigned int>* condDims);
+  template <> void getCumulantHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname, std::vector<unsigned int>* condDims);
 
-  template <typename T> void translateCumulantToHistogram(T const* histo, T*& res, TString newname="");
-  template <> void translateCumulantToHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname);
-  template <> void translateCumulantToHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname);
-  template <> void translateCumulantToHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname);
-
-  void rebinCumulant(TH1F*& histo, const ExtendedBinning& binningX);
-  void rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY);
-  void rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ);
-
-  void rebinHistogram(TH1F*& histo, const ExtendedBinning& binningX);
-  void rebinHistogram(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY);
-  void rebinHistogram(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ);
+  template <typename T> void translateCumulantToHistogram(T const* histo, T*& res, TString newname="", std::vector<unsigned int>* condDims=nullptr);
+  template <> void translateCumulantToHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname, std::vector<unsigned int>* condDims);
+  template <> void translateCumulantToHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname, std::vector<unsigned int>* condDims);
+  template <> void translateCumulantToHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname, std::vector<unsigned int>* condDims);
 
   // Spline functions
   template<int N> TF1* getFcn_a0plusa1overXN(TSpline3* sp, double xmin, double xmax, bool useLowBound);
@@ -154,9 +146,9 @@ namespace HelperFunctions{
 
   TGraph* createROCFromDistributions(TH1* hA, TH1* hB, TString name);
 
-  TGraphErrors* makeGraphFromTH1(TH1* hx, TH1* hy, TString name);
+  TGraphErrors* makeGraphFromTH1(TH1 const* hx, TH1 const* hy, TString name);
 
-  TGraphErrors* makeGraphFromCumulantHistogram(TH1* histo, TString name);
+  TGraphErrors* makeGraphFromCumulantHistogram(TH1 const* histo, TString name);
 
   TGraph* addTGraphs(TGraph* tgfirst, TGraph* tgsecond);
 
@@ -195,6 +187,18 @@ namespace HelperFunctions{
     int nIter_=-1, double threshold_=-1, double acceleration_=-1,
     signed char forceUseFaithfulSlopeFirst=-1, signed char forceUseFaithfulSlopeSecond=-1
   );
+
+  void rebinCumulant(TH1F*& histo, const ExtendedBinning& binningX);
+  void rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
+  void rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
+
+  void rebinHistogram(TH1F*& histo, const ExtendedBinning& binningX);
+  void rebinHistogram(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
+  void rebinHistogram(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
+
+  TH1F* getHistogramSlice(TH2F const* histo, unsigned char XDirection, int iy, int jy, TString newname="");
+  TH1F* getHistogramSlice(TH3F const* histo, unsigned char XDirection, int iy, int jy, int iz, int jz, TString newname=""); // "y" and "z" are cylical, so if Xdirection==1 (Y), "y"=Z and "z"=X
+  TH2F* getHistogramSlice(TH3F const* histo, unsigned char XDirection, unsigned char YDirection, int iz, int jz, TString newname="");
 
   // Function to calculate error in efficiency
   float calculateEfficiencyError(

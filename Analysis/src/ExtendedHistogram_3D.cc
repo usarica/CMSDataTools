@@ -89,9 +89,13 @@ void ExtendedHistogram_3D::fill(double x, double y, double z, double wgt){
   if (prof_z) prof_z->Fill(z, z, wgt);
 }
 
-void ExtendedHistogram_3D::rebin(ExtendedBinning const& binningX, ExtendedBinning const& binningY, ExtendedBinning const& binningZ){
+void ExtendedHistogram_3D::rebin(ExtendedBinning const& binningX, ExtendedBinning const& binningY, ExtendedBinning const& binningZ, bool condX, bool condY, bool condZ){
   if (binningX.isValid() && binningY.isValid() && binningZ.isValid()){
-    if (histo) rebinHistogram(histo, binningX, binningY, binningZ);
+    std::vector<std::pair<TProfile const*, unsigned int>> condProfs;
+    if (condX && prof_x) condProfs.emplace_back(prof_x, 0);
+    if (condY && prof_y) condProfs.emplace_back(prof_y, 1);
+    if (condZ && prof_z) condProfs.emplace_back(prof_z, 2);
+    if (histo) rebinHistogram(histo, binningX, binningY, binningZ, (condX || condY || condZ ? &condProfs : nullptr));
     if (prof_x) rebinProfile(prof_x, binningX);
     if (prof_y) rebinProfile(prof_y, binningY);
     if (prof_z) rebinProfile(prof_z, binningZ);

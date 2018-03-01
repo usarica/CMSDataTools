@@ -42,7 +42,7 @@ public:
 
   void fill(double x, double y, double wgt=1.);
 
-  void rebin(ExtendedBinning const& binningX, ExtendedBinning const& binningY);
+  void rebin(ExtendedBinning const& binningX, ExtendedBinning const& binningY, bool condX, bool condY);
 
   static ExtendedHistogram_2D divideHistograms(ExtendedHistogram_2D const& h1, ExtendedHistogram_2D const& h2, bool useEffErr, TString newname="");
 

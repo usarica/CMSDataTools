@@ -1986,14 +1986,15 @@ void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binning
   MELANCSplineFactory_2D spFac(xvar, yvar, "tmpSpline");
   MELANCSplineFactory_2D spErrFac(xvar, yvar, "tmpSplineErr");
   vector<splineTriplet_t> pList, pErrList;
-  for (int ix=0; ix<=histo->GetNbinsX(); ix++){
-    for (int iy=0; iy<=histo->GetNbinsY(); iy++){
-      double xval = histo->GetXaxis()->GetBinUpEdge(ix);
-      double yval = histo->GetYaxis()->GetBinUpEdge(iy);
+  for (int ix=0; ix<=histo->GetNbinsX()+(prof_x ? 1 : 0); ix++){
+    for (int iy=0; iy<=histo->GetNbinsY()+(prof_y ? 1 : 0); iy++){
+      double xval, yval;
       double wval = histo->GetBinContent(ix, iy);
       double errsqval = pow(histo->GetBinError(ix, iy), 2);
-      if (prof_x && ix>0) xval = prof_x->GetBinContent(ix);
-      if (prof_y && iy>0) yval = prof_y->GetBinContent(iy);
+      if (prof_x) xval = prof_x->GetBinContent(ix);
+      else xval = histo->GetXaxis()->GetBinUpEdge(ix);
+      if (prof_y) yval = prof_y->GetBinContent(iy);
+      else yval = histo->GetYaxis()->GetBinUpEdge(iy);
       pList.emplace_back(xval, yval, wval);
       pErrList.emplace_back(xval, yval, errsqval);
     }
@@ -2006,10 +2007,10 @@ void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binning
   // Once cumulant is rebinned, errors are lost
   delete histo;
   histo = new TH2F(hname, htitle, binningX.getNbins(), binningX.getBinning(), binningY.getNbins(), binningY.getBinning());
-  for (unsigned int ix=0; ix<=binningX.getNbins(); ix++){
+  for (unsigned int ix=0; ix<binningX.getNbins()+(spprof_x ? 0 : 1); ix++){
     double xval=binningX.getBinLowEdge(ix);
     if (spprof_x) xval=spprof_x->Eval(binningX.getBinCenter(ix));
-    for (unsigned int iy=0; iy<=binningY.getNbins(); iy++){
+    for (unsigned int iy=0; iy<binningY.getNbins()+(spprof_y ? 0 : 1); iy++){
       double yval=binningY.getBinLowEdge(iy);
       if (spprof_y) yval=spprof_y->Eval(binningY.getBinCenter(iy));
       double cval=0;
@@ -2021,8 +2022,8 @@ void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binning
         errval = spErr->getVal();
         if (errval<0.) errval=0.;
       }
-      histo->SetBinContent(ix, iy, cval);
-      histo->SetBinError(ix, iy, sqrt(std::max(0., errval)));
+      histo->SetBinContent(ix+(spprof_x ? 1 : 0), iy+(spprof_y ? 1 : 0), cval);
+      histo->SetBinError(ix+(spprof_x ? 1 : 0), iy+(spprof_y ? 1 : 0), sqrt(std::max(0., errval)));
     }
   }
 
@@ -2062,17 +2063,18 @@ void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binning
   MELANCSplineFactory_3D spFac(xvar, yvar, zvar, "tmpSpline");
   MELANCSplineFactory_3D spErrFac(xvar, yvar, zvar, "tmpSplineErr");
   vector<splineQuadruplet_t> pList, pErrList;
-  for (int ix=0; ix<=histo->GetNbinsX(); ix++){
-    for (int iy=0; iy<=histo->GetNbinsY(); iy++){
-      for (int iz=0; iz<=histo->GetNbinsZ(); iz++){
-        double xval = histo->GetXaxis()->GetBinUpEdge(ix);
-        double yval = histo->GetYaxis()->GetBinUpEdge(iy);
-        double zval = histo->GetZaxis()->GetBinUpEdge(iz);
+  for (int ix=0; ix<=histo->GetNbinsX()+(prof_x ? 1 : 0); ix++){
+    for (int iy=0; iy<=histo->GetNbinsY()+(prof_y ? 1 : 0); iy++){
+      for (int iz=0; iz<=histo->GetNbinsZ()+(prof_z ? 1 : 0); iz++){
+        double xval, yval, zval;
         double wval = histo->GetBinContent(ix, iy, iz);
         double errsqval = pow(histo->GetBinError(ix, iy, iz), 2);
-        if (prof_x && ix>0) xval = prof_x->GetBinContent(ix);
-        if (prof_y && iy>0) yval = prof_y->GetBinContent(iy);
-        if (prof_z && iz>0) zval = prof_z->GetBinContent(iz);
+        if (prof_x) xval = prof_x->GetBinContent(ix);
+        else xval = histo->GetXaxis()->GetBinUpEdge(ix);
+        if (prof_y) yval = prof_y->GetBinContent(iy);
+        else yval = histo->GetYaxis()->GetBinUpEdge(iy);
+        if (prof_z) zval = prof_z->GetBinContent(iz);
+        else zval = histo->GetZaxis()->GetBinUpEdge(iz);
         pList.emplace_back(xval, yval, zval, wval);
         pErrList.emplace_back(xval, yval, zval, errsqval);
       }
@@ -2086,13 +2088,13 @@ void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binning
   // Once cumulant is rebinned, errors are lost
   delete histo;
   histo = new TH3F(hname, htitle, binningX.getNbins(), binningX.getBinning(), binningY.getNbins(), binningY.getBinning(), binningZ.getNbins(), binningZ.getBinning());
-  for (unsigned int ix=0; ix<=binningX.getNbins(); ix++){
+  for (unsigned int ix=0; ix<binningX.getNbins()+(spprof_x ? 0 : 1); ix++){
     double xval=binningX.getBinLowEdge(ix);
     if (spprof_x) xval=spprof_x->Eval(binningX.getBinCenter(ix));
-    for (unsigned int iy=0; iy<=binningY.getNbins(); iy++){
+    for (unsigned int iy=0; iy<binningY.getNbins()+(spprof_y ? 0 : 1); iy++){
       double yval=binningY.getBinLowEdge(iy);
       if (spprof_y) yval=spprof_y->Eval(binningY.getBinCenter(iy));
-      for (unsigned int iz=0; iz<=binningZ.getNbins(); iz++){
+      for (unsigned int iz=0; iz<binningZ.getNbins()+(spprof_z ? 0 : 1); iz++){
         double zval=binningZ.getBinLowEdge(iz);
         if (spprof_z) zval=spprof_z->Eval(binningZ.getBinCenter(iz));
         double cval=0;
@@ -2105,8 +2107,8 @@ void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binning
           errval = spErr->getVal();
           if (errval<0.) errval=0.;
         }
-        histo->SetBinContent(ix, iy, iz, cval);
-        histo->SetBinError(ix, iy, iz, sqrt(std::max(0., errval)));
+        histo->SetBinContent(ix+(spprof_x ? 1 : 0), iy+(spprof_y ? 1 : 0), iz+(spprof_z ? 1 : 0), cval);
+        histo->SetBinError(ix+(spprof_x ? 1 : 0), iy+(spprof_y ? 1 : 0), iz+(spprof_z ? 1 : 0), sqrt(std::max(0., errval)));
       }
     }
   }

@@ -48,7 +48,7 @@ public:
 
   void fill(double x, double y, double z, double wgt=1.);
 
-  void rebin(ExtendedBinning const& binningX, ExtendedBinning const& binningY, ExtendedBinning const& binningZ);
+  void rebin(ExtendedBinning const& binningX, ExtendedBinning const& binningY, ExtendedBinning const& binningZ, bool condX, bool condY, bool condZ);
 
   static ExtendedHistogram_3D divideHistograms(ExtendedHistogram_3D const& h1, ExtendedHistogram_3D const& h2, bool useEffErr, TString newname="");
 

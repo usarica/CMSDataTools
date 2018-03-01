@@ -75,9 +75,12 @@ void ExtendedHistogram_2D::fill(double x, double y, double wgt){
   if (prof_y) prof_y->Fill(y, y, wgt);
 }
 
-void ExtendedHistogram_2D::rebin(ExtendedBinning const& binningX, ExtendedBinning const& binningY){
+void ExtendedHistogram_2D::rebin(ExtendedBinning const& binningX, ExtendedBinning const& binningY, bool condX, bool condY){
   if (binningX.isValid() && binningY.isValid()){
-    if (histo) rebinHistogram(histo, binningX, binningY);
+    std::vector<std::pair<TProfile const*, unsigned int>> condProfs;
+    if (condX && prof_x) condProfs.emplace_back(prof_x, 0);
+    if (condY && prof_y) condProfs.emplace_back(prof_y, 1);
+    if (histo) rebinHistogram(histo, binningX, binningY, (condX || condY ? &condProfs : nullptr));
     if (prof_x) rebinProfile(prof_x, binningX);
     if (prof_y) rebinProfile(prof_y, binningY);
   }

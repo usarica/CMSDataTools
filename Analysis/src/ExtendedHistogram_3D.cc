@@ -2,6 +2,9 @@
 #include "ExtendedHistogram_3D.h"
 
 
+using namespace HelperFunctions;
+
+
 ExtendedHistogram_3D::ExtendedHistogram_3D() : ExtendedHistogram(), histo(nullptr), prof_x(nullptr), prof_y(nullptr), prof_z(nullptr){}
 ExtendedHistogram_3D::ExtendedHistogram_3D(const TString name_, const TString title_) : ExtendedHistogram(name_, title_), histo(nullptr), prof_x(nullptr), prof_y(nullptr), prof_z(nullptr){}
 ExtendedHistogram_3D::ExtendedHistogram_3D(const TString name_, const TString title_, const ExtendedBinning& xbinning_, const ExtendedBinning& ybinning_, const ExtendedBinning& zbinning_) :
@@ -84,6 +87,15 @@ void ExtendedHistogram_3D::fill(double x, double y, double z, double wgt){
   if (prof_x) prof_x->Fill(x, x, wgt);
   if (prof_y) prof_y->Fill(y, y, wgt);
   if (prof_z) prof_z->Fill(z, z, wgt);
+}
+
+void ExtendedHistogram_3D::rebin(ExtendedBinning const& binningX, ExtendedBinning const& binningY, ExtendedBinning const& binningZ){
+  if (binningX.isValid() && binningY.isValid() && binningZ.isValid()){
+    if (histo) rebinHistogram(histo, binningX, binningY, binningZ);
+    if (prof_x) rebinProfile(prof_x, binningX);
+    if (prof_y) rebinProfile(prof_y, binningY);
+    if (prof_z) rebinProfile(prof_z, binningZ);
+  }
 }
 
 TH3F* ExtendedHistogram_3D::getCumulantHistogram(TString newname) const{

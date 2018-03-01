@@ -541,7 +541,7 @@ TGraph* HelperFunctions::genericPatcher(
   TF1* (*lowf)(TSpline3*, double, double, bool),
   TF1* (*highf)(TSpline3*, double, double, bool),
   bool useFaithfulSlopeFirst, bool useFaithfulSlopeSecond,
-  vector<pair<pair<double, double>, unsigned int>>* addpoints
+  std::vector<std::pair<std::pair<double, double>, unsigned int>>* addpoints
 ){
   if (addpoints!=0){ for (auto& prange : *addpoints) addPointsBetween(tg, prange.first.first, prange.first.second, prange.second); }
 
@@ -1034,46 +1034,95 @@ template<> void HelperFunctions::regularizeHistogram<TH2F>(TH2F*& histo, int nIt
   delete cumulant;
 }
 
-template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference){
+template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference, bool useWidth){
   if (axis==0){
     for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
       double integral=1;
-      double width = (ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
-      if (!conditionalsReference) integral = histo->Integral(ix, ix, 0, histo->GetNbinsY()+1)/width;
-      else{ for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(ix, ix, 0, hh.first->GetNbinsY()+1)/width, hh.second); }
-      if (integral==0.) continue; // All bins across y are 0.
+      double integralerror=0;
+      double width = (useWidth && ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
+      if (!conditionalsReference) integral = histo->IntegralAndError(ix, ix, 0, histo->GetNbinsY()+1, integralerror, (useWidth ? "width" : ""));
+      else{
+        std::vector<float> fractionalerrors;
+        for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)){
+          double extraintegralerror=0;
+          double extraintegral = hh.first->IntegralAndError(ix, ix, 0, hh.first->GetNbinsY()+1, extraintegralerror, (useWidth ? "width" : ""));
+          if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
+          integral *= pow(extraintegral, hh.second);
+        }
+        integralerror = 0;
+        for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
+        integralerror = integral*sqrt(integralerror);
+      }
+      if (integral==0.) continue;
       for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
-        histo->SetBinContent(ix, iy, histo->GetBinContent(ix, iy)/integral);
-        histo->SetBinError(ix, iy, histo->GetBinError(ix, iy)/integral);
+        double bincontent = histo->GetBinContent(ix, iy);
+        double binerror = histo->GetBinError(ix, iy);
+        double width2 = (useWidth && iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
+        histo->SetBinContent(ix, iy, bincontent/integral*width);
+        if (!conditionalsReference) histo->SetBinError(ix, iy, calculateEfficiencyError(bincontent*width*width2, integral, pow(binerror*width*width2, 2), pow(integralerror, 2))/width2);
+        else histo->SetBinError(ix, iy, (bincontent/integral*width*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2))));
       }
     }
   }
   else{
     for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
-      double integral = 1;
-      double width = (iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
-      if (!conditionalsReference) integral = histo->Integral(0, histo->GetNbinsX()+1, iy, iy)/width;
-      else{ for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(0, hh.first->GetNbinsX()+1, iy, iy)/width, hh.second); }
-      if (integral==0.) continue; // All bins across y are 0.
+      double integral=1;
+      double integralerror=0;
+      double width = (useWidth && iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
+      if (!conditionalsReference) integral = histo->IntegralAndError(0, histo->GetNbinsX()+1, iy, iy, integralerror, (useWidth ? "width" : ""));
+      else{
+        std::vector<float> fractionalerrors;
+        for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)){
+          double extraintegralerror=0;
+          double extraintegral = hh.first->IntegralAndError(0, hh.first->GetNbinsX()+1, iy, iy, extraintegralerror, (useWidth ? "width" : ""));
+          if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
+          integral *= pow(extraintegral, hh.second);
+        }
+        integralerror = 0;
+        for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
+        integralerror = integral*sqrt(integralerror);
+      }
+      if (integral==0.) continue;
       for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
-        histo->SetBinContent(ix, iy, histo->GetBinContent(ix, iy)/integral);
-        histo->SetBinError(ix, iy, histo->GetBinError(ix, iy)/integral);
+        double bincontent = histo->GetBinContent(ix, iy); // = BC/WX/WY
+        double binerror = histo->GetBinError(ix, iy);
+        double width2 = (useWidth && ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
+        histo->SetBinContent(ix, iy, bincontent/integral*width);
+        if (!conditionalsReference) histo->SetBinError(ix, iy, calculateEfficiencyError(bincontent*width*width2, integral, pow(binerror*width*width2, 2), pow(integralerror, 2))/width2);
+        else histo->SetBinError(ix, iy, (bincontent/integral*width*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2))));
       }
     }
   }
 }
-template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int axis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference){
+template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int axis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth){
   if (axis==0){
     for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
       double integral=1;
-      double width = (ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
-      if (!conditionalsReference) integral = histo->Integral(ix, ix, 0, histo->GetNbinsY()+1, 0, histo->GetNbinsZ()+1)/width;
-      else{ for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(ix, ix, 0, hh.first->GetNbinsY()+1, 0, hh.first->GetNbinsZ()+1)/width, hh.second); }
-      if (integral==0.) continue; // All bins across y are 0.
+      double integralerror=0;
+      double width = (useWidth && ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
+      if (!conditionalsReference) integral = histo->IntegralAndError(ix, ix, 0, histo->GetNbinsY()+1, 0, histo->GetNbinsZ()+1, integralerror, (useWidth ? "width" : ""));
+      else{
+        std::vector<float> fractionalerrors;
+        for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)){
+          double extraintegralerror=0;
+          double extraintegral = hh.first->IntegralAndError(ix, ix, 0, hh.first->GetNbinsY()+1, 0, hh.first->GetNbinsZ()+1, extraintegralerror, (useWidth ? "width" : ""));
+          if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
+          integral *= pow(extraintegral, hh.second);
+        }
+        integralerror = 0;
+        for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
+        integralerror = integral*sqrt(integralerror);
+      }
+      if (integral==0.) continue;
       for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
         for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
-          histo->SetBinContent(ix, iy, iz, histo->GetBinContent(ix, iy, iz)/integral);
-          histo->SetBinError(ix, iy, iz, histo->GetBinError(ix, iy, iz)/integral);
+          double bincontent = histo->GetBinContent(ix, iy, iz);
+          double binerror = histo->GetBinError(ix, iy, iz);
+          double width2 = (useWidth && iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
+          double width3 = (useWidth && iz>=1 && iz<=histo->GetNbinsZ() ? histo->GetZaxis()->GetBinWidth(iz) : 1.);
+          histo->SetBinContent(ix, iy, iz, bincontent/integral*width);
+          if (!conditionalsReference) histo->SetBinError(ix, iy, iz, calculateEfficiencyError(bincontent*width*width2*width3, integral, pow(binerror*width*width2*width3, 2), pow(integralerror, 2))/width2/width3);
+          else histo->SetBinError(ix, iy, iz, (bincontent/integral*width*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2))));
         }
       }
     }
@@ -1081,14 +1130,31 @@ template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsi
   else if (axis==1){
     for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
       double integral=1;
-      double width = (iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
-      if (!conditionalsReference) integral = histo->Integral(0, histo->GetNbinsX()+1, iy, iy, 0, histo->GetNbinsZ()+1)/width;
-      else{ for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(0, hh.first->GetNbinsX()+1, iy, iy, 0, hh.first->GetNbinsZ()+1)/width, hh.second); }
-      if (integral==0.) continue; // All bins across y are 0.
+      double integralerror=0;
+      double width = (useWidth && iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
+      if (!conditionalsReference) integral = histo->IntegralAndError(0, histo->GetNbinsX()+1, iy, iy, 0, histo->GetNbinsZ()+1, integralerror, (useWidth ? "width" : ""));
+      else{
+        std::vector<float> fractionalerrors;
+        for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)){
+          double extraintegralerror=0;
+          double extraintegral = hh.first->IntegralAndError(0, hh.first->GetNbinsY()+1, iy, iy, 0, hh.first->GetNbinsZ()+1, extraintegralerror, (useWidth ? "width" : ""));
+          if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
+          integral *= pow(extraintegral, hh.second);
+        }
+        integralerror = 0;
+        for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
+        integralerror = integral*sqrt(integralerror);
+      }
+      if (integral==0.) continue;
       for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
         for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
-          histo->SetBinContent(ix, iy, iz, histo->GetBinContent(ix, iy, iz)/integral);
-          histo->SetBinError(ix, iy, iz, histo->GetBinError(ix, iy, iz)/integral);
+          double bincontent = histo->GetBinContent(ix, iy, iz);
+          double binerror = histo->GetBinError(ix, iy, iz);
+          double width2 = (useWidth && ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
+          double width3 = (useWidth && iz>=1 && iz<=histo->GetNbinsZ() ? histo->GetZaxis()->GetBinWidth(iz) : 1.);
+          histo->SetBinContent(ix, iy, iz, bincontent/integral*width);
+          if (!conditionalsReference) histo->SetBinError(ix, iy, iz, calculateEfficiencyError(bincontent*width*width2*width3, integral, pow(binerror*width*width2*width3, 2), pow(integralerror, 2))/width2/width3);
+          else histo->SetBinError(ix, iy, iz, (bincontent/integral*width*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2))));
         }
       }
     }
@@ -1096,14 +1162,31 @@ template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsi
   else{
     for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
       double integral=1;
-      double width = (iz>=1 && iz<=histo->GetNbinsZ() ? histo->GetZaxis()->GetBinWidth(iz) : 1.);
-      if (!conditionalsReference) integral = histo->Integral(0, histo->GetNbinsX()+1, 0, histo->GetNbinsY()+1, iz, iz)/width;
-      else{ for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)) integral *= pow(hh.first->Integral(0, hh.first->GetNbinsX()+1, 0, hh.first->GetNbinsY()+1, iz, iz)/width, hh.second); }
-      if (integral==0.) continue; // All bins across y are 0.
+      double integralerror=0;
+      double width = (useWidth && iz>=1 && iz<=histo->GetNbinsZ() ? histo->GetZaxis()->GetBinWidth(iz) : 1.);
+      if (!conditionalsReference) integral = histo->IntegralAndError(0, histo->GetNbinsX()+1, 0, histo->GetNbinsY()+1, iz, iz, integralerror, (useWidth ? "width" : ""));
+      else{
+        std::vector<float> fractionalerrors;
+        for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)){
+          double extraintegralerror=0;
+          double extraintegral = hh.first->IntegralAndError(0, hh.first->GetNbinsX()+1, 0, hh.first->GetNbinsY()+1, iz, iz, extraintegralerror, (useWidth ? "width" : ""));
+          if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
+          integral *= pow(extraintegral, hh.second);
+        }
+        integralerror = 0;
+        for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
+        integralerror = integral*sqrt(integralerror);
+      }
+      if (integral==0.) continue;
       for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
         for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
-          histo->SetBinContent(ix, iy, iz, histo->GetBinContent(ix, iy, iz)/integral);
-          histo->SetBinError(ix, iy, iz, histo->GetBinError(ix, iy, iz)/integral);
+          double bincontent = histo->GetBinContent(ix, iy, iz);
+          double binerror = histo->GetBinError(ix, iy, iz);
+          double width2 = (useWidth && ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
+          double width3 = (useWidth && iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
+          histo->SetBinContent(ix, iy, iz, bincontent/integral*width);
+          if (!conditionalsReference) histo->SetBinError(ix, iy, iz, calculateEfficiencyError(bincontent*width*width2*width3, integral, pow(binerror*width*width2*width3, 2), pow(integralerror, 2))/width2/width3);
+          else histo->SetBinError(ix, iy, iz, (bincontent/integral*width*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2))));
         }
       }
     }
@@ -2075,6 +2158,47 @@ void HelperFunctions::rebinHistogram(TH3F*& histo, const ExtendedBinning& binnin
   translateCumulantToHistogram(htmp_cumulant, histo, hname);
   histo->SetTitle(htitle);
   delete htmp_cumulant;
+}
+
+void HelperFunctions::rebinProfile(TProfile*& prof, const ExtendedBinning& binningX){
+  if (!prof) return;
+  const TString hname=prof->GetName();
+  const TString htitle=prof->GetTitle();
+  RooRealVar xvar("xvar", "", prof->GetXaxis()->GetBinLowEdge(1), prof->GetXaxis()->GetBinLowEdge(prof->GetNbinsX()+1));
+
+  MELANCSplineFactory_1D spFac(xvar, "tmpSpline");
+  MELANCSplineFactory_1D spErrFac(xvar, "tmpSplineErr");
+  vector<pair<MELANCSplineCore::T, MELANCSplineCore::T>> pList, pErrList;
+  for (int ix=1; ix<=prof->GetNbinsX(); ix++){
+    pList.emplace_back(prof->GetXaxis()->GetBinCenter(ix), prof->GetBinContent(ix));
+    pErrList.emplace_back(prof->GetXaxis()->GetBinCenter(ix), pow(prof->GetBinError(ix), 2));
+  }
+  spFac.setPoints(pList);
+  spErrFac.setPoints(pErrList);
+  const MELANCSpline_1D_fast* sp = spFac.getFunc();
+  const MELANCSpline_1D_fast* spErr = spErrFac.getFunc();
+
+  // Once cumulant is rebinned, errors are lost
+  double boundaries[2]={ prof->GetXaxis()->GetBinLowEdge(1), prof->GetXaxis()->GetBinLowEdge(prof->GetNbinsX()+1) };
+  double val_under_over[2]={ prof->GetBinContent(0), prof->GetBinContent(prof->GetNbinsX()+1) };
+  double err_under_over[2]={ prof->GetBinError(0), prof->GetBinError(prof->GetNbinsX()+1) };
+  delete prof;
+  prof = new TProfile(hname, htitle, binningX.getNbins(), binningX.getBinning());
+  for (unsigned int ix=0; ix<binningX.getNbins(); ix++){
+    double xval=binningX.getBinCenter(ix);
+    double cval=0;
+    double errval=0;
+    if (xval>=xvar.getMin() && xval<=xvar.getMax()){
+      xvar.setVal(xval);
+      cval = sp->getVal();
+      errval = spErr->getVal();
+      if (errval<0.) errval=0.;
+    }
+    prof->SetBinContent(ix+1, cval);
+    prof->SetBinError(ix+1, sqrt(std::max(0., errval)));
+  }
+  if (boundaries[0]<=xvar.getMin()){ prof->SetBinContent(0, val_under_over[0]); prof->SetBinError(0, err_under_over[0]); }
+  if (boundaries[1]>=xvar.getMax()){ prof->SetBinContent(prof->GetNbinsX()+1, val_under_over[1]); prof->SetBinError(prof->GetNbinsX()+1, err_under_over[1]); }
 }
 
 TH1F* HelperFunctions::getHistogramSlice(TH2F const* histo, unsigned char XDirection, int iy, int jy, TString newname){

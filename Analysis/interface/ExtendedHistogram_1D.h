@@ -38,6 +38,8 @@ public:
 
   void fill(double x, double wgt=1.);
 
+  void rebin(ExtendedBinning const& binningX);
+
   static ExtendedHistogram_1D divideHistograms(ExtendedHistogram_1D const& h1, ExtendedHistogram_1D const& h2, bool useEffErr, TString newname="");
 
 };

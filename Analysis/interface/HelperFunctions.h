@@ -77,9 +77,9 @@ namespace HelperFunctions{
   template<> void regularizeHistogram<TH2F>(TH2F*& histo, int nIter_, double threshold_, double acceleration_);
   //template<> void regularizeHistogram<TH3F>(TH3F*& histo, int nIter_, double threshold_, double acceleration_);
 
-  template <typename T> void conditionalizeHistogram(T* histo, unsigned int axis, std::vector<std::pair<T*, float>> const* conditionalsReference=nullptr);
-  template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference);
-  template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int axis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference);
+  template <typename T> void conditionalizeHistogram(T* histo, unsigned int axis, std::vector<std::pair<T*, float>> const* conditionalsReference=nullptr, bool useWidth=true);
+  template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference, bool useWidth);
+  template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int axis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth);
 
   template <typename T> void wipeOverUnderFlows(T* hwipe, bool rescale=false);
   template<> void wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool rescale);
@@ -172,7 +172,7 @@ namespace HelperFunctions{
     TF1* (*lowf)(TSpline3*, double, double, bool),
     TF1* (*highf)(TSpline3*, double, double, bool),
     bool useFaithfulSlopeFirst, bool useFaithfulSlopeSecond,
-    vector<pair<pair<double, double>, unsigned int>>* addpoints=nullptr
+    std::vector<std::pair<std::pair<double, double>, unsigned int>>* addpoints=nullptr
   );
 
   void regularizeSlice(
@@ -195,6 +195,8 @@ namespace HelperFunctions{
   void rebinHistogram(TH1F*& histo, const ExtendedBinning& binningX);
   void rebinHistogram(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
   void rebinHistogram(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
+
+  void rebinProfile(TProfile*& prof, const ExtendedBinning& binningX);
 
   TH1F* getHistogramSlice(TH2F const* histo, unsigned char XDirection, int iy, int jy, TString newname="");
   TH1F* getHistogramSlice(TH3F const* histo, unsigned char XDirection, int iy, int jy, int iz, int jz, TString newname=""); // "y" and "z" are cylical, so if Xdirection==1 (Y), "y"=Z and "z"=X

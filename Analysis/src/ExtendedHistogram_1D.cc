@@ -2,6 +2,9 @@
 #include "ExtendedHistogram_1D.h"
 
 
+using namespace HelperFunctions;
+
+
 ExtendedHistogram_1D::ExtendedHistogram_1D() : ExtendedHistogram(), histo(nullptr), prof_x(nullptr){}
 ExtendedHistogram_1D::ExtendedHistogram_1D(const TString name_, const TString title_) : ExtendedHistogram(name_, title_), histo(nullptr), prof_x(nullptr){}
 ExtendedHistogram_1D::ExtendedHistogram_1D(const TString name_, const TString title_, const ExtendedBinning& xbinning_) :
@@ -54,6 +57,13 @@ void ExtendedHistogram_1D::build(){
 void ExtendedHistogram_1D::fill(double x, double wgt){
   if (histo) histo->Fill(x, wgt);
   if (prof_x) prof_x->Fill(x, x, wgt);
+}
+
+void ExtendedHistogram_1D::rebin(ExtendedBinning const& binningX){
+  if (binningX.isValid()){
+    if (histo) rebinHistogram(histo, binningX);
+    if (prof_x) rebinProfile(prof_x, binningX);
+  }
 }
 
 TGraphErrors* ExtendedHistogram_1D::getGraph(TString newname) const{

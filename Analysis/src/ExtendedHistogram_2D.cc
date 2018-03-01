@@ -2,6 +2,9 @@
 #include "ExtendedHistogram_2D.h"
 
 
+using namespace HelperFunctions;
+
+
 ExtendedHistogram_2D::ExtendedHistogram_2D() : ExtendedHistogram(), histo(nullptr), prof_x(nullptr), prof_y(nullptr){}
 ExtendedHistogram_2D::ExtendedHistogram_2D(const TString name_, const TString title_) : ExtendedHistogram(name_, title_), histo(nullptr), prof_x(nullptr), prof_y(nullptr){}
 ExtendedHistogram_2D::ExtendedHistogram_2D(const TString name_, const TString title_, const ExtendedBinning& xbinning_, const ExtendedBinning& ybinning_) :
@@ -71,6 +74,15 @@ void ExtendedHistogram_2D::fill(double x, double y, double wgt){
   if (prof_x) prof_x->Fill(x, x, wgt);
   if (prof_y) prof_y->Fill(y, y, wgt);
 }
+
+void ExtendedHistogram_2D::rebin(ExtendedBinning const& binningX, ExtendedBinning const& binningY){
+  if (binningX.isValid() && binningY.isValid()){
+    if (histo) rebinHistogram(histo, binningX, binningY);
+    if (prof_x) rebinProfile(prof_x, binningX);
+    if (prof_y) rebinProfile(prof_y, binningY);
+  }
+}
+
 
 TH2F* ExtendedHistogram_2D::getCumulantHistogram(TString newname) const{
   if (!histo) return nullptr;

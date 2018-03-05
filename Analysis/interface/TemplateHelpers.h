@@ -19,6 +19,8 @@ namespace TemplateHelpers{
   /* General functions */
   /*********************/
   template<typename T> void setTemplateAxisLabels(T* histo);
+  template<typename T> void doTemplatePostprocessing(T* tpl);
+
   void getLikelihoodDiscriminants(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, const SystematicsHelpers::SystematicVariationTypes syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);
   void getCategorizationDiscriminants(const SystematicsHelpers::SystematicVariationTypes syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);
   ExtendedBinning getDiscriminantFineBinning(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell);

@@ -1046,160 +1046,189 @@ template<> void HelperFunctions::regularizeHistogram<TH2F>(TH2F*& histo, int nIt
   delete cumulant;
 }
 
-template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference, bool useWidth){
-  if (axis==0){
-    for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
-      double integral=1;
-      double integralerror=0;
-      double width = (useWidth && ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
-      if (!conditionalsReference) integral = histo->IntegralAndError(ix, ix, 0, histo->GetNbinsY()+1, integralerror, (useWidth ? "width" : ""));
-      else{
-        std::vector<float> fractionalerrors;
-        for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)){
-          double extraintegralerror=0;
-          double extraintegral = hh.first->IntegralAndError(ix, ix, 0, hh.first->GetNbinsY()+1, extraintegralerror, (useWidth ? "width" : ""));
-          if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
-          integral *= pow(extraintegral, hh.second);
-        }
-        integralerror = 0;
-        for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
-        integralerror = integral*sqrt(integralerror);
-      }
-      if (integral==0.) continue;
-      for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
-        double bincontent = histo->GetBinContent(ix, iy);
-        double binerror = histo->GetBinError(ix, iy);
-        double width2 = (useWidth && iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
-        histo->SetBinContent(ix, iy, bincontent/integral*width);
-        if (!conditionalsReference) histo->SetBinError(ix, iy, calculateEfficiencyError(bincontent*width*width2, integral, pow(binerror*width*width2, 2), pow(integralerror, 2))/width2);
-        else histo->SetBinError(ix, iy, (bincontent/integral*width*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2))));
-      }
-    }
+template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int iaxis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference, bool useWidth){
+  TAxis* axis[2]={ nullptr };
+  switch (iaxis){
+  case 0:
+    axis[0]=histo->GetXaxis();
+    axis[1]=histo->GetYaxis();
+    break;
+  case 1:
+    axis[0]=histo->GetYaxis();
+    axis[1]=histo->GetXaxis();
+    break;
+  default:
+    return;
   }
-  else{
-    for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
-      double integral=1;
-      double integralerror=0;
-      double width = (useWidth && iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
-      if (!conditionalsReference) integral = histo->IntegralAndError(0, histo->GetNbinsX()+1, iy, iy, integralerror, (useWidth ? "width" : ""));
-      else{
-        std::vector<float> fractionalerrors;
-        for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)){
-          double extraintegralerror=0;
-          double extraintegral = hh.first->IntegralAndError(0, hh.first->GetNbinsX()+1, iy, iy, extraintegralerror, (useWidth ? "width" : ""));
-          if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
-          integral *= pow(extraintegral, hh.second);
-        }
-        integralerror = 0;
-        for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
-        integralerror = integral*sqrt(integralerror);
+  int nbins[2]; for (unsigned int i=0; i<2; i++) nbins[i]=axis[i]->GetNbins();
+
+  for (int i=0; i<=nbins[0]+1; i++){
+    double integral=1;
+    double integralerror=0;
+
+    int int_xb[2]={ 0 }, int_yb[2]={ 0 };
+    switch (iaxis){
+    case 0:
+      int_xb[0]=i;
+      int_xb[1]=i;
+      int_yb[0]=0;
+      int_yb[1]=nbins[1]+1;
+      break;
+    case 1:
+      int_yb[0]=i;
+      int_yb[1]=i;
+      int_xb[0]=0;
+      int_xb[1]=nbins[1]+1;
+      break;
+    }
+
+    if (!conditionalsReference) integral = getHistogramIntegralAndError<TH2F>(histo, int_xb[0], int_xb[1], int_yb[0], int_yb[1], useWidth, &integralerror);
+    else{
+      std::vector<float> fractionalerrors;
+      for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)){
+        double extraintegralerror=0;
+        double extraintegral = getHistogramIntegralAndError<TH2F>(hh.first, int_xb[0], int_xb[1], int_yb[0], int_yb[1], useWidth, &extraintegralerror);
+        if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
+        integral *= pow(extraintegral, hh.second);
       }
-      if (integral==0.) continue;
-      for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
-        double bincontent = histo->GetBinContent(ix, iy); // = BC/WX/WY
-        double binerror = histo->GetBinError(ix, iy);
-        double width2 = (useWidth && ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
-        histo->SetBinContent(ix, iy, bincontent/integral*width);
-        if (!conditionalsReference) histo->SetBinError(ix, iy, calculateEfficiencyError(bincontent*width*width2, integral, pow(binerror*width*width2, 2), pow(integralerror, 2))/width2);
-        else histo->SetBinError(ix, iy, (bincontent/integral*width*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2))));
+      integralerror = 0;
+      for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
+      integralerror = integral*sqrt(integralerror);
+    }
+    for (int j=0; j<=nbins[1]+1; j++){
+      int ix=0, iy=0;
+      switch (iaxis){
+      case 0:
+        ix=i;
+        iy=j;
+        break;
+      case 1:
+        iy=i;
+        ix=j;
+        break;
       }
+
+      double width = 1;
+      double binerror;
+      double bincontent = getHistogramIntegralAndError<TH2F>(histo, ix, ix, iy, iy, useWidth, &binerror);
+
+      if (useWidth && j>=1 && j<=nbins[1]) width *= axis[1]->GetBinWidth(j);
+
+      double hval = bincontent/integral;
+      double herr;
+      if (!conditionalsReference) herr = calculateEfficiencyError(bincontent, integral, pow(binerror, 2), pow(integralerror, 2));
+      else herr = hval*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2));
+      hval /= width; herr /= width;
+
+      histo->SetBinContent(ix, iy, bincontent/integral*width);
+      histo->SetBinError(ix, iy, herr);
     }
   }
 }
-template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int axis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth){
-  if (axis==0){
-    for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
-      double integral=1;
-      double integralerror=0;
-      double width = (useWidth && ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
-      if (!conditionalsReference) integral = histo->IntegralAndError(ix, ix, 0, histo->GetNbinsY()+1, 0, histo->GetNbinsZ()+1, integralerror, (useWidth ? "width" : ""));
-      else{
-        std::vector<float> fractionalerrors;
-        for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)){
-          double extraintegralerror=0;
-          double extraintegral = hh.first->IntegralAndError(ix, ix, 0, hh.first->GetNbinsY()+1, 0, hh.first->GetNbinsZ()+1, extraintegralerror, (useWidth ? "width" : ""));
-          if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
-          integral *= pow(extraintegral, hh.second);
-        }
-        integralerror = 0;
-        for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
-        integralerror = integral*sqrt(integralerror);
-      }
-      if (integral==0.) continue;
-      for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
-        for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
-          double bincontent = histo->GetBinContent(ix, iy, iz);
-          double binerror = histo->GetBinError(ix, iy, iz);
-          double width2 = (useWidth && iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
-          double width3 = (useWidth && iz>=1 && iz<=histo->GetNbinsZ() ? histo->GetZaxis()->GetBinWidth(iz) : 1.);
-          histo->SetBinContent(ix, iy, iz, bincontent/integral*width);
-          if (!conditionalsReference) histo->SetBinError(ix, iy, iz, calculateEfficiencyError(bincontent*width*width2*width3, integral, pow(binerror*width*width2*width3, 2), pow(integralerror, 2))/width2/width3);
-          else histo->SetBinError(ix, iy, iz, (bincontent/integral*width*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2))));
-        }
-      }
-    }
+template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int iaxis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth){
+  TAxis* axis[3]={ nullptr };
+  switch (iaxis){
+  case 0:
+    axis[0]=histo->GetXaxis();
+    axis[1]=histo->GetYaxis();
+    axis[2]=histo->GetZaxis();
+    break;
+  case 1:
+    axis[0]=histo->GetYaxis();
+    axis[1]=histo->GetZaxis();
+    axis[2]=histo->GetXaxis();
+    break;
+  case 2:
+    axis[0]=histo->GetZaxis();
+    axis[1]=histo->GetXaxis();
+    axis[2]=histo->GetYaxis();
+    break;
+  default:
+    return;
   }
-  else if (axis==1){
-    for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
-      double integral=1;
-      double integralerror=0;
-      double width = (useWidth && iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
-      if (!conditionalsReference) integral = histo->IntegralAndError(0, histo->GetNbinsX()+1, iy, iy, 0, histo->GetNbinsZ()+1, integralerror, (useWidth ? "width" : ""));
-      else{
-        std::vector<float> fractionalerrors;
-        for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)){
-          double extraintegralerror=0;
-          double extraintegral = hh.first->IntegralAndError(0, hh.first->GetNbinsY()+1, iy, iy, 0, hh.first->GetNbinsZ()+1, extraintegralerror, (useWidth ? "width" : ""));
-          if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
-          integral *= pow(extraintegral, hh.second);
-        }
-        integralerror = 0;
-        for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
-        integralerror = integral*sqrt(integralerror);
-      }
-      if (integral==0.) continue;
-      for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
-        for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
-          double bincontent = histo->GetBinContent(ix, iy, iz);
-          double binerror = histo->GetBinError(ix, iy, iz);
-          double width2 = (useWidth && ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
-          double width3 = (useWidth && iz>=1 && iz<=histo->GetNbinsZ() ? histo->GetZaxis()->GetBinWidth(iz) : 1.);
-          histo->SetBinContent(ix, iy, iz, bincontent/integral*width);
-          if (!conditionalsReference) histo->SetBinError(ix, iy, iz, calculateEfficiencyError(bincontent*width*width2*width3, integral, pow(binerror*width*width2*width3, 2), pow(integralerror, 2))/width2/width3);
-          else histo->SetBinError(ix, iy, iz, (bincontent/integral*width*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2))));
-        }
-      }
+  int nbins[3]; for (unsigned int i=0; i<3; i++) nbins[i]=axis[i]->GetNbins();
+
+  for (int i=0; i<=nbins[0]+1; i++){
+    double integral=1;
+    double integralerror=0;
+
+    int int_xb[2]={ 0 }, int_yb[2]={ 0 }, int_zb[2]={ 0 };
+    switch (iaxis){
+    case 0:
+      int_xb[0]=i;
+      int_xb[1]=i;
+      int_yb[0]=0;
+      int_yb[1]=nbins[1]+1;
+      int_zb[0]=0;
+      int_zb[1]=nbins[2]+1;
+      break;
+    case 1:
+      int_yb[0]=i;
+      int_yb[1]=i;
+      int_zb[0]=0;
+      int_zb[1]=nbins[1]+1;
+      int_xb[0]=0;
+      int_xb[1]=nbins[2]+1;
+      break;
+    case 2:
+      int_zb[0]=i;
+      int_zb[1]=i;
+      int_xb[0]=0;
+      int_xb[1]=nbins[1]+1;
+      int_yb[0]=0;
+      int_yb[1]=nbins[2]+1;
+      break;
     }
-  }
-  else{
-    for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
-      double integral=1;
-      double integralerror=0;
-      double width = (useWidth && iz>=1 && iz<=histo->GetNbinsZ() ? histo->GetZaxis()->GetBinWidth(iz) : 1.);
-      if (!conditionalsReference) integral = histo->IntegralAndError(0, histo->GetNbinsX()+1, 0, histo->GetNbinsY()+1, iz, iz, integralerror, (useWidth ? "width" : ""));
-      else{
-        std::vector<float> fractionalerrors;
-        for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)){
-          double extraintegralerror=0;
-          double extraintegral = hh.first->IntegralAndError(0, hh.first->GetNbinsX()+1, 0, hh.first->GetNbinsY()+1, iz, iz, extraintegralerror, (useWidth ? "width" : ""));
-          if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
-          integral *= pow(extraintegral, hh.second);
-        }
-        integralerror = 0;
-        for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
-        integralerror = integral*sqrt(integralerror);
+
+    if (!conditionalsReference) integral = getHistogramIntegralAndError<TH3F>(histo, int_xb[0], int_xb[1], int_yb[0], int_yb[1], int_zb[0], int_zb[1], useWidth, &integralerror);
+    else{
+      std::vector<float> fractionalerrors;
+      for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)){
+        double extraintegralerror=0;
+        double extraintegral = getHistogramIntegralAndError<TH3F>(hh.first, int_xb[0], int_xb[1], int_yb[0], int_yb[1], int_zb[0], int_zb[1], useWidth, &extraintegralerror);
+        if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
+        integral *= pow(extraintegral, hh.second);
       }
-      if (integral==0.) continue;
-      for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
-        for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
-          double bincontent = histo->GetBinContent(ix, iy, iz);
-          double binerror = histo->GetBinError(ix, iy, iz);
-          double width2 = (useWidth && ix>=1 && ix<=histo->GetNbinsX() ? histo->GetXaxis()->GetBinWidth(ix) : 1.);
-          double width3 = (useWidth && iy>=1 && iy<=histo->GetNbinsY() ? histo->GetYaxis()->GetBinWidth(iy) : 1.);
-          histo->SetBinContent(ix, iy, iz, bincontent/integral*width);
-          if (!conditionalsReference) histo->SetBinError(ix, iy, iz, calculateEfficiencyError(bincontent*width*width2*width3, integral, pow(binerror*width*width2*width3, 2), pow(integralerror, 2))/width2/width3);
-          else histo->SetBinError(ix, iy, iz, (bincontent/integral*width*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2))));
+      integralerror = 0;
+      for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
+      integralerror = integral*sqrt(integralerror);
+    }
+    for (int j=0; j<=nbins[1]+1; j++){
+      for (int k=0; k<=nbins[2]+1; k++){
+        int ix=0, iy=0, iz=0;
+        switch (iaxis){
+        case 0:
+          ix=i;
+          iy=j;
+          iz=k;
+          break;
+        case 1:
+          ix=k;
+          iy=i;
+          iz=j;
+          break;
+        case 2:
+          ix=j;
+          iy=k;
+          iz=i;
+          break;
         }
+
+        double width = 1;
+        double binerror;
+        double bincontent = getHistogramIntegralAndError<TH3F>(histo, ix, ix, iy, iy, iz, iz, useWidth, &binerror);
+
+        if (useWidth && j>=1 && j<=nbins[1]) width *= axis[1]->GetBinWidth(j);
+        if (useWidth && k>=1 && k<=nbins[2]) width *= axis[2]->GetBinWidth(k);
+
+        double hval = bincontent/integral;
+        double herr;
+        if (!conditionalsReference) herr = calculateEfficiencyError(bincontent, integral, pow(binerror, 2), pow(integralerror, 2));
+        else herr = hval*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2));
+        hval /= width; herr /= width;
+
+        histo->SetBinContent(ix, iy, iz, bincontent/integral*width);
+        histo->SetBinError(ix, iy, iz, herr);
       }
     }
   }
@@ -2478,7 +2507,7 @@ TH1F* HelperFunctions::getHistogramSlice(TH2F const* histo, unsigned char XDirec
   if (XDirection==0){
     for (int ii=0; ii<=xaxis->GetNbins()+1; ii++){
       double integral=0, integralerror=0;
-      integral = histo->IntegralAndError(ii, ii, iy, jy, integralerror);
+      integral = getHistogramIntegralAndError(histo, ii, ii, iy, jy, false, &integralerror);
       res->SetBinContent(ii, integral);
       res->SetBinError(ii, integralerror);
     }
@@ -2486,7 +2515,7 @@ TH1F* HelperFunctions::getHistogramSlice(TH2F const* histo, unsigned char XDirec
   else{
     for (int ii=0; ii<=yaxis->GetNbins()+1; ii++){
       double integral=0, integralerror=0;
-      integral = histo->IntegralAndError(iy, jy, ii, ii, integralerror);
+      integral = getHistogramIntegralAndError(histo, iy, jy, ii, ii, false, &integralerror);
       res->SetBinContent(ii, integral);
       res->SetBinError(ii, integralerror);
     }
@@ -2542,7 +2571,7 @@ TH1F* HelperFunctions::getHistogramSlice(TH3F const* histo, unsigned char XDirec
       IY=iz; JY=jz;
       IZ=ii; JZ=ii;
     }
-    integral = histo->IntegralAndError(IX, JX, IY, JY, IZ, JZ, integralerror);
+    integral = getHistogramIntegralAndError(histo, IX, JX, IY, JY, IZ, JZ, false, &integralerror);
     res->SetBinContent(ii, integral);
     res->SetBinError(ii, integralerror);
   }
@@ -2586,7 +2615,7 @@ TH2F* HelperFunctions::getHistogramSlice(TH3F const* histo, unsigned char XDirec
       if (ZDirection==0){ IX=iz; JX=jz; }
       else if (ZDirection==1){ IY=iz; JY=jz; }
       else{ IZ=iz; JZ=jz; }
-      integral = histo->IntegralAndError(IX, JX, IY, JY, IZ, JZ, integralerror);
+      integral = getHistogramIntegralAndError(histo, IX, JX, IY, JY, IZ, JZ, false, &integralerror);
       res->SetBinContent(ii, jj, integral);
       res->SetBinError(ii, jj, integralerror);
     }

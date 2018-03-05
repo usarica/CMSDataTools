@@ -52,6 +52,29 @@ void ProcessHandler::imposeTplPhysicality(std::vector<float>& /*vals*/) const{}
 GGProcessHandler::GGProcessHandler(bool useOffshell_) : ProcessHandler(ProcessHandler::kGG, useOffshell_)
 {}
 
+GGProcessHandler::TemplateContributionList::TemplateContributionList(GGProcessHandler::TemplateType type_) : type(type_), coefficient(1){
+  switch (type){
+  case GGTplInt_Re:
+    TypePowerPair.emplace_back(GGTplBkg, 0.5);
+    TypePowerPair.emplace_back(GGTplSig, 0.5);
+    coefficient=2;
+    break;
+  case GGTplIntBSM_Re:
+    TypePowerPair.emplace_back(GGTplBkg, 0.5);
+    TypePowerPair.emplace_back(GGTplSigBSM, 0.5);
+    coefficient=2;
+    break;
+  case GGTplSigBSMSMInt_Re:
+    TypePowerPair.emplace_back(GGTplSig, 0.5);
+    TypePowerPair.emplace_back(GGTplSigBSM, 0.5);
+    coefficient=2;
+    break;
+  default:
+    TypePowerPair.emplace_back(type, 1);
+    break;
+  }
+}
+
 TString GGProcessHandler::getOutputTreeName(GGProcessHandler::HypothesisType type) const{
   TString res;
   switch (type){
@@ -278,18 +301,20 @@ GGProcessHandler::TemplateType GGProcessHandler::castIntToTemplateType(int type,
 }
 
 void GGProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
-  vector<pair<float*, pair<float*, float*>>> pairing;
-  if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes)
-    pairing.push_back(pair<float*, pair<float*, float*>>(&(vals.at(GGTplInt_Re)), pair<float*, float*>(&(vals.at(GGTplBkg)), &(vals.at(GGTplSig)))));
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes) pairing.emplace_back(GGTplInt_Re);
   if (vals.size()==nGGTplTypes){
-    pairing.push_back(pair<float*, pair<float*, float*>>(&(vals.at(GGTplIntBSM_Re)), pair<float*, float*>(&(vals.at(GGTplBkg)), &(vals.at(GGTplSigBSM)))));
-    pairing.push_back(pair<float*, pair<float*, float*>>(&(vals.at(GGTplSigBSMSMInt_Re)), pair<float*, float*>(&(vals.at(GGTplSig)), &(vals.at(GGTplSigBSM)))));
+    pairing.emplace_back(GGTplIntBSM_Re);
+    pairing.emplace_back(GGTplSigBSMSMInt_Re);
   }
-  for (auto& pair:pairing){
-    if (*(pair.second.first)<0.) *(pair.second.first)=0.;
-    if (*(pair.second.second)<0.) *(pair.second.second)=0.;
-    float thr = 2.*sqrt(*(pair.second.first) * *(pair.second.second));
-    if (fabs(*(pair.first))>thr) *(pair.first) *= thr*0.99/fabs(*(pair.first));
+  for (TemplateContributionList const& pair:pairing){
+    float& tplVal=vals.at(pair.type);
+    float thr = pair.coefficient;
+    for (auto const& componentPair:pair.TypePowerPair){
+      if (vals.at(componentPair.first)<0.) vals.at(componentPair.first)=0;
+      thr *= pow(vals.at(componentPair.first), componentPair.second);
+    }
+    if (fabs(tplVal)>thr) tplVal *= thr*0.99/fabs(tplVal);
   }
 }
 template<> void GGProcessHandler::recombineHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
@@ -464,6 +489,45 @@ VVProcessHandler::VVProcessHandler(bool useOffshell_, ProcessHandler::ProcessTyp
       proctype==ProcessHandler::kWH
       )
     ) MELAout << "VVProcessHandler::VVProcessHandler: Process type " << getProcessName() << " is not supported!" << endl;
+}
+
+VVProcessHandler::TemplateContributionList::TemplateContributionList(VVProcessHandler::TemplateType type_) : type(type_), coefficient(1){
+  switch (type){
+  case VVTplInt_Re:
+    TypePowerPair.emplace_back(VVTplBkg, 0.5);
+    TypePowerPair.emplace_back(VVTplSig, 0.5);
+    coefficient=2;
+    break;
+  case VVTplSigBSMSMInt_ai1_1_Re:
+    TypePowerPair.emplace_back(VVTplSig, 0.75);
+    TypePowerPair.emplace_back(VVTplSigBSM, 0.25);
+    coefficient=4;
+    break;
+  case VVTplSigBSMSMInt_ai1_2_PosDef:
+    TypePowerPair.emplace_back(VVTplSig, 0.5);
+    TypePowerPair.emplace_back(VVTplSigBSM, 0.5);
+    coefficient=6;
+    break;
+  case VVTplSigBSMSMInt_ai1_3_Re:
+    TypePowerPair.emplace_back(VVTplSig, 0.25);
+    TypePowerPair.emplace_back(VVTplSigBSM, 0.75);
+    coefficient=4;
+    break;
+  case VVTplIntBSM_ai1_1_Re:
+    TypePowerPair.emplace_back(VVTplBkg, 0.5);
+    TypePowerPair.emplace_back(VVTplSig, 0.25);
+    TypePowerPair.emplace_back(VVTplSigBSM, 0.25);
+    coefficient=2;
+    break;
+  case VVTplIntBSM_ai1_2_Re:
+    TypePowerPair.emplace_back(VVTplBkg, 0.5);
+    TypePowerPair.emplace_back(VVTplSigBSM, 0.5);
+    coefficient=2;
+    break;
+  default:
+    TypePowerPair.emplace_back(type, 1);
+    break;
+  }
 }
 
 TString VVProcessHandler::getOutputTreeName(VVProcessHandler::HypothesisType type) const{
@@ -812,52 +876,24 @@ VVProcessHandler::TemplateType VVProcessHandler::castIntToTemplateType(int type,
 }
 
 void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
-  struct pairing{
-    float* PA;
-    float* PB;
-    float* PC;
-    float* Pint;
-    const float multInt;
-    const float coefA;
-    const float coefB;
-    const float coefC;
-
-    pairing(float* pa, float* pb, float* pc, float* pint, const float mult, const float cA, const float cB, const float cC) : PA(pa), PB(pb), PC(pc), Pint(pint), multInt(mult), coefA(cA), coefB(cB), coefC(cC) {}
-
-    bool scale(){
-      assert((PA && coefA!=0.) || (PB && coefB!=0.) || (PC && coefC!=0.));
-      bool res=false;
-      float thr=multInt;
-      if (PA){
-        if (*PA<0.){ *PA=0.; res=true; }
-        thr *= pow(*PA, coefA);
-      }
-      if (PB){
-        if (*PB<0.){ *PB=0.; res=true; }
-        thr *= pow(*PB, coefB);
-      }
-      if (PC){
-        if (*PC<0.){ *PC=0.; res=true; }
-        thr *= pow(*PC, coefC);
-      }
-      if (Pint && fabs(*Pint)>thr){ *Pint *= thr*0.99/fabs(*Pint); res=true; }
-      return res;
-    }
-  };
-
-  vector<pairing> pairings;
-  if (vals.size()==nVVTplSMTypes || vals.size()==nVVTplTypes)
-    pairings.push_back(pairing(&vals.at(VVTplBkg), &vals.at(VVTplSig), nullptr, &vals.at(VVTplInt_Re), 2., 0.5, 0.5, 0));
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nVVTplSMTypes || vals.size()==nVVTplTypes) pairing.emplace_back(VVTplInt_Re);
   if (vals.size()==nVVTplTypes){
-    pairings.push_back(pairing(&vals.at(VVTplSig), &vals.at(VVTplSigBSM), nullptr, &vals.at(VVTplSigBSMSMInt_ai1_1_Re), 4., 0.75, 0.25, 0));
-    pairings.push_back(pairing(&vals.at(VVTplSig), &vals.at(VVTplSigBSM), nullptr, &vals.at(VVTplSigBSMSMInt_ai1_2_PosDef), 6., 0.5, 0.5, 0));
-    pairings.push_back(pairing(&vals.at(VVTplSig), &vals.at(VVTplSigBSM), nullptr, &vals.at(VVTplSigBSMSMInt_ai1_3_Re), 4., 0.25, 0.75, 0));
-    pairings.push_back(pairing(&vals.at(VVTplBkg), &vals.at(VVTplSig), &vals.at(VVTplSigBSM), &vals.at(VVTplIntBSM_ai1_1_Re), 2., 0.5, 0.25, 0.25));
-    pairings.push_back(pairing(&vals.at(VVTplBkg), nullptr, &vals.at(VVTplSigBSM), &vals.at(VVTplIntBSM_ai1_2_Re), 2., 0.5, 0, 0.5));
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_1_Re);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_2_PosDef);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_3_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_1_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_2_Re);
   }
-  //unsigned int nBinsCorrected=0;
-  for (auto& pair:pairings) /*nBinsCorrected += */pair.scale();
-  //MELAout << "VVProcessHandler::imposeTplPhysicality: Corrected number of bins: " << nBinsCorrected << endl;
+  for (TemplateContributionList const& pair:pairing){
+    float& tplVal=vals.at(pair.type);
+    float thr = pair.coefficient;
+    for (auto const& componentPair:pair.TypePowerPair){
+      if (vals.at(componentPair.first)<0.) vals.at(componentPair.first)=0;
+      thr *= pow(vals.at(componentPair.first), componentPair.second);
+    }
+    if (fabs(tplVal)>thr) tplVal *= thr*0.99/fabs(tplVal);
+  }
 }
 template<> void VVProcessHandler::recombineHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   if (vals.empty()) return;

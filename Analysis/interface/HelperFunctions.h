@@ -77,9 +77,9 @@ namespace HelperFunctions{
   template<> void regularizeHistogram<TH2F>(TH2F*& histo, int nIter_, double threshold_, double acceleration_);
   //template<> void regularizeHistogram<TH3F>(TH3F*& histo, int nIter_, double threshold_, double acceleration_);
 
-  template <typename T> void conditionalizeHistogram(T* histo, unsigned int axis, std::vector<std::pair<T*, float>> const* conditionalsReference=nullptr, bool useWidth=true);
-  template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference, bool useWidth);
-  template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int axis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth);
+  template <typename T> void conditionalizeHistogram(T* histo, unsigned int iaxis, std::vector<std::pair<T*, float>> const* conditionalsReference=nullptr, bool useWidth=true);
+  template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int iaxis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference, bool useWidth);
+  template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int iaxis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth);
 
   template <typename T> void wipeOverUnderFlows(T* hwipe, bool rescale=false);
   template<> void wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool rescale);
@@ -90,6 +90,10 @@ namespace HelperFunctions{
   template<> void divideBinWidth<TH1F>(TH1F* histo);
   template<> void divideBinWidth<TH2F>(TH2F* histo);
   template<> void divideBinWidth<TH3F>(TH3F* histo);
+
+  template <typename T> double getHistogramIntegralAndError(T const* histo, int ix, int jx, bool useWidth, double* error=nullptr);
+  template <typename T> double getHistogramIntegralAndError(T const* histo, int ix, int jx, int iy, int jy, bool useWidth, double* error=nullptr);
+  template <typename T> double getHistogramIntegralAndError(T const* histo, int ix, int jx, int iy, int jy, int iz, int jz, bool useWidth, double* error=nullptr);
 
   template <typename T> float computeIntegral(T* histo, bool useWidth);
   template<> float computeIntegral<TH1F>(TH1F* histo, bool useWidth);
@@ -452,6 +456,80 @@ template<typename T> bool HelperFunctions::checkNanInf(std::vector<T> const& var
   return true;
 }
 
+// Histogram functions
+template <typename T> double HelperFunctions::getHistogramIntegralAndError(T const* histo, int ix, int jx, bool useWidth, double* error){
+  double res=0;
+  double reserror=0;
+  if (histo){
+    if (!useWidth) res=histo->IntegralAndError(ix, jx, reserror, "");
+    else{
+      int xb[2]={ std::max(1, std::min(histo->GetNbinsX(), ix)), std::max(1, std::min(histo->GetNbinsX(), jx)) };
+
+      res=histo->IntegralAndError(xb[0], xb[1], reserror, "width");
+
+      double integralinside, integralerrorinside;
+      integralinside=histo->IntegralAndError(xb[0], xb[1], integralerrorinside, "");
+
+      double integraloutside, integralerroroutside;
+      integraloutside=histo->IntegralAndError(ix, jx, integralerroroutside, "");
+
+      res = res + integraloutside - integralinside;
+      reserror = sqrt(std::max(0., pow(reserror, 2) + pow(integralerroroutside, 2) - pow(integralinside, 2)));
+    }
+  }
+  if (error) *error=reserror;
+  return res;
+}
+template <typename T> double HelperFunctions::getHistogramIntegralAndError(T const* histo, int ix, int jx, int iy, int jy, bool useWidth, double* error){
+  double res=0;
+  double reserror=0;
+  if (histo){
+    if (!useWidth) res=histo->IntegralAndError(ix, jx, iy, jy, reserror, "");
+    else{
+      int xb[2]={ std::max(1, std::min(histo->GetNbinsX(), ix)), std::max(1, std::min(histo->GetNbinsX(), jx)) };
+      int yb[2]={ std::max(1, std::min(histo->GetNbinsY(), iy)), std::max(1, std::min(histo->GetNbinsY(), jy)) };
+
+      res=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], reserror, "width");
+
+      double integralinside, integralerrorinside;
+      integralinside=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], integralerrorinside, "");
+
+      double integraloutside, integralerroroutside;
+      integraloutside=histo->IntegralAndError(ix, jx, iy, jy, integralerroroutside, "");
+
+      res = res + integraloutside - integralinside;
+      reserror = sqrt(std::max(0., pow(reserror, 2) + pow(integralerroroutside, 2) - pow(integralinside, 2)));
+    }
+  }
+  if (error) *error=reserror;
+  return res;
+}
+template <typename T> double HelperFunctions::getHistogramIntegralAndError(T const* histo, int ix, int jx, int iy, int jy, int iz, int jz, bool useWidth, double* error){
+  double res=0;
+  double reserror=0;
+  if (histo){
+    if (!useWidth) res=histo->IntegralAndError(ix, jx, iy, jy, iz, jz, reserror, "");
+    else{
+      int xb[2]={ std::max(1, std::min(histo->GetNbinsX(), ix)), std::max(1, std::min(histo->GetNbinsX(), jx)) };
+      int yb[2]={ std::max(1, std::min(histo->GetNbinsY(), iy)), std::max(1, std::min(histo->GetNbinsY(), jy)) };
+      int zb[2]={ std::max(1, std::min(histo->GetNbinsZ(), iz)), std::max(1, std::min(histo->GetNbinsZ(), jz)) };
+
+      res=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], zb[0], zb[1], reserror, "width");
+
+      double integralinside, integralerrorinside;
+      integralinside=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], zb[0], zb[1], integralerrorinside, "");
+
+      double integraloutside, integralerroroutside;
+      integraloutside=histo->IntegralAndError(ix, jx, iy, jy, iz, jz, integralerroroutside, "");
+
+      res = res + integraloutside - integralinside;
+      reserror = sqrt(std::max(0., pow(reserror, 2) + pow(integralerroroutside, 2) - pow(integralinside, 2)));
+    }
+  }
+  if (error) *error=reserror;
+  return res;
+}
+
 // TGraph functions
 template<typename T> TGraph* HelperFunctions::makeGraphFromPair(std::vector<std::pair<T, T>> points, TString name){
   if (points.empty()) return nullptr;
@@ -616,6 +694,13 @@ template void HelperFunctions::cleanUnorderedMap<TString, std::vector<unsigned i
 template void HelperFunctions::cleanUnorderedMap<TString, std::vector<int>*>(std::unordered_map<TString, std::vector<int>*> um);
 template void HelperFunctions::cleanUnorderedMap<TString, std::vector<float>*>(std::unordered_map<TString, std::vector<float>*> um);
 template void HelperFunctions::cleanUnorderedMap<TString, std::vector<double>*>(std::unordered_map<TString, std::vector<double>*> um);
+
+template double HelperFunctions::getHistogramIntegralAndError<TH1F>(TH1F const* histo, int ix, int jx, bool useWidth, double* error);
+template double HelperFunctions::getHistogramIntegralAndError<TH1D>(TH1D const* histo, int ix, int jx, bool useWidth, double* error);
+template double HelperFunctions::getHistogramIntegralAndError<TH2F>(TH2F const* histo, int ix, int jx, int iy, int jy, bool useWidth, double* error);
+template double HelperFunctions::getHistogramIntegralAndError<TH2D>(TH2D const* histo, int ix, int jx, int iy, int jy, bool useWidth, double* error);
+template double HelperFunctions::getHistogramIntegralAndError<TH3F>(TH3F const* histo, int ix, int jx, int iy, int jy, int iz, int jz, bool useWidth, double* error);
+template double HelperFunctions::getHistogramIntegralAndError<TH3D>(TH3D const* histo, int ix, int jx, int iy, int jy, int iz, int jz, bool useWidth, double* error);
 
 template TGraph* HelperFunctions::makeGraphFromPair<float>(std::vector<std::pair<float, float>> points, TString name);
 template TGraph* HelperFunctions::makeGraphFromPair<double>(std::vector<std::pair<double, double>> points, TString name);

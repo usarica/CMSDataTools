@@ -60,6 +60,13 @@ public:
     nGGTplTypes=6
   };
 
+  struct TemplateContributionList{
+    GGProcessHandler::TemplateType type;
+    float coefficient;
+    std::vector<std::pair<GGProcessHandler::TemplateType, float>> TypePowerPair;
+    TemplateContributionList(GGProcessHandler::TemplateType type_);
+  };
+
   GGProcessHandler(bool useOffshell_);
 
   TString getOutputTreeName(GGProcessHandler::HypothesisType type) const;
@@ -152,6 +159,13 @@ public:
     VVTplIntBSM_ai1_1_Re=7, // ai**1 a1**1 B**1
     VVTplIntBSM_ai1_2_Re=8, // ai**2 a1**0 B**1
     nVVTplTypes=9
+  };
+
+  struct TemplateContributionList{
+    VVProcessHandler::TemplateType type;
+    float coefficient;
+    std::vector<std::pair<VVProcessHandler::TemplateType, float>> TypePowerPair;
+    TemplateContributionList(VVProcessHandler::TemplateType type_);
   };
 
   VVProcessHandler(bool useOffshell_, ProcessHandler::ProcessType proctype_=ProcessHandler::kVV);

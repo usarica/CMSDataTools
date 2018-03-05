@@ -1,8 +1,10 @@
 #include "HelperFunctions.h"
 #include "ExtendedHistogram_1D.h"
+#include "MELAStreamHelpers.hh"
 
 
 using namespace HelperFunctions;
+using namespace MELAStreamHelpers;
 
 
 ExtendedHistogram_1D::ExtendedHistogram_1D() : ExtendedHistogram(), histo(nullptr), prof_x(nullptr){}
@@ -46,6 +48,7 @@ void ExtendedHistogram_1D::setBinning(const ExtendedBinning& binning, const int 
   if (label!="") xbinning.setLabel(label);
 }
 void ExtendedHistogram_1D::build(){
+  reset();
   if (xbinning.isValid()){
     const double* xbins = xbinning.getBinning();
     const int nbins = xbinning.getNbins();
@@ -53,16 +56,20 @@ void ExtendedHistogram_1D::build(){
     prof_x = new TProfile(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data()), title, nbins, xbins); prof_x->GetXaxis()->SetTitle(xbinning.getLabel()); prof_x->Sumw2();
   }
 }
+void ExtendedHistogram_1D::reset(){
+  delete histo;
+  delete prof_x;
+}
 
 void ExtendedHistogram_1D::fill(double x, double wgt){
   if (histo) histo->Fill(x, wgt);
   if (prof_x) prof_x->Fill(x, x, wgt);
 }
 
-void ExtendedHistogram_1D::rebin(ExtendedBinning const& binningX){
-  if (binningX.isValid()){
-    if (histo) rebinHistogram(histo, binningX);
-    if (prof_x) rebinProfile(prof_x, binningX);
+void ExtendedHistogram_1D::rebin(ExtendedBinning const* binningX){
+  if (binningX && binningX->isValid()){
+    if (histo) rebinHistogram(histo, *binningX);
+    if (prof_x) rebinProfile(prof_x, *binningX);
   }
 }
 
@@ -101,4 +108,14 @@ ExtendedHistogram_1D ExtendedHistogram_1D::divideHistograms(ExtendedHistogram_1D
     }
   }
   return res;
+}
+
+void ExtendedHistogram_1D::constructFromTree(TTree* tree, float& xvar, float& weight, ExtendedBinning const* binningX){
+  if (!tree) return;
+  if (binningX) setBinning(*binningX, 0, binningX->getLabel());
+  build();
+  for (int ev=0; ev<tree->GetEntries(); ev++){
+    tree->GetEntry(ev);
+    fill(xvar, weight);
+  }
 }

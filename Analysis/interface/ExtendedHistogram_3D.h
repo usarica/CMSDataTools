@@ -2,6 +2,7 @@
 #define EXTENDEDHISTOGRAM_3D_H
 
 #include "ExtendedHistogram.h"
+#include "TTree.h"
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TH3F.h"
@@ -32,6 +33,7 @@ public:
   void setNameTitle(const TString name_, const TString title_="");
   virtual void setBinning(const ExtendedBinning& binning, const int xyz=0, const TString label="");
   virtual void build();
+  virtual void reset();
 
   TH3F*& getHistogram(){ return histo; }
   const TH3F* getHistogram() const{ return histo; }
@@ -48,7 +50,9 @@ public:
 
   void fill(double x, double y, double z, double wgt=1.);
 
-  void rebin(ExtendedBinning const& binningX, ExtendedBinning const& binningY, ExtendedBinning const& binningZ, bool condX, bool condY, bool condZ);
+  void rebin(ExtendedBinning const* binningX, ExtendedBinning const* binningY, ExtendedBinning const* binningZ);
+
+  void constructFromTree(TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, ExtendedBinning const* binningX=nullptr, ExtendedBinning const* binningY=nullptr, ExtendedBinning const* binningZ=nullptr);
 
   static ExtendedHistogram_3D divideHistograms(ExtendedHistogram_3D const& h1, ExtendedHistogram_3D const& h2, bool useEffErr, TString newname="");
 

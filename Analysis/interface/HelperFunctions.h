@@ -188,15 +188,19 @@ namespace HelperFunctions{
     signed char forceUseFaithfulSlopeFirst=-1, signed char forceUseFaithfulSlopeSecond=-1
   );
 
+  void rebinProfile(TProfile*& prof, const ExtendedBinning& binningX);
+
   void rebinCumulant(TH1F*& histo, const ExtendedBinning& binningX);
-  void rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
-  void rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
+  void rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX_, const ExtendedBinning& binningY_, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
+  void rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX_, const ExtendedBinning& binningY_, const ExtendedBinning& binningZ_, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
 
   void rebinHistogram(TH1F*& histo, const ExtendedBinning& binningX);
   void rebinHistogram(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
   void rebinHistogram(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
 
-  void rebinProfile(TProfile*& prof, const ExtendedBinning& binningX);
+  void rebinHistogram_NoCumulant(TH1F*& histo, const ExtendedBinning& binningX, const TProfile* prof_x);
+  void rebinHistogram_NoCumulant(TH2F*& histo, const ExtendedBinning& binningX, const TProfile* prof_x, const ExtendedBinning& binningY, const TProfile* prof_y);
+  void rebinHistogram_NoCumulant(TH3F*& histo, const ExtendedBinning& binningX, const TProfile* prof_x, const ExtendedBinning& binningY, const TProfile* prof_y, const ExtendedBinning& binningZ, const TProfile* prof_z);
 
   TH1F* getHistogramSlice(TH2F const* histo, unsigned char XDirection, int iy, int jy, TString newname="");
   TH1F* getHistogramSlice(TH3F const* histo, unsigned char XDirection, int iy, int jy, int iz, int jz, TString newname=""); // "y" and "z" are cylical, so if Xdirection==1 (Y), "y"=Z and "z"=X
@@ -207,6 +211,10 @@ namespace HelperFunctions{
     float const sumW, float const sumWAll,
     float const sumWsq, float const sumWsqAll
     );
+  float translateEfficiencyErrorToNumeratorError(
+    float const eff, float const sumWAll,
+    float const effErr, float const sumWsqAll
+  );
 
   // Function to copy a file
   void CopyFile(TString fname, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*));

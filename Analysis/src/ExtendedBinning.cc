@@ -64,3 +64,25 @@ void ExtendedBinning::removeBinLowEdge(const int bin){
   if (bin>=0 && bin<(int) vbinlow.size()) vbinlow.erase(vbinlow.begin()+bin);
 }
 
+ExtendedBinning ExtendedBinning::extractBinning(TH1 const* histo, unsigned int const direction){
+  ExtendedBinning res;
+  if (!histo) return res;
+  TAxis const* axis;
+  switch (direction){
+  case 0:
+    axis=histo->GetXaxis();
+    break;
+  case 1:
+    axis=histo->GetYaxis();
+    break;
+  case 2:
+    axis=histo->GetZaxis();
+    break;
+  default:
+    return res;
+  }
+  res.setLabel(axis->GetTitle());
+  const int nbins=axis->GetNbins();
+  for (int i=0; i<=nbins; i++) res.addBinBoundary(axis->GetBinLowEdge(i+1));
+  return res;
+}

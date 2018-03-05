@@ -784,10 +784,11 @@ void HelperFunctions::regularizeSlice(
   for (unsigned int ix=0; ix<ndim; ix++) delete[] xy_mod[ix];
 }
 
+
 float HelperFunctions::calculateEfficiencyError(
   float const sumW, float const sumWAll,
   float const sumWsq, float const sumWsqAll
-  ){
+){
   float const& sumWp=sumW;
   float const& sumWsqp=sumWsq;
   float const sumWm = sumWAll-sumWp;
@@ -800,6 +801,17 @@ float HelperFunctions::calculateEfficiencyError(
     ratio = numerator/denominator;
   }
   return ratio;
+}
+
+float HelperFunctions::translateEfficiencyErrorToNumeratorError(
+  float const eff, float const sumWAll,
+  float const effErr, float const sumWsqAll
+){
+  double numerator = pow(effErr*pow(sumWAll, 2), 2);
+  double sumWp = eff*sumWAll;
+  double sumWm = sumWAll-sumWp;
+  double res = (numerator - sumWsqAll*pow(sumWp, 2))/(pow(sumWm, 2)-pow(sumWp, 2));
+  return sqrt(res);
 }
 
 
@@ -1926,6 +1938,52 @@ template <> void HelperFunctions::translateCumulantToHistogram<TH3F>(TH3F const*
   }
 }
 
+void HelperFunctions::rebinProfile(TProfile*& prof, const ExtendedBinning& binningX){
+  if (!prof) return;
+  if (!binningX.isValid()) MELAerr << "HelperFunctions::rebinProfile: New binning is not valid!" << endl;
+
+  const TString hname=prof->GetName();
+  const TString htitle=prof->GetTitle();
+
+  double boundaries[2]={ prof->GetXaxis()->GetBinLowEdge(1), prof->GetXaxis()->GetBinLowEdge(prof->GetNbinsX()+1) };
+  double val_under_over[2]={ prof->GetBinContent(0), prof->GetBinContent(prof->GetNbinsX()+1) };
+  double err_under_over[2]={ prof->GetBinError(0), prof->GetBinError(prof->GetNbinsX()+1) };
+  RooRealVar xvar("xvar", "", boundaries[0], boundaries[1]);
+
+  MELANCSplineFactory_1D spFac(xvar, "tmpSpline");
+  MELANCSplineFactory_1D spErrFac(xvar, "tmpSplineErr");
+  vector<pair<MELANCSplineCore::T, MELANCSplineCore::T>> pList, pErrList;
+  for (int ix=1; ix<=prof->GetNbinsX(); ix++){
+    if (prof->GetBinError(ix)==0.){ MELAout << "HelperFunctions::rebinProfile: Omitting bin " << ix << endl; continue; }
+    pList.emplace_back(prof->GetXaxis()->GetBinCenter(ix), prof->GetBinContent(ix));
+    pErrList.emplace_back(prof->GetXaxis()->GetBinCenter(ix), pow(prof->GetBinError(ix), 2));
+  }
+  spFac.setPoints(pList);
+  spErrFac.setPoints(pErrList);
+  const MELANCSpline_1D_fast* sp = spFac.getFunc();
+  const MELANCSpline_1D_fast* spErr = spErrFac.getFunc();
+
+  delete prof;
+  prof = new TProfile(hname, htitle, binningX.getNbins(), binningX.getBinning());
+  for (unsigned int ix=0; ix<binningX.getNbins(); ix++){
+    double xval=binningX.getBinCenter(ix);
+    double cval=0;
+    double errval=0;
+    if (xval>=xvar.getMin() && xval<=xvar.getMax()){
+      xvar.setVal(xval);
+      cval = sp->getVal();
+      errval = spErr->getVal();
+      if (errval<0.) errval=0.;
+    }
+    else MELAerr << "HelperFunctions::rebinProfile: X val " << xval << " outside of range " << xvar.getMin() << " , " << xvar.getMax() << endl;
+    prof->SetBinEntries(ix+1, 1);
+    prof->SetBinContent(ix+1, cval);
+    prof->SetBinError(ix+1, sqrt(std::max(0., errval)));
+  }
+  if (boundaries[0]<=binningX.getBinLowEdge(0)){ prof->SetBinEntries(0, 1); prof->SetBinContent(0, val_under_over[0]); prof->SetBinError(0, err_under_over[0]); }
+  if (boundaries[1]>=binningX.getBinLowEdge(binningX.getNbins())){ prof->SetBinEntries(prof->GetNbinsX()+1, 1); prof->SetBinContent(prof->GetNbinsX()+1, val_under_over[1]); prof->SetBinError(prof->GetNbinsX()+1, err_under_over[1]); }
+}
+
 void HelperFunctions::rebinCumulant(TH1F*& histo, const ExtendedBinning& binningX){
   if (!histo) return;
   const TString hname=histo->GetName();
@@ -1961,13 +2019,18 @@ void HelperFunctions::rebinCumulant(TH1F*& histo, const ExtendedBinning& binning
     histo->SetBinError(ix, sqrt(std::max(0., errval)));
   }
 }
-void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs){
+void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX_, const ExtendedBinning& binningY_, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs){
   if (!histo) return;
   const TString hname=histo->GetName();
   const TString htitle=histo->GetTitle();
   RooRealVar xvar("xvar", "", histo->GetXaxis()->GetBinLowEdge(1), histo->GetXaxis()->GetBinLowEdge(histo->GetNbinsX()+1));
   RooRealVar yvar("yvar", "", histo->GetYaxis()->GetBinLowEdge(1), histo->GetYaxis()->GetBinLowEdge(histo->GetNbinsY()+1));
 
+  ExtendedBinning binningX(binningX_), binningY(binningY_);
+  unsigned int nbinsXoriginal=histo->GetNbinsX();
+  unsigned int nbinsYoriginal=histo->GetNbinsY();
+  unsigned int ixfirst=0, ixlast=nbinsXoriginal;
+  unsigned int iyfirst=0, iylast=nbinsYoriginal;
   const TProfile* prof_x=nullptr;
   const TProfile* prof_y=nullptr;
   if (condProfs){
@@ -1975,19 +2038,37 @@ void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binning
       if (prof_dim.second==0) prof_x=prof_dim.first;
       if (prof_dim.second==1) prof_y=prof_dim.first;
     }
+    if (prof_x && (prof_x->GetNbinsX()!=(int) nbinsXoriginal || nbinsXoriginal!=binningX.getNbins())){
+      MELAerr << "HelperFunctions::rebinCumulant: Conditional cumulant rebinning requires X binning to be the same" << endl;
+      prof_x=nullptr;
+    }
+    if (prof_y && (prof_y->GetNbinsX()!=(int) nbinsYoriginal || nbinsYoriginal!=binningY.getNbins())){
+      MELAerr << "HelperFunctions::rebinCumulant: Conditional cumulant rebinning requires Y binning to be the same" << endl;
+      prof_y=nullptr;
+    }
+    if (prof_x){
+      if (prof_x->GetBinError(0)!=0.) ixfirst=0;
+      else ixfirst=1;
+      if (prof_x->GetBinError(nbinsXoriginal+1)!=0.) ixlast=nbinsXoriginal+1;
+      else ixlast=nbinsXoriginal;
+      binningX=ExtendedBinning::extractBinning(prof_x, 0);
+    }
+    if (prof_y){
+      if (prof_y->GetBinError(0)!=0.) iyfirst=0;
+      else iyfirst=1;
+      if (prof_y->GetBinError(nbinsYoriginal+1)!=0.) iylast=nbinsYoriginal+1;
+      else iylast=nbinsYoriginal;
+      binningY=ExtendedBinning::extractBinning(prof_y, 0);
+    }
+    if (prof_x && prof_y){ MELAerr << "HelperFunctions::rebinCumulant: Cannot rebin a 2D cumulant with 2 conditional dimensions. Returning the original cumulant." << endl; return; }
   }
-  TGraphErrors* tgprof_x=nullptr; TSpline3* spprof_x=nullptr;
-  TGraphErrors* tgprof_y=nullptr; TSpline3* spprof_y=nullptr;
-  if (prof_x) tgprof_x=makeGraphFromTH1(nullptr, prof_x, "");
-  if (prof_y) tgprof_y=makeGraphFromTH1(nullptr, prof_y, "");
-  if (tgprof_x) spprof_x=convertGraphToSpline3(tgprof_x);
-  if (tgprof_y) spprof_y=convertGraphToSpline3(tgprof_y);
+  if (!binningX.isValid() || !binningY.isValid()){ MELAerr << "HelperFunctions::rebinCumulant: Cannot rebin a 2D cumulant with an invalid binning" << endl; return; }
 
   MELANCSplineFactory_2D spFac(xvar, yvar, "tmpSpline");
   MELANCSplineFactory_2D spErrFac(xvar, yvar, "tmpSplineErr");
   vector<splineTriplet_t> pList, pErrList;
-  for (int ix=0; ix<=histo->GetNbinsX()+(prof_x ? 1 : 0); ix++){
-    for (int iy=0; iy<=histo->GetNbinsY()+(prof_y ? 1 : 0); iy++){
+  for (unsigned int ix=ixfirst; ix<=ixlast; ix++){
+    for (unsigned int iy=iyfirst; iy<=iylast; iy++){
       double xval, yval;
       double wval = histo->GetBinContent(ix, iy);
       double errsqval = pow(histo->GetBinError(ix, iy), 2);
@@ -2004,15 +2085,20 @@ void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binning
   const MELANCSpline_2D_fast* sp = spFac.getFunc();
   const MELANCSpline_2D_fast* spErr = spErrFac.getFunc();
 
-  // Once cumulant is rebinned, errors are lost
   delete histo;
   histo = new TH2F(hname, htitle, binningX.getNbins(), binningX.getBinning(), binningY.getNbins(), binningY.getBinning());
-  for (unsigned int ix=0; ix<binningX.getNbins()+(spprof_x ? 0 : 1); ix++){
+  for (unsigned int ix=0; ix<binningX.getNbins()+(prof_x ? 2 : 1); ix++){
     double xval=binningX.getBinLowEdge(ix);
-    if (spprof_x) xval=spprof_x->Eval(binningX.getBinCenter(ix));
-    for (unsigned int iy=0; iy<binningY.getNbins()+(spprof_y ? 0 : 1); iy++){
+    if (prof_x){
+      if ((ixfirst==1 && ix==0) || (ixlast==nbinsXoriginal && ix==binningX.getNbins()+1)) continue;
+      xval=prof_x->GetBinContent(ix);
+    }
+    for (unsigned int iy=0; iy<binningY.getNbins()+(prof_y ? 2 : 1); iy++){
       double yval=binningY.getBinLowEdge(iy);
-      if (spprof_y) yval=spprof_y->Eval(binningY.getBinCenter(iy));
+      if (prof_y){
+        if ((iyfirst==1 && iy==0) || (iylast==nbinsYoriginal && iy==binningY.getNbins()+1)) continue;
+        yval=prof_y->GetBinContent(iy);
+      }
       double cval=0;
       double errval=0;
       if (xval>=xvar.getMin() && xval<=xvar.getMax() && yval>=yvar.getMin() && yval<=yvar.getMax()){
@@ -2022,17 +2108,12 @@ void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binning
         errval = spErr->getVal();
         if (errval<0.) errval=0.;
       }
-      histo->SetBinContent(ix+(spprof_x ? 1 : 0), iy+(spprof_y ? 1 : 0), cval);
-      histo->SetBinError(ix+(spprof_x ? 1 : 0), iy+(spprof_y ? 1 : 0), sqrt(std::max(0., errval)));
+      histo->SetBinContent(ix, iy, cval);
+      histo->SetBinError(ix, iy, sqrt(std::max(0., errval)));
     }
   }
-
-  delete tgprof_x;
-  delete tgprof_y;
-  delete spprof_x;
-  delete spprof_y;
 }
-void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs){
+void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX_, const ExtendedBinning& binningY_, const ExtendedBinning& binningZ_, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs){
   if (!histo) return;
   const TString hname=histo->GetName();
   const TString htitle=histo->GetTitle();
@@ -2040,6 +2121,13 @@ void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binning
   RooRealVar yvar("yvar", "", histo->GetYaxis()->GetBinLowEdge(1), histo->GetYaxis()->GetBinLowEdge(histo->GetNbinsY()+1));
   RooRealVar zvar("zvar", "", histo->GetZaxis()->GetBinLowEdge(1), histo->GetZaxis()->GetBinLowEdge(histo->GetNbinsZ()+1));
 
+  ExtendedBinning binningX(binningX_), binningY(binningY_), binningZ(binningZ_);
+  unsigned int nbinsXoriginal=histo->GetNbinsX();
+  unsigned int nbinsYoriginal=histo->GetNbinsY();
+  unsigned int nbinsZoriginal=histo->GetNbinsZ();
+  unsigned int ixfirst=0, ixlast=nbinsXoriginal;
+  unsigned int iyfirst=0, iylast=nbinsYoriginal;
+  unsigned int izfirst=0, izlast=nbinsZoriginal;
   const TProfile* prof_x=nullptr;
   const TProfile* prof_y=nullptr;
   const TProfile* prof_z=nullptr;
@@ -2049,23 +2137,49 @@ void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binning
       if (prof_dim.second==1) prof_y=prof_dim.first;
       if (prof_dim.second==2) prof_z=prof_dim.first;
     }
+    if (prof_x && (prof_x->GetNbinsX()!=(int) nbinsXoriginal || nbinsXoriginal!=binningX.getNbins())){
+      MELAerr << "HelperFunctions::rebinCumulant: Conditional cumulant rebinning requires X binning to be the same" << endl;
+      prof_x=nullptr;
+    }
+    if (prof_y && (prof_y->GetNbinsX()!=(int) nbinsYoriginal || nbinsYoriginal!=binningY.getNbins())){
+      MELAerr << "HelperFunctions::rebinCumulant: Conditional cumulant rebinning requires Y binning to be the same" << endl;
+      prof_y=nullptr;
+    }
+    if (prof_z && (prof_z->GetNbinsX()!=(int) nbinsZoriginal || nbinsZoriginal!=binningZ.getNbins())){
+      MELAerr << "HelperFunctions::rebinCumulant: Conditional cumulant rebinning requires Z binning to be the same" << endl;
+      prof_z=nullptr;
+    }
+    if (prof_x){
+      if (prof_x->GetBinError(0)!=0.) ixfirst=0;
+      else ixfirst=1;
+      if (prof_x->GetBinError(nbinsXoriginal+1)!=0.) ixlast=nbinsXoriginal+1;
+      else ixlast=nbinsXoriginal;
+      binningX=ExtendedBinning::extractBinning(prof_x, 0);
+    }
+    if (prof_y){
+      if (prof_y->GetBinError(0)!=0.) iyfirst=0;
+      else iyfirst=1;
+      if (prof_y->GetBinError(nbinsYoriginal+1)!=0.) iylast=nbinsYoriginal+1;
+      else iylast=nbinsYoriginal;
+      binningY=ExtendedBinning::extractBinning(prof_y, 0);
+    }
+    if (prof_z){
+      if (prof_z->GetBinError(0)!=0.) izfirst=0;
+      else izfirst=1;
+      if (prof_z->GetBinError(nbinsZoriginal+1)!=0.) izlast=nbinsZoriginal+1;
+      else izlast=nbinsZoriginal;
+      binningZ=ExtendedBinning::extractBinning(prof_z, 0);
+    }
+    if (prof_x && prof_y && prof_z){ MELAerr << "HelperFunctions::rebinCumulant: Cannot rebin a 3D cumulant with 3 conditional dimensions. Returning the original cumulant." << endl; return; }
   }
-  TGraphErrors* tgprof_x=nullptr; TSpline3* spprof_x=nullptr;
-  TGraphErrors* tgprof_y=nullptr; TSpline3* spprof_y=nullptr;
-  TGraphErrors* tgprof_z=nullptr; TSpline3* spprof_z=nullptr;
-  if (prof_x) tgprof_x=makeGraphFromTH1(nullptr, prof_x, "");
-  if (prof_y) tgprof_y=makeGraphFromTH1(nullptr, prof_y, "");
-  if (prof_z) tgprof_z=makeGraphFromTH1(nullptr, prof_z, "");
-  if (tgprof_x) spprof_x=convertGraphToSpline3(tgprof_x);
-  if (tgprof_y) spprof_y=convertGraphToSpline3(tgprof_y);
-  if (tgprof_z) spprof_z=convertGraphToSpline3(tgprof_z);
+  if (!binningX.isValid() || !binningY.isValid() || !binningZ.isValid()){ MELAerr << "HelperFunctions::rebinCumulant: Cannot rebin a 3D cumulant with an invalid binning" << endl; return; }
 
   MELANCSplineFactory_3D spFac(xvar, yvar, zvar, "tmpSpline");
   MELANCSplineFactory_3D spErrFac(xvar, yvar, zvar, "tmpSplineErr");
   vector<splineQuadruplet_t> pList, pErrList;
-  for (int ix=0; ix<=histo->GetNbinsX()+(prof_x ? 1 : 0); ix++){
-    for (int iy=0; iy<=histo->GetNbinsY()+(prof_y ? 1 : 0); iy++){
-      for (int iz=0; iz<=histo->GetNbinsZ()+(prof_z ? 1 : 0); iz++){
+  for (unsigned int ix=ixfirst; ix<=ixlast; ix++){
+    for (unsigned int iy=iyfirst; iy<=iylast; iy++){
+      for (unsigned int iz=izfirst; iz<=izlast; iz++){
         double xval, yval, zval;
         double wval = histo->GetBinContent(ix, iy, iz);
         double errsqval = pow(histo->GetBinError(ix, iy, iz), 2);
@@ -2085,18 +2199,26 @@ void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binning
   const MELANCSpline_3D_fast* sp = spFac.getFunc();
   const MELANCSpline_3D_fast* spErr = spErrFac.getFunc();
 
-  // Once cumulant is rebinned, errors are lost
   delete histo;
   histo = new TH3F(hname, htitle, binningX.getNbins(), binningX.getBinning(), binningY.getNbins(), binningY.getBinning(), binningZ.getNbins(), binningZ.getBinning());
-  for (unsigned int ix=0; ix<binningX.getNbins()+(spprof_x ? 0 : 1); ix++){
+  for (unsigned int ix=0; ix<binningX.getNbins()+(prof_x ? 2 : 1); ix++){
     double xval=binningX.getBinLowEdge(ix);
-    if (spprof_x) xval=spprof_x->Eval(binningX.getBinCenter(ix));
-    for (unsigned int iy=0; iy<binningY.getNbins()+(spprof_y ? 0 : 1); iy++){
+    if (prof_x){
+      if ((ixfirst==1 && ix==0) || (ixlast==nbinsXoriginal && ix==binningX.getNbins()+1)) continue;
+      xval=prof_x->GetBinContent(ix);
+    }
+    for (unsigned int iy=0; iy<binningY.getNbins()+(prof_y ? 2 : 1); iy++){
       double yval=binningY.getBinLowEdge(iy);
-      if (spprof_y) yval=spprof_y->Eval(binningY.getBinCenter(iy));
-      for (unsigned int iz=0; iz<binningZ.getNbins()+(spprof_z ? 0 : 1); iz++){
+      if (prof_y){
+        if ((iyfirst==1 && iy==0) || (iylast==nbinsYoriginal && iy==binningY.getNbins()+1)) continue;
+        yval=prof_y->GetBinContent(iy);
+      }
+      for (unsigned int iz=0; iz<binningZ.getNbins()+(prof_z ? 2 : 1); iz++){
         double zval=binningZ.getBinLowEdge(iz);
-        if (spprof_z) zval=spprof_z->Eval(binningZ.getBinCenter(iz));
+        if (prof_z){
+          if ((izfirst==1 && iz==0) || (izlast==nbinsYoriginal && iz==binningY.getNbins()+1)) continue;
+          zval=prof_z->GetBinContent(iz);
+        }
         double cval=0;
         double errval=0;
         if (xval>=xvar.getMin() && xval<=xvar.getMax() && yval>=yvar.getMin() && yval<=yvar.getMax() && zval>=zvar.getMin() && zval<=zvar.getMax()){
@@ -2107,19 +2229,11 @@ void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binning
           errval = spErr->getVal();
           if (errval<0.) errval=0.;
         }
-        histo->SetBinContent(ix+(spprof_x ? 1 : 0), iy+(spprof_y ? 1 : 0), iz+(spprof_z ? 1 : 0), cval);
-        histo->SetBinError(ix+(spprof_x ? 1 : 0), iy+(spprof_y ? 1 : 0), iz+(spprof_z ? 1 : 0), sqrt(std::max(0., errval)));
+        histo->SetBinContent(ix, iy, iz, cval);
+        histo->SetBinError(ix, iy, iz, sqrt(std::max(0., errval)));
       }
     }
   }
-
-
-  delete tgprof_x;
-  delete tgprof_y;
-  delete tgprof_z;
-  delete spprof_x;
-  delete spprof_y;
-  delete spprof_z;
 }
 
 void HelperFunctions::rebinHistogram(TH1F*& histo, const ExtendedBinning& binningX){
@@ -2162,18 +2276,28 @@ void HelperFunctions::rebinHistogram(TH3F*& histo, const ExtendedBinning& binnin
   delete htmp_cumulant;
 }
 
-void HelperFunctions::rebinProfile(TProfile*& prof, const ExtendedBinning& binningX){
-  if (!prof) return;
-  const TString hname=prof->GetName();
-  const TString htitle=prof->GetTitle();
-  RooRealVar xvar("xvar", "", prof->GetXaxis()->GetBinLowEdge(1), prof->GetXaxis()->GetBinLowEdge(prof->GetNbinsX()+1));
+void HelperFunctions::rebinHistogram_NoCumulant(TH1F*& histo, const ExtendedBinning& binningX, const TProfile* prof_x){
+  if (!histo || !prof_x || !binningX.isValid()) return;
+
+  TProfile* prof_final_x = new TProfile(*prof_x); prof_final_x->SetName(TString(prof_final_x->GetName())+"_copy");
+  rebinProfile(prof_final_x, binningX);
+
+  const TString hname=histo->GetName();
+  const TString htitle=histo->GetTitle();
+  RooRealVar xvar(
+    "xvar", "",
+    std::min(binningX.getBinLowEdge(0), histo->GetXaxis()->GetBinLowEdge(1)),
+    std::max(binningX.getBinLowEdge(binningX.getNbins()), histo->GetXaxis()->GetBinLowEdge(histo->GetNbinsX()+1))
+  );
 
   MELANCSplineFactory_1D spFac(xvar, "tmpSpline");
   MELANCSplineFactory_1D spErrFac(xvar, "tmpSplineErr");
   vector<pair<MELANCSplineCore::T, MELANCSplineCore::T>> pList, pErrList;
-  for (int ix=1; ix<=prof->GetNbinsX(); ix++){
-    pList.emplace_back(prof->GetXaxis()->GetBinCenter(ix), prof->GetBinContent(ix));
-    pErrList.emplace_back(prof->GetXaxis()->GetBinCenter(ix), pow(prof->GetBinError(ix), 2));
+  for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
+    if (prof_x->GetBinError(ix)!=0.){
+      pList.emplace_back(prof_x->GetBinContent(ix), histo->GetBinContent(ix));
+      pErrList.emplace_back(prof_x->GetBinContent(ix), pow(histo->GetBinError(ix), 2));
+    }
   }
   spFac.setPoints(pList);
   spErrFac.setPoints(pErrList);
@@ -2181,26 +2305,156 @@ void HelperFunctions::rebinProfile(TProfile*& prof, const ExtendedBinning& binni
   const MELANCSpline_1D_fast* spErr = spErrFac.getFunc();
 
   // Once cumulant is rebinned, errors are lost
-  double boundaries[2]={ prof->GetXaxis()->GetBinLowEdge(1), prof->GetXaxis()->GetBinLowEdge(prof->GetNbinsX()+1) };
-  double val_under_over[2]={ prof->GetBinContent(0), prof->GetBinContent(prof->GetNbinsX()+1) };
-  double err_under_over[2]={ prof->GetBinError(0), prof->GetBinError(prof->GetNbinsX()+1) };
-  delete prof;
-  prof = new TProfile(hname, htitle, binningX.getNbins(), binningX.getBinning());
-  for (unsigned int ix=0; ix<binningX.getNbins(); ix++){
-    double xval=binningX.getBinCenter(ix);
+  delete histo;
+  histo = new TH1F(hname, htitle, binningX.getNbins(), binningX.getBinning());
+  for (unsigned int ix=0; ix<=binningX.getNbins()+1; ix++){
+    double xval=prof_final_x->GetBinContent(ix);
     double cval=0;
     double errval=0;
-    if (xval>=xvar.getMin() && xval<=xvar.getMax()){
+    xvar.setVal(xval);
+    cval = sp->getVal();
+    errval = spErr->getVal();
+    if (errval<0.) errval=0.;
+    histo->SetBinContent(ix, cval);
+    histo->SetBinError(ix, sqrt(std::max(0., errval)));
+  }
+
+  delete prof_final_x;
+}
+void HelperFunctions::rebinHistogram_NoCumulant(TH2F*& histo, const ExtendedBinning& binningX, const TProfile* prof_x, const ExtendedBinning& binningY, const TProfile* prof_y){
+  if (!histo || !prof_x || !binningX.isValid() || !prof_y || !binningY.isValid()) return;
+
+  TProfile* prof_final_x = new TProfile(*prof_x); prof_final_x->SetName(TString(prof_final_x->GetName())+"_copy");
+  rebinProfile(prof_final_x, binningX);
+  TProfile* prof_final_y = new TProfile(*prof_y); prof_final_y->SetName(TString(prof_final_y->GetName())+"_copy");
+  rebinProfile(prof_final_y, binningY);
+
+  const TString hname=histo->GetName();
+  const TString htitle=histo->GetTitle();
+  RooRealVar xvar(
+    "xvar", "",
+    std::min(binningX.getBinLowEdge(0), histo->GetXaxis()->GetBinLowEdge(1)),
+    std::max(binningX.getBinLowEdge(binningX.getNbins()), histo->GetXaxis()->GetBinLowEdge(histo->GetNbinsX()+1))
+  );
+  RooRealVar yvar(
+    "yvar", "",
+    std::min(binningY.getBinLowEdge(0), histo->GetYaxis()->GetBinLowEdge(1)),
+    std::max(binningY.getBinLowEdge(binningY.getNbins()), histo->GetYaxis()->GetBinLowEdge(histo->GetNbinsY()+1))
+  );
+
+  MELANCSplineFactory_2D spFac(xvar, yvar, "tmpSpline");
+  MELANCSplineFactory_2D spErrFac(xvar, yvar, "tmpSplineErr");
+  vector<splineTriplet_t> pList, pErrList;
+  for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
+    if (prof_x->GetBinError(ix)==0.) continue;
+    for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
+      if (prof_y->GetBinError(iy)==0.) continue;
+
+      pList.emplace_back(prof_x->GetBinContent(ix), prof_y->GetBinContent(iy), histo->GetBinContent(ix, iy));
+      pErrList.emplace_back(prof_x->GetBinContent(ix), prof_y->GetBinContent(iy), pow(histo->GetBinError(ix, iy), 2));
+    }
+  }
+  spFac.setPoints(pList);
+  spErrFac.setPoints(pErrList);
+  const MELANCSpline_2D_fast* sp = spFac.getFunc();
+  const MELANCSpline_2D_fast* spErr = spErrFac.getFunc();
+
+  // Once cumulant is rebinned, errors are lost
+  delete histo;
+  histo = new TH2F(hname, htitle, binningX.getNbins(), binningX.getBinning(), binningY.getNbins(), binningY.getBinning());
+  for (unsigned int ix=0; ix<=binningX.getNbins()+1; ix++){
+    double xval=prof_final_x->GetBinContent(ix);
+    for (unsigned int iy=0; iy<=binningY.getNbins()+1; iy++){
+      double yval=prof_final_y->GetBinContent(iy);
+      double cval=0;
+      double errval=0;
       xvar.setVal(xval);
+      yvar.setVal(yval);
       cval = sp->getVal();
       errval = spErr->getVal();
       if (errval<0.) errval=0.;
+      histo->SetBinContent(ix, iy, cval);
+      histo->SetBinError(ix, iy, sqrt(std::max(0., errval)));
     }
-    prof->SetBinContent(ix+1, cval);
-    prof->SetBinError(ix+1, sqrt(std::max(0., errval)));
   }
-  if (boundaries[0]<=xvar.getMin()){ prof->SetBinContent(0, val_under_over[0]); prof->SetBinError(0, err_under_over[0]); }
-  if (boundaries[1]>=xvar.getMax()){ prof->SetBinContent(prof->GetNbinsX()+1, val_under_over[1]); prof->SetBinError(prof->GetNbinsX()+1, err_under_over[1]); }
+
+  delete prof_final_x;
+  delete prof_final_y;
+}
+void HelperFunctions::rebinHistogram_NoCumulant(TH3F*& histo, const ExtendedBinning& binningX, const TProfile* prof_x, const ExtendedBinning& binningY, const TProfile* prof_y, const ExtendedBinning& binningZ, const TProfile* prof_z){
+  if (!histo || !prof_x || !binningX.isValid() || !prof_y || !binningY.isValid() || !prof_z || !binningZ.isValid()) return;
+
+  TProfile* prof_final_x = new TProfile(*prof_x); prof_final_x->SetName(TString(prof_final_x->GetName())+"_copy");
+  rebinProfile(prof_final_x, binningX);
+  TProfile* prof_final_y = new TProfile(*prof_y); prof_final_y->SetName(TString(prof_final_y->GetName())+"_copy");
+  rebinProfile(prof_final_y, binningY);
+  TProfile* prof_final_z = new TProfile(*prof_z); prof_final_z->SetName(TString(prof_final_z->GetName())+"_copy");
+  rebinProfile(prof_final_z, binningZ);
+
+  const TString hname=histo->GetName();
+  const TString htitle=histo->GetTitle();
+  RooRealVar xvar(
+    "xvar", "",
+    std::min(binningX.getBinLowEdge(0), histo->GetXaxis()->GetBinLowEdge(1)),
+    std::max(binningX.getBinLowEdge(binningX.getNbins()), histo->GetXaxis()->GetBinLowEdge(histo->GetNbinsX()+1))
+  );
+  RooRealVar yvar(
+    "yvar", "",
+    std::min(binningY.getBinLowEdge(0), histo->GetYaxis()->GetBinLowEdge(1)),
+    std::max(binningY.getBinLowEdge(binningY.getNbins()), histo->GetYaxis()->GetBinLowEdge(histo->GetNbinsY()+1))
+  );
+  RooRealVar zvar(
+    "zvar", "",
+    std::min(binningZ.getBinLowEdge(0), histo->GetZaxis()->GetBinLowEdge(1)),
+    std::max(binningZ.getBinLowEdge(binningZ.getNbins()), histo->GetZaxis()->GetBinLowEdge(histo->GetNbinsZ()+1))
+  );
+
+  MELANCSplineFactory_3D spFac(xvar, yvar, zvar, "tmpSpline");
+  MELANCSplineFactory_3D spErrFac(xvar, yvar, zvar, "tmpSplineErr");
+  vector<splineQuadruplet_t> pList, pErrList;
+  for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
+    if (prof_x->GetBinError(ix)==0.) continue;
+    for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
+      if (prof_y->GetBinError(iy)==0.) continue;
+      for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
+        if (prof_z->GetBinError(iz)==0.) continue;
+
+        pList.emplace_back(prof_x->GetBinContent(ix), prof_y->GetBinContent(iy), prof_z->GetBinContent(iz), histo->GetBinContent(ix, iy, iz));
+        pErrList.emplace_back(prof_x->GetBinContent(ix), prof_y->GetBinContent(iy), prof_z->GetBinContent(iz), pow(histo->GetBinError(ix, iy, iz), 2));
+      }
+    }
+  }
+  spFac.setPoints(pList);
+  spErrFac.setPoints(pErrList);
+  const MELANCSpline_3D_fast* sp = spFac.getFunc();
+  const MELANCSpline_3D_fast* spErr = spErrFac.getFunc();
+
+  // Once cumulant is rebinned, errors are lost
+  delete histo;
+  histo = new TH3F(hname, htitle, binningX.getNbins(), binningX.getBinning(), binningY.getNbins(), binningY.getBinning(), binningZ.getNbins(), binningZ.getBinning());
+  for (unsigned int ix=0; ix<=binningX.getNbins()+1; ix++){
+    double xval=prof_final_x->GetBinContent(ix);
+    for (unsigned int iy=0; iy<=binningY.getNbins()+1; iy++){
+      double yval=prof_final_y->GetBinContent(iy);
+      for (unsigned int iz=0; iz<=binningZ.getNbins()+1; iz++){
+        double zval=prof_final_z->GetBinContent(iz);
+        double cval=0;
+        double errval=0;
+        xvar.setVal(xval);
+        yvar.setVal(yval);
+        zvar.setVal(zval);
+        cval = sp->getVal();
+        errval = spErr->getVal();
+        if (errval<0.) errval=0.;
+        histo->SetBinContent(ix, iy, iz, cval);
+        histo->SetBinError(ix, iy, iz, sqrt(std::max(0., errval)));
+      }
+    }
+  }
+
+  delete prof_final_x;
+  delete prof_final_y;
+  delete prof_final_z;
 }
 
 TH1F* HelperFunctions::getHistogramSlice(TH2F const* histo, unsigned char XDirection, int iy, int jy, TString newname){
@@ -2212,11 +2466,11 @@ TH1F* HelperFunctions::getHistogramSlice(TH2F const* histo, unsigned char XDirec
   vector<float> bins;
   if (XDirection==0){
     for (int i=1; i<=xaxis->GetNbins()+1; i++) bins.push_back(xaxis->GetBinLowEdge(i));
-    iy = std::max(0, iy); jy = std::min(yaxis->GetNbins(), jy);
+    iy = std::max(0, iy); jy = std::min(yaxis->GetNbins()+1, jy);
   }
   else{
     for (int i=1; i<=yaxis->GetNbins()+1; i++) bins.push_back(yaxis->GetBinLowEdge(i));
-    iy = std::max(0, iy); jy = std::min(xaxis->GetNbins(), jy);
+    iy = std::max(0, iy); jy = std::min(xaxis->GetNbins()+1, jy);
   }
   if (iy>jy) MELAerr << "HelperFunctions::getHistogramSlice: iy>jy!" << endl;
   TH1F* res = new TH1F(newname, "", bins.size()-1, bins.data());
@@ -2264,8 +2518,8 @@ TH1F* HelperFunctions::getHistogramSlice(TH3F const* histo, unsigned char XDirec
     zaxis=histo->GetYaxis();
   }
   for (int i=1; i<=xaxis->GetNbins()+1; i++) bins.push_back(xaxis->GetBinLowEdge(i));
-  iy = std::max(0, iy); jy = std::min(yaxis->GetNbins(), jy);
-  iz = std::max(0, iz); jz = std::min(zaxis->GetNbins(), jz);
+  iy = std::max(0, iy); jy = std::min(yaxis->GetNbins()+1, jy);
+  iz = std::max(0, iz); jz = std::min(zaxis->GetNbins()+1, jz);
   if (iy>jy) MELAerr << "HelperFunctions::getHistogramSlice: iy>jy!" << endl;
   if (iz>jz) MELAerr << "HelperFunctions::getHistogramSlice: iz>jz!" << endl;
   TH1F* res = new TH1F(newname, "", bins.size()-1, bins.data());
@@ -2316,7 +2570,7 @@ TH2F* HelperFunctions::getHistogramSlice(TH3F const* histo, unsigned char XDirec
 
   for (int i=1; i<=xaxis->GetNbins()+1; i++) xbins.push_back(xaxis->GetBinLowEdge(i));
   for (int i=1; i<=yaxis->GetNbins()+1; i++) ybins.push_back(yaxis->GetBinLowEdge(i));
-  iz = std::max(0, iz); std::min(zaxis->GetNbins(), jz);
+  iz = std::max(0, iz); std::min(zaxis->GetNbins()+1, jz);
   TH2F* res = new TH2F(newname, "", xbins.size()-1, xbins.data(), ybins.size()-1, ybins.data());
 
   for (int ii=0; ii<=xaxis->GetNbins()+1; ii++){

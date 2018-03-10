@@ -283,6 +283,46 @@ ExtendedBinning TemplateHelpers::getDiscriminantCoarseBinning(const SampleHelper
   }
   return res;
 }
+ProcessHandler const* TemplateHelpers::getOnshellProcessHandler(ProcessHandler::ProcessType type){
+  switch (type){
+  case ProcessHandler::kGG:
+    return &TemplateHelpers::OnshellGGProcessHandle;
+  case ProcessHandler::kVV:
+    return &TemplateHelpers::OnshellVVProcessHandle;
+  case ProcessHandler::kVBF:
+    return &TemplateHelpers::OnshellVBFProcessHandle;
+  case ProcessHandler::kZH:
+    return &TemplateHelpers::OnshellZHProcessHandle;
+  case ProcessHandler::kWH:
+    return &TemplateHelpers::OnshellWHProcessHandle;
+  case ProcessHandler::kQQBkg:
+    return &TemplateHelpers::OnshellQQBkgProcessHandle;
+  case ProcessHandler::kZX:
+    return &TemplateHelpers::OnshellZXProcessHandle;
+  default:
+    return nullptr;;
+  };
+}
+ProcessHandler const* TemplateHelpers::getOffshellProcessHandler(ProcessHandler::ProcessType type){
+  switch (type){
+  case ProcessHandler::kGG:
+    return &TemplateHelpers::OffshellGGProcessHandle;
+  case ProcessHandler::kVV:
+    return &TemplateHelpers::OffshellVVProcessHandle;
+  case ProcessHandler::kVBF:
+    return &TemplateHelpers::OffshellVBFProcessHandle;
+  case ProcessHandler::kZH:
+    return &TemplateHelpers::OffshellZHProcessHandle;
+  case ProcessHandler::kWH:
+    return &TemplateHelpers::OffshellWHProcessHandle;
+  case ProcessHandler::kQQBkg:
+    return &TemplateHelpers::OffshellQQBkgProcessHandle;
+  case ProcessHandler::kZX:
+    return &TemplateHelpers::OffshellZXProcessHandle;
+  default:
+    return nullptr;;
+  };
+}
 
 
 /******************/

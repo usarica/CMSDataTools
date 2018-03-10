@@ -26,6 +26,8 @@ namespace TemplateHelpers{
   ExtendedBinning getDiscriminantFineBinning(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell);
   ExtendedBinning getDiscriminantCoarseBinning(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell);
 
+  ProcessHandler const* getOnshellProcessHandler(ProcessHandler::ProcessType type);
+  ProcessHandler const* getOffshellProcessHandler(ProcessHandler::ProcessType type);
 
   /****************/
   /* Gluon fusion */

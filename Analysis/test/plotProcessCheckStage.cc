@@ -29,23 +29,7 @@ void plotProcessCheckStage(
 ){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  ProcessHandler const* thePerProcessHandle=nullptr;
-  switch (proctype){
-  case ProcessHandler::kGG:
-    thePerProcessHandle = &TemplateHelpers::OffshellGGProcessHandle;
-    break;
-  case ProcessHandler::kVV:
-    thePerProcessHandle = &TemplateHelpers::OffshellVVProcessHandle;
-    break;
-  case ProcessHandler::kQQBkg:
-    thePerProcessHandle = &TemplateHelpers::OffshellQQBkgProcessHandle;
-    break;
-  case ProcessHandler::kZX:
-    thePerProcessHandle = &TemplateHelpers::OffshellZXProcessHandle;
-    break;
-  default:
-    break;
-  };
+  ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;
   if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
 
@@ -535,23 +519,7 @@ void plotProcessCheckStage_SystPairs(
 ){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  ProcessHandler const* thePerProcessHandle=nullptr;
-  switch (proctype){
-  case ProcessHandler::kGG:
-    thePerProcessHandle = &TemplateHelpers::OffshellGGProcessHandle;
-    break;
-  case ProcessHandler::kVV:
-    thePerProcessHandle = &TemplateHelpers::OffshellVVProcessHandle;
-    break;
-  case ProcessHandler::kQQBkg:
-    thePerProcessHandle = &TemplateHelpers::OffshellQQBkgProcessHandle;
-    break;
-  case ProcessHandler::kZX:
-    thePerProcessHandle = &TemplateHelpers::OffshellZXProcessHandle;
-    break;
-  default:
-    break;
-  };
+  ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;
   if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
 

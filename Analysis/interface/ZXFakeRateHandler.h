@@ -21,7 +21,8 @@ public:
 
   enum FakeRateMethod{
     mSS,
-    mOS
+    mOS,
+    NFakeRateMethods
   };
 
 

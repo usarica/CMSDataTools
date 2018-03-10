@@ -24,20 +24,8 @@ typedef void(*CheckStageFcn)(const Channel, const Category, const ACHypothesis, 
 CheckStageFcn checkstagefcn = &makeGGTemplatesFromPOWHEG_checkstage;
 #endif
 
-void plotProcessCheckStage(
-  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
-  const unsigned int istage,
-  const TString fixedDate="",
-  ProcessHandler::ProcessType proctype=theProcess.getProcessType(),
-  const TString strGenerator="POWHEG"
-);
-void plotProcessCheckStage_SystPairs(
-  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
-  const unsigned int istage,
-  const TString fixedDate="",
-  ProcessHandler::ProcessType proctype=theProcess.getProcessType(),
-  const TString strGenerator="POWHEG"
-);
+void plotProcessCheckStage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate="", ProcessHandler::ProcessType proctype=theProcess.getProcessType(), const TString strGenerator="POWHEG");
+void plotProcessCheckStage_SystPairs(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate="", ProcessHandler::ProcessType proctype=theProcess.getProcessType(), const TString strGenerator="POWHEG");
 
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)

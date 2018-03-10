@@ -236,9 +236,11 @@ float ZXFakeRateHandler::getFakeRateWeight(CJLSTTree* tree) const{
 
 TString ZXFakeRateHandler::TranslateFakeRateMethodToString(ZXFakeRateHandler::FakeRateMethod FRMethod_){
   if (FRMethod_==ZXFakeRateHandler::mSS) return "SS";
-  else return "OS";
+  else if (FRMethod_==ZXFakeRateHandler::mOS) return "OS";
+  else return "";
 }
 ZXFakeRateHandler::FakeRateMethod ZXFakeRateHandler::TranslateFakeRateMethodToEnum(TString FRMethodName_){
   if (FRMethodName_.Contains("SS")) return ZXFakeRateHandler::mSS;
-  else return ZXFakeRateHandler::mOS;
+  else if (FRMethodName_.Contains("OS")) return ZXFakeRateHandler::mOS;
+  else return ZXFakeRateHandler::NFakeRateMethods;
 }

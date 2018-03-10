@@ -195,8 +195,8 @@ namespace HelperFunctions{
   void rebinProfile(TProfile*& prof, const ExtendedBinning& binningX);
 
   void rebinCumulant(TH1F*& histo, const ExtendedBinning& binningX);
-  void rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX_, const ExtendedBinning& binningY_, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
-  void rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX_, const ExtendedBinning& binningY_, const ExtendedBinning& binningZ_, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
+  void rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
+  void rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
 
   void rebinHistogram(TH1F*& histo, const ExtendedBinning& binningX);
   void rebinHistogram(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);

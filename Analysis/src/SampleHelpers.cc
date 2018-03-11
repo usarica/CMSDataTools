@@ -156,11 +156,6 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
   std::vector<TString> samples;
   if (sqrts!=13) return samples;
 
-  if (CJLSTversion>180212 && theDataPeriod=="2016"){
-    MELAout << "SampleHelpers::constructSamplesList: Check ggH and ZH samples list before proceeding" << endl;
-    assert(0);
-  }
-
   if (strsample=="VBF_Sig_POWHEG"){
     samples.push_back("VBFH115");
     samples.push_back("VBFH120");
@@ -320,7 +315,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("ZH400");
     samples.push_back("ZH450");
     samples.push_back("ZH500");
-    //samples.push_back("ZH550");
+    samples.push_back("ZH550");
     samples.push_back("ZH600");
     samples.push_back("ZH700");
     samples.push_back("ZH750");
@@ -367,11 +362,11 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     samples.push_back("ggH400");
     samples.push_back("ggH450");
     samples.push_back("ggH500");
-    //samples.push_back("ggH550");
+    samples.push_back("ggH550");
     samples.push_back("ggH600");
     samples.push_back("ggH700");
     samples.push_back("ggH750");
-    //samples.push_back("ggH800");
+    samples.push_back("ggH800");
     samples.push_back("ggH900");
     samples.push_back("ggH1000");
     samples.push_back("ggH1500");

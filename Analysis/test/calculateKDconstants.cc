@@ -839,9 +839,13 @@ void getKDConstant_DjjZH(float sqrts=13, const bool writeFinalTree=false){
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
   {
-    pair<float, float> valrange(70, 120);
+    pair<float, float> valrange(70, 145);
     vector<float> manualboundaries;
     manualboundaries.push_back(105);
+    manualboundaries.push_back(119);
+    manualboundaries.push_back(124.7);
+    manualboundaries.push_back(131.4);
+    manualboundaries.push_back(144.15);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
   }
   {
@@ -885,12 +889,22 @@ void getKDConstant_DjjWH(float sqrts=13, const bool writeFinalTree=false){
 
   vector<pair<vector<float>, pair<float, float>>> manualboundary_validity_pairs;
   {
-    pair<float, float> valrange(70, 120);
+    pair<float, float> valrange(70, 125);
     vector<float> manualboundaries;
     manualboundaries.push_back(105);
+    manualboundaries.push_back(119);
+    manualboundaries.push_back(124.37);
     manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(
       manualboundaries, valrange
-    ));
+      ));
+  }
+  {
+    pair<float, float> valrange(129, 135);
+    vector<float> manualboundaries;
+    manualboundaries.push_back(132.3);
+    manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(
+      manualboundaries, valrange
+      ));
   }
   {
     pair<float, float> valrange(2600, sqrts*1000.);
@@ -1455,7 +1469,7 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       pair<float, float> valrange(130, 158);
       vector<float> manualboundaries;
       manualboundaries.push_back(133);
-      manualboundaries.push_back(138);
+      //manualboundaries.push_back(138);
       manualboundaries.push_back(149.5);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
@@ -1517,9 +1531,10 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
-      pair<float, float> valrange(130, 135);
+      pair<float, float> valrange(136, 150);
       vector<float> manualboundaries;
-      manualboundaries.push_back(133);
+      manualboundaries.push_back(137.8);
+      manualboundaries.push_back(149.96);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
@@ -1536,6 +1551,20 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundaries.push_back(180.6);
       manualboundaries.push_back(184);
       manualboundaries.push_back(191);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    {
+      pair<float, float> valrange(665, 810);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(665.4);
+      manualboundaries.push_back(809);
+      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
+    }
+    {
+      pair<float, float> valrange(900, 1190);
+      vector<float> manualboundaries;
+      manualboundaries.push_back(903.77);
+      manualboundaries.push_back(1185.3);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
@@ -1556,6 +1585,7 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
     {
       pair<float, float> valrange(70, 132);
       vector<float> manualboundaries;
+      manualboundaries.push_back(101);
       manualboundaries.push_back(114.5);
       manualboundaries.push_back(121);
       manualboundaries.push_back(124.8);
@@ -1592,9 +1622,10 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
-      pair<float, float> valrange(2500, sqrts*1000.);
+      pair<float, float> valrange(1860, sqrts*1000.);
       vector<float> manualboundaries;
-      manualboundaries.push_back(2200);
+      manualboundaries.push_back(1970);
+      manualboundaries.push_back(2500);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
   }
@@ -1602,6 +1633,7 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
     {
       pair<float, float> valrange(70, 135);
       vector<float> manualboundaries;
+      manualboundaries.push_back(100);
       manualboundaries.push_back(114);
       manualboundaries.push_back(121);
       manualboundaries.push_back(124);
@@ -1610,11 +1642,11 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
-      pair<float, float> valrange(300, 1400);
+      pair<float, float> valrange(300, 1350);
       vector<float> manualboundaries;
-      manualboundaries.push_back(301);
+      //manualboundaries.push_back(301);
       manualboundaries.push_back(347.302);
-      manualboundaries.push_back(370.658);
+      //manualboundaries.push_back(370.658);
       manualboundaries.push_back(427.896);
       manualboundaries.push_back(481.677);
       manualboundaries.push_back(542.162);
@@ -1622,12 +1654,13 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundaries.push_back(702.238);
       manualboundaries.push_back(802.943);
       manualboundaries.push_back(937.149);
-      manualboundaries.push_back(1360.01);
+      //manualboundaries.push_back(1360.01);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
-      pair<float, float> valrange(2100, sqrts*1000.);
+      pair<float, float> valrange(1400, sqrts*1000.);
       vector<float> manualboundaries;
+      manualboundaries.push_back(2000);
       manualboundaries.push_back(2600);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
@@ -1732,6 +1765,10 @@ void generic_SmoothKDConstantProducer(
 void SmoothKDConstantProducer_DjjZH(){
   vector<pair<pair<double, double>, unsigned int>> addpoints;
   {
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(103, 114), 10);
+    addpoints.push_back(points);
+  }
+  {
     pair<pair<double, double>, unsigned int> points(pair<double, double>(150, 155), 5);
     addpoints.push_back(points);
   }
@@ -1739,6 +1776,15 @@ void SmoothKDConstantProducer_DjjZH(){
     pair<pair<double, double>, unsigned int> points(pair<double, double>(155.1, 158), 4);
     addpoints.push_back(points);
   }
+  {
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(140, 146), 10);
+    addpoints.push_back(points);
+  }
+  {
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(138.5, 139.9), 3);
+    addpoints.push_back(points);
+  }
+  /*
   {
     pair<pair<double, double>, unsigned int> points(pair<double, double>(100, 117.8), 10);
     addpoints.push_back(points);
@@ -1751,9 +1797,10 @@ void SmoothKDConstantProducer_DjjZH(){
     pair<pair<double, double>, unsigned int> points(pair<double, double>(117, 118), 3);
     addpoints.push_back(points);
   }
+  */
   generic_SmoothKDConstantProducer(
     13, "DjjZH", "",
-    &getFcn_a0plusa1timesXN<1>,
+    &getFcn_a0timesexpa1X,
     &getFcn_a0plusa1timesXN<3>,
     true, true,
     &addpoints
@@ -1763,28 +1810,24 @@ void SmoothKDConstantProducer_DjjZH(){
 void SmoothKDConstantProducer_DjjWH(){
   vector<pair<pair<double, double>, unsigned int>> addpoints;
   {
-    pair<pair<double, double>, unsigned int> points(pair<double, double>(145, 155), 10);
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(103, 114), 10);
     addpoints.push_back(points);
   }
   {
-    pair<pair<double, double>, unsigned int> points(pair<double, double>(155.1, 158), 4);
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(113.5, 114.5), 10);
     addpoints.push_back(points);
   }
   {
-    pair<pair<double, double>, unsigned int> points(pair<double, double>(100, 118), 10);
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(115, 119), 10);
     addpoints.push_back(points);
   }
   {
-    pair<pair<double, double>, unsigned int> points(pair<double, double>(118.4, 120), 10);
-    addpoints.push_back(points);
-  }
-  {
-    pair<pair<double, double>, unsigned int> points(pair<double, double>(116.37, 118.4), 3);
+    pair<pair<double, double>, unsigned int> points(pair<double, double>(119.2, 122.2), 3);
     addpoints.push_back(points);
   }
   generic_SmoothKDConstantProducer(
     13, "DjjWH", "",
-    &getFcn_a0plusa1timesXN<1>,
+    &getFcn_a0timesexpa1X,
     &getFcn_a0plusa1timesXN<3>,
     true, true,
     &addpoints
@@ -1849,6 +1892,11 @@ void SmoothKDConstantProducer_DbkgjjEWQCD(const Channel channel, const Category 
   if (category!=JJVBFTagged && category!=HadVHTagged) return;
   const TString strChannel = getChannelName(channel);
 
+  typedef TF1* (*PatchFunction)(TSpline3*, double, double, bool);
+  PatchFunction lowf=nullptr;
+  PatchFunction highf=nullptr;
+  lowf=&getFcn_a0timesexpa1X;
+  highf=&getFcn_a0plusa1timesatana2timesXminusa3;
   vector<pair<pair<double, double>, unsigned int>> addpoints;
   if (category==JJVBFTagged && channel==k2l2l){
     {
@@ -1860,11 +1908,15 @@ void SmoothKDConstantProducer_DbkgjjEWQCD(const Channel channel, const Category 
       addpoints.push_back(points);
     }
     {
-      pair<pair<double, double>, unsigned int> points(pair<double, double>(127, 155), 10);
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(124, 152), 20);
       addpoints.push_back(points);
     }
   }
   else if (category==JJVBFTagged && channel==k4l){
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(380, 420), 5);
+      addpoints.push_back(points);
+    }
     {
       pair<pair<double, double>, unsigned int> points(pair<double, double>(195, 250), 10);
       addpoints.push_back(points);
@@ -1877,12 +1929,57 @@ void SmoothKDConstantProducer_DbkgjjEWQCD(const Channel channel, const Category 
       pair<pair<double, double>, unsigned int> points(pair<double, double>(148, 165), 10);
       addpoints.push_back(points);
     }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(135, 143), 5);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(117.5, 120), 5);
+      addpoints.push_back(points);
+    }
+  }
+  else if (category==HadVHTagged && channel==k2l2l){
+    //highf=&getFcn_a0plusa1overXN<1>;
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(1200, 2000), 10);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(183.5, 210), 10);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(123.5, 126.5), 5);
+      addpoints.push_back(points);
+    }
+  }
+  else if (category==HadVHTagged && channel==k4l){
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(1200, 2300), 10);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(470, 570), 10);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(290, 360), 10);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(185.5, 192.5), 5);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(125.5, 130), 5);
+      addpoints.push_back(points);
+    }
   }
 
   generic_SmoothKDConstantProducer(
     13, Form("DbkgjjEWQCD_%s_%s", strChannel.Data(), CategorizationHelpers::getCategoryName(category).Data()), "",
-    &getFcn_a0timesexpa1X,
-    &getFcn_a0plusa1overXN<1>,
+    lowf,
+    highf,
     true, false,
     &addpoints
   );

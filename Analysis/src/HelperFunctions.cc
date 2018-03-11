@@ -151,10 +151,6 @@ TF1* HelperFunctions::getFcn_a0plusa1timesexpXovera2(TSpline3* sp, double xmin, 
   s = sp->Derivative(x); // == b + 2.*c*dx + 3.*d*dx*dx
   ss = 2.*c + 6.*d*dx;
 
-  cout << "s = " << s << " =? b + 2.*c*dx + 3.*d*dx*dx = " << b + 2.*c*dx + 3.*d*dx*dx << endl;
-  cout << "b = " << b << ", c = " << c << ", d = " << d << endl;
-  cout << "x = " << x << ", xp = " << xp << endl;
-
   double a0, a1, a2;
   // y=a0+a1*exp(x/a2) => s=a1/a2*exp(x/a2), ss=a1/pow(a2, 2)*exp(x/a2)
   TF1* fcn=nullptr;
@@ -180,6 +176,54 @@ TF1* HelperFunctions::getFcn_a0plusa1timesexpXovera2(TSpline3* sp, double xmin, 
     else fcnName = Form("highFcn_%s", sp->GetName());
     fcn = new TF1(fcnName, "[0]", xmin, xmax);
     fcn->SetParameter(0, a0);
+  }
+  return fcn;
+}
+
+/* SPECIFIC COMMENT: Get a TF1 object for the formula a0+a1*atan(a2*(x-a3)) */
+TF1* HelperFunctions::getFcn_a0plusa1timesatana2timesXminusa3(TSpline3* sp, double xmin, double xmax, bool useLowBound){
+  double x, xp, dx, y, b, c, d;
+  double s, ss, sss;
+  if (useLowBound){
+    x = sp->GetXmin();
+    sp->GetCoeff(0, xp, y, b, c, d); // Hopefully xp=x; we don't care about y.
+  }
+  else{
+    x = sp->GetXmax();
+    sp->GetCoeff(sp->GetNp()-2, xp, y, b, c, d); // We don't care about y.
+  }
+  dx=x-xp;
+  y = sp->Eval(x);
+  s = sp->Derivative(x); // == b + 2.*c*dx + 3.*d*dx*dx
+  ss = 2.*c + 6.*d*dx;
+  sss = 6.*d;
+
+  double a0, a1, a2, a3;
+  TF1* fcn=nullptr;
+  if (ss!=0.){
+    double a1a2 = (8.*pow(s, 3)/sss - 4.*pow(s*s/ss, 2))/(6.*pow(s, 2)/sss-4.*pow(s, 3)/pow(ss, 2));
+    double a1sq = 4.*pow(s, 3)/pow(ss, 2)*a1a2-4.*pow(s*s/ss, 2);
+    if (a1sq<0.){
+      MELAerr << "HelperFunctions::getFcn_a0plusa1timesatana2timesXminusa3: a1**2<0!" << endl;
+      assert(0);
+    }
+    a1=sqrt(a1sq)*(a1a2<0. ? -1. : 1.);
+    a2=a1a2/a1;
+    a3=x + ss/pow(s, 2) * a1/a2/2.;
+    a0=y-a1*atan(a2*(x-a3));
+
+    TString fcnName;
+    if (useLowBound) fcnName = Form("lowFcn_%s", sp->GetName());
+    else fcnName = Form("highFcn_%s", sp->GetName());
+    fcn = new TF1(fcnName, "[0]+[1]*atan([2]*(x-[3]))", xmin, xmax);
+    fcn->SetParameter(0, a0);
+    fcn->SetParameter(1, a1);
+    fcn->SetParameter(2, a2);
+    fcn->SetParameter(3, a3);
+  }
+  else{
+    MELAerr << "HelperFunctions::getFcn_a0plusa1timesatana2timesXminusa3: Second derivative was 0!" << endl;
+    assert(0);
   }
   return fcn;
 }

@@ -1,5 +1,6 @@
 #include "ReweightingBuilder.h"
 #include "SimpleEntry.h"
+#include "SampleHelpers.h"
 #include "MELAAccumulators.h"
 #include "MELAStreamHelpers.hh"
 

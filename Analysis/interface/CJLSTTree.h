@@ -1,6 +1,7 @@
 #ifndef CJLSTTREE_H
 #define CJLSTTREE_H
 
+#include "Samples.h"
 #include "BaseTree.h"
 
 

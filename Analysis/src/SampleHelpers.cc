@@ -152,227 +152,317 @@ void SampleHelpers::getSamplePairs(float sqrts, std::vector<TString> const& s1, 
   getSamplesList(sqrts, s2, vs2);
 }
 
-std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, float sqrts){
+std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, float sqrts, SystematicsHelpers::SystematicVariationTypes syst){
   std::vector<TString> samples;
   if (sqrts!=13) return samples;
 
   if (strsample=="VBF_Sig_POWHEG"){
-    samples.push_back("VBFH115");
-    samples.push_back("VBFH120");
-    samples.push_back("VBFH124");
-    if (theDataPeriod=="2017") samples.push_back("VBFH125Combined");
-    else samples.push_back("VBFH125");
-    samples.push_back("VBFH126");
-    samples.push_back("VBFH130");
-    samples.push_back("VBFH135");
-    samples.push_back("VBFH140");
-    samples.push_back("VBFH145");
-    samples.push_back("VBFH150");
-    samples.push_back("VBFH155");
-    samples.push_back("VBFH160");
-    samples.push_back("VBFH165");
-    samples.push_back("VBFH170");
-    samples.push_back("VBFH175");
-    samples.push_back("VBFH180");
-    samples.push_back("VBFH190");
-    samples.push_back("VBFH200");
-    samples.push_back("VBFH210");
-    samples.push_back("VBFH230");
-    samples.push_back("VBFH250");
-    samples.push_back("VBFH270");
-    samples.push_back("VBFH300");
-    samples.push_back("VBFH350");
-    samples.push_back("VBFH400");
-    samples.push_back("VBFH450");
-    samples.push_back("VBFH500");
-    samples.push_back("VBFH550");
-    samples.push_back("VBFH600");
-    samples.push_back("VBFH700");
-    samples.push_back("VBFH750");
-    samples.push_back("VBFH800");
-    samples.push_back("VBFH900");
-    samples.push_back("VBFH1000");
-    samples.push_back("VBFH1500");
-    samples.push_back("VBFH2000");
-    samples.push_back("VBFH2500");
-    samples.push_back("VBFH3000");
+    if (!(
+      syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
+      ||
+      syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
+      )){
+      samples.push_back("VBFH115");
+      samples.push_back("VBFH120");
+      samples.push_back("VBFH124");
+      if (theDataPeriod=="2017") samples.push_back("VBFH125Combined");
+      else samples.push_back("VBFH125");
+      samples.push_back("VBFH126");
+      samples.push_back("VBFH130");
+      samples.push_back("VBFH135");
+      samples.push_back("VBFH140");
+      samples.push_back("VBFH145");
+      samples.push_back("VBFH150");
+      samples.push_back("VBFH155");
+      samples.push_back("VBFH160");
+      samples.push_back("VBFH165");
+      samples.push_back("VBFH170");
+      samples.push_back("VBFH175");
+      samples.push_back("VBFH180");
+      samples.push_back("VBFH190");
+      samples.push_back("VBFH200");
+      samples.push_back("VBFH210");
+      samples.push_back("VBFH230");
+      samples.push_back("VBFH250");
+      samples.push_back("VBFH270");
+      samples.push_back("VBFH300");
+      samples.push_back("VBFH350");
+      samples.push_back("VBFH400");
+      samples.push_back("VBFH450");
+      samples.push_back("VBFH500");
+      samples.push_back("VBFH550");
+      samples.push_back("VBFH600");
+      samples.push_back("VBFH700");
+      samples.push_back("VBFH750");
+      samples.push_back("VBFH800");
+      samples.push_back("VBFH900");
+      samples.push_back("VBFH1000");
+      samples.push_back("VBFH1500");
+      samples.push_back("VBFH2000");
+      samples.push_back("VBFH2500");
+      samples.push_back("VBFH3000");
+    }
+    else{
+      if (theDataPeriod=="2017"){ MELAerr << "SampleHelpers::constructSamplesList: Systematic not inplemented yet!" << endl; assert(0); }
+      else{
+        if (syst==SystematicsHelpers::tPythiaScaleDn){ samples.push_back("VBFH125_scaledown"); }
+        else if (syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("VBFH125_scaleup"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneDn){ samples.push_back("VBFH125_tunedown"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneUp){ samples.push_back("VBFH125_tuneup"); }
+      }
+    }
   }
 
   else if (strsample=="WH_Sig_POWHEG"){
     vector<TString> vtmp;
-    vtmp = SampleHelpers::constructSamplesList("WminusH_Sig_POWHEG", sqrts); HelperFunctions::appendVector(samples, vtmp);
-    vtmp = SampleHelpers::constructSamplesList("WplusH_Sig_POWHEG", sqrts); HelperFunctions::appendVector(samples, vtmp);
+    vtmp = SampleHelpers::constructSamplesList("WminusH_Sig_POWHEG", sqrts, syst); HelperFunctions::appendVector(samples, vtmp);
+    vtmp = SampleHelpers::constructSamplesList("WplusH_Sig_POWHEG", sqrts, syst); HelperFunctions::appendVector(samples, vtmp);
   }
   else if (strsample=="WminusH_Sig_POWHEG"){
-    samples.push_back("WminusH115");
-    samples.push_back("WminusH120");
-    samples.push_back("WminusH124");
-    if (theDataPeriod=="2017") samples.push_back("WminusH125Combined");
-    else samples.push_back("WminusH125");
-    samples.push_back("WminusH126");
-    samples.push_back("WminusH130");
-    samples.push_back("WminusH135");
-    samples.push_back("WminusH140");
-    samples.push_back("WminusH145");
-    samples.push_back("WminusH150");
-    samples.push_back("WminusH155");
-    samples.push_back("WminusH160");
-    samples.push_back("WminusH165");
-    samples.push_back("WminusH170");
-    samples.push_back("WminusH175");
-    samples.push_back("WminusH180");
-    samples.push_back("WminusH190");
-    samples.push_back("WminusH200");
-    samples.push_back("WminusH210");
-    samples.push_back("WminusH230");
-    samples.push_back("WminusH250");
-    samples.push_back("WminusH270");
-    samples.push_back("WminusH300");
-    samples.push_back("WminusH350");
-    samples.push_back("WminusH400");
-    samples.push_back("WminusH450");
-    samples.push_back("WminusH500");
-    samples.push_back("WminusH550");
-    samples.push_back("WminusH600");
-    samples.push_back("WminusH700");
-    samples.push_back("WminusH750");
-    samples.push_back("WminusH800");
-    samples.push_back("WminusH900");
-    samples.push_back("WminusH1000");
-    samples.push_back("WminusH1500");
-    samples.push_back("WminusH2000");
-    samples.push_back("WminusH2500");
-    samples.push_back("WminusH3000");
+    if (!(
+      syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
+      ||
+      syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
+      )){
+      samples.push_back("WminusH115");
+      samples.push_back("WminusH120");
+      samples.push_back("WminusH124");
+      if (theDataPeriod=="2017") samples.push_back("WminusH125Combined");
+      else samples.push_back("WminusH125");
+      samples.push_back("WminusH126");
+      samples.push_back("WminusH130");
+      samples.push_back("WminusH135");
+      samples.push_back("WminusH140");
+      samples.push_back("WminusH145");
+      samples.push_back("WminusH150");
+      samples.push_back("WminusH155");
+      samples.push_back("WminusH160");
+      samples.push_back("WminusH165");
+      samples.push_back("WminusH170");
+      samples.push_back("WminusH175");
+      samples.push_back("WminusH180");
+      samples.push_back("WminusH190");
+      samples.push_back("WminusH200");
+      samples.push_back("WminusH210");
+      samples.push_back("WminusH230");
+      samples.push_back("WminusH250");
+      samples.push_back("WminusH270");
+      samples.push_back("WminusH300");
+      samples.push_back("WminusH350");
+      samples.push_back("WminusH400");
+      samples.push_back("WminusH450");
+      samples.push_back("WminusH500");
+      samples.push_back("WminusH550");
+      samples.push_back("WminusH600");
+      samples.push_back("WminusH700");
+      samples.push_back("WminusH750");
+      samples.push_back("WminusH800");
+      samples.push_back("WminusH900");
+      samples.push_back("WminusH1000");
+      samples.push_back("WminusH1500");
+      samples.push_back("WminusH2000");
+      samples.push_back("WminusH2500");
+      samples.push_back("WminusH3000");
+    }
+    else{
+      if (theDataPeriod=="2017"){ MELAerr << "SampleHelpers::constructSamplesList: Systematic not inplemented yet!" << endl; assert(0); }
+      else{
+        if (syst==SystematicsHelpers::tPythiaScaleDn){ samples.push_back("WminusH125_scaledown"); }
+        else if (syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("WminusH125_scaleup"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneDn){ samples.push_back("WminusH125_tunedown"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneUp){ samples.push_back("WminusH125_tuneup"); }
+      }
+    }
   }
   else if (strsample=="WplusH_Sig_POWHEG"){
-    samples.push_back("WplusH115");
-    samples.push_back("WplusH120");
-    samples.push_back("WplusH124");
-    if (theDataPeriod=="2017") samples.push_back("WplusH125Combined");
-    else samples.push_back("WplusH125");
-    samples.push_back("WplusH126");
-    samples.push_back("WplusH130");
-    samples.push_back("WplusH135");
-    samples.push_back("WplusH140");
-    samples.push_back("WplusH145");
-    samples.push_back("WplusH150");
-    samples.push_back("WplusH155");
-    samples.push_back("WplusH160");
-    samples.push_back("WplusH165");
-    samples.push_back("WplusH170");
-    samples.push_back("WplusH175");
-    samples.push_back("WplusH180");
-    samples.push_back("WplusH190");
-    samples.push_back("WplusH200");
-    samples.push_back("WplusH210");
-    samples.push_back("WplusH230");
-    samples.push_back("WplusH250");
-    samples.push_back("WplusH270");
-    samples.push_back("WplusH300");
-    samples.push_back("WplusH350");
-    samples.push_back("WplusH400");
-    samples.push_back("WplusH450");
-    samples.push_back("WplusH500");
-    samples.push_back("WplusH550");
-    samples.push_back("WplusH600");
-    samples.push_back("WplusH700");
-    samples.push_back("WplusH750");
-    samples.push_back("WplusH800");
-    samples.push_back("WplusH900");
-    samples.push_back("WplusH1000");
-    samples.push_back("WplusH1500");
-    samples.push_back("WplusH2000");
-    samples.push_back("WplusH2500");
-    samples.push_back("WplusH3000");
+    if (!(
+      syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
+      ||
+      syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
+      )){
+      samples.push_back("WplusH115");
+      samples.push_back("WplusH120");
+      samples.push_back("WplusH124");
+      if (theDataPeriod=="2017") samples.push_back("WplusH125Combined");
+      else samples.push_back("WplusH125");
+      samples.push_back("WplusH126");
+      samples.push_back("WplusH130");
+      samples.push_back("WplusH135");
+      samples.push_back("WplusH140");
+      samples.push_back("WplusH145");
+      samples.push_back("WplusH150");
+      samples.push_back("WplusH155");
+      samples.push_back("WplusH160");
+      samples.push_back("WplusH165");
+      samples.push_back("WplusH170");
+      samples.push_back("WplusH175");
+      samples.push_back("WplusH180");
+      samples.push_back("WplusH190");
+      samples.push_back("WplusH200");
+      samples.push_back("WplusH210");
+      samples.push_back("WplusH230");
+      samples.push_back("WplusH250");
+      samples.push_back("WplusH270");
+      samples.push_back("WplusH300");
+      samples.push_back("WplusH350");
+      samples.push_back("WplusH400");
+      samples.push_back("WplusH450");
+      samples.push_back("WplusH500");
+      samples.push_back("WplusH550");
+      samples.push_back("WplusH600");
+      samples.push_back("WplusH700");
+      samples.push_back("WplusH750");
+      samples.push_back("WplusH800");
+      samples.push_back("WplusH900");
+      samples.push_back("WplusH1000");
+      samples.push_back("WplusH1500");
+      samples.push_back("WplusH2000");
+      samples.push_back("WplusH2500");
+      samples.push_back("WplusH3000");
+    }
+    else{
+      if (theDataPeriod=="2017"){ MELAerr << "SampleHelpers::constructSamplesList: Systematic not inplemented yet!" << endl; assert(0); }
+      else{
+        if (syst==SystematicsHelpers::tPythiaScaleDn){ samples.push_back("WplusH125_scaledown"); }
+        else if (syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("WplusH125_scaleup"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneDn){ samples.push_back("WplusH125_tunedown"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneUp){ samples.push_back("WplusH125_tuneup"); }
+      }
+    }
   }
 
   else if (strsample=="ZH_Sig_POWHEG"){
-    samples.push_back("ZH115");
-    samples.push_back("ZH120");
-    samples.push_back("ZH124");
-    if (theDataPeriod=="2017") samples.push_back("ZH125Combined");
-    else samples.push_back("ZH125");
-    samples.push_back("ZH126");
-    samples.push_back("ZH130");
-    samples.push_back("ZH135");
-    samples.push_back("ZH140");
-    samples.push_back("ZH145");
-    samples.push_back("ZH150");
-    samples.push_back("ZH155");
-    samples.push_back("ZH160");
-    samples.push_back("ZH165");
-    samples.push_back("ZH170");
-    samples.push_back("ZH175");
-    samples.push_back("ZH180");
-    samples.push_back("ZH190");
-    samples.push_back("ZH200");
-    samples.push_back("ZH210");
-    samples.push_back("ZH230");
-    samples.push_back("ZH250");
-    samples.push_back("ZH270");
-    samples.push_back("ZH300");
-    samples.push_back("ZH350");
-    samples.push_back("ZH400");
-    samples.push_back("ZH450");
-    samples.push_back("ZH500");
-    samples.push_back("ZH550");
-    samples.push_back("ZH600");
-    samples.push_back("ZH700");
-    samples.push_back("ZH750");
-    samples.push_back("ZH800");
-    samples.push_back("ZH900");
-    samples.push_back("ZH1000");
-    samples.push_back("ZH1500");
-    samples.push_back("ZH2000");
-    samples.push_back("ZH2500");
-    samples.push_back("ZH3000");
+    if (!(
+      syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
+      ||
+      syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
+      )){
+      samples.push_back("ZH115");
+      samples.push_back("ZH120");
+      samples.push_back("ZH124");
+      if (theDataPeriod=="2017") samples.push_back("ZH125Combined");
+      else samples.push_back("ZH125");
+      samples.push_back("ZH126");
+      samples.push_back("ZH130");
+      samples.push_back("ZH135");
+      samples.push_back("ZH140");
+      samples.push_back("ZH145");
+      samples.push_back("ZH150");
+      samples.push_back("ZH155");
+      samples.push_back("ZH160");
+      samples.push_back("ZH165");
+      samples.push_back("ZH170");
+      samples.push_back("ZH175");
+      samples.push_back("ZH180");
+      samples.push_back("ZH190");
+      samples.push_back("ZH200");
+      samples.push_back("ZH210");
+      samples.push_back("ZH230");
+      samples.push_back("ZH250");
+      samples.push_back("ZH270");
+      samples.push_back("ZH300");
+      samples.push_back("ZH350");
+      samples.push_back("ZH400");
+      samples.push_back("ZH450");
+      samples.push_back("ZH500");
+      samples.push_back("ZH550");
+      samples.push_back("ZH600");
+      samples.push_back("ZH700");
+      samples.push_back("ZH750");
+      samples.push_back("ZH800");
+      samples.push_back("ZH900");
+      samples.push_back("ZH1000");
+      samples.push_back("ZH1500");
+      samples.push_back("ZH2000");
+      samples.push_back("ZH2500");
+      samples.push_back("ZH3000");
+    }
+    else{
+      if (theDataPeriod=="2017"){ MELAerr << "SampleHelpers::constructSamplesList: Systematic not inplemented yet!" << endl; assert(0); }
+      else{
+        if (syst==SystematicsHelpers::tPythiaScaleDn){ samples.push_back("ZH125_scaledown"); }
+        else if (syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("ZH125_scaleup"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneDn){ samples.push_back("ZH125_tunedown"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneUp){ samples.push_back("ZH125_tuneup"); }
+      }
+    }
   }
 
   else if (strsample=="gg_Sig_POWHEG_MINLO"){
-    samples.push_back("ggH125_minloHJJ");
-    samples.push_back("ggH300_minloHJJ");
+    if (!(
+      syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
+      ||
+      syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
+      )){
+      samples.push_back("ggH125_minloHJJ");
+      samples.push_back("ggH300_minloHJJ");
+    }
+    else{
+      if (theDataPeriod=="2017"){ MELAerr << "SampleHelpers::constructSamplesList: Systematic not inplemented yet!" << endl; assert(0); }
+      else{
+        if (syst==SystematicsHelpers::tPythiaScaleDn){ samples.push_back("ggH125_scaledown_minloHJJ"); samples.push_back("ggH300_scaledown_minloHJJ"); }
+        else if (syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("ggH125_scaleup_minloHJJ"); samples.push_back("ggH300_scaleup_minloHJJ"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneDn){ samples.push_back("ggH125_tunedown_minloHJJ"); samples.push_back("ggH300_tunedown_minloHJJ"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneUp){ samples.push_back("ggH125_tuneup_minloHJJ"); samples.push_back("ggH300_tuneup_minloHJJ"); }
+      }
+    }
   }
 
   else if (strsample=="gg_Sig_POWHEG"){
-    samples.push_back("ggH115");
-    samples.push_back("ggH120");
-    samples.push_back("ggH124");
-    if (theDataPeriod=="2017") samples.push_back("ggH125Combined");
-    else samples.push_back("ggH125");
-    samples.push_back("ggH126");
-    samples.push_back("ggH130");
-    samples.push_back("ggH135");
-    samples.push_back("ggH140");
-    samples.push_back("ggH145");
-    samples.push_back("ggH150");
-    samples.push_back("ggH155");
-    samples.push_back("ggH160");
-    samples.push_back("ggH165");
-    samples.push_back("ggH170");
-    samples.push_back("ggH175");
-    samples.push_back("ggH180");
-    samples.push_back("ggH190");
-    samples.push_back("ggH200");
-    samples.push_back("ggH210");
-    samples.push_back("ggH230");
-    samples.push_back("ggH250");
-    samples.push_back("ggH270");
-    samples.push_back("ggH300");
-    samples.push_back("ggH350");
-    samples.push_back("ggH400");
-    samples.push_back("ggH450");
-    samples.push_back("ggH500");
-    samples.push_back("ggH550");
-    samples.push_back("ggH600");
-    samples.push_back("ggH700");
-    samples.push_back("ggH750");
-    samples.push_back("ggH800");
-    samples.push_back("ggH900");
-    samples.push_back("ggH1000");
-    samples.push_back("ggH1500");
-    samples.push_back("ggH2000");
-    samples.push_back("ggH2500");
-    samples.push_back("ggH3000");
+    if (!(
+      syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
+      ||
+      syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
+      )){
+      samples.push_back("ggH115");
+      samples.push_back("ggH120");
+      samples.push_back("ggH124");
+      if (theDataPeriod=="2017") samples.push_back("ggH125Combined");
+      else samples.push_back("ggH125");
+      samples.push_back("ggH126");
+      samples.push_back("ggH130");
+      samples.push_back("ggH135");
+      samples.push_back("ggH140");
+      samples.push_back("ggH145");
+      samples.push_back("ggH150");
+      samples.push_back("ggH155");
+      samples.push_back("ggH160");
+      samples.push_back("ggH165");
+      samples.push_back("ggH170");
+      samples.push_back("ggH175");
+      samples.push_back("ggH180");
+      samples.push_back("ggH190");
+      samples.push_back("ggH200");
+      samples.push_back("ggH210");
+      samples.push_back("ggH230");
+      samples.push_back("ggH250");
+      samples.push_back("ggH270");
+      samples.push_back("ggH300");
+      samples.push_back("ggH350");
+      samples.push_back("ggH400");
+      samples.push_back("ggH450");
+      samples.push_back("ggH500");
+      samples.push_back("ggH550");
+      samples.push_back("ggH600");
+      samples.push_back("ggH700");
+      samples.push_back("ggH750");
+      samples.push_back("ggH800");
+      samples.push_back("ggH900");
+      samples.push_back("ggH1000");
+      samples.push_back("ggH1500");
+      samples.push_back("ggH2000");
+      samples.push_back("ggH2500");
+      samples.push_back("ggH3000");
+    }
+    else{
+      if (theDataPeriod=="2017"){ MELAerr << "SampleHelpers::constructSamplesList: Systematic not inplemented yet!" << endl; assert(0); }
+      else{
+        if (syst==SystematicsHelpers::tPythiaScaleDn){ samples.push_back("ggH125_scaledown"); samples.push_back("ggH300_scaledown"); }
+        else if (syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("ggH125_scaleup"); samples.push_back("ggH300_scaleup"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneDn){ samples.push_back("ggH125_tunedown"); samples.push_back("ggH300_tunedown"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneUp){ samples.push_back("ggH125_tuneup"); samples.push_back("ggH300_tuneup"); }
+      }
+    }
   }
 
   else if (strsample=="gg_Bkg_MCFM"){
@@ -383,7 +473,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Bkg_MCFM_2e2tau");
     vreq.push_back("gg_Bkg_MCFM_2mu2tau");
     vreq.push_back("gg_Bkg_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_Bkg_MCFM_4mu") samples.push_back("ggTo4mu_Contin_MCFM701");
   else if (strsample=="gg_Bkg_MCFM_4e") samples.push_back("ggTo4e_Contin_MCFM701");
@@ -400,7 +490,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_SM_MCFM_2e2tau");
     vreq.push_back("gg_Sig_SM_MCFM_2mu2tau");
     vreq.push_back("gg_Sig_SM_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_Sig_SM_MCFM_4mu") samples.push_back("ggTo4mu_0PMH125_MCFM701");
   else if (strsample=="gg_Sig_SM_MCFM_4e") samples.push_back("ggTo4e_0PMH125_MCFM701");
@@ -417,7 +507,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI_SM_MCFM_2e2tau");
     vreq.push_back("gg_BSI_SM_MCFM_2mu2tau");
     vreq.push_back("gg_BSI_SM_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI_SM_MCFM_4mu") samples.push_back("ggTo4mu_0PMH125Contin_MCFM701");
   else if (strsample=="gg_BSI_SM_MCFM_4e") samples.push_back("ggTo4e_0PMH125Contin_MCFM701");
@@ -434,7 +524,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI10_SM_MCFM_2e2tau");
     vreq.push_back("gg_BSI10_SM_MCFM_2mu2tau");
     vreq.push_back("gg_BSI10_SM_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI10_SM_MCFM_4mu") samples.push_back("ggTo4mu_0PMH125Contin_10GaSM_MCFM701");
   else if (strsample=="gg_BSI10_SM_MCFM_4e") samples.push_back("ggTo4e_0PMH125Contin_10GaSM_MCFM701");
@@ -451,7 +541,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_0PL1_MCFM_2e2tau");
     vreq.push_back("gg_Sig_0PL1_MCFM_2mu2tau");
     vreq.push_back("gg_Sig_0PL1_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_Sig_0PL1_MCFM_4mu") samples.push_back("ggTo4mu_0PL1H125_MCFM701");
   else if (strsample=="gg_Sig_0PL1_MCFM_4e") samples.push_back("ggTo4e_0PL1H125_MCFM701");
@@ -468,7 +558,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI_0PL1_MCFM_2e2tau");
     vreq.push_back("gg_BSI_0PL1_MCFM_2mu2tau");
     vreq.push_back("gg_BSI_0PL1_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI_0PL1_MCFM_4mu") samples.push_back("ggTo4mu_0PL1H125Contin_MCFM701");
   else if (strsample=="gg_BSI_0PL1_MCFM_4e") samples.push_back("ggTo4e_0PL1H125Contin_MCFM701");
@@ -485,7 +575,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI10_0PL1_MCFM_2e2tau");
     vreq.push_back("gg_BSI10_0PL1_MCFM_2mu2tau");
     vreq.push_back("gg_BSI10_0PL1_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI10_0PL1_MCFM_4mu") samples.push_back("ggTo4mu_0PL1H125Contin_10GaSM_MCFM701");
   else if (strsample=="gg_BSI10_0PL1_MCFM_4e") samples.push_back("ggTo4e_0PL1H125Contin_10GaSM_MCFM701");
@@ -502,7 +592,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_2e2tau");
     vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_Sig_0PL1f05ph0_MCFM_4mu") samples.push_back("ggTo4mu_0PL1f05ph0H125_MCFM701");
   else if (strsample=="gg_Sig_0PL1f05ph0_MCFM_4e") samples.push_back("ggTo4e_0PL1f05ph0H125_MCFM701");
@@ -519,7 +609,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_2e2tau");
     vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI_0PL1f05ph0_MCFM_4mu") samples.push_back("ggTo4mu_0PL1f05ph0H125Contin_MCFM701");
   else if (strsample=="gg_BSI_0PL1f05ph0_MCFM_4e") samples.push_back("ggTo4e_0PL1f05ph0H125Contin_MCFM701");
@@ -536,7 +626,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_2e2tau");
     vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI10_0PL1f05ph0_MCFM_4mu") samples.push_back("ggTo4mu_0PL1f05ph0H125Contin_10GaSM_MCFM701");
   else if (strsample=="gg_BSI10_0PL1f05ph0_MCFM_4e") samples.push_back("ggTo4e_0PL1f05ph0H125Contin_10GaSM_MCFM701");
@@ -553,7 +643,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_0PH_MCFM_2e2tau");
     vreq.push_back("gg_Sig_0PH_MCFM_2mu2tau");
     vreq.push_back("gg_Sig_0PH_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_Sig_0PH_MCFM_4mu") samples.push_back("ggTo4mu_0PHH125_MCFM701");
   else if (strsample=="gg_Sig_0PH_MCFM_4e") samples.push_back("ggTo4e_0PHH125_MCFM701");
@@ -570,7 +660,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI_0PH_MCFM_2e2tau");
     vreq.push_back("gg_BSI_0PH_MCFM_2mu2tau");
     vreq.push_back("gg_BSI_0PH_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI_0PH_MCFM_4mu") samples.push_back("ggTo4mu_0PHH125Contin_MCFM701");
   else if (strsample=="gg_BSI_0PH_MCFM_4e") samples.push_back("ggTo4e_0PHH125Contin_MCFM701");
@@ -587,7 +677,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI10_0PH_MCFM_2e2tau");
     vreq.push_back("gg_BSI10_0PH_MCFM_2mu2tau");
     vreq.push_back("gg_BSI10_0PH_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI10_0PH_MCFM_4mu") samples.push_back("ggTo4mu_0PHH125Contin_10GaSM_MCFM701");
   else if (strsample=="gg_BSI10_0PH_MCFM_4e") samples.push_back("ggTo4e_0PHH125Contin_10GaSM_MCFM701");
@@ -604,7 +694,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_0PHf05ph0_MCFM_2e2tau");
     vreq.push_back("gg_Sig_0PHf05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_Sig_0PHf05ph0_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_Sig_0PHf05ph0_MCFM_4mu") samples.push_back("ggTo4mu_0PHf05ph0H125_MCFM701");
   else if (strsample=="gg_Sig_0PHf05ph0_MCFM_4e") samples.push_back("ggTo4e_0PHf05ph0H125_MCFM701");
@@ -621,7 +711,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI_0PHf05ph0_MCFM_2e2tau");
     vreq.push_back("gg_BSI_0PHf05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_BSI_0PHf05ph0_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI_0PHf05ph0_MCFM_4mu") samples.push_back("ggTo4mu_0PHf05ph0H125Contin_MCFM701");
   else if (strsample=="gg_BSI_0PHf05ph0_MCFM_4e") samples.push_back("ggTo4e_0PHf05ph0H125Contin_MCFM701");
@@ -638,7 +728,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_2e2tau");
     vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI10_0PHf05ph0_MCFM_4mu") samples.push_back("ggTo4mu_0PHf05ph0H125Contin_10GaSM_MCFM701");
   else if (strsample=="gg_BSI10_0PHf05ph0_MCFM_4e") samples.push_back("ggTo4e_0PHf05ph0H125Contin_10GaSM_MCFM701");
@@ -655,7 +745,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_0M_MCFM_2e2tau");
     vreq.push_back("gg_Sig_0M_MCFM_2mu2tau");
     vreq.push_back("gg_Sig_0M_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_Sig_0M_MCFM_4mu") samples.push_back("ggTo4mu_0MH125_MCFM701");
   else if (strsample=="gg_Sig_0M_MCFM_4e") samples.push_back("ggTo4e_0MH125_MCFM701");
@@ -672,7 +762,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI_0M_MCFM_2e2tau");
     vreq.push_back("gg_BSI_0M_MCFM_2mu2tau");
     vreq.push_back("gg_BSI_0M_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI_0M_MCFM_4mu") samples.push_back("ggTo4mu_0MH125Contin_MCFM701");
   else if (strsample=="gg_BSI_0M_MCFM_4e") samples.push_back("ggTo4e_0MH125Contin_MCFM701");
@@ -689,7 +779,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI10_0M_MCFM_2e2tau");
     vreq.push_back("gg_BSI10_0M_MCFM_2mu2tau");
     vreq.push_back("gg_BSI10_0M_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI10_0M_MCFM_4mu") samples.push_back("ggTo4mu_0MH125Contin_10GaSM_MCFM701");
   else if (strsample=="gg_BSI10_0M_MCFM_4e") samples.push_back("ggTo4e_0MH125Contin_10GaSM_MCFM701");
@@ -706,7 +796,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_0Mf05ph0_MCFM_2e2tau");
     vreq.push_back("gg_Sig_0Mf05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_Sig_0Mf05ph0_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_Sig_0Mf05ph0_MCFM_4mu") samples.push_back("ggTo4mu_0Mf05ph0H125_MCFM701");
   else if (strsample=="gg_Sig_0Mf05ph0_MCFM_4e") samples.push_back("ggTo4e_0Mf05ph0H125_MCFM701");
@@ -723,7 +813,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI_0Mf05ph0_MCFM_2e2tau");
     vreq.push_back("gg_BSI_0Mf05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_BSI_0Mf05ph0_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI_0Mf05ph0_MCFM_4mu") samples.push_back("ggTo4mu_0Mf05ph0H125Contin_MCFM701");
   else if (strsample=="gg_BSI_0Mf05ph0_MCFM_4e") samples.push_back("ggTo4e_0Mf05ph0H125Contin_MCFM701");
@@ -740,7 +830,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_2e2tau");
     vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI10_0Mf05ph0_MCFM_4mu") samples.push_back("ggTo4mu_0Mf05ph0H125Contin_10GaSM_MCFM701");
   else if (strsample=="gg_BSI10_0Mf05ph0_MCFM_4e") samples.push_back("ggTo4e_0Mf05ph0H125Contin_10GaSM_MCFM701");
@@ -758,7 +848,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_4mu");
     vreq.push_back("gg_Sig_0PHf05ph0_MCFM_4mu");
     vreq.push_back("gg_Sig_0Mf05ph0_MCFM_4mu");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_Sig_MCFM_4e"){
     vector<TString> vreq;
@@ -769,7 +859,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_4e");
     vreq.push_back("gg_Sig_0PHf05ph0_MCFM_4e");
     vreq.push_back("gg_Sig_0Mf05ph0_MCFM_4e");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_Sig_MCFM_2e2mu"){
     vector<TString> vreq;
@@ -780,7 +870,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_2e2mu");
     vreq.push_back("gg_Sig_0PHf05ph0_MCFM_2e2mu");
     vreq.push_back("gg_Sig_0Mf05ph0_MCFM_2e2mu");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_Sig_MCFM_2e2tau"){
     vector<TString> vreq;
@@ -791,7 +881,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_2e2tau");
     vreq.push_back("gg_Sig_0PHf05ph0_MCFM_2e2tau");
     vreq.push_back("gg_Sig_0Mf05ph0_MCFM_2e2tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_Sig_MCFM_2mu2tau"){
     vector<TString> vreq;
@@ -802,7 +892,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_Sig_0PHf05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_Sig_0Mf05ph0_MCFM_2mu2tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_Sig_MCFM_4tau"){
     vector<TString> vreq;
@@ -813,7 +903,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_0PL1f05ph0_MCFM_4tau");
     vreq.push_back("gg_Sig_0PHf05ph0_MCFM_4tau");
     vreq.push_back("gg_Sig_0Mf05ph0_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
 
   else if (strsample=="gg_BSI_MCFM_4mu"){
@@ -825,7 +915,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_4mu");
     vreq.push_back("gg_BSI_0PHf05ph0_MCFM_4mu");
     vreq.push_back("gg_BSI_0Mf05ph0_MCFM_4mu");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI_MCFM_4e"){
     vector<TString> vreq;
@@ -836,7 +926,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_4e");
     vreq.push_back("gg_BSI_0PHf05ph0_MCFM_4e");
     vreq.push_back("gg_BSI_0Mf05ph0_MCFM_4e");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI_MCFM_2e2mu"){
     vector<TString> vreq;
@@ -847,7 +937,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_2e2mu");
     vreq.push_back("gg_BSI_0PHf05ph0_MCFM_2e2mu");
     vreq.push_back("gg_BSI_0Mf05ph0_MCFM_2e2mu");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI_MCFM_2e2tau"){
     vector<TString> vreq;
@@ -858,7 +948,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_2e2tau");
     vreq.push_back("gg_BSI_0PHf05ph0_MCFM_2e2tau");
     vreq.push_back("gg_BSI_0Mf05ph0_MCFM_2e2tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI_MCFM_2mu2tau"){
     vector<TString> vreq;
@@ -869,7 +959,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_BSI_0PHf05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_BSI_0Mf05ph0_MCFM_2mu2tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI_MCFM_4tau"){
     vector<TString> vreq;
@@ -880,7 +970,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI_0PL1f05ph0_MCFM_4tau");
     vreq.push_back("gg_BSI_0PHf05ph0_MCFM_4tau");
     vreq.push_back("gg_BSI_0Mf05ph0_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
 
   else if (strsample=="gg_BSI10_MCFM_4mu"){
@@ -892,7 +982,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_4mu");
     vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_4mu");
     vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_4mu");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI10_MCFM_4e"){
     vector<TString> vreq;
@@ -903,7 +993,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_4e");
     vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_4e");
     vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_4e");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI10_MCFM_2e2mu"){
     vector<TString> vreq;
@@ -914,7 +1004,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_2e2mu");
     vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_2e2mu");
     vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_2e2mu");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI10_MCFM_2e2tau"){
     vector<TString> vreq;
@@ -925,7 +1015,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_2e2tau");
     vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_2e2tau");
     vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_2e2tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI10_MCFM_2mu2tau"){
     vector<TString> vreq;
@@ -936,7 +1026,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_2mu2tau");
     vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_2mu2tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_BSI10_MCFM_4tau"){
     vector<TString> vreq;
@@ -947,7 +1037,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_BSI10_0PL1f05ph0_MCFM_4tau");
     vreq.push_back("gg_BSI10_0PHf05ph0_MCFM_4tau");
     vreq.push_back("gg_BSI10_0Mf05ph0_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
 
   else if (strsample=="gg_MCFM_4mu"){
@@ -956,7 +1046,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_MCFM_4mu");
     vreq.push_back("gg_BSI_MCFM_4mu");
     vreq.push_back("gg_BSI10_MCFM_4mu");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_MCFM_4e"){
     vector<TString> vreq;
@@ -964,7 +1054,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_MCFM_4e");
     vreq.push_back("gg_BSI_MCFM_4e");
     vreq.push_back("gg_BSI10_MCFM_4e");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_MCFM_2e2mu"){
     vector<TString> vreq;
@@ -972,7 +1062,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_MCFM_2e2mu");
     vreq.push_back("gg_BSI_MCFM_2e2mu");
     vreq.push_back("gg_BSI10_MCFM_2e2mu");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_MCFM_2e2tau"){
     vector<TString> vreq;
@@ -980,7 +1070,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_MCFM_2e2tau");
     vreq.push_back("gg_BSI_MCFM_2e2tau");
     vreq.push_back("gg_BSI10_MCFM_2e2tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_MCFM_2mu2tau"){
     vector<TString> vreq;
@@ -988,7 +1078,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_MCFM_2mu2tau");
     vreq.push_back("gg_BSI_MCFM_2mu2tau");
     vreq.push_back("gg_BSI10_MCFM_2mu2tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="gg_MCFM_4tau"){
     vector<TString> vreq;
@@ -996,7 +1086,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("gg_Sig_MCFM_4tau");
     vreq.push_back("gg_BSI_MCFM_4tau");
     vreq.push_back("gg_BSI10_MCFM_4tau");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
 
   else if (strsample=="VV_Sig_Phantom"){
@@ -1004,7 +1094,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("VV_Sig_Phantom_4mu");
     vreq.push_back("VV_Sig_Phantom_4e");
     vreq.push_back("VV_Sig_Phantom_2e2mu");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="VV_Sig_Phantom_4mu") samples.push_back("VBFTo4muJJ_0PMH125_phantom128");
   else if (strsample=="VV_Sig_Phantom_4e") samples.push_back("VBFTo4eJJ_0PMH125_phantom128");
@@ -1014,7 +1104,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
     vreq.push_back("VV_Bkg_Phantom_4mu");
     vreq.push_back("VV_Bkg_Phantom_4e");
     vreq.push_back("VV_Bkg_Phantom_2e2mu");
-    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts); HelperFunctions::appendVector(samples, vtmp); }
+    for (auto& sreq:vreq){ vector<TString> vtmp = SampleHelpers::constructSamplesList(sreq, sqrts, syst); HelperFunctions::appendVector(samples, vtmp); }
   }
   else if (strsample=="VV_Bkg_Phantom_4mu") samples.push_back("VBFTo4muJJ_Contin_phantom128");
   else if (strsample=="VV_Bkg_Phantom_4e") samples.push_back("VBFTo4eJJ_Contin_phantom128");

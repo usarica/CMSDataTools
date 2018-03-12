@@ -1,6 +1,8 @@
 #ifndef SYSTEMATICSHELPERS_H
 #define SYSTEMATICSHELPERS_H
 
+#include "SystematicVariations.h"
+#include "SampleHelpers.h"
 #include "ReweightingBuilder.h"
 #include "DiscriminantClasses.h"
 #include "ProcessHandler.h"
@@ -56,20 +58,6 @@ namespace SystematicsHelpers{
 
   std::pair<float, float> getLeptonSFSystematic(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>*> const& LepVars, unsigned int const idreq);
 
-
-  enum SystematicVariationTypes{
-    sNominal,
-    tPDFScaleDn, tPDFScaleUp,
-    tQCDScaleDn, tQCDScaleUp,
-    tAsMZDn, tAsMZUp,
-    tPDFReplicaDn, tPDFReplicaUp,
-    tQQBkgEWCorrDn, tQQBkgEWCorrUp,
-    eLepSFEleDn, eLepSFEleUp,
-    eLepSFMuDn, eLepSFMuUp,
-    eJECDn, eJECUp,
-    eZXStatsDn, eZXStatsUp,
-    nSystematicVariations
-  };
 
   int convertSystematicVariationTypeToInt(SystematicsHelpers::SystematicVariationTypes type);
 

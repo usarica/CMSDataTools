@@ -78,7 +78,7 @@ void makeWHTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   for (unsigned int iset=0; iset<nSampleSet; iset++){
     vector<TString> strSampleIdentifiers;
     strSampleIdentifiers.push_back(Form("%s_Sig_POWHEG", strSampleSet[iset].Data()));
-    getSamplesList(theSqrts, strSampleIdentifiers, strSamples[iset]);
+    getSamplesList(theSqrts, strSampleIdentifiers, strSamples[iset], syst);
   }
 
   // Kfactor variable names

@@ -10,6 +10,7 @@
 #include "VHProdDecACDiscriminant.h"
 #include "JJEWQCDBkgDiscriminant.h"
 #include "SimpleInterferenceDiscriminant.h"
+#include "JJEWQCDInterferenceDiscriminant.h"
 
 
 namespace DiscriminantClasses{
@@ -38,6 +39,7 @@ namespace DiscriminantClasses{
     kDjjWHa3,
 
     kDbkgjjEWQCD,
+    kDintjjEWQCD,
 
     kDL1dec,
     kDL1decint,

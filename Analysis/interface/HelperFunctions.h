@@ -624,6 +624,8 @@ template void HelperFunctions::extractHistogramsFromDirectory<TH3D>(TDirectory* 
 template void HelperFunctions::extractHistogramsFromDirectory<TGraphAsymmErrors>(TDirectory* source, std::vector<TGraphAsymmErrors*>& histolist);
 template void HelperFunctions::extractHistogramsFromDirectory<TGraphErrors>(TDirectory* source, std::vector<TGraphErrors*>& histolist);
 template void HelperFunctions::extractHistogramsFromDirectory<TGraph>(TDirectory* source, std::vector<TGraph*>& histolist);
+// Overloads for TSpline that can be used just like histograms
+template void HelperFunctions::extractHistogramsFromDirectory<TSpline3>(TDirectory* source, std::vector<TSpline3*>& histolist);
 
 /****************************************************************/
 // Explicit instantiations

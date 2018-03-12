@@ -82,7 +82,7 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
   vector<TString> strSamples;
   vector<TString> strSampleIdentifiers;
   strSampleIdentifiers.push_back("AllData");
-  getSamplesList(theSqrts, strSampleIdentifiers, strSamples);
+  getSamplesList(theSqrts, strSampleIdentifiers, strSamples, syst);
 
   // Get the CJLST set
   CJLSTSet* theSampleSet = new CJLSTSet(strSamples, TREE_CRZLL_NAME, "", COUNTERS_CRZLL_NAME);

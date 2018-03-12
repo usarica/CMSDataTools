@@ -141,15 +141,15 @@ void SampleHelpers::addXsecBranchNames(std::vector<TString>& vars){
   for (auto& v:xsecvars) vars.push_back(v);
 }
 
-void SampleHelpers::getSamplesList(float sqrts, std::vector<TString> const& s, std::vector<TString>& vs){
-  for (auto& ss : s){
-    vector<TString> dumappend = constructSamplesList(ss, sqrts);
+void SampleHelpers::getSamplesList(float sqrts, std::vector<TString> const& s, std::vector<TString>& vs, SystematicsHelpers::SystematicVariationTypes syst){
+  for (auto& ss:s){
+    vector<TString> dumappend = constructSamplesList(ss, sqrts, syst);
     HelperFunctions::appendVector<TString>(vs, dumappend);
   }
 }
-void SampleHelpers::getSamplePairs(float sqrts, std::vector<TString> const& s1, std::vector<TString> const& s2, std::vector<TString>& vs1, std::vector<TString>& vs2){
-  getSamplesList(sqrts, s1, vs1);
-  getSamplesList(sqrts, s2, vs2);
+void SampleHelpers::getSamplePairs(float sqrts, std::vector<TString> const& s1, std::vector<TString> const& s2, std::vector<TString>& vs1, std::vector<TString>& vs2, SystematicsHelpers::SystematicVariationTypes syst){
+  getSamplesList(sqrts, s1, vs1, syst);
+  getSamplesList(sqrts, s2, vs2, syst);
 }
 
 std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, float sqrts, SystematicsHelpers::SystematicVariationTypes syst){

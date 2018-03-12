@@ -299,6 +299,7 @@ void acquireMassRatio_ProcessSystToNominal(
   const TString strGenerator
 ){
   if (channel==NChannels) return;
+  if (syst==sNominal) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
   ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;

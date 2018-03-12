@@ -34,6 +34,7 @@ std::unordered_map<TString, DiscriminantClasses::Type> DiscriminantClasses::getK
   res["DjjWHa3"] = kDjjWHa3;
 
   res["DbkgjjEWQCD"] = kDbkgjjEWQCD;
+  res["DintjjEWQCD"] = kDintjjEWQCD;
 
   res["DL1dec"] = kDL1dec;
   res["DL1decint"] = kDL1decint;
@@ -110,6 +111,8 @@ TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
 
   case kDbkgjjEWQCD:
     return "D^{jj+dec}_{bkg}";
+  case kDintjjEWQCD:
+    return "D^{jj+dec}_{int}";
 
   case kDL1dec:
     return "D^{dec}_{#Lambda1}";
@@ -217,6 +220,8 @@ Discriminant* DiscriminantClasses::constructKDFromType(
 
   case kDbkgjjEWQCD:
     return new DbkgjjEWQCD_t(cfilename, splinename, gfilename, gsplinename, gscale);
+  case kDintjjEWQCD:
+    return new DintjjEWQCD_t(cfilename, splinename, gfilename, gsplinename, gscale);
 
   case kDL1dec:
   case kDa2dec:
@@ -376,6 +381,30 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     res.push_back("pConst_HadZH_BKG_MCFM_JECNominal");
     res.push_back("pConst_HadWH_BKG_MCFM_JECNominal");
     res.push_back("pConst_JJQCD_BKG_MCFM_JECNominal");
+    break;
+
+  case kDintjjEWQCD:
+    res.push_back("p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal");
+    res.push_back("p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal");
+    res.push_back("p_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"); // FIXME
+    res.push_back("p_JJVBF_BKG_MCFM_JECNominal");
+    res.push_back("p_HadZH_BKG_MCFM_JECNominal");
+    res.push_back("p_HadWH_BKG_MCFM_JECNominal");
+    res.push_back("p_JJQCD_BKG_MCFM_JECNominal");
+    res.push_back("p_HadZH_mavjj_JECNominal");
+    res.push_back("p_HadZH_mavjj_true_JECNominal");
+    res.push_back("p_HadWH_mavjj_JECNominal");
+    res.push_back("p_HadWH_mavjj_true_JECNominal");
+    res.push_back("pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal");
+    res.push_back("pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal");
+    res.push_back("pConst_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"); // FIXME
+    res.push_back("pConst_JJVBF_BKG_MCFM_JECNominal");
+    res.push_back("pConst_HadZH_BKG_MCFM_JECNominal");
+    res.push_back("pConst_HadWH_BKG_MCFM_JECNominal");
+    res.push_back("pConst_JJQCD_BKG_MCFM_JECNominal");
+    res.push_back("p_JJVBF_S_BSI_ghv1_1_MCFM_JECNominal");
+    res.push_back("p_HadZH_S_BSI_ghz1_1_MCFM_JECNominal");
+    res.push_back("p_HadWH_S_BSI_ghv1_1_MCFM_JECNominal"); // FIXME
     break;
 
   case kDL1dec:

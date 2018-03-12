@@ -72,7 +72,7 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
   vector<TString> strSamples;
   vector<TString> strSampleIdentifiers;
   strSampleIdentifiers.push_back("qq_Bkg_Combined");
-  getSamplesList(theSqrts, strSampleIdentifiers, strSamples);
+  getSamplesList(theSqrts, strSampleIdentifiers, strSamples, syst);
 
   // Kfactor variable names
   vector<TString> strKfactorVars;

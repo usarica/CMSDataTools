@@ -75,7 +75,7 @@ void makeVBFTemplatesFromPOWHEG_one(const Channel channel, const Category catego
   vector<TString> strSampleIdentifiers;
   strSampleIdentifiers.push_back("VBF_Sig_POWHEG");
   vector<TString> strSamples;
-  getSamplesList(theSqrts, strSampleIdentifiers, strSamples);
+  getSamplesList(theSqrts, strSampleIdentifiers, strSamples, syst);
 
   // Kfactor variable names
   vector<TString> strKfactorVars;

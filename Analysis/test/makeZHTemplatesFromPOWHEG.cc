@@ -75,7 +75,7 @@ void makeZHTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   vector<TString> strSampleIdentifiers;
   strSampleIdentifiers.push_back("ZH_Sig_POWHEG");
   vector<TString> strSamples;
-  getSamplesList(theSqrts, strSampleIdentifiers, strSamples);
+  getSamplesList(theSqrts, strSampleIdentifiers, strSamples, syst);
 
   // Kfactor variable names
   vector<TString> strKfactorVars;

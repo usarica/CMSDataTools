@@ -40,16 +40,8 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDlist.push_back(KDa3);
   }
   else if (category==CategorizationHelpers::JJVBFTagged){
+    getLikelihoodDiscriminants(channel, CategorizationHelpers::Inclusive, syst, KDlist);
     if (channel==k4e || channel==k4mu || channel==k2e2mu){
-      KDspecs KDbkg("Dbkgkin");
-      KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
-      KDbkg.KDvars = getKDVars(kDbkgkin);
-      KDlist.push_back(KDbkg);
-      KDspecs KDbkgsigint("Dggint");
-      KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
-      KDbkgsigint.KDvars = getKDVars(kDggint);
-      KDlist.push_back(KDbkgsigint);
-
       KDspecs KDbkgjjEWQCD("DbkgjjEWQCD");
       KDbkgjjEWQCD.KD = constructKDFromType(
         kDbkgjjEWQCD,
@@ -62,6 +54,18 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
       );
       KDbkgjjEWQCD.KDvars = getKDVars(kDbkgjjEWQCD);
       KDlist.push_back(KDbkgjjEWQCD);
+      KDspecs KDintjjEWQCD("DintjjEWQCD");
+      KDintjjEWQCD.KD = constructKDFromType(
+        kDintjjEWQCD,
+        Form(
+          "%s%s%s",
+          (channel==k2e2mu ? "../data/SmoothKDConstant_m4l_DbkgjjEWQCD_2l2l_" : "../data/SmoothKDConstant_m4l_DbkgjjEWQCD_4l_"),
+          strCategory.Data(), "_13TeV.root"
+        ),
+        "sp_gr_varReco_Constant_Smooth"
+      );
+      KDintjjEWQCD.KDvars = getKDVars(kDintjjEWQCD);
+      KDlist.push_back(KDintjjEWQCD);
     }
     KDspecs KDL1("DL1jjVBFdec");
     KDL1.KD = constructKDFromType(kDL1jjVBFdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1), 2));
@@ -83,16 +87,8 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDlist.push_back(KDa3);
   }
   else if (category==CategorizationHelpers::HadVHTagged){
+    getLikelihoodDiscriminants(channel, CategorizationHelpers::Inclusive, syst, KDlist);
     if (channel==k4e || channel==k4mu || channel==k2e2mu){
-      KDspecs KDbkg("Dbkgkin");
-      KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
-      KDbkg.KDvars = getKDVars(kDbkgkin);
-      KDlist.push_back(KDbkg);
-      KDspecs KDbkgsigint("Dggint");
-      KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
-      KDbkgsigint.KDvars = getKDVars(kDggint);
-      KDlist.push_back(KDbkgsigint);
-
       KDspecs KDbkgjjEWQCD("DbkgjjEWQCD");
       KDbkgjjEWQCD.KD = constructKDFromType(
         kDbkgjjEWQCD,
@@ -105,6 +101,18 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
       );
       KDbkgjjEWQCD.KDvars = getKDVars(kDbkgjjEWQCD);
       KDlist.push_back(KDbkgjjEWQCD);
+      KDspecs KDintjjEWQCD("DintjjEWQCD");
+      KDintjjEWQCD.KD = constructKDFromType(
+        kDintjjEWQCD,
+        Form(
+          "%s%s%s",
+          (channel==k2e2mu ? "../data/SmoothKDConstant_m4l_DbkgjjEWQCD_2l2l_" : "../data/SmoothKDConstant_m4l_DbkgjjEWQCD_4l_"),
+          strCategory.Data(), "_13TeV.root"
+        ),
+        "sp_gr_varReco_Constant_Smooth"
+      );
+      KDintjjEWQCD.KDvars = getKDVars(kDintjjEWQCD);
+      KDlist.push_back(KDintjjEWQCD);
     }
     KDspecs KDL1("DL1jjVHdec");
     KDL1.KD = constructKDFromType(kDL1jjVHdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1), 2));

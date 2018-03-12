@@ -18,22 +18,22 @@ void ProcessHandler::assignProcessName(){
     procname=(useOffshell ? "ggZZ_offshell" : "ggZZ");
     break;
   case kVV:
-    procname= (useOffshell ? "VVZZ_offshell" : "VVZZ");
+    procname=(useOffshell ? "VVZZ_offshell" : "VVZZ");
     break;
   case kVBF:
-    procname= (useOffshell ? "VBF_offshell" : "VBF");
+    procname=(useOffshell ? "VBF_offshell" : "VBF");
     break;
   case kZH:
-    procname= (useOffshell ? "ZZZ_offshell" : "ZH");
+    procname=(useOffshell ? "ZZZ_offshell" : "ZH");
     break;
   case kWH:
-    procname= (useOffshell ? "WZZ_offshell" : "WH");
+    procname=(useOffshell ? "WZZ_offshell" : "WH");
     break;
   case kQQBkg:
-    procname= (useOffshell ? "qqZZ" : "bkg_qqzz");
+    procname=(useOffshell ? "qqZZ" : "bkg_qqzz");
     break;
   case kZX:
-    procname= (useOffshell ? "Zjets" : "Zjets");
+    procname=(useOffshell ? "Zjets" : "Zjets");
     break;
   default:
     procname="";

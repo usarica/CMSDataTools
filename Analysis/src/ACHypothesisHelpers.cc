@@ -44,6 +44,7 @@ std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet
     res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
     switch (hypo){
     case kSM:
+      res.push_back(DiscriminantClasses::kDintjjEWQCD);
       break;
     case kL1:
       res.push_back(DiscriminantClasses::kDL1jjVBFdec);
@@ -62,6 +63,7 @@ std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet
     res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
     switch (hypo){
     case kSM:
+      res.push_back(DiscriminantClasses::kDintjjEWQCD);
       break;
     case kL1:
       res.push_back(DiscriminantClasses::kDL1jjVHdec);

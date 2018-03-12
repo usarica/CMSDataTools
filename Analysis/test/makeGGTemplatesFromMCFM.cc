@@ -87,7 +87,7 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
     strSampleIdentifiers.push_back(Form("gg_BSI_SM_MCFM_%s", strMCFMChannels[ich].Data()));
     strSampleIdentifiers.push_back(Form("gg_BSI10_SM_MCFM_%s", strMCFMChannels[ich].Data()));
     */
-    getSamplesList(theSqrts, strSampleIdentifiers, strSamples[ich]);
+    getSamplesList(theSqrts, strSampleIdentifiers, strSamples[ich], syst);
   }
 
   // Kfactor variable names

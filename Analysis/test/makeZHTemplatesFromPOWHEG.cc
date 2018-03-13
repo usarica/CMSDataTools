@@ -33,7 +33,7 @@ void plotProcessCheckStage_SystPairs(const Channel channel, const Category categ
 void makeZHTemplatesFromPOWHEG_one(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -84,7 +84,10 @@ void makeZHTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   // Register the discriminants
   vector<KDspecs> KDlist;
   getLikelihoodDiscriminants(channel, category, syst, KDlist);
-  if (category!=Inclusive) getCategorizationDiscriminants(syst, KDlist);
+  if (category!=Inclusive){
+    if (category!=Untagged) getLikelihoodDiscriminants(channel, Inclusive, syst, KDlist);
+    getCategorizationDiscriminants(syst, KDlist);
+  }
 
   // Get the CJLST set
   CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
@@ -108,7 +111,7 @@ void makeZHTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_NgenOverNgenWPU, false, true);
 
   std::vector<ReweightingBuilder*> extraEvaluators;
-  SystematicsClass* systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators);
+  SystematicsClass* systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators, "POWHEG");
 
   // Setup GenHMass binning
   // Binning for inclusive reweighting
@@ -214,7 +217,7 @@ void makeZHTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 void makeZHTemplatesFromPOWHEG_two(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -287,7 +290,7 @@ void makeZHTemplatesFromPOWHEG_checkstage(
 ){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);

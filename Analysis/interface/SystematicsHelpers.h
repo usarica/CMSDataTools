@@ -64,14 +64,16 @@ namespace SystematicsHelpers{
   std::vector<SystematicsHelpers::SystematicVariationTypes> getProcessSystematicVariations(
     CategorizationHelpers::Category const category,
     SampleHelpers::Channel const channel,
-    ProcessHandler::ProcessType const proc
+    ProcessHandler::ProcessType const proc,
+    TString strGenerator
   );
 
   bool systematicAllowed(
     CategorizationHelpers::Category const category,
     SampleHelpers::Channel const channel,
     ProcessHandler::ProcessType const proc,
-    SystematicsHelpers::SystematicVariationTypes const syst
+    SystematicsHelpers::SystematicVariationTypes const syst,
+    TString strGenerator
   );
 
   SystematicsClass* constructSystematic(
@@ -80,7 +82,8 @@ namespace SystematicsHelpers{
     ProcessHandler::ProcessType const proc,
     SystematicsHelpers::SystematicVariationTypes const syst,
     std::vector<CJLSTTree*> trees,
-    std::vector<ReweightingBuilder*>& extraEvaluators
+    std::vector<ReweightingBuilder*>& extraEvaluators,
+    TString strGenerator
   );
 
   void adjustDiscriminantJECVariables(SystematicsHelpers::SystematicVariationTypes const syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);

@@ -32,7 +32,7 @@ void plotProcessCheckStage_SystPairs(const Channel channel, const Category categ
 void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -104,7 +104,7 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
   theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_OneOverNgen, false, true);
 
   std::vector<ReweightingBuilder*> extraEvaluators;
-  SystematicsClass* systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators);
+  SystematicsClass* systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators, "POWHEG");
 
 // Setup GenHMass binning
 // Binning for inclusive reweighting
@@ -172,7 +172,7 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
 void makeQQBkgTemplatesFromPOWHEG_two(const Channel channel, const Category category, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -245,7 +245,7 @@ void makeQQBkgTemplatesFromPOWHEG_checkstage(
 ){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);

@@ -28,7 +28,7 @@ void acquireMassRatio_ProcessNominalToNominalInclusive(
   if (!CheckSetTemplatesCategoryScheme(category)) return;
   ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;
-  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst, strGenerator)) return;
   if (proctype==ProcessHandler::kZX && strGenerator!="Data") return;
 
   const TString strChannel = getChannelName(channel);
@@ -303,7 +303,7 @@ void acquireMassRatio_ProcessSystToNominal(
   if (!CheckSetTemplatesCategoryScheme(category)) return;
   ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;
-  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst, strGenerator)) return;
   if (proctype==ProcessHandler::kZX && strGenerator!="Data") return;
 
   const TString strChannel = getChannelName(channel);

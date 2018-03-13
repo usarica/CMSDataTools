@@ -31,7 +31,7 @@ void plotProcessCheckStage(
   if (!CheckSetTemplatesCategoryScheme(category)) return;
   ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;
-  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst, strGenerator)) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -521,7 +521,7 @@ void plotProcessCheckStage_SystPairs(
   if (!CheckSetTemplatesCategoryScheme(category)) return;
   ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;
-  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst, strGenerator)) return;
 
   const int isyst = convertSystematicVariationTypeToInt(syst);
   if (syst==sNominal || isyst%2==1) return; // This means the code runs only when Up systematics are passed.

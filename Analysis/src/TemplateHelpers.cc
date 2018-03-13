@@ -40,7 +40,7 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDlist.push_back(KDa3);
   }
   else if (category==CategorizationHelpers::JJVBFTagged){
-    getLikelihoodDiscriminants(channel, CategorizationHelpers::Inclusive, syst, KDlist);
+    //getLikelihoodDiscriminants(channel, CategorizationHelpers::Inclusive, syst, KDlist);
     if (channel==k4e || channel==k4mu || channel==k2e2mu){
       KDspecs KDbkgjjEWQCD("DbkgjjEWQCD");
       KDbkgjjEWQCD.KD = constructKDFromType(
@@ -87,7 +87,7 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDlist.push_back(KDa3);
   }
   else if (category==CategorizationHelpers::HadVHTagged){
-    getLikelihoodDiscriminants(channel, CategorizationHelpers::Inclusive, syst, KDlist);
+    //getLikelihoodDiscriminants(channel, CategorizationHelpers::Inclusive, syst, KDlist);
     if (channel==k4e || channel==k4mu || channel==k2e2mu){
       KDspecs KDbkgjjEWQCD("DbkgjjEWQCD");
       KDbkgjjEWQCD.KD = constructKDFromType(

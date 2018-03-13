@@ -33,7 +33,7 @@ void plotProcessCheckStage_SystPairs(const Channel channel, const Category categ
 void makeWHTemplatesFromPOWHEG_one(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -88,7 +88,10 @@ void makeWHTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   // Register the discriminants
   vector<KDspecs> KDlist;
   getLikelihoodDiscriminants(channel, category, syst, KDlist);
-  if (category!=Inclusive) getCategorizationDiscriminants(syst, KDlist);
+  if (category!=Inclusive){
+    if (category!=Untagged) getLikelihoodDiscriminants(channel, Inclusive, syst, KDlist);
+    getCategorizationDiscriminants(syst, KDlist);
+  }
 
   // Get the CJLST sets
   vector<CJLSTSet*> theSets;
@@ -120,7 +123,7 @@ void makeWHTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   {
     vector<CJLSTTree*> trees;
     for (auto& theSampleSet:theSets) std::copy(theSampleSet->getCJLSTTreeList().begin(), theSampleSet->getCJLSTTreeList().end(), std::back_inserter(trees));
-    systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, trees, extraEvaluators);
+    systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, trees, extraEvaluators, "POWHEG");
   }
 
   // Setup GenHMass binning
@@ -205,7 +208,7 @@ void makeWHTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 void makeWHTemplatesFromPOWHEG_two(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -278,7 +281,7 @@ void makeWHTemplatesFromPOWHEG_checkstage(
 ){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);

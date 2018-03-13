@@ -131,8 +131,8 @@ class StageXBatchManager:
 
    def submitJobs(self):
       channels = [ "NChannels", "k2e2mu", "k4e", "k4mu" ]
-      categories = [ "Inclusive", "Untagged", "JJVBFTagged" ] # Not yet ready for VH-tagged categories
-      #categories = [ "Inclusive", "Untagged", "JJVBFTagged", "HadVHTagged" ]
+      #categories = [ "Inclusive", "Untagged", "JJVBFTagged" ] # Not yet ready for VH-tagged categories
+      categories = [ "Inclusive", "Untagged", "JJVBFTagged", "HadVHTagged" ]
       hypos = [ "nACHypotheses", "kSM", "kL1", "kA2", "kA3" ]
       systematics = [
          "sNominal",
@@ -142,6 +142,8 @@ class StageXBatchManager:
          "tQCDScaleDn", "tQCDScaleUp",
          "tAsMZDn", "tAsMZUp",
          "tPDFReplicaDn", "tPDFReplicaUp",
+         "tPythiaScaleDn", "tPythiaScaleUp",
+         "tPythiaTuneDn", "tPythiaTuneUp",
          "tQQBkgEWCorrDn", "tQQBkgEWCorrUp",
          "eJECDn", "eJECUp",
          "eZXStatsDn", "eZXStatsUp"
@@ -182,6 +184,11 @@ class StageXBatchManager:
                   strfixedDate="\\\"{}\\\"".format(self.opt.fixedDate)
                else:
                   strfixedDate=r"\\\"{}\\\"".format(self.opt.fixedDate)
+            else:
+               if not self.opt.interactive:
+                  strfixedDate="\\\"\\\""
+               else:
+                  strfixedDate=r"\\\"\\\""
             if argstr:
                argstr = "{},{}".format(argstr, strfixedDate)
             else:
@@ -241,7 +248,9 @@ class StageXBatchManager:
                               continue
 
                      # Do not submit unnecessary jobs
-                     if cat == "Inclusive" and ("eJEC" in syst or "tMINLO" in syst or "tPythia" in syst):
+                     if (self.opt.generator == "MCFM" or cat == "Inclusive") and ("eJEC" in syst or "tMINLO" in syst or "tPythia" in syst):
+                        continue
+                     if self.opt.process == "QQBkg" and ("tMINLO" in syst or "tPythia" in syst):
                         continue
                      if self.opt.process == "ZX" and not(syst=="sNominal" or "ZX" in syst):
                         continue

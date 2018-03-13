@@ -49,7 +49,7 @@ ExtendedHistogram_3D& ExtendedHistogram_3D::operator=(const ExtendedHistogram_3D
 }
 
 void ExtendedHistogram_3D::setNameTitle(const TString name_, const TString title_){
-  ExtendedHistogram::setNameTitle(name, title);
+  ExtendedHistogram::setNameTitle(name_, title_);
   if (histo){ histo->SetName(name); histo->SetTitle(title); }
   if (prof_x){ prof_x->SetName(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data())); prof_x->SetTitle(title); }
   if (prof_y){ prof_y->SetName(Form("%s_prof_%s", name.Data(), ybinning.getLabel().Data())); prof_y->SetTitle(title); }

@@ -2074,14 +2074,18 @@ void HelperFunctions::rebinCumulant(TH1F*& histo, const ExtendedBinning& binning
     std::min(binningX.getBinLowEdge(0), histo->GetXaxis()->GetBinLowEdge(1)),
     std::max(binningX.getBinLowEdge(binningX.getNbins()), histo->GetXaxis()->GetBinLowEdge(histo->GetNbinsX()+1))
   );
-
-  MELANCSplineFactory_1D spFac(xvar, "tmpSpline", MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope);
-  MELANCSplineFactory_1D spErrFac(xvar, "tmpSplineErr", MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope);
+  int nx=0;
+  MELANCSplineCore::BoundaryCondition bcBeginX = MELANCSplineCore::bcQuadraticWithNullSlope;
+  MELANCSplineCore::BoundaryCondition bcEndX = MELANCSplineCore::bcQuadraticWithNullSlope;
   vector<pair<MELANCSplineCore::T, MELANCSplineCore::T>> pList, pErrList;
   for (int ix=0; ix<=histo->GetNbinsX(); ix++){
     pList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), histo->GetBinContent(ix));
     pErrList.emplace_back(histo->GetXaxis()->GetBinUpEdge(ix), pow(histo->GetBinError(ix), 2));
+    nx++;
   }
+  if (nx<=3){ bcBeginX = MELANCSplineCore::bcNaturalSpline; bcEndX = MELANCSplineCore::bcNaturalSpline; }
+  MELANCSplineFactory_1D spFac(xvar, "tmpSpline", bcBeginX, bcEndX);
+  MELANCSplineFactory_1D spErrFac(xvar, "tmpSplineErr", bcBeginX, bcEndX);
   spFac.setPoints(pList);
   spErrFac.setPoints(pErrList);
   const MELANCSpline_1D_fast* sp = spFac.getFunc();
@@ -2138,8 +2142,11 @@ void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binning
     }
   }
 
-  MELANCSplineFactory_2D spFac(xvar, yvar, "tmpSpline", MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope);
-  MELANCSplineFactory_2D spErrFac(xvar, yvar, "tmpSplineErr", MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope);
+  int nx=0, ny=0;
+  MELANCSplineCore::BoundaryCondition bcBeginX = MELANCSplineCore::bcQuadraticWithNullSlope;
+  MELANCSplineCore::BoundaryCondition bcEndX = MELANCSplineCore::bcQuadraticWithNullSlope;
+  MELANCSplineCore::BoundaryCondition bcBeginY = MELANCSplineCore::bcQuadraticWithNullSlope;
+  MELANCSplineCore::BoundaryCondition bcEndY = MELANCSplineCore::bcQuadraticWithNullSlope;
   vector<splineTriplet_t> pList, pErrList;
   for (unsigned int ix=0; ix<=nbinsXoriginal+1; ix++){
     double xval;
@@ -2166,8 +2173,15 @@ void HelperFunctions::rebinCumulant(TH2F*& histo, const ExtendedBinning& binning
       double errsqval = pow(histo->GetBinError(ix, iy), 2);
       pList.emplace_back(xval, yval, wval);
       pErrList.emplace_back(xval, yval, errsqval);
+
+      if (nx==0) ny++;
     }
+    nx++;
   }
+  if (nx<=3){ bcBeginX = MELANCSplineCore::bcNaturalSpline; bcEndX = MELANCSplineCore::bcNaturalSpline; }
+  if (ny<=3){ bcBeginY = MELANCSplineCore::bcNaturalSpline; bcEndY = MELANCSplineCore::bcNaturalSpline; }
+  MELANCSplineFactory_2D spFac(xvar, yvar, "tmpSpline", bcBeginX, bcEndX, bcBeginY, bcEndY);
+  MELANCSplineFactory_2D spErrFac(xvar, yvar, "tmpSplineErr", bcBeginX, bcEndX, bcBeginY, bcEndY);
   spFac.setPoints(pList);
   spErrFac.setPoints(pErrList);
   const MELANCSpline_2D_fast* sp = spFac.getFunc();
@@ -2258,8 +2272,13 @@ void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binning
     }
   }
 
-  MELANCSplineFactory_3D spFac(xvar, yvar, zvar, "tmpSpline", MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope);
-  MELANCSplineFactory_3D spErrFac(xvar, yvar, zvar, "tmpSplineErr", MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope, MELANCSplineCore::bcApproximatedSlope);
+  int nx=0, ny=0, nz=0;
+  MELANCSplineCore::BoundaryCondition bcBeginX = MELANCSplineCore::bcQuadraticWithNullSlope;
+  MELANCSplineCore::BoundaryCondition bcEndX = MELANCSplineCore::bcQuadraticWithNullSlope;
+  MELANCSplineCore::BoundaryCondition bcBeginY = MELANCSplineCore::bcQuadraticWithNullSlope;
+  MELANCSplineCore::BoundaryCondition bcEndY = MELANCSplineCore::bcQuadraticWithNullSlope;
+  MELANCSplineCore::BoundaryCondition bcBeginZ = MELANCSplineCore::bcQuadraticWithNullSlope;
+  MELANCSplineCore::BoundaryCondition bcEndZ = MELANCSplineCore::bcQuadraticWithNullSlope;
   vector<splineQuadruplet_t> pList, pErrList;
   for (unsigned int ix=0; ix<=nbinsXoriginal+1; ix++){
     double xval;
@@ -2296,9 +2315,17 @@ void HelperFunctions::rebinCumulant(TH3F*& histo, const ExtendedBinning& binning
         double errsqval = pow(histo->GetBinError(ix, iy, iz), 2);
         pList.emplace_back(xval, yval, zval, wval);
         pErrList.emplace_back(xval, yval, zval, errsqval);
+        if (nx==0 && ny==0) nz++;
       }
+      if (nx==0) ny++;
     }
+    nx++;
   }
+  if (nx<=3){ bcBeginX = MELANCSplineCore::bcNaturalSpline; bcEndX = MELANCSplineCore::bcNaturalSpline; }
+  if (ny<=3){ bcBeginY = MELANCSplineCore::bcNaturalSpline; bcEndY = MELANCSplineCore::bcNaturalSpline; }
+  if (nz<=3){ bcBeginZ = MELANCSplineCore::bcNaturalSpline; bcEndZ = MELANCSplineCore::bcNaturalSpline; }
+  MELANCSplineFactory_3D spFac(xvar, yvar, zvar, "tmpSpline", bcBeginX, bcEndX, bcBeginY, bcEndY, bcBeginZ, bcEndZ);
+  MELANCSplineFactory_3D spErrFac(xvar, yvar, zvar, "tmpSplineErr", bcBeginX, bcEndX, bcBeginY, bcEndY, bcBeginZ, bcEndZ);
   spFac.setPoints(pList);
   spErrFac.setPoints(pErrList);
   const MELANCSpline_3D_fast* sp = spFac.getFunc();
@@ -2379,14 +2406,22 @@ void HelperFunctions::rebinHistogram(TH2F*& histo, const ExtendedBinning& binnin
     for (pair<TProfile const*, unsigned int>& condProf:*condProfs) condDims->push_back(condProf.second);
   }
 
+  MELAout << "HERE1" << endl;
   TH2F* htmp_cumulant=nullptr;
   getCumulantHistogram(histo, htmp_cumulant, "", condDims);
+  MELAout << "HERE2" << endl;
   rebinCumulant(htmp_cumulant, binningX, binningY, condProfs);
+  MELAout << "HERE3" << endl;
   delete histo; histo=nullptr;
+  MELAout << "HERE4" << endl;
   translateCumulantToHistogram(htmp_cumulant, histo, hname, condDims);
+  MELAout << "HERE5" << endl;
   histo->SetTitle(htitle);
+  MELAout << "HERE6" << endl;
   delete htmp_cumulant;
+  MELAout << "HERE7" << endl;
   delete condDims;
+  MELAout << "HERE8" << endl;
 }
 void HelperFunctions::rebinHistogram(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs){
   if (!histo) return;

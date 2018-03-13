@@ -39,7 +39,7 @@ ExtendedHistogram_1D& ExtendedHistogram_1D::operator=(const ExtendedHistogram_1D
 }
 
 void ExtendedHistogram_1D::setNameTitle(const TString name_, const TString title_){
-  ExtendedHistogram::setNameTitle(name, title);
+  ExtendedHistogram::setNameTitle(name_, title_);
   if (histo){ histo->SetName(name); histo->SetTitle(title); }
   if (prof_x){ prof_x->SetName(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data())); prof_x->SetTitle(title); }
 }

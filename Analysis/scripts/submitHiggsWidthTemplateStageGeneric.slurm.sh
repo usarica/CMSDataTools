@@ -17,7 +17,7 @@ export CPATH="/work-zfs/lhc/usarica/libXpm-3.5.11/include:$CPATH"
 source /work-zfs/lhc/usarica/ROOT/bin/thisroot.sh
 
 # CMSSW
-source /work-zfs/lhc/cms/cmsset_default.sh
+source /work-zfs/lhc/cms9/cmsset_default.sh
 module load boost/1.60.0
 export LIBRARY_PATH=$LIBRARY_PATH:/cm/shared/apps/boost/1.60.0/lib
 export CPATH=$CPATH:/cm/shared/apps/boost/1.60.0/include

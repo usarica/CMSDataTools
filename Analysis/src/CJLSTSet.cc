@@ -1,3 +1,4 @@
+#include "SampleHelpers.h"
 #include "CJLSTSet.h"
 #include <algorithm>
 

@@ -24,20 +24,8 @@ typedef void(*CheckStageFcn)(const Channel, const Category, const ACHypothesis, 
 CheckStageFcn checkstagefcn = &makeGGTemplatesFromPOWHEG_checkstage;
 #endif
 
-void plotProcessCheckStage(
-  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
-  const unsigned int istage,
-  const TString fixedDate="",
-  ProcessHandler::ProcessType proctype=theProcess.getProcessType(),
-  const TString strGenerator="POWHEG"
-);
-void plotProcessCheckStage_SystPairs(
-  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
-  const unsigned int istage,
-  const TString fixedDate="",
-  ProcessHandler::ProcessType proctype=theProcess.getProcessType(),
-  const TString strGenerator="POWHEG"
-);
+void plotProcessCheckStage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate="", ProcessHandler::ProcessType proctype=theProcess.getProcessType(), const TString strGenerator="POWHEG");
+void plotProcessCheckStage_SystPairs(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate="", ProcessHandler::ProcessType proctype=theProcess.getProcessType(), const TString strGenerator="POWHEG");
 
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
@@ -45,7 +33,7 @@ void plotProcessCheckStage_SystPairs(
 void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -87,7 +75,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   vector<TString> strSampleIdentifiers;
   strSampleIdentifiers.push_back("gg_Sig_POWHEG");
   vector<TString> strSamples;
-  getSamplesList(theSqrts, strSampleIdentifiers, strSamples);
+  getSamplesList(theSqrts, strSampleIdentifiers, strSamples, syst);
 
   // Kfactor variable names
   vector<TString> strKfactorVars;
@@ -121,7 +109,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_NgenOverNgenWPU, false, true);
 
   std::vector<ReweightingBuilder*> extraEvaluators;
-  SystematicsClass* systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators);
+  SystematicsClass* systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators, "POWHEG");
 
   // Setup GenHMass binning
   // Binning for inclusive reweighting
@@ -227,7 +215,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 void makeGGTemplatesFromPOWHEG_two(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -300,7 +288,7 @@ void makeGGTemplatesFromPOWHEG_checkstage(
 ){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);

@@ -1,10 +1,15 @@
 #ifndef BASETREE_H
 #define BASETREE_H
 
-#include "SampleHelpers.h"
-#include "Samples.h"
-#include "TSystem.h"
-#include "TDirectory.h"
+#include <vector>
+#include <fstream>
+#include <cstdlib>
+#include <unordered_map>
+#include "StdExtensions.h"
+#include "SimpleEntry.h"
+#include "TFile.h"
+#include "TTree.h"
+#include "TH1F.h"
 
 
 class BaseTree{

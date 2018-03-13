@@ -32,5 +32,14 @@ template void TemplateHelpers::setTemplateAxisLabels<TH1F>(TH1F* histo);
 template void TemplateHelpers::setTemplateAxisLabels<TH2F>(TH2F* histo);
 template void TemplateHelpers::setTemplateAxisLabels<TH3F>(TH3F* histo);
 
+template<typename T> void TemplateHelpers::doTemplatePostprocessing(T* tpl){
+  HelperFunctions::wipeOverUnderFlows(tpl);
+  HelperFunctions::divideBinWidth(tpl);
+  TemplateHelpers::setTemplateAxisLabels(tpl);
+}
+template void TemplateHelpers::doTemplatePostprocessing<TH1F>(TH1F* tpl);
+template void TemplateHelpers::doTemplatePostprocessing<TH2F>(TH2F* tpl);
+template void TemplateHelpers::doTemplatePostprocessing<TH3F>(TH3F* tpl);
+
 
 #endif

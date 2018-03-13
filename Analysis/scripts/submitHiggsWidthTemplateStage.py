@@ -22,13 +22,14 @@ class StageXBatchManager:
 
       self.parser.add_option("--process", dest="process", type="string", help="Name of the process")
       self.parser.add_option("--generator", dest="generator", type="string", help="Name of the generator", default="POWHEG")
-      self.parser.add_option("--stage", dest="stage", type="int", default=2, help="Stage 1, 2 (default=2)")
+      self.parser.add_option("--stage", dest="stage", type="int", default=1, help="Stage 1, 2 (default=1)")
       self.parser.add_option("--fixedDate", dest="fixedDate", type="string", help="Fixed output directory", default="")
 
       self.parser.add_option("--syst", dest="customSysts", type="string", action="append", help="Systematics to run (default=all turned on)")
       self.parser.add_option("--channel", dest="customChannels", type="string", action="append", help="Channels to run (default=all turned on)")
       self.parser.add_option("--category", dest="customCategories", type="string", action="append", help="Categories to run (default=all turned on)")
       self.parser.add_option("--AChypo", dest="customACHypos", type="string", action="append", help="Anomalous couplings hypotheses to run (default=all turned on)")
+      self.parser.add_option("--FRMethod", dest="customFRMethods", type="string", action="append", help="ZX fake rate methods (default=all turned on)")
 
       self.parser.add_option("--dry", dest="dryRun", action="store_true", default=False, help="Do not submit jobs, just set up the files")
       self.parser.add_option("--interactive", dest="interactive", action="store_true", default=False, help="Do not submit jobs; run them interactively")
@@ -82,6 +83,28 @@ class StageXBatchManager:
       self.submitJobs()
 
 
+   def getFcnArguments( self, fname, fcnname ):
+      fcnargs=[]
+      fcnfound=False
+      with open(fname) as testfile:
+         for line in testfile:
+            if fcnfound: break
+            if fcnname in line:
+               fcnfound=True
+               line=line.rstrip()
+               line=line.replace(' ','')
+               line=line.replace(fcnname,'')
+               line=line.replace('(','')
+               line=line.replace(')','')
+               line=line.replace('{','')
+               tmpargs=line.split(',')
+               for tmparg in tmpargs:
+                  fcnargs.append(tmparg.lower())
+      if not fcnfound:
+         sys.exit("Function {} is not found in file {}!".format(fcnname,fname))
+      return fcnargs
+
+
    def mkdir( self, dirname ):
       strcmd = 'mkdir -p %s' % dirname
       ret = os.system(strcmd)
@@ -107,9 +130,10 @@ class StageXBatchManager:
 
 
    def submitJobs(self):
-      channels = [ "k2e2mu", "k4e", "k4mu" ]
-      categories = [ "Inclusive", "JJVBFTagged" ] # Not yet ready for VH-tagged categories
-      hypos = [ "kSM", "kL1", "kA2", "kA3" ]
+      channels = [ "NChannels", "k2e2mu", "k4e", "k4mu" ]
+      #categories = [ "Inclusive", "Untagged", "JJVBFTagged" ] # Not yet ready for VH-tagged categories
+      categories = [ "Inclusive", "Untagged", "JJVBFTagged", "HadVHTagged" ]
+      hypos = [ "nACHypotheses", "kSM", "kL1", "kA2", "kA3" ]
       systematics = [
          "sNominal",
          "eLepSFEleDn", "eLepSFEleUp",
@@ -118,64 +142,131 @@ class StageXBatchManager:
          "tQCDScaleDn", "tQCDScaleUp",
          "tAsMZDn", "tAsMZUp",
          "tPDFReplicaDn", "tPDFReplicaUp",
+         "tPythiaScaleDn", "tPythiaScaleUp",
+         "tPythiaTuneDn", "tPythiaTuneUp",
          "tQQBkgEWCorrDn", "tQQBkgEWCorrUp",
          "eJECDn", "eJECUp",
          "eZXStatsDn", "eZXStatsUp"
          ]
+      frmethods = [ "ZXFakeRateHandler::NFakeRateMethods", "ZXFakeRateHandler::mSS" ]
 
-      for channel in channels:
-         if self.opt.customChannels is not None:
-            if not channel in self.opt.customChannels:
+      fcnargs=self.getFcnArguments(self.scriptname, self.fcnname)
+      argstr=""
+      for fcnarg in fcnargs:
+         tmpargstr=""
+         if "channel" in fcnarg:
+            tmpargstr = "{channel}"
+         elif "category" in fcnarg:
+            tmpargstr = "{category}"
+         elif "syst" in fcnarg:
+            tmpargstr = "{systematic}"
+         elif "hypo" in fcnarg:
+            tmpargstr = "{achypothesis}"
+         elif "frmethod" in fcnarg:
+            tmpargstr = "{frmethod}"
+         # For the rest of if-statements, do not set tmpargstr; append to argstr directly
+         elif "istage" in fcnarg:
+            strStage = str(self.opt.stage)
+            if argstr:
+               argstr = "{},{}".format(argstr, strStage)
+            else:
+               argstr=strStage
+         elif "sqrts" in fcnarg:
+            strSqrts = str(self.opt.sqrts)
+            if argstr:
+               argstr = "{},{}".format(argstr, strSqrts)
+            else:
+               argstr=strSqrts
+         elif "fixeddate" in fcnarg:
+            strfixedDate=""
+            if self.opt.fixedDate:
+               if not self.opt.interactive:
+                  strfixedDate="\\\"{}\\\"".format(self.opt.fixedDate)
+               else:
+                  strfixedDate=r"\\\"{}\\\"".format(self.opt.fixedDate)
+            else:
+               if not self.opt.interactive:
+                  strfixedDate="\\\"\\\""
+               else:
+                  strfixedDate=r"\\\"\\\""
+            if argstr:
+               argstr = "{},{}".format(argstr, strfixedDate)
+            else:
+               argstr=strfixedDate
+         if tmpargstr:
+            if argstr:
+               argstr = "{},{}".format(argstr, tmpargstr)
+            else:
+               argstr=tmpargstr
+
+      print "Argument string: ",argstr
+
+      for ch in channels:
+         if (not "channel" in argstr) and ch!="NChannels":
+            break
+         elif ("channel" in argstr):
+            if ch=="NChannels":
                continue
-
-         for cat in categories:
-            if self.opt.customCategories is not None:
-               if not cat in self.opt.customCategories:
+            elif self.opt.customChannels is not None:
+               if not ch in self.opt.customChannels:
                   continue
 
-            for hypo in hypos:
-               if self.opt.customACHypos is not None:
-                  if not hypo in self.opt.customACHypos:
+         for cat in categories:
+            if (not "category" in argstr) and cat!="Inclusive":
+               break
+            elif ("category" in argstr):
+               if self.opt.customCategories is not None:
+                  if not cat in self.opt.customCategories:
                      continue
 
-               if ((self.opt.process == "QQBkg" or self.opt.process == "ZX") and hypo != "kSM" and not self.opt.checkstage): # QQBkg and ZX are only kSM
+            for hypo in hypos:
+               if (not "achypothesis" in argstr) and hypo!="nACHypotheses":
                   break
-
-               for syst in systematics:
-                  if self.opt.customSysts is not None:
-                     if not syst in self.opt.customSysts:
+               elif ("achypothesis" in argstr):
+                  if hypo=="nACHypotheses":
+                     continue
+                  elif self.opt.customACHypos is not None:
+                     if not hypo in self.opt.customACHypos:
                         continue
 
-                  # Do not submit unnecessary jobs
-                  if cat == "Inclusive" and "eJEC" in syst:
-                     continue
-                  if self.opt.process == "ZX" and not(syst=="sNominal" or "ZX" in syst):
-                     continue
-                  if self.opt.process != "ZX" and "ZX" in syst:
-                     continue
-                  if self.opt.process != "QQBkg" and "QQBkg" in syst:
-                     continue
+               for syst in systematics:
+                  if (not "systematic" in argstr) and syst!="sNominal":
+                     break
+                  elif ("systematic" in argstr):
+                     if self.opt.customSysts is not None:
+                        if not syst in self.opt.customSysts:
+                           continue
 
-                  strscrcmd = "{}, {}".format(channel, cat)
-                  if (self.opt.process!="QQBkg" and self.opt.process!="ZX") or self.opt.checkstage:
-                     strscrcmd = "{}, {}".format(strscrcmd, hypo)
-                  strscrcmd = "{}, {}".format(strscrcmd, syst)
-                  if self.opt.checkstage:
-                     strscrcmd = "{}, {}".format(strscrcmd, self.opt.stage)
-                  if self.opt.fixedDate:
-                     strfixedDate=""
-                     if not self.opt.interactive:
-                        strfixedDate="\\\"{}\\\"".format(self.opt.fixedDate)
-                     else:
-                        strfixedDate=r"\\\"{}\\\"".format(self.opt.fixedDate)
-                     strscrcmd = "{}, {}".format(strscrcmd, strfixedDate)
-                  strscrcmd = strscrcmd.replace(' ','') # The command passed to bash script should not contain whitespace itself
-                  jobcmd = "submitHiggsWidthTemplateStageGeneric.sh {} \({}\)".format(self.fcnname, strscrcmd)
-                  if self.opt.interactive:
-                     jobcmd = "root -l -b -q -e \"gROOT->ProcessLine(\\\".x loadLib.C\\\");gROOT->ProcessLine(\\\".x {}.c+({})\\\");\"".format(self.fcnname, strscrcmd)
-                  if self.opt.dryRun:
-                     jobcmd = "echo " + jobcmd
-                  ret = os.system( jobcmd )
+                  for frm in frmethods:
+                     if (not "frmethod" in argstr) and frm!="ZXFakeRateHandler::NFakeRateMethods":
+                        break
+                     elif ("frmethod" in argstr):
+                        if frm=="ZXFakeRateHandler::NFakeRateMethods":
+                           continue
+                        elif self.opt.customFRMethods is not None:
+                           if not frm in self.opt.customFRMethods:
+                              continue
+
+                     # Do not submit unnecessary jobs
+                     if (self.opt.generator == "MCFM" or cat == "Inclusive") and ("eJEC" in syst or "tMINLO" in syst or "tPythia" in syst):
+                        continue
+                     if self.opt.process == "QQBkg" and ("tMINLO" in syst or "tPythia" in syst):
+                        continue
+                     if self.opt.process == "ZX" and not(syst=="sNominal" or "ZX" in syst):
+                        continue
+                     if self.opt.process != "ZX" and "ZX" in syst:
+                        continue
+                     if self.opt.process != "QQBkg" and "QQBkg" in syst:
+                        continue
+
+                     strscrcmd = argstr.format(channel=ch,category=cat,achypothesis=hypo,systematic=syst,frmethod=frm)
+                     strscrcmd = strscrcmd.replace(' ','') # The command passed to bash script should not contain whitespace itself
+                     jobcmd = "submitHiggsWidthTemplateStageGeneric.sh {} \({}\)".format(self.fcnname, strscrcmd)
+                     if self.opt.interactive:
+                        jobcmd = "root -l -b -q -e \"gROOT->ProcessLine(\\\".x loadLib.C\\\");gROOT->ProcessLine(\\\".x {}.c+({})\\\");\"".format(self.fcnname, strscrcmd)
+                     if self.opt.dryRun:
+                        jobcmd = "echo " + jobcmd
+                     ret = os.system( jobcmd )
 
 
 

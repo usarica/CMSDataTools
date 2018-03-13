@@ -22,20 +22,8 @@ typedef void(*CheckStageFcn)(const Channel, const Category, const ACHypothesis, 
 CheckStageFcn checkstagefcn = &makeZXTemplatesFromData_checkstage;
 #endif
 
-void plotProcessCheckStage(
-  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
-  const unsigned int istage,
-  const TString fixedDate="",
-  ProcessHandler::ProcessType proctype=theProcess.getProcessType(),
-  const TString strGenerator="Data"
-);
-void plotProcessCheckStage_SystPairs(
-  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
-  const unsigned int istage,
-  const TString fixedDate="",
-  ProcessHandler::ProcessType proctype=theProcess.getProcessType(),
-  const TString strGenerator="Data"
-);
+void plotProcessCheckStage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate="", ProcessHandler::ProcessType proctype=theProcess.getProcessType(), const TString strGenerator="Data");
+void plotProcessCheckStage_SystPairs(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate="", ProcessHandler::ProcessType proctype=theProcess.getProcessType(), const TString strGenerator="Data");
 
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
@@ -45,7 +33,7 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
 
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "Data")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -94,7 +82,7 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
   vector<TString> strSamples;
   vector<TString> strSampleIdentifiers;
   strSampleIdentifiers.push_back("AllData");
-  getSamplesList(theSqrts, strSampleIdentifiers, strSamples);
+  getSamplesList(theSqrts, strSampleIdentifiers, strSamples, syst);
 
   // Get the CJLST set
   CJLSTSet* theSampleSet = new CJLSTSet(strSamples, TREE_CRZLL_NAME, "", COUNTERS_CRZLL_NAME);
@@ -112,7 +100,7 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
   theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_None, false, false);
 
   std::vector<ReweightingBuilder*> extraEvaluators;
-  SystematicsClass* systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators);
+  SystematicsClass* systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators, "Data");
 
   ExtendedBinning ZZMassInclusiveBinning("ZZMass");
 
@@ -162,7 +150,7 @@ void makeZXTemplatesFromData_checkstage(
 ){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "Data")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);

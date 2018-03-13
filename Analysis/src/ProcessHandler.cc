@@ -18,22 +18,22 @@ void ProcessHandler::assignProcessName(){
     procname=(useOffshell ? "ggZZ_offshell" : "ggZZ");
     break;
   case kVV:
-    procname= (useOffshell ? "VVZZ_offshell" : "VVZZ");
+    procname=(useOffshell ? "VVZZ_offshell" : "VVZZ");
     break;
   case kVBF:
-    procname= (useOffshell ? "VBF_offshell" : "VBF");
+    procname=(useOffshell ? "VBF_offshell" : "VBF");
     break;
   case kZH:
-    procname= (useOffshell ? "ZZZ_offshell" : "ZH");
+    procname=(useOffshell ? "ZZZ_offshell" : "ZH");
     break;
   case kWH:
-    procname= (useOffshell ? "WZZ_offshell" : "WH");
+    procname=(useOffshell ? "WZZ_offshell" : "WH");
     break;
   case kQQBkg:
-    procname= (useOffshell ? "qqZZ" : "bkg_qqzz");
+    procname=(useOffshell ? "qqZZ" : "bkg_qqzz");
     break;
   case kZX:
-    procname= (useOffshell ? "Zjets" : "Zjets");
+    procname=(useOffshell ? "Zjets" : "Zjets");
     break;
   default:
     procname="";
@@ -51,6 +51,29 @@ void ProcessHandler::imposeTplPhysicality(std::vector<float>& /*vals*/) const{}
 /****************/
 GGProcessHandler::GGProcessHandler(bool useOffshell_) : ProcessHandler(ProcessHandler::kGG, useOffshell_)
 {}
+
+GGProcessHandler::TemplateContributionList::TemplateContributionList(GGProcessHandler::TemplateType type_) : type(type_), coefficient(1){
+  switch (type){
+  case GGTplInt_Re:
+    TypePowerPair.emplace_back(GGTplBkg, 0.5);
+    TypePowerPair.emplace_back(GGTplSig, 0.5);
+    coefficient=2;
+    break;
+  case GGTplIntBSM_Re:
+    TypePowerPair.emplace_back(GGTplBkg, 0.5);
+    TypePowerPair.emplace_back(GGTplSigBSM, 0.5);
+    coefficient=2;
+    break;
+  case GGTplSigBSMSMInt_Re:
+    TypePowerPair.emplace_back(GGTplSig, 0.5);
+    TypePowerPair.emplace_back(GGTplSigBSM, 0.5);
+    coefficient=2;
+    break;
+  default:
+    TypePowerPair.emplace_back(type, 1);
+    break;
+  }
+}
 
 TString GGProcessHandler::getOutputTreeName(GGProcessHandler::HypothesisType type) const{
   TString res;
@@ -278,24 +301,27 @@ GGProcessHandler::TemplateType GGProcessHandler::castIntToTemplateType(int type,
 }
 
 void GGProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
-  vector<pair<float*, pair<float*, float*>>> pairing;
-  if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes)
-    pairing.push_back(pair<float*, pair<float*, float*>>(&(vals.at(GGTplInt_Re)), pair<float*, float*>(&(vals.at(GGTplBkg)), &(vals.at(GGTplSig)))));
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes) pairing.emplace_back(GGTplInt_Re);
   if (vals.size()==nGGTplTypes){
-    pairing.push_back(pair<float*, pair<float*, float*>>(&(vals.at(GGTplIntBSM_Re)), pair<float*, float*>(&(vals.at(GGTplBkg)), &(vals.at(GGTplSigBSM)))));
-    pairing.push_back(pair<float*, pair<float*, float*>>(&(vals.at(GGTplSigBSMSMInt_Re)), pair<float*, float*>(&(vals.at(GGTplSig)), &(vals.at(GGTplSigBSM)))));
+    pairing.emplace_back(GGTplIntBSM_Re);
+    pairing.emplace_back(GGTplSigBSMSMInt_Re);
   }
-  for (auto& pair:pairing){
-    if (*(pair.second.first)<0.) *(pair.second.first)=0.;
-    if (*(pair.second.second)<0.) *(pair.second.second)=0.;
-    float thr = 2.*sqrt(*(pair.second.first) * *(pair.second.second));
-    if (fabs(*(pair.first))>thr) *(pair.first) *= thr*0.99/fabs(*(pair.first));
+  for (TemplateContributionList const& pair:pairing){
+    float& tplVal=vals.at(pair.type);
+    float thr = pair.coefficient;
+    for (auto const& componentPair:pair.TypePowerPair){
+      if (vals.at(componentPair.first)<0.) vals.at(componentPair.first)=0;
+      thr *= pow(vals.at(componentPair.first), componentPair.second);
+    }
+    if (fabs(tplVal)>thr) tplVal *= thr*0.99/fabs(tplVal);
   }
 }
-template<> void GGProcessHandler::recombineHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void GGProcessHandler::recombineHistogramsToTemplates<std::pair<float, float>>(std::vector<std::pair<float, float>>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   if (vals.empty()) return;
-  std::vector<float> res;
+  std::vector<float> res, errs;
   res.assign(vals.size(), 0);
+  errs.assign(vals.size(), 0);
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nGGSMTypes);
     const float invA[nGGSMTypes][nGGSMTypes]={
@@ -303,7 +329,13 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<float>(std::vec
       { 0, 1, 0 },
       { -1, -1, 1 }
     };
-    for (int ix=0; ix<(int) nGGSMTypes; ix++){ for (int iy=0; iy<(int) nGGSMTypes; iy++) res.at(ix) += invA[ix][iy]*vals.at(iy); }
+    for (int ix=0; ix<(int) nGGSMTypes; ix++){
+      for (int iy=0; iy<(int) nGGSMTypes; iy++){
+        res.at(ix) += invA[ix][iy]*vals.at(iy).first;
+        errs.at(ix) += pow(invA[ix][iy]*vals.at(iy).second, 2);
+      }
+      errs.at(ix) = sqrt(errs.at(ix));
+    }
   }
   else{
     assert(vals.size()==nGGTypes);
@@ -319,22 +351,36 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<float>(std::vec
       { 0, -cscale, 0, -cscale, cscale, 0 },
       { -cscale, 0, 0, -cscale, 0, cscale }
     };
-    for (int ix=0; ix<(int) nGGTypes; ix++){ for (int iy=0; iy<(int) nGGTypes; iy++) res.at(ix) += invA[ix][iy]*vals.at(iy); }
+    for (int ix=0; ix<(int) nGGTypes; ix++){
+      for (int iy=0; iy<(int) nGGTypes; iy++){
+        res.at(ix) += invA[ix][iy]*vals.at(iy).first;
+        errs.at(ix) += pow(invA[ix][iy]*vals.at(iy).second, 2);
+      }
+      errs.at(ix) = sqrt(errs.at(ix));
+    }
   }
-  std::swap(vals, res);
-  imposeTplPhysicality(vals);
+  imposeTplPhysicality(res);
+  for (unsigned int i=0; i<vals.size(); i++){ vals.at(i).first=res.at(i); vals.at(i).second=errs.at(i); }
 }
 template<> void GGProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   if (vals.empty()) return;
   typedef TH1F htype_t;
   int const nx = vals.at(0)->GetNbinsX();
   for (int ix=1; ix<=nx; ix++){
-    std::vector<float> binvals; binvals.assign(vals.size(), 0);
-    std::vector<float>::iterator ih=binvals.begin();
-    for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix); ih++; }
-    GGProcessHandler::recombineHistogramsToTemplates<float>(binvals, hypo);
+    std::vector<std::pair<float, float>> binvals; binvals.assign(vals.size(), std::pair<float, float>(0, 0));
+    std::vector<std::pair<float, float>>::iterator ih=binvals.begin();
+    for (htype_t*& hh:vals){
+      ih->first=hh->GetBinContent(ix);
+      ih->second=hh->GetBinError(ix);
+      ih++;
+    }
+    GGProcessHandler::recombineHistogramsToTemplates(binvals, hypo);
     ih=binvals.begin();
-    for (htype_t*& hh:vals){ hh->SetBinContent(ix, *ih); ih++; }
+    for (htype_t*& hh:vals){
+      hh->SetBinContent(ix, ih->first);
+      hh->SetBinError(ix, ih->second);
+      ih++;
+    }
   }
   for (int t=0; t<(int) vals.size(); t++){
     htype_t*& hh=vals.at(t);
@@ -353,11 +399,8 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vec
     for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
     for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
 
-    HelperFunctions::wipeOverUnderFlows(hh);
-    HelperFunctions::divideBinWidth(hh);
     hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel(type, hypo));
-    TemplateHelpers::setTemplateAxisLabels(hh);
   }
 }
 template<> void GGProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
@@ -367,12 +410,20 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vec
   int const ny = vals.at(0)->GetNbinsY();
   for (int ix=1; ix<=nx; ix++){
     for (int iy=1; iy<=ny; iy++){
-      std::vector<float> binvals; binvals.assign(vals.size(), 0);
-      std::vector<float>::iterator ih=binvals.begin();
-      for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix, iy); ih++; }
-      GGProcessHandler::recombineHistogramsToTemplates<float>(binvals, hypo);
+      std::vector<std::pair<float, float>> binvals; binvals.assign(vals.size(), std::pair<float, float>(0, 0));
+      std::vector<std::pair<float, float>>::iterator ih=binvals.begin();
+      for (htype_t*& hh:vals){
+        ih->first=hh->GetBinContent(ix, iy);
+        ih->second=hh->GetBinError(ix, iy);
+        ih++;
+      }
+      GGProcessHandler::recombineHistogramsToTemplates(binvals, hypo);
       ih=binvals.begin();
-      for (htype_t*& hh:vals){ hh->SetBinContent(ix, iy, *ih); ih++; }
+      for (htype_t*& hh:vals){
+        hh->SetBinContent(ix, iy, ih->first);
+        hh->SetBinError(ix, iy, ih->second);
+        ih++;
+      }
     }
   }
   for (int t=0; t<(int) vals.size(); t++){
@@ -394,11 +445,8 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vec
     for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
     for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
 
-    HelperFunctions::wipeOverUnderFlows(hh);
-    HelperFunctions::divideBinWidth(hh);
     hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel(type, hypo));
-    TemplateHelpers::setTemplateAxisLabels(hh);
   }
 }
 template<> void GGProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
@@ -410,12 +458,20 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vec
   for (int ix=1; ix<=nx; ix++){
     for (int iy=1; iy<=ny; iy++){
       for (int iz=1; iz<=nz; iz++){
-        std::vector<float> binvals; binvals.assign(vals.size(), 0);
-        std::vector<float>::iterator ih=binvals.begin();
-        for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix, iy, iz); ih++; }
-        GGProcessHandler::recombineHistogramsToTemplates<float>(binvals, hypo);
+        std::vector<std::pair<float, float>> binvals; binvals.assign(vals.size(), std::pair<float, float>(0, 0));
+        std::vector<std::pair<float, float>>::iterator ih=binvals.begin();
+        for (htype_t*& hh:vals){
+          ih->first=hh->GetBinContent(ix, iy, iz);
+          ih->second=hh->GetBinError(ix, iy, iz);
+          ih++;
+        }
+        GGProcessHandler::recombineHistogramsToTemplates(binvals, hypo);
         ih=binvals.begin();
-        for (htype_t*& hh:vals){ hh->SetBinContent(ix, iy, iz, *ih); ih++; }
+        for (htype_t*& hh:vals){
+          hh->SetBinContent(ix, iy, iz, ih->first);
+          hh->SetBinError(ix, iy, iz, ih->second);
+          ih++;
+        }
       }
     }
   }
@@ -440,11 +496,119 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vec
     for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
     for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
 
-    HelperFunctions::wipeOverUnderFlows(hh);
-    HelperFunctions::divideBinWidth(hh);
     hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel(type, hypo));
-    TemplateHelpers::setTemplateAxisLabels(hh);
+  }
+}
+template<> void GGProcessHandler::recombineHistogramsToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+  if (vals.empty()) return;
+  typedef TH1F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+  recombineHistogramsToTemplates<htype_t*>(vals, hypo);
+
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes) pairing.emplace_back(GGTplInt_Re);
+  if (vals.size()==nGGTplTypes){
+    pairing.emplace_back(GGTplIntBSM_Re);
+    pairing.emplace_back(GGTplSigBSMSMInt_Re);
+  }
+  assert(!pairing.empty());
+
+  for (TemplateContributionList const& pair:pairing){
+    htype_t*& tpl=vals.at(pair.type);
+    float const& coefficient = pair.coefficient;
+    // Loop over the bins
+    for (int ix=1; ix<=nx; ix++){
+      double bincontent = tpl->GetBinContent(ix);
+      double binerror = tpl->GetBinError(ix);
+      double divisor(coefficient);
+      for (auto const& componentPair:pair.TypePowerPair){
+        float const& componentPower=componentPair.second;
+        htype_t*& component = vals.at(componentPair.first);
+        divisor *= pow(component->GetBinContent(ix), componentPower);
+      }
+      if (divisor!=0.){ bincontent /= divisor; binerror /= divisor; }
+      else{ bincontent=0; binerror=0; }
+      tpl->SetBinContent(ix, bincontent);
+      tpl->SetBinError(ix, binerror);
+    }
+  }
+}
+template<> void GGProcessHandler::recombineHistogramsToTemplatesWithPhase<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+  if (vals.empty()) return;
+  typedef TH2F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+  int const ny = vals.at(0)->GetNbinsY();
+  recombineHistogramsToTemplates<htype_t*>(vals, hypo);
+
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes) pairing.emplace_back(GGTplInt_Re);
+  if (vals.size()==nGGTplTypes){
+    pairing.emplace_back(GGTplIntBSM_Re);
+    pairing.emplace_back(GGTplSigBSMSMInt_Re);
+  }
+  assert(!pairing.empty());
+
+  for (TemplateContributionList const& pair:pairing){
+    htype_t*& tpl=vals.at(pair.type);
+    float const& coefficient = pair.coefficient;
+    // Loop over the bins
+    for (int ix=1; ix<=nx; ix++){
+      for (int iy=1; iy<=ny; iy++){
+        double bincontent = tpl->GetBinContent(ix, iy);
+        double binerror = tpl->GetBinError(ix, iy);
+        double divisor(coefficient);
+        for (auto const& componentPair:pair.TypePowerPair){
+          float const& componentPower=componentPair.second;
+          htype_t*& component = vals.at(componentPair.first);
+          divisor *= pow(component->GetBinContent(ix, iy), componentPower);
+        }
+        if (divisor!=0.){ bincontent /= divisor; binerror /= divisor; }
+        else{ bincontent=0; binerror=0; }
+        tpl->SetBinContent(ix, iy, bincontent);
+        tpl->SetBinError(ix, iy, binerror);
+      }
+    }
+  }
+}
+template<> void GGProcessHandler::recombineHistogramsToTemplatesWithPhase<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+  if (vals.empty()) return;
+  typedef TH3F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+  int const ny = vals.at(0)->GetNbinsY();
+  int const nz = vals.at(0)->GetNbinsZ();
+  recombineHistogramsToTemplates<htype_t*>(vals, hypo);
+
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes) pairing.emplace_back(GGTplInt_Re);
+  if (vals.size()==nGGTplTypes){
+    pairing.emplace_back(GGTplIntBSM_Re);
+    pairing.emplace_back(GGTplSigBSMSMInt_Re);
+  }
+  assert(!pairing.empty());
+
+  for (TemplateContributionList const& pair:pairing){
+    htype_t*& tpl=vals.at(pair.type);
+    float const& coefficient = pair.coefficient;
+    // Loop over the bins
+    for (int ix=1; ix<=nx; ix++){
+      for (int iy=1; iy<=ny; iy++){
+        for (int iz=1; iz<=nz; iz++){
+          double bincontent = tpl->GetBinContent(ix, iy, iz);
+          double binerror = tpl->GetBinError(ix, iy, iz);
+          double divisor(coefficient);
+          for (auto const& componentPair:pair.TypePowerPair){
+            float const& componentPower=componentPair.second;
+            htype_t*& component = vals.at(componentPair.first);
+            divisor *= pow(component->GetBinContent(ix, iy, iz), componentPower);
+          }
+          if (divisor!=0.){ bincontent /= divisor; binerror /= divisor; }
+          else{ bincontent=0; binerror=0; }
+          tpl->SetBinContent(ix, iy, iz, bincontent);
+          tpl->SetBinError(ix, iy, iz, binerror);
+        }
+      }
+    }
   }
 }
 
@@ -464,6 +628,45 @@ VVProcessHandler::VVProcessHandler(bool useOffshell_, ProcessHandler::ProcessTyp
       proctype==ProcessHandler::kWH
       )
     ) MELAout << "VVProcessHandler::VVProcessHandler: Process type " << getProcessName() << " is not supported!" << endl;
+}
+
+VVProcessHandler::TemplateContributionList::TemplateContributionList(VVProcessHandler::TemplateType type_) : type(type_), coefficient(1){
+  switch (type){
+  case VVTplInt_Re:
+    TypePowerPair.emplace_back(VVTplBkg, 0.5);
+    TypePowerPair.emplace_back(VVTplSig, 0.5);
+    coefficient=2;
+    break;
+  case VVTplSigBSMSMInt_ai1_1_Re:
+    TypePowerPair.emplace_back(VVTplSig, 0.75);
+    TypePowerPair.emplace_back(VVTplSigBSM, 0.25);
+    coefficient=4;
+    break;
+  case VVTplSigBSMSMInt_ai1_2_PosDef:
+    TypePowerPair.emplace_back(VVTplSig, 0.5);
+    TypePowerPair.emplace_back(VVTplSigBSM, 0.5);
+    coefficient=6;
+    break;
+  case VVTplSigBSMSMInt_ai1_3_Re:
+    TypePowerPair.emplace_back(VVTplSig, 0.25);
+    TypePowerPair.emplace_back(VVTplSigBSM, 0.75);
+    coefficient=4;
+    break;
+  case VVTplIntBSM_ai1_1_Re:
+    TypePowerPair.emplace_back(VVTplBkg, 0.5);
+    TypePowerPair.emplace_back(VVTplSig, 0.25);
+    TypePowerPair.emplace_back(VVTplSigBSM, 0.25);
+    coefficient=4;
+    break;
+  case VVTplIntBSM_ai1_2_Re:
+    TypePowerPair.emplace_back(VVTplBkg, 0.5);
+    TypePowerPair.emplace_back(VVTplSigBSM, 0.5);
+    coefficient=2;
+    break;
+  default:
+    TypePowerPair.emplace_back(type, 1);
+    break;
+  }
 }
 
 TString VVProcessHandler::getOutputTreeName(VVProcessHandler::HypothesisType type) const{
@@ -812,57 +1015,30 @@ VVProcessHandler::TemplateType VVProcessHandler::castIntToTemplateType(int type,
 }
 
 void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
-  struct pairing{
-    float* PA;
-    float* PB;
-    float* PC;
-    float* Pint;
-    const float multInt;
-    const float coefA;
-    const float coefB;
-    const float coefC;
-
-    pairing(float* pa, float* pb, float* pc, float* pint, const float mult, const float cA, const float cB, const float cC) : PA(pa), PB(pb), PC(pc), Pint(pint), multInt(mult), coefA(cA), coefB(cB), coefC(cC) {}
-
-    bool scale(){
-      assert((PA && coefA!=0.) || (PB && coefB!=0.) || (PC && coefC!=0.));
-      bool res=false;
-      float thr=multInt;
-      if (PA){
-        if (*PA<0.){ *PA=0.; res=true; }
-        thr *= pow(*PA, coefA);
-      }
-      if (PB){
-        if (*PB<0.){ *PB=0.; res=true; }
-        thr *= pow(*PB, coefB);
-      }
-      if (PC){
-        if (*PC<0.){ *PC=0.; res=true; }
-        thr *= pow(*PC, coefC);
-      }
-      if (Pint && fabs(*Pint)>thr){ *Pint *= thr*0.99/fabs(*Pint); res=true; }
-      return res;
-    }
-  };
-
-  vector<pairing> pairings;
-  if (vals.size()==nVVTplSMTypes || vals.size()==nVVTplTypes)
-    pairings.push_back(pairing(&vals.at(VVTplBkg), &vals.at(VVTplSig), nullptr, &vals.at(VVTplInt_Re), 2., 0.5, 0.5, 0));
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nVVTplSMTypes || vals.size()==nVVTplTypes) pairing.emplace_back(VVTplInt_Re);
   if (vals.size()==nVVTplTypes){
-    pairings.push_back(pairing(&vals.at(VVTplSig), &vals.at(VVTplSigBSM), nullptr, &vals.at(VVTplSigBSMSMInt_ai1_1_Re), 4., 0.75, 0.25, 0));
-    pairings.push_back(pairing(&vals.at(VVTplSig), &vals.at(VVTplSigBSM), nullptr, &vals.at(VVTplSigBSMSMInt_ai1_2_PosDef), 6., 0.5, 0.5, 0));
-    pairings.push_back(pairing(&vals.at(VVTplSig), &vals.at(VVTplSigBSM), nullptr, &vals.at(VVTplSigBSMSMInt_ai1_3_Re), 4., 0.25, 0.75, 0));
-    pairings.push_back(pairing(&vals.at(VVTplBkg), &vals.at(VVTplSig), &vals.at(VVTplSigBSM), &vals.at(VVTplIntBSM_ai1_1_Re), 2., 0.5, 0.25, 0.25));
-    pairings.push_back(pairing(&vals.at(VVTplBkg), nullptr, &vals.at(VVTplSigBSM), &vals.at(VVTplIntBSM_ai1_2_Re), 2., 0.5, 0, 0.5));
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_1_Re);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_2_PosDef);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_3_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_1_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_2_Re);
   }
-  //unsigned int nBinsCorrected=0;
-  for (auto& pair:pairings) /*nBinsCorrected += */pair.scale();
-  //MELAout << "VVProcessHandler::imposeTplPhysicality: Corrected number of bins: " << nBinsCorrected << endl;
+  for (TemplateContributionList const& pair:pairing){
+    float& tplVal=vals.at(pair.type);
+    float thr = pair.coefficient;
+    for (auto const& componentPair:pair.TypePowerPair){
+      if (vals.at(componentPair.first)<0.) vals.at(componentPair.first)=0;
+      thr *= pow(vals.at(componentPair.first), componentPair.second);
+    }
+    if (fabs(tplVal)>thr) tplVal *= thr*0.99/fabs(tplVal);
+  }
 }
-template<> void VVProcessHandler::recombineHistogramsToTemplates<float>(std::vector<float>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void VVProcessHandler::recombineHistogramsToTemplates<std::pair<float, float>>(std::vector<std::pair<float, float>>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   if (vals.empty()) return;
-  std::vector<float> res;
+  std::vector<float> res, errs;
   res.assign(vals.size(), 0);
+  res.assign(errs.size(), 0);
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nVVSMTypes);
     const float invA[nVVSMTypes][nVVSMTypes]={
@@ -870,7 +1046,13 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<float>(std::vec
       { 0, 1, 0 },
       { -1, -1, 1 }
     };
-    for (int ix=0; ix<(int) nVVSMTypes; ix++){ for (int iy=0; iy<(int) nVVSMTypes; iy++) res.at(ix) += invA[ix][iy]*vals.at(iy); }
+    for (int ix=0; ix<(int) nVVSMTypes; ix++){
+      for (int iy=0; iy<(int) nVVSMTypes; iy++){
+        res.at(ix) += invA[ix][iy]*vals.at(iy).first;
+        errs.at(ix) += pow(invA[ix][iy]*vals.at(iy).second, 2);
+      }
+      errs.at(ix) = sqrt(errs.at(ix));
+    }
   }
   else{
     assert(vals.size()==nVVTypes);
@@ -891,22 +1073,36 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<float>(std::vec
       { c, float(2.)*c, -c, float(29./32.)*c, float(-4.)*c, float(6.)*c, float(-4.)*c, -c, c },
       { -c2, 0, 0, -c2, 0, 0, 0, c2, 0 }
     };
-    for (int ix=0; ix<(int) nVVTypes; ix++){ for (int iy=0; iy<(int) nVVTypes; iy++) res.at(ix) += invA[ix][iy]*vals.at(iy); }
+    for (int ix=0; ix<(int) nVVTypes; ix++){
+      for (int iy=0; iy<(int) nVVTypes; iy++){
+        res.at(ix) += invA[ix][iy]*vals.at(iy).first;
+        errs.at(ix) += pow(invA[ix][iy]*vals.at(iy).second, 2);
+      }
+      errs.at(ix) = sqrt(errs.at(ix));
+    }
   }
-  std::swap(vals, res);
-  imposeTplPhysicality(vals);
+  imposeTplPhysicality(res);
+  for (unsigned int i=0; i<vals.size(); i++){ vals.at(i).first=res.at(i); vals.at(i).second=errs.at(i); }
 }
 template<> void VVProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   if (vals.empty()) return;
   typedef TH1F htype_t;
   int const nx = vals.at(0)->GetNbinsX();
   for (int ix=1; ix<=nx; ix++){
-    std::vector<float> binvals; binvals.assign(vals.size(), 0);
-    std::vector<float>::iterator ih=binvals.begin();
-    for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix); ih++; }
-    VVProcessHandler::recombineHistogramsToTemplates<float>(binvals, hypo);
+    std::vector<std::pair<float, float>> binvals; binvals.assign(vals.size(), std::pair<float, float>(0, 0));
+    std::vector<std::pair<float, float>>::iterator ih=binvals.begin();
+    for (htype_t*& hh:vals){
+      ih->first=hh->GetBinContent(ix);
+      ih->second=hh->GetBinError(ix);
+      ih++;
+    }
+    VVProcessHandler::recombineHistogramsToTemplates(binvals, hypo);
     ih=binvals.begin();
-    for (htype_t*& hh:vals){ hh->SetBinContent(ix, *ih); ih++; }
+    for (htype_t*& hh:vals){
+      hh->SetBinContent(ix, ih->first);
+      hh->SetBinError(ix, ih->second);
+      ih++;
+    }
   }
   for (int t=0; t<(int) vals.size(); t++){
     htype_t*& hh=vals.at(t);
@@ -925,11 +1121,8 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vec
     for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
     for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
 
-    HelperFunctions::wipeOverUnderFlows(hh);
-    HelperFunctions::divideBinWidth(hh);
     hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel(type, hypo));
-    TemplateHelpers::setTemplateAxisLabels(hh);
   }
 }
 template<> void VVProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
@@ -939,12 +1132,20 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vec
   int const ny = vals.at(0)->GetNbinsY();
   for (int ix=1; ix<=nx; ix++){
     for (int iy=1; iy<=ny; iy++){
-      std::vector<float> binvals; binvals.assign(vals.size(), 0);
-      std::vector<float>::iterator ih=binvals.begin();
-      for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix, iy); ih++; }
-      VVProcessHandler::recombineHistogramsToTemplates<float>(binvals, hypo);
+      std::vector<std::pair<float, float>> binvals; binvals.assign(vals.size(), std::pair<float, float>(0, 0));
+      std::vector<std::pair<float, float>>::iterator ih=binvals.begin();
+      for (htype_t*& hh:vals){
+        ih->first=hh->GetBinContent(ix, iy);
+        ih->second=hh->GetBinError(ix, iy);
+        ih++;
+      }
+      VVProcessHandler::recombineHistogramsToTemplates(binvals, hypo);
       ih=binvals.begin();
-      for (htype_t*& hh:vals){ hh->SetBinContent(ix, iy, *ih); ih++; }
+      for (htype_t*& hh:vals){
+        hh->SetBinContent(ix, iy, ih->first);
+        hh->SetBinError(ix, iy, ih->second);
+        ih++;
+      }
     }
   }
   for (int t=0; t<(int) vals.size(); t++){
@@ -966,11 +1167,8 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vec
     for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
     for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
 
-    HelperFunctions::wipeOverUnderFlows(hh);
-    HelperFunctions::divideBinWidth(hh);
     hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel(type, hypo));
-    TemplateHelpers::setTemplateAxisLabels(hh);
   }
 }
 template<> void VVProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
@@ -982,12 +1180,20 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vec
   for (int ix=1; ix<=nx; ix++){
     for (int iy=1; iy<=ny; iy++){
       for (int iz=1; iz<=nz; iz++){
-        std::vector<float> binvals; binvals.assign(vals.size(), 0);
-        std::vector<float>::iterator ih=binvals.begin();
-        for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix, iy, iz); ih++; }
-        VVProcessHandler::recombineHistogramsToTemplates<float>(binvals, hypo);
+        std::vector<std::pair<float, float>> binvals; binvals.assign(vals.size(), std::pair<float, float>(0, 0));
+        std::vector<std::pair<float, float>>::iterator ih=binvals.begin();
+        for (htype_t*& hh:vals){
+          ih->first=hh->GetBinContent(ix, iy, iz);
+          ih->second=hh->GetBinError(ix, iy, iz);
+          ih++;
+        }
+        VVProcessHandler::recombineHistogramsToTemplates(binvals, hypo);
         ih=binvals.begin();
-        for (htype_t*& hh:vals){ hh->SetBinContent(ix, iy, iz, *ih); ih++; }
+        for (htype_t*& hh:vals){
+          hh->SetBinContent(ix, iy, iz, ih->first);
+          hh->SetBinError(ix, iy, iz, ih->second);
+          ih++;
+        }
       }
     }
   }
@@ -1012,11 +1218,128 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vec
     for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
     for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
 
-    HelperFunctions::wipeOverUnderFlows(hh);
-    HelperFunctions::divideBinWidth(hh);
     hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel(type, hypo));
-    TemplateHelpers::setTemplateAxisLabels(hh);
+  }
+}
+template<> void VVProcessHandler::recombineHistogramsToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+  if (vals.empty()) return;
+  typedef TH1F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+  recombineHistogramsToTemplates<htype_t*>(vals, hypo);
+
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nVVTplSMTypes || vals.size()==nVVTplTypes) pairing.emplace_back(VVTplInt_Re);
+  if (vals.size()==nVVTplTypes){
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_1_Re);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_2_PosDef);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_3_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_1_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_2_Re);
+  }
+  assert(!pairing.empty());
+
+  for (TemplateContributionList const& pair:pairing){
+    htype_t*& tpl=vals.at(pair.type);
+    float const& coefficient = pair.coefficient;
+    // Loop over the bins
+    for (int ix=1; ix<=nx; ix++){
+      double bincontent = tpl->GetBinContent(ix);
+      double binerror = tpl->GetBinError(ix);
+      double divisor(coefficient);
+      for (auto const& componentPair:pair.TypePowerPair){
+        float const& componentPower=componentPair.second;
+        htype_t*& component = vals.at(componentPair.first);
+        divisor *= pow(component->GetBinContent(ix), componentPower);
+      }
+      if (divisor!=0.){ bincontent /= divisor; binerror /= divisor; }
+      else{ bincontent=0; binerror=0; }
+      tpl->SetBinContent(ix, bincontent);
+      tpl->SetBinError(ix, binerror);
+    }
+  }
+}
+template<> void VVProcessHandler::recombineHistogramsToTemplatesWithPhase<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+  if (vals.empty()) return;
+  typedef TH2F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+  int const ny = vals.at(0)->GetNbinsY();
+  recombineHistogramsToTemplates<htype_t*>(vals, hypo);
+
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nVVTplSMTypes || vals.size()==nVVTplTypes) pairing.emplace_back(VVTplInt_Re);
+  if (vals.size()==nVVTplTypes){
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_1_Re);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_2_PosDef);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_3_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_1_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_2_Re);
+  }
+  assert(!pairing.empty());
+
+  for (TemplateContributionList const& pair:pairing){
+    htype_t*& tpl=vals.at(pair.type);
+    float const& coefficient = pair.coefficient;
+    // Loop over the bins
+    for (int ix=1; ix<=nx; ix++){
+      for (int iy=1; iy<=ny; iy++){
+        double bincontent = tpl->GetBinContent(ix, iy);
+        double binerror = tpl->GetBinError(ix, iy);
+        double divisor(coefficient);
+        for (auto const& componentPair:pair.TypePowerPair){
+          float const& componentPower=componentPair.second;
+          htype_t*& component = vals.at(componentPair.first);
+          divisor *= pow(component->GetBinContent(ix, iy), componentPower);
+        }
+        if (divisor!=0.){ bincontent /= divisor; binerror /= divisor; }
+        else{ bincontent=0; binerror=0; }
+        tpl->SetBinContent(ix, iy, bincontent);
+        tpl->SetBinError(ix, iy, binerror);
+      }
+    }
+  }
+}
+template<> void VVProcessHandler::recombineHistogramsToTemplatesWithPhase<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+  if (vals.empty()) return;
+  typedef TH3F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+  int const ny = vals.at(0)->GetNbinsY();
+  int const nz = vals.at(0)->GetNbinsZ();
+  recombineHistogramsToTemplates<htype_t*>(vals, hypo);
+
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nVVTplSMTypes || vals.size()==nVVTplTypes) pairing.emplace_back(VVTplInt_Re);
+  if (vals.size()==nVVTplTypes){
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_1_Re);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_2_PosDef);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_3_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_1_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_2_Re);
+  }
+  assert(!pairing.empty());
+
+  for (TemplateContributionList const& pair:pairing){
+    htype_t*& tpl=vals.at(pair.type);
+    float const& coefficient = pair.coefficient;
+    // Loop over the bins
+    for (int ix=1; ix<=nx; ix++){
+      for (int iy=1; iy<=ny; iy++){
+        for (int iz=1; iz<=nz; iz++){
+          double bincontent = tpl->GetBinContent(ix, iy, iz);
+          double binerror = tpl->GetBinError(ix, iy, iz);
+          double divisor(coefficient);
+          for (auto const& componentPair:pair.TypePowerPair){
+            float const& componentPower=componentPair.second;
+            htype_t*& component = vals.at(componentPair.first);
+            divisor *= pow(component->GetBinContent(ix, iy, iz), componentPower);
+          }
+          if (divisor!=0.){ bincontent /= divisor; binerror /= divisor; }
+          else{ bincontent=0; binerror=0; }
+          tpl->SetBinContent(ix, iy, iz, bincontent);
+          tpl->SetBinError(ix, iy, iz, binerror);
+        }
+      }
+    }
   }
 }
 
@@ -1053,33 +1376,24 @@ template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::
   typedef TH1F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nQQBkgTypes)) return;
   for (T*& hh:vals){
-    HelperFunctions::wipeOverUnderFlows<T>(hh);
-    HelperFunctions::divideBinWidth<T>(hh);
     hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel());
-    TemplateHelpers::setTemplateAxisLabels<T>(hh);
   }
 }
 template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals) const{
   typedef TH2F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nQQBkgTypes)) return;
   for (T*& hh:vals){
-    HelperFunctions::wipeOverUnderFlows<T>(hh);
-    HelperFunctions::divideBinWidth<T>(hh);
     hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel());
-    TemplateHelpers::setTemplateAxisLabels<T>(hh);
   }
 }
 template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals) const{
   typedef TH3F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nQQBkgTypes)) return;
   for (T*& hh:vals){
-    HelperFunctions::wipeOverUnderFlows<T>(hh);
-    HelperFunctions::divideBinWidth<T>(hh);
     hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel());
-    TemplateHelpers::setTemplateAxisLabels<T>(hh);
   }
 }
 
@@ -1108,32 +1422,20 @@ template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vec
   typedef TH1F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nZXTypes)) return;
   for (T*& hh:vals){
-    HelperFunctions::wipeOverUnderFlows<T>(hh);
-    HelperFunctions::divideBinWidth<T>(hh);
-    hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel());
-    TemplateHelpers::setTemplateAxisLabels<T>(hh);
   }
 }
 template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals) const{
   typedef TH2F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nZXTypes)) return;
   for (T*& hh:vals){
-    HelperFunctions::wipeOverUnderFlows<T>(hh);
-    HelperFunctions::divideBinWidth<T>(hh);
-    hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel());
-    TemplateHelpers::setTemplateAxisLabels<T>(hh);
   }
 }
 template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals) const{
   typedef TH3F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nZXTypes)) return;
   for (T*& hh:vals){
-    HelperFunctions::wipeOverUnderFlows<T>(hh);
-    HelperFunctions::divideBinWidth<T>(hh);
-    hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel());
-    TemplateHelpers::setTemplateAxisLabels<T>(hh);
   }
 }

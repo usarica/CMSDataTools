@@ -1,6 +1,7 @@
 #ifndef BASETREE_HPP
 #define BASETREE_HPP
 
+#include "SampleHelpers.h"
 #include "BaseTree.h"
 
 

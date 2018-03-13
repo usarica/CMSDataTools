@@ -26,25 +26,9 @@ void acquireMassRatio_ProcessNominalToNominalInclusive(
   if (channel==NChannels) return;
   if (category==Inclusive) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  ProcessHandler const* thePerProcessHandle=nullptr;
-  switch (proctype){
-  case ProcessHandler::kGG:
-    thePerProcessHandle = &TemplateHelpers::OffshellGGProcessHandle;
-    break;
-  case ProcessHandler::kVV:
-    thePerProcessHandle = &TemplateHelpers::OffshellVVProcessHandle;
-    break;
-  case ProcessHandler::kQQBkg:
-    thePerProcessHandle = &TemplateHelpers::OffshellQQBkgProcessHandle;
-    break;
-  case ProcessHandler::kZX:
-    thePerProcessHandle = &TemplateHelpers::OffshellZXProcessHandle;
-    break;
-  default:
-    break;
-  };
+  ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;
-  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst, strGenerator)) return;
   if (proctype==ProcessHandler::kZX && strGenerator!="Data") return;
 
   const TString strChannel = getChannelName(channel);
@@ -315,26 +299,11 @@ void acquireMassRatio_ProcessSystToNominal(
   const TString strGenerator
 ){
   if (channel==NChannels) return;
+  if (syst==sNominal) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  ProcessHandler const* thePerProcessHandle=nullptr;
-  switch (proctype){
-  case ProcessHandler::kGG:
-    thePerProcessHandle = &TemplateHelpers::OffshellGGProcessHandle;
-    break;
-  case ProcessHandler::kVV:
-    thePerProcessHandle = &TemplateHelpers::OffshellVVProcessHandle;
-    break;
-  case ProcessHandler::kQQBkg:
-    thePerProcessHandle = &TemplateHelpers::OffshellQQBkgProcessHandle;
-    break;
-  case ProcessHandler::kZX:
-    thePerProcessHandle = &TemplateHelpers::OffshellZXProcessHandle;
-    break;
-  default:
-    break;
-  };
+  ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;
-  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst, strGenerator)) return;
   if (proctype==ProcessHandler::kZX && strGenerator!="Data") return;
 
   const TString strChannel = getChannelName(channel);
@@ -642,7 +611,7 @@ ExtendedBinning getMassBinning(TTree* tree, bool separateZ4l){
     counts.erase(counts.begin());
     binning.removeBinLowEdge(1);
   }
-  // Merge every wo bins except the last one
+  // Merge every two bins except the last one
   {
     unsigned int nbins_old=binning.getNbins();
     for (unsigned int bin=0; bin<nbins_old-2; bin++){

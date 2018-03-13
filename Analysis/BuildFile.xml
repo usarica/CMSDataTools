@@ -8,3 +8,6 @@
 <use name="roofitcore"/>
 <use name="ZZMatrixElement/MELA"/>
 
+<export>
+   <lib name="1"/>
+</export>

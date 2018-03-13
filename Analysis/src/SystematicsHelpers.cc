@@ -118,7 +118,8 @@ int SystematicsHelpers::convertSystematicVariationTypeToInt(SystematicsHelpers::
 std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::getProcessSystematicVariations(
   CategorizationHelpers::Category const category,
   SampleHelpers::Channel const channel,
-  ProcessHandler::ProcessType const proc
+  ProcessHandler::ProcessType const proc,
+  TString strGenerator
 ){
   std::vector<SystematicVariationTypes> res;
 
@@ -152,7 +153,17 @@ std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::ge
       res.push_back(tQQBkgEWCorrUp);
     }
 
-    if (category==CategorizationHelpers::JJVBFTagged || category==CategorizationHelpers::HadVHTagged){
+    if (
+      (category==CategorizationHelpers::Untagged || category==CategorizationHelpers::JJVBFTagged || category==CategorizationHelpers::HadVHTagged)
+      &&
+      strGenerator!="MCFM"
+    ){
+      if (proc==ProcessHandler::kGG || proc==ProcessHandler::kVV){
+        res.push_back(tPythiaScaleDn);
+        res.push_back(tPythiaScaleUp);
+        res.push_back(tPythiaTuneDn);
+        res.push_back(tPythiaTuneUp);
+      }
       res.push_back(eJECDn);
       res.push_back(eJECUp);
     }
@@ -163,9 +174,10 @@ bool SystematicsHelpers::systematicAllowed(
   CategorizationHelpers::Category const category,
   SampleHelpers::Channel const channel,
   ProcessHandler::ProcessType const proc,
-  SystematicsHelpers::SystematicVariationTypes const syst
+  SystematicsHelpers::SystematicVariationTypes const syst,
+  TString strGenerator
 ){
-  std::vector<SystematicsHelpers::SystematicVariationTypes> allowedTypes = SystematicsHelpers::getProcessSystematicVariations(category, channel, proc);
+  std::vector<SystematicsHelpers::SystematicVariationTypes> allowedTypes = SystematicsHelpers::getProcessSystematicVariations(category, channel, proc, strGenerator);
   for (SystematicVariationTypes& st:allowedTypes){ if (st==syst) return true; }
   return false;
 }
@@ -175,10 +187,11 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
   ProcessHandler::ProcessType const proc,
   SystematicsHelpers::SystematicVariationTypes const syst,
   std::vector<CJLSTTree*> trees,
-  std::vector<ReweightingBuilder*>& extraEvaluators
+  std::vector<ReweightingBuilder*>& extraEvaluators,
+  TString strGenerator
 ){
   SystematicsClass* res=nullptr;
-  if (!systematicAllowed(category, channel, proc, syst)) return res;
+  if (!systematicAllowed(category, channel, proc, syst, strGenerator)) return res;
 
   ExtendedBinning binning((theSqrts*1000.-70.)/10., 70., theSqrts*1000., "GenHMass");
   ReweightingBuilder* rewgtbuilder=nullptr;
@@ -287,6 +300,7 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
     }
     res = new YieldSystematic(evaluators, (normbuilder ? SystematicsHelpers::getNormalizedSystematic : SystematicsHelpers::getRawSystematic));
   }
+  // FIXME: PYTHIA SCALE AND TUNE VARIATIONS FOR 2017 MC NEED SPECIAL VARIABLES
 
   MELAout << "SystematicsHelpers::constructSystematic: Systematics constructed with:\n"
     << "\t- Vars: " << strVars
@@ -322,6 +336,14 @@ TString SystematicsHelpers::getSystematicsName(SystematicsHelpers::SystematicVar
     return "PDFReplicaDn";
   case tPDFReplicaUp:
     return "PDFReplicaUp";
+  case tPythiaScaleDn:
+    return "PythiaScaleDn";
+  case tPythiaScaleUp:
+    return "PythiaScaleUp";
+  case tPythiaTuneDn:
+    return "PythiaTuneDn";
+  case tPythiaTuneUp:
+    return "PythiaTuneUp";
   case tQQBkgEWCorrDn:
     return "EWCorrDn";
   case tQQBkgEWCorrUp:

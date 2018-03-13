@@ -77,9 +77,9 @@ namespace HelperFunctions{
   template<> void regularizeHistogram<TH2F>(TH2F*& histo, int nIter_, double threshold_, double acceleration_);
   //template<> void regularizeHistogram<TH3F>(TH3F*& histo, int nIter_, double threshold_, double acceleration_);
 
-  template <typename T> void conditionalizeHistogram(T* histo, unsigned int axis, std::vector<std::pair<T*, float>> const* conditionalsReference=nullptr);
-  template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int axis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference);
-  template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int axis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference);
+  template <typename T> void conditionalizeHistogram(T* histo, unsigned int iaxis, std::vector<std::pair<T*, float>> const* conditionalsReference=nullptr, bool useWidth=true);
+  template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int iaxis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference, bool useWidth);
+  template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int iaxis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth);
 
   template <typename T> void wipeOverUnderFlows(T* hwipe, bool rescale=false);
   template<> void wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool rescale);
@@ -90,6 +90,10 @@ namespace HelperFunctions{
   template<> void divideBinWidth<TH1F>(TH1F* histo);
   template<> void divideBinWidth<TH2F>(TH2F* histo);
   template<> void divideBinWidth<TH3F>(TH3F* histo);
+
+  template <typename T> double getHistogramIntegralAndError(T const* histo, int ix, int jx, bool useWidth, double* error=nullptr);
+  template <typename T> double getHistogramIntegralAndError(T const* histo, int ix, int jx, int iy, int jy, bool useWidth, double* error=nullptr);
+  template <typename T> double getHistogramIntegralAndError(T const* histo, int ix, int jx, int iy, int jy, int iz, int jz, bool useWidth, double* error=nullptr);
 
   template <typename T> float computeIntegral(T* histo, bool useWidth);
   template<> float computeIntegral<TH1F>(TH1F* histo, bool useWidth);
@@ -111,23 +115,15 @@ namespace HelperFunctions{
   template <> void antisymmetrizeHistogram<TH2F>(TH2F* histo, unsigned int const axis);
   template <> void antisymmetrizeHistogram<TH3F>(TH3F* histo, unsigned int const axis);
 
-  template <typename T> void getCumulantHistogram(T const* histo, T*& res, TString newname="");
-  template <> void getCumulantHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname);
-  template <> void getCumulantHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname);
-  template <> void getCumulantHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname);
+  template <typename T> void getCumulantHistogram(T const* histo, T*& res, TString newname="", std::vector<unsigned int>* condDims=nullptr);
+  template <> void getCumulantHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname, std::vector<unsigned int>* condDims);
+  template <> void getCumulantHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname, std::vector<unsigned int>* condDims);
+  template <> void getCumulantHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname, std::vector<unsigned int>* condDims);
 
-  template <typename T> void translateCumulantToHistogram(T const* histo, T*& res, TString newname="");
-  template <> void translateCumulantToHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname);
-  template <> void translateCumulantToHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname);
-  template <> void translateCumulantToHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname);
-
-  void rebinCumulant(TH1F*& histo, const ExtendedBinning& binningX);
-  void rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY);
-  void rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ);
-
-  void rebinHistogram(TH1F*& histo, const ExtendedBinning& binningX);
-  void rebinHistogram(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY);
-  void rebinHistogram(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ);
+  template <typename T> void translateCumulantToHistogram(T const* histo, T*& res, TString newname="", std::vector<unsigned int>* condDims=nullptr);
+  template <> void translateCumulantToHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname, std::vector<unsigned int>* condDims);
+  template <> void translateCumulantToHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname, std::vector<unsigned int>* condDims);
+  template <> void translateCumulantToHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname, std::vector<unsigned int>* condDims);
 
   // Spline functions
   template<int N> TF1* getFcn_a0plusa1overXN(TSpline3* sp, double xmin, double xmax, bool useLowBound);
@@ -154,9 +150,9 @@ namespace HelperFunctions{
 
   TGraph* createROCFromDistributions(TH1* hA, TH1* hB, TString name);
 
-  TGraphErrors* makeGraphFromTH1(TH1* hx, TH1* hy, TString name);
+  TGraphErrors* makeGraphFromTH1(TH1 const* hx, TH1 const* hy, TString name);
 
-  TGraphErrors* makeGraphFromCumulantHistogram(TH1* histo, TString name);
+  TGraphErrors* makeGraphFromCumulantHistogram(TH1 const* histo, TString name);
 
   TGraph* addTGraphs(TGraph* tgfirst, TGraph* tgsecond);
 
@@ -181,7 +177,7 @@ namespace HelperFunctions{
     TF1* (*lowf)(TSpline3*, double, double, bool),
     TF1* (*highf)(TSpline3*, double, double, bool),
     bool useFaithfulSlopeFirst, bool useFaithfulSlopeSecond,
-    vector<pair<pair<double, double>, unsigned int>>* addpoints=nullptr
+    std::vector<std::pair<std::pair<double, double>, unsigned int>>* addpoints=nullptr
   );
 
   void regularizeSlice(
@@ -197,11 +193,33 @@ namespace HelperFunctions{
     signed char forceUseFaithfulSlopeFirst=-1, signed char forceUseFaithfulSlopeSecond=-1
   );
 
+  void rebinProfile(TProfile*& prof, const ExtendedBinning& binningX);
+
+  void rebinCumulant(TH1F*& histo, const ExtendedBinning& binningX);
+  void rebinCumulant(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
+  void rebinCumulant(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
+
+  void rebinHistogram(TH1F*& histo, const ExtendedBinning& binningX);
+  void rebinHistogram(TH2F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
+  void rebinHistogram(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs=nullptr);
+
+  void rebinHistogram_NoCumulant(TH1F*& histo, const ExtendedBinning& binningX, const TProfile* prof_x);
+  void rebinHistogram_NoCumulant(TH2F*& histo, const ExtendedBinning& binningX, const TProfile* prof_x, const ExtendedBinning& binningY, const TProfile* prof_y);
+  void rebinHistogram_NoCumulant(TH3F*& histo, const ExtendedBinning& binningX, const TProfile* prof_x, const ExtendedBinning& binningY, const TProfile* prof_y, const ExtendedBinning& binningZ, const TProfile* prof_z);
+
+  TH1F* getHistogramSlice(TH2F const* histo, unsigned char XDirection, int iy, int jy, TString newname="");
+  TH1F* getHistogramSlice(TH3F const* histo, unsigned char XDirection, int iy, int jy, int iz, int jz, TString newname=""); // "y" and "z" are cylical, so if Xdirection==1 (Y), "y"=Z and "z"=X
+  TH2F* getHistogramSlice(TH3F const* histo, unsigned char XDirection, unsigned char YDirection, int iz, int jz, TString newname="");
+
   // Function to calculate error in efficiency
   float calculateEfficiencyError(
     float const sumW, float const sumWAll,
     float const sumWsq, float const sumWsqAll
     );
+  float translateEfficiencyErrorToNumeratorError(
+    float const eff, float const sumWAll,
+    float const effErr, float const sumWsqAll
+  );
 
   // Function to copy a file
   void CopyFile(TString fname, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*));
@@ -439,6 +457,80 @@ template<typename T> bool HelperFunctions::checkNanInf(std::vector<T> const& var
   return true;
 }
 
+// Histogram functions
+template <typename T> double HelperFunctions::getHistogramIntegralAndError(T const* histo, int ix, int jx, bool useWidth, double* error){
+  double res=0;
+  double reserror=0;
+  if (histo){
+    if (!useWidth) res=histo->IntegralAndError(ix, jx, reserror, "");
+    else{
+      int xb[2]={ std::max(1, std::min(histo->GetNbinsX(), ix)), std::max(1, std::min(histo->GetNbinsX(), jx)) };
+
+      res=histo->IntegralAndError(xb[0], xb[1], reserror, "width");
+
+      double integralinside, integralerrorinside;
+      integralinside=histo->IntegralAndError(xb[0], xb[1], integralerrorinside, "");
+
+      double integraloutside, integralerroroutside;
+      integraloutside=histo->IntegralAndError(ix, jx, integralerroroutside, "");
+
+      res = res + integraloutside - integralinside;
+      reserror = sqrt(std::max(0., pow(reserror, 2) + pow(integralerroroutside, 2) - pow(integralinside, 2)));
+    }
+  }
+  if (error) *error=reserror;
+  return res;
+}
+template <typename T> double HelperFunctions::getHistogramIntegralAndError(T const* histo, int ix, int jx, int iy, int jy, bool useWidth, double* error){
+  double res=0;
+  double reserror=0;
+  if (histo){
+    if (!useWidth) res=histo->IntegralAndError(ix, jx, iy, jy, reserror, "");
+    else{
+      int xb[2]={ std::max(1, std::min(histo->GetNbinsX(), ix)), std::max(1, std::min(histo->GetNbinsX(), jx)) };
+      int yb[2]={ std::max(1, std::min(histo->GetNbinsY(), iy)), std::max(1, std::min(histo->GetNbinsY(), jy)) };
+
+      res=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], reserror, "width");
+
+      double integralinside, integralerrorinside;
+      integralinside=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], integralerrorinside, "");
+
+      double integraloutside, integralerroroutside;
+      integraloutside=histo->IntegralAndError(ix, jx, iy, jy, integralerroroutside, "");
+
+      res = res + integraloutside - integralinside;
+      reserror = sqrt(std::max(0., pow(reserror, 2) + pow(integralerroroutside, 2) - pow(integralinside, 2)));
+    }
+  }
+  if (error) *error=reserror;
+  return res;
+}
+template <typename T> double HelperFunctions::getHistogramIntegralAndError(T const* histo, int ix, int jx, int iy, int jy, int iz, int jz, bool useWidth, double* error){
+  double res=0;
+  double reserror=0;
+  if (histo){
+    if (!useWidth) res=histo->IntegralAndError(ix, jx, iy, jy, iz, jz, reserror, "");
+    else{
+      int xb[2]={ std::max(1, std::min(histo->GetNbinsX(), ix)), std::max(1, std::min(histo->GetNbinsX(), jx)) };
+      int yb[2]={ std::max(1, std::min(histo->GetNbinsY(), iy)), std::max(1, std::min(histo->GetNbinsY(), jy)) };
+      int zb[2]={ std::max(1, std::min(histo->GetNbinsZ(), iz)), std::max(1, std::min(histo->GetNbinsZ(), jz)) };
+
+      res=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], zb[0], zb[1], reserror, "width");
+
+      double integralinside, integralerrorinside;
+      integralinside=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], zb[0], zb[1], integralerrorinside, "");
+
+      double integraloutside, integralerroroutside;
+      integraloutside=histo->IntegralAndError(ix, jx, iy, jy, iz, jz, integralerroroutside, "");
+
+      res = res + integraloutside - integralinside;
+      reserror = sqrt(std::max(0., pow(reserror, 2) + pow(integralerroroutside, 2) - pow(integralinside, 2)));
+    }
+  }
+  if (error) *error=reserror;
+  return res;
+}
+
 // TGraph functions
 template<typename T> TGraph* HelperFunctions::makeGraphFromPair(std::vector<std::pair<T, T>> points, TString name){
   if (points.empty()) return nullptr;
@@ -532,6 +624,8 @@ template void HelperFunctions::extractHistogramsFromDirectory<TH3D>(TDirectory* 
 template void HelperFunctions::extractHistogramsFromDirectory<TGraphAsymmErrors>(TDirectory* source, std::vector<TGraphAsymmErrors*>& histolist);
 template void HelperFunctions::extractHistogramsFromDirectory<TGraphErrors>(TDirectory* source, std::vector<TGraphErrors*>& histolist);
 template void HelperFunctions::extractHistogramsFromDirectory<TGraph>(TDirectory* source, std::vector<TGraph*>& histolist);
+// Overloads for TSpline that can be used just like histograms
+template void HelperFunctions::extractHistogramsFromDirectory<TSpline3>(TDirectory* source, std::vector<TSpline3*>& histolist);
 
 /****************************************************************/
 // Explicit instantiations
@@ -603,6 +697,13 @@ template void HelperFunctions::cleanUnorderedMap<TString, std::vector<unsigned i
 template void HelperFunctions::cleanUnorderedMap<TString, std::vector<int>*>(std::unordered_map<TString, std::vector<int>*> um);
 template void HelperFunctions::cleanUnorderedMap<TString, std::vector<float>*>(std::unordered_map<TString, std::vector<float>*> um);
 template void HelperFunctions::cleanUnorderedMap<TString, std::vector<double>*>(std::unordered_map<TString, std::vector<double>*> um);
+
+template double HelperFunctions::getHistogramIntegralAndError<TH1F>(TH1F const* histo, int ix, int jx, bool useWidth, double* error);
+template double HelperFunctions::getHistogramIntegralAndError<TH1D>(TH1D const* histo, int ix, int jx, bool useWidth, double* error);
+template double HelperFunctions::getHistogramIntegralAndError<TH2F>(TH2F const* histo, int ix, int jx, int iy, int jy, bool useWidth, double* error);
+template double HelperFunctions::getHistogramIntegralAndError<TH2D>(TH2D const* histo, int ix, int jx, int iy, int jy, bool useWidth, double* error);
+template double HelperFunctions::getHistogramIntegralAndError<TH3F>(TH3F const* histo, int ix, int jx, int iy, int jy, int iz, int jz, bool useWidth, double* error);
+template double HelperFunctions::getHistogramIntegralAndError<TH3D>(TH3D const* histo, int ix, int jx, int iy, int jy, int iz, int jz, bool useWidth, double* error);
 
 template TGraph* HelperFunctions::makeGraphFromPair<float>(std::vector<std::pair<float, float>> points, TString name);
 template TGraph* HelperFunctions::makeGraphFromPair<double>(std::vector<std::pair<double, double>> points, TString name);

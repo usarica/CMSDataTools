@@ -2,6 +2,8 @@
 #define EXTENDEDHISTOGRAM_2D_H
 
 #include "ExtendedHistogram.h"
+#include "TTree.h"
+#include "TH1F.h"
 #include "TH2F.h"
 #include "TProfile.h"
 #include "TGraphErrors.h"
@@ -28,6 +30,7 @@ public:
   void setNameTitle(const TString name_, const TString title_="");
   virtual void setBinning(const ExtendedBinning& binning, const int xyz=0, const TString label="");
   virtual void build();
+  virtual void reset();
 
   TH2F*& getHistogram(){ return histo; }
   const TH2F* getHistogram() const{ return histo; }
@@ -40,6 +43,10 @@ public:
   const TProfile* getProfileY() const{ return prof_y; }
 
   void fill(double x, double y, double wgt=1.);
+
+  void rebin(ExtendedBinning const* binningX, ExtendedBinning const* binningY);
+
+  void constructFromTree(TTree* tree, float& xvar, float& yvar, float& weight, ExtendedBinning const* binningX=nullptr, ExtendedBinning const* binningY=nullptr);
 
   static ExtendedHistogram_2D divideHistograms(ExtendedHistogram_2D const& h1, ExtendedHistogram_2D const& h2, bool useEffErr, TString newname="");
 

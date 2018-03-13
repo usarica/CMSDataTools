@@ -6,12 +6,12 @@
 
 // Process handle
 typedef VVProcessHandler ProcessHandleType;
-const ProcessHandleType& theProcess = TemplateHelpers::OffshellVVProcessHandle;
+const ProcessHandleType& theProcess = TemplateHelpers::OffshellZHProcessHandle;
 
 // Process-specific functions
-void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate="");
-void makeVVTemplatesFromPOWHEG_two(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate="");
-void makeVVTemplatesFromPOWHEG_checkstage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate="");
+void makeZHTemplatesFromPOWHEG_one(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate="");
+void makeZHTemplatesFromPOWHEG_two(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate="");
+void makeZHTemplatesFromPOWHEG_checkstage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate="");
 
 // Constants to affect the template code
 #ifndef outputdir_def
@@ -21,31 +21,19 @@ const TString user_output_dir = "output/";
 #ifndef checkstage_def
 #define checkstage_def
 typedef void(*CheckStageFcn)(const Channel, const Category, const ACHypothesis, const SystematicVariationTypes, const unsigned int, const TString);
-CheckStageFcn checkstagefcn = &makeVVTemplatesFromPOWHEG_checkstage;
+CheckStageFcn checkstagefcn = &makeZHTemplatesFromPOWHEG_checkstage;
 #endif
 
-void plotProcessCheckStage(
-  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
-  const unsigned int istage,
-  const TString fixedDate="",
-  ProcessHandler::ProcessType proctype=theProcess.getProcessType(),
-  const TString strGenerator="POWHEG"
-);
-void plotProcessCheckStage_SystPairs(
-  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
-  const unsigned int istage,
-  const TString fixedDate="",
-  ProcessHandler::ProcessType proctype=theProcess.getProcessType(),
-  const TString strGenerator="POWHEG"
-);
+void plotProcessCheckStage(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate="", ProcessHandler::ProcessType proctype=theProcess.getProcessType(), const TString strGenerator="POWHEG");
+void plotProcessCheckStage_SystPairs(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate="", ProcessHandler::ProcessType proctype=theProcess.getProcessType(), const TString strGenerator="POWHEG");
 
 // Function to build one templates
 // ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
 // theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
+void makeZHTemplatesFromPOWHEG_one(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -85,9 +73,9 @@ void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
   // Get list of samples
   vector<TString> strSampleIdentifiers;
-  strSampleIdentifiers.push_back("VBF_Sig_POWHEG");
+  strSampleIdentifiers.push_back("ZH_Sig_POWHEG");
   vector<TString> strSamples;
-  getSamplesList(theSqrts, strSampleIdentifiers, strSamples);
+  getSamplesList(theSqrts, strSampleIdentifiers, strSamples, syst);
 
   // Kfactor variable names
   vector<TString> strKfactorVars;
@@ -96,7 +84,10 @@ void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   // Register the discriminants
   vector<KDspecs> KDlist;
   getLikelihoodDiscriminants(channel, category, syst, KDlist);
-  if (category!=Inclusive) getCategorizationDiscriminants(syst, KDlist);
+  if (category!=Inclusive){
+    if (category!=Untagged) getLikelihoodDiscriminants(channel, Inclusive, syst, KDlist);
+    getCategorizationDiscriminants(syst, KDlist);
+  }
 
   // Get the CJLST set
   CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
@@ -120,7 +111,7 @@ void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_NgenOverNgenWPU, false, true);
 
   std::vector<ReweightingBuilder*> extraEvaluators;
-  SystematicsClass* systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators);
+  SystematicsClass* systhandle = constructSystematic(category, channel, theProcess.getProcessType(), syst, theSampleSet->getCJLSTTreeList(), extraEvaluators, "POWHEG");
 
   // Setup GenHMass binning
   // Binning for inclusive reweighting
@@ -223,10 +214,10 @@ void makeVVTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   MELAout.close();
 }
 
-void makeVVTemplatesFromPOWHEG_two(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
+void makeZHTemplatesFromPOWHEG_two(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const TString fixedDate){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -251,7 +242,7 @@ void makeVVTemplatesFromPOWHEG_two(const Channel channel, const Category categor
   INPUT_NAME += ".root";
   TString cinput = cinput_common + INPUT_NAME;
   // Test for the presence of the file
-  if (gSystem->AccessPathName(cinput)) makeVVTemplatesFromPOWHEG_one(channel, category, hypo, syst, fixedDate);
+  if (gSystem->AccessPathName(cinput)) makeZHTemplatesFromPOWHEG_one(channel, category, hypo, syst, fixedDate);
   // Test again and fail if file still doesn't exist
   if (gSystem->AccessPathName(cinput)){
     MELAerr << "File " << cinput << " still doesn't exist. Reason is not understood. Quitting..." << endl;
@@ -292,14 +283,14 @@ void makeVVTemplatesFromPOWHEG_two(const Channel channel, const Category categor
   MELAout.close();
 }
 
-void makeVVTemplatesFromPOWHEG_checkstage(
+void makeZHTemplatesFromPOWHEG_checkstage(
   const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
   const unsigned int istage,
   const TString fixedDate
 ){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, theProcess.getProcessType(), syst, "POWHEG")) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);

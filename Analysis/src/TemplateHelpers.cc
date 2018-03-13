@@ -40,16 +40,8 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDlist.push_back(KDa3);
   }
   else if (category==CategorizationHelpers::JJVBFTagged){
+    //getLikelihoodDiscriminants(channel, CategorizationHelpers::Inclusive, syst, KDlist);
     if (channel==k4e || channel==k4mu || channel==k2e2mu){
-      KDspecs KDbkg("Dbkgkin");
-      KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
-      KDbkg.KDvars = getKDVars(kDbkgkin);
-      KDlist.push_back(KDbkg);
-      KDspecs KDbkgsigint("Dggint");
-      KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
-      KDbkgsigint.KDvars = getKDVars(kDggint);
-      KDlist.push_back(KDbkgsigint);
-
       KDspecs KDbkgjjEWQCD("DbkgjjEWQCD");
       KDbkgjjEWQCD.KD = constructKDFromType(
         kDbkgjjEWQCD,
@@ -62,6 +54,18 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
       );
       KDbkgjjEWQCD.KDvars = getKDVars(kDbkgjjEWQCD);
       KDlist.push_back(KDbkgjjEWQCD);
+      KDspecs KDintjjEWQCD("DintjjEWQCD");
+      KDintjjEWQCD.KD = constructKDFromType(
+        kDintjjEWQCD,
+        Form(
+          "%s%s%s",
+          (channel==k2e2mu ? "../data/SmoothKDConstant_m4l_DbkgjjEWQCD_2l2l_" : "../data/SmoothKDConstant_m4l_DbkgjjEWQCD_4l_"),
+          strCategory.Data(), "_13TeV.root"
+        ),
+        "sp_gr_varReco_Constant_Smooth"
+      );
+      KDintjjEWQCD.KDvars = getKDVars(kDintjjEWQCD);
+      KDlist.push_back(KDintjjEWQCD);
     }
     KDspecs KDL1("DL1jjVBFdec");
     KDL1.KD = constructKDFromType(kDL1jjVBFdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1), 2));
@@ -83,16 +87,8 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDlist.push_back(KDa3);
   }
   else if (category==CategorizationHelpers::HadVHTagged){
+    //getLikelihoodDiscriminants(channel, CategorizationHelpers::Inclusive, syst, KDlist);
     if (channel==k4e || channel==k4mu || channel==k2e2mu){
-      KDspecs KDbkg("Dbkgkin");
-      KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
-      KDbkg.KDvars = getKDVars(kDbkgkin);
-      KDlist.push_back(KDbkg);
-      KDspecs KDbkgsigint("Dggint");
-      KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
-      KDbkgsigint.KDvars = getKDVars(kDggint);
-      KDlist.push_back(KDbkgsigint);
-
       KDspecs KDbkgjjEWQCD("DbkgjjEWQCD");
       KDbkgjjEWQCD.KD = constructKDFromType(
         kDbkgjjEWQCD,
@@ -105,6 +101,18 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
       );
       KDbkgjjEWQCD.KDvars = getKDVars(kDbkgjjEWQCD);
       KDlist.push_back(KDbkgjjEWQCD);
+      KDspecs KDintjjEWQCD("DintjjEWQCD");
+      KDintjjEWQCD.KD = constructKDFromType(
+        kDintjjEWQCD,
+        Form(
+          "%s%s%s",
+          (channel==k2e2mu ? "../data/SmoothKDConstant_m4l_DbkgjjEWQCD_2l2l_" : "../data/SmoothKDConstant_m4l_DbkgjjEWQCD_4l_"),
+          strCategory.Data(), "_13TeV.root"
+        ),
+        "sp_gr_varReco_Constant_Smooth"
+      );
+      KDintjjEWQCD.KDvars = getKDVars(kDintjjEWQCD);
+      KDlist.push_back(KDintjjEWQCD);
     }
     KDspecs KDL1("DL1jjVHdec");
     KDL1.KD = constructKDFromType(kDL1jjVHdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1), 2));
@@ -197,7 +205,49 @@ void TemplateHelpers::getCategorizationDiscriminants(const SystematicsHelpers::S
 
   SystematicsHelpers::adjustDiscriminantJECVariables(syst, KDlist);
 }
-ExtendedBinning TemplateHelpers::getDiscriminantBinning(const SampleHelpers::Channel /*channel*/, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell){
+ExtendedBinning TemplateHelpers::getDiscriminantFineBinning(const SampleHelpers::Channel /*channel*/, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell){
+  ExtendedBinning res(strKD);
+  if (strKD=="ZZMass"){
+    if (useOffshell){
+      res.addBinBoundary(theSqrts*1000.);
+      res.addBinBoundary(220);
+      res.addBinBoundary(230);
+      res.addBinBoundary(240);
+      res.addBinBoundary(250);
+      res.addBinBoundary(260);
+      res.addBinBoundary(280);
+      res.addBinBoundary(310);
+      res.addBinBoundary(340);
+      res.addBinBoundary(370);
+      res.addBinBoundary(400);
+      res.addBinBoundary(450);
+      res.addBinBoundary(550);
+      res.addBinBoundary(600);
+      res.addBinBoundary(650);
+      res.addBinBoundary(700);
+      res.addBinBoundary(800);
+      res.addBinBoundary(900);
+      res.addBinBoundary(1000);
+      res.addBinBoundary(1200);
+      res.addBinBoundary(1600);
+      res.addBinBoundary(2000);
+      res.addBinBoundary(3000);
+    }
+    else{ for (unsigned int i=105; i<=140; i++) res.addBinBoundary(i); }
+  }
+  else if (strKD.Contains("int")){
+    unsigned int nbins=30;
+    double stepsize=2./double(nbins);
+    for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(-1.+double(i)*stepsize);
+  }
+  else{
+    unsigned int nbins=30;
+    double stepsize=1./double(nbins);
+    for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(double(i)*stepsize);
+  }
+  return res;
+}
+ExtendedBinning TemplateHelpers::getDiscriminantCoarseBinning(const SampleHelpers::Channel /*channel*/, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell){
   ExtendedBinning res(strKD);
   if (strKD=="ZZMass"){
     if (useOffshell){
@@ -223,23 +273,63 @@ ExtendedBinning TemplateHelpers::getDiscriminantBinning(const SampleHelpers::Cha
         res.addBinBoundary(750);
       }
       else{
-        MELAerr << "TemplateHelpers::getDiscriminantBinning: Category " << CategorizationHelpers::getCategoryName(category)  << " not yet implemented!" << endl;
+        MELAerr << "TemplateHelpers::getDiscriminantCoarseBinning: Category " << CategorizationHelpers::getCategoryName(category)  << " not yet implemented!" << endl;
         assert(0);
       }
     }
-    else{ for (unsigned int i=105; i<=140; i++) res.addBinBoundary(i); }
+    else{ for (unsigned int i=105; i<=140; i+=5) res.addBinBoundary(i); }
   }
   else if (strKD.Contains("int")){
-    unsigned int nbins=30;
+    unsigned int nbins=15+5*(category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged);
     double stepsize=2./double(nbins);
     for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(-1.+double(i)*stepsize);
   }
   else{
-    unsigned int nbins=30;
+    unsigned int nbins=15+5*(category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged);
     double stepsize=1./double(nbins);
     for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(double(i)*stepsize);
   }
   return res;
+}
+ProcessHandler const* TemplateHelpers::getOnshellProcessHandler(ProcessHandler::ProcessType type){
+  switch (type){
+  case ProcessHandler::kGG:
+    return &TemplateHelpers::OnshellGGProcessHandle;
+  case ProcessHandler::kVV:
+    return &TemplateHelpers::OnshellVVProcessHandle;
+  case ProcessHandler::kVBF:
+    return &TemplateHelpers::OnshellVBFProcessHandle;
+  case ProcessHandler::kZH:
+    return &TemplateHelpers::OnshellZHProcessHandle;
+  case ProcessHandler::kWH:
+    return &TemplateHelpers::OnshellWHProcessHandle;
+  case ProcessHandler::kQQBkg:
+    return &TemplateHelpers::OnshellQQBkgProcessHandle;
+  case ProcessHandler::kZX:
+    return &TemplateHelpers::OnshellZXProcessHandle;
+  default:
+    return nullptr;;
+  };
+}
+ProcessHandler const* TemplateHelpers::getOffshellProcessHandler(ProcessHandler::ProcessType type){
+  switch (type){
+  case ProcessHandler::kGG:
+    return &TemplateHelpers::OffshellGGProcessHandle;
+  case ProcessHandler::kVV:
+    return &TemplateHelpers::OffshellVVProcessHandle;
+  case ProcessHandler::kVBF:
+    return &TemplateHelpers::OffshellVBFProcessHandle;
+  case ProcessHandler::kZH:
+    return &TemplateHelpers::OffshellZHProcessHandle;
+  case ProcessHandler::kWH:
+    return &TemplateHelpers::OffshellWHProcessHandle;
+  case ProcessHandler::kQQBkg:
+    return &TemplateHelpers::OffshellQQBkgProcessHandle;
+  case ProcessHandler::kZX:
+    return &TemplateHelpers::OffshellZXProcessHandle;
+  default:
+    return nullptr;;
+  };
 }
 
 

@@ -19,6 +19,7 @@
 #include "TChain.h"
 #include "TList.h"
 #include "HelperFunctions.h"
+#include "SystematicVariations.h"
 
 
 namespace SampleHelpers{
@@ -46,9 +47,9 @@ namespace SampleHelpers{
   SampleHelpers::Channel getChannelFromName(const TString channame);
   bool testChannel(SampleHelpers::Channel const& targetChannel, short const& Z1Flav, short const& Z2Flav, bool checkSS=false);
 
-  std::vector<TString> constructSamplesList(TString strsample, float sqrts);
-  void getSamplesList(float sqrts, std::vector<TString> const& s, std::vector<TString>& vs);
-  void getSamplePairs(float sqrts, std::vector<TString> const& s1, std::vector<TString> const& s2, std::vector<TString>& vs1, std::vector<TString>& vs2);
+  std::vector<TString> constructSamplesList(TString strsample, float sqrts, SystematicsHelpers::SystematicVariationTypes syst=SystematicsHelpers::sNominal);
+  void getSamplesList(float sqrts, std::vector<TString> const& s, std::vector<TString>& vs, SystematicsHelpers::SystematicVariationTypes syst=SystematicsHelpers::sNominal);
+  void getSamplePairs(float sqrts, std::vector<TString> const& s1, std::vector<TString> const& s2, std::vector<TString>& vs1, std::vector<TString>& vs2, SystematicsHelpers::SystematicVariationTypes syst=SystematicsHelpers::sNominal);
 
   std::vector<TString> getXsecBranchNames();
   void addXsecBranchNames(std::vector<TString>& vars);

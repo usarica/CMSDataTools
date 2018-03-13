@@ -4,6 +4,7 @@
 #include <vector>
 #include <utility>
 #include "TString.h"
+#include "TH1.h"
 
 
 class ExtendedBinning{
@@ -33,9 +34,16 @@ public:
   int getBin(double val) const; // = [ -1,0,...,vbinlow.size() ]
   double getBinLowEdge(const int bin) const;
   double getBinHighEdge(const int bin) const;
+  double getBinCenter(const int bin) const;
+
+  double getMin() const;
+  double getMax() const;
 
   void addBinBoundary(double boundary);
   void removeBinLowEdge(const int bin);
+
+  // Static functions
+  static ExtendedBinning extractBinning(TH1 const* histo, unsigned int const direction);
 
 };
 

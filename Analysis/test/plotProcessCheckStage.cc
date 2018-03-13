@@ -29,25 +29,9 @@ void plotProcessCheckStage(
 ){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  ProcessHandler const* thePerProcessHandle=nullptr;
-  switch (proctype){
-  case ProcessHandler::kGG:
-    thePerProcessHandle = &TemplateHelpers::OffshellGGProcessHandle;
-    break;
-  case ProcessHandler::kVV:
-    thePerProcessHandle = &TemplateHelpers::OffshellVVProcessHandle;
-    break;
-  case ProcessHandler::kQQBkg:
-    thePerProcessHandle = &TemplateHelpers::OffshellQQBkgProcessHandle;
-    break;
-  case ProcessHandler::kZX:
-    thePerProcessHandle = &TemplateHelpers::OffshellZXProcessHandle;
-    break;
-  default:
-    break;
-  };
+  ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;
-  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst, strGenerator)) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -535,25 +519,9 @@ void plotProcessCheckStage_SystPairs(
 ){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  ProcessHandler const* thePerProcessHandle=nullptr;
-  switch (proctype){
-  case ProcessHandler::kGG:
-    thePerProcessHandle = &TemplateHelpers::OffshellGGProcessHandle;
-    break;
-  case ProcessHandler::kVV:
-    thePerProcessHandle = &TemplateHelpers::OffshellVVProcessHandle;
-    break;
-  case ProcessHandler::kQQBkg:
-    thePerProcessHandle = &TemplateHelpers::OffshellQQBkgProcessHandle;
-    break;
-  case ProcessHandler::kZX:
-    thePerProcessHandle = &TemplateHelpers::OffshellZXProcessHandle;
-    break;
-  default:
-    break;
-  };
+  ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;
-  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst)) return;
+  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst, strGenerator)) return;
 
   const int isyst = convertSystematicVariationTypeToInt(syst);
   if (syst==sNominal || isyst%2==1) return; // This means the code runs only when Up systematics are passed.

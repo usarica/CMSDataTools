@@ -1,6 +1,8 @@
 #ifndef SYSTEMATICSHELPERS_H
 #define SYSTEMATICSHELPERS_H
 
+#include "SystematicVariations.h"
+#include "SampleHelpers.h"
 #include "ReweightingBuilder.h"
 #include "DiscriminantClasses.h"
 #include "ProcessHandler.h"
@@ -57,33 +59,21 @@ namespace SystematicsHelpers{
   std::pair<float, float> getLeptonSFSystematic(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>*> const& LepVars, unsigned int const idreq);
 
 
-  enum SystematicVariationTypes{
-    sNominal,
-    tPDFScaleDn, tPDFScaleUp,
-    tQCDScaleDn, tQCDScaleUp,
-    tAsMZDn, tAsMZUp,
-    tPDFReplicaDn, tPDFReplicaUp,
-    tQQBkgEWCorrDn, tQQBkgEWCorrUp,
-    eLepSFEleDn, eLepSFEleUp,
-    eLepSFMuDn, eLepSFMuUp,
-    eJECDn, eJECUp,
-    eZXStatsDn, eZXStatsUp,
-    nSystematicVariations
-  };
-
   int convertSystematicVariationTypeToInt(SystematicsHelpers::SystematicVariationTypes type);
 
   std::vector<SystematicsHelpers::SystematicVariationTypes> getProcessSystematicVariations(
     CategorizationHelpers::Category const category,
     SampleHelpers::Channel const channel,
-    ProcessHandler::ProcessType const proc
+    ProcessHandler::ProcessType const proc,
+    TString strGenerator
   );
 
   bool systematicAllowed(
     CategorizationHelpers::Category const category,
     SampleHelpers::Channel const channel,
     ProcessHandler::ProcessType const proc,
-    SystematicsHelpers::SystematicVariationTypes const syst
+    SystematicsHelpers::SystematicVariationTypes const syst,
+    TString strGenerator
   );
 
   SystematicsClass* constructSystematic(
@@ -92,7 +82,8 @@ namespace SystematicsHelpers{
     ProcessHandler::ProcessType const proc,
     SystematicsHelpers::SystematicVariationTypes const syst,
     std::vector<CJLSTTree*> trees,
-    std::vector<ReweightingBuilder*>& extraEvaluators
+    std::vector<ReweightingBuilder*>& extraEvaluators,
+    TString strGenerator
   );
 
   void adjustDiscriminantJECVariables(SystematicsHelpers::SystematicVariationTypes const syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);

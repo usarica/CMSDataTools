@@ -44,7 +44,7 @@ int ExtendedBinning::getBin(double val) const{
   else return -1;
 }
 double ExtendedBinning::getBinLowEdge(const int bin) const{
-  if (bin>=0 && bin<(int)vbinlow.size()) return vbinlow.at(bin);
+  if (bin>=0 && bin<(int) vbinlow.size()) return vbinlow.at(bin);
   else if (bin<0 && vbinlow.size()>0) return vbinlow.at(0);
   else if (vbinlow.size()>0) return vbinlow.at(vbinlow.size()-1);
   else return -1;
@@ -55,6 +55,10 @@ double ExtendedBinning::getBinHighEdge(const int bin) const{
   else if (vbinlow.size()>0) return vbinlow.at(vbinlow.size()-1);
   else return -1;
 }
+double ExtendedBinning::getBinCenter(const int bin) const{ return (getBinLowEdge(bin)+getBinHighEdge(bin))/2.; }
+
+double ExtendedBinning::getMin() const{ unsigned int nbins = getNbins(); return (nbins>0 ? getBinLowEdge(0) : 0); }
+double ExtendedBinning::getMax() const{ unsigned int nbins = getNbins(); return (nbins>0 ? getBinLowEdge(nbins) : 0); }
 
 void ExtendedBinning::addBinBoundary(double boundary){
   HelperFunctions::addByLowest<double>(vbinlow, boundary, true);
@@ -63,3 +67,25 @@ void ExtendedBinning::removeBinLowEdge(const int bin){
   if (bin>=0 && bin<(int) vbinlow.size()) vbinlow.erase(vbinlow.begin()+bin);
 }
 
+ExtendedBinning ExtendedBinning::extractBinning(TH1 const* histo, unsigned int const direction){
+  ExtendedBinning res;
+  if (!histo) return res;
+  TAxis const* axis;
+  switch (direction){
+  case 0:
+    axis=histo->GetXaxis();
+    break;
+  case 1:
+    axis=histo->GetYaxis();
+    break;
+  case 2:
+    axis=histo->GetZaxis();
+    break;
+  default:
+    return res;
+  }
+  res.setLabel(axis->GetTitle());
+  const int nbins=axis->GetNbins();
+  for (int i=0; i<=nbins; i++) res.addBinBoundary(axis->GetBinLowEdge(i+1));
+  return res;
+}

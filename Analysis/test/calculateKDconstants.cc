@@ -1430,13 +1430,12 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
     strSamples[1].push_back("VBFPowheg");
   }
   else if (category==HadVHTagged){
-    strSamples[0].push_back("WHPowheg"); strSamples[0].push_back("ZHPowheg");
-    strSamples[1].push_back("WHPowheg"); strSamples[1].push_back("ZHPowheg");
+    strSamples[0].push_back("WplusH_Sig_POWHEG+WminusH_Sig_POWHEG+ZH_Sig_POWHEG");
+    strSamples[1].push_back("WplusH_Sig_POWHEG"); strSamples[1].push_back("WminusH_Sig_POWHEG"); strSamples[1].push_back("ZH_Sig_POWHEG");
   }
   strSamples[1].push_back("qqBkg");
-  //strSamples[1].push_back("ggHPowheg");
   vector<vector<TString>> strMelaWgts[2]; for (unsigned int ih=0; ih<2; ih++) strMelaWgts[ih].assign(strSamples[ih].size(), vector<TString>());
-  for (unsigned int ih=0; ih<2; ih++){
+  for (unsigned int ih=1; ih<2; ih++){
     unsigned int iw=0;
     for (auto& wlist:strMelaWgts[ih]){
       SampleHelpers::addXsecBranchNames(wlist);
@@ -1444,12 +1443,6 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
         wlist.push_back(OffshellVVProcessHandle.getMELAHypothesisWeight((ih==0 ? VVProcessHandler::VVSig : VVProcessHandler::VVBkg), kSM));
         wlist.push_back("p_Gen_CPStoBWPropRewgt");
       }
-      /*
-      else{
-        wlist.push_back("p_Gen_QQB_BKG_MCFM");
-        wlist.push_back("p_Gen_CPStoBWPropRewgt");
-      }
-      */
       iw++;
     }
   }
@@ -1531,15 +1524,10 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
-      pair<float, float> valrange(136, 150);
+      pair<float, float> valrange(136, 178);
       vector<float> manualboundaries;
       manualboundaries.push_back(137.8);
       manualboundaries.push_back(149.96);
-      manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
-    }
-    {
-      pair<float, float> valrange(157, 178);
-      vector<float> manualboundaries;
       manualboundaries.push_back(160.5);
       manualboundaries.push_back(166);
       manualboundaries.push_back(175);
@@ -1561,16 +1549,15 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
-      pair<float, float> valrange(900, 1190);
+      pair<float, float> valrange(900, 1300);
       vector<float> manualboundaries;
       manualboundaries.push_back(903.77);
-      manualboundaries.push_back(1185.3);
+      manualboundaries.push_back(1295.78);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
     {
-      pair<float, float> valrange(1290, 1750);
+      pair<float, float> valrange(1300, 1750);
       vector<float> manualboundaries;
-      manualboundaries.push_back(1295.78);
       manualboundaries.push_back(1739.01);
       manualboundary_validity_pairs.push_back(pair<vector<float>, pair<float, float>>(manualboundaries, valrange));
     }
@@ -1667,6 +1654,12 @@ void getKDConstant_DbkgjjEWQCD(const Channel channel, const Category category, f
   }
 
   KDConstantByMass constProducer(sqrts, strKD);
+  {
+    std::vector<CJLSTSet::NormScheme> NormSchemeA;
+    NormSchemeA.assign(strSamples[0].size(), CJLSTSet::NormScheme_None);
+    NormSchemeA.at(0)=CJLSTSet::NormScheme_XsecOverNgen_RelRenormToSumNgen;
+    constProducer.setNormSchemeA(NormSchemeA);
+  }
   {
     vector<pair<float, float>> setranges; setranges.push_back(pair<float, float>(350, sqrts*1000.));
     constProducer.ensureConstantSampleFraction(0, setranges);
@@ -1904,17 +1897,29 @@ void SmoothKDConstantProducer_DbkgjjEWQCD(const Channel channel, const Category 
       addpoints.push_back(points);
     }
     {
-      pair<pair<double, double>, unsigned int> points(pair<double, double>(186, 204), 10);
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(182, 204), 15);
       addpoints.push_back(points);
     }
     {
-      pair<pair<double, double>, unsigned int> points(pair<double, double>(124, 152), 20);
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(160, 172), 3);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(123.7, 152), 20);
       addpoints.push_back(points);
     }
   }
   else if (category==JJVBFTagged && channel==k4l){
     {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(865, 1065), 20);
+      addpoints.push_back(points);
+    }
+    {
       pair<pair<double, double>, unsigned int> points(pair<double, double>(380, 420), 5);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(253, 340), 20);
       addpoints.push_back(points);
     }
     {
@@ -1922,11 +1927,19 @@ void SmoothKDConstantProducer_DbkgjjEWQCD(const Channel channel, const Category 
       addpoints.push_back(points);
     }
     {
-      pair<pair<double, double>, unsigned int> points(pair<double, double>(181, 194), 10);
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(189, 199), 5);
       addpoints.push_back(points);
     }
     {
-      pair<pair<double, double>, unsigned int> points(pair<double, double>(148, 165), 10);
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(180.5, 187), 5);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(156, 165), 5);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(145, 154), 5);
       addpoints.push_back(points);
     }
     {
@@ -1939,13 +1952,36 @@ void SmoothKDConstantProducer_DbkgjjEWQCD(const Channel channel, const Category 
     }
   }
   else if (category==HadVHTagged && channel==k2l2l){
-    //highf=&getFcn_a0plusa1overXN<1>;
     {
-      pair<pair<double, double>, unsigned int> points(pair<double, double>(1200, 2000), 10);
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(1750, 2150), 5);
       addpoints.push_back(points);
     }
     {
-      pair<pair<double, double>, unsigned int> points(pair<double, double>(183.5, 210), 10);
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(1200, 1745), 10);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(210, 250), 10);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(194, 208), 5);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(179, 191), 10);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(172, 176), 5);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(152, 165), 5);
+      addpoints.push_back(points);
+    }
+    {
+      pair<pair<double, double>, unsigned int> points(pair<double, double>(138, 150), 5);
       addpoints.push_back(points);
     }
     {

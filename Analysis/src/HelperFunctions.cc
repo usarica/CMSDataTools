@@ -1454,7 +1454,7 @@ template<> float HelperFunctions::computeIntegral<TH3F>(TH3F* histo, bool useWid
 }
 
 template<> double HelperFunctions::computeChiSq<TH1F>(TH1F const* h1, TH1F const* h2){
-  double res=0;
+  double res=0; double norm=0;
   if (h1->GetNbinsX()!=h2->GetNbinsX()) return res; const int nbinsx = h1->GetNbinsX();
   for (int binx=0; binx<=nbinsx+1; binx++){
     double sumW[2] ={
@@ -1466,12 +1466,13 @@ template<> double HelperFunctions::computeChiSq<TH1F>(TH1F const* h1, TH1F const
       pow(h2->GetBinError(binx), 2)
     };
     double totalWsq=(sumWsq[0]+sumWsq[1]);
-    if (totalWsq!=0.) res += pow(sumW[1]-sumW[0], 2)/totalWsq;
+    if (totalWsq!=0.){ res += pow(sumW[1]-sumW[0], 2)/totalWsq; norm+=1; }
   }
+  if (norm!=0.) res /= norm;
   return res;
 }
 template<> double HelperFunctions::computeChiSq<TH2F>(TH2F const* h1, TH2F const* h2){
-  double res=0;
+  double res=0, norm=0;
   if (h1->GetNbinsX()!=h2->GetNbinsX()) return res; const int nbinsx = h1->GetNbinsX();
   if (h1->GetNbinsY()!=h2->GetNbinsY()) return res; const int nbinsy = h1->GetNbinsY();
   for (int binx=0; binx<=nbinsx+1; binx++){
@@ -1485,13 +1486,14 @@ template<> double HelperFunctions::computeChiSq<TH2F>(TH2F const* h1, TH2F const
         pow(h2->GetBinError(binx, biny), 2)
       };
       double totalWsq=(sumWsq[0]+sumWsq[1]);
-      if (totalWsq!=0.) res += pow(sumW[1]-sumW[0], 2)/totalWsq;
+      if (totalWsq!=0.){ res += pow(sumW[1]-sumW[0], 2)/totalWsq; norm+=1; }
     }
   }
+  if (norm!=0.) res /= norm;
   return res;
 }
 template<> double HelperFunctions::computeChiSq<TH3F>(TH3F const* h1, TH3F const* h2){
-  double res=0;
+  double res=0, norm=0;
   if (h1->GetNbinsX()!=h2->GetNbinsX()) return res; const int nbinsx = h1->GetNbinsX();
   if (h1->GetNbinsY()!=h2->GetNbinsY()) return res; const int nbinsy = h1->GetNbinsY();
   if (h1->GetNbinsZ()!=h2->GetNbinsZ()) return res; const int nbinsz = h1->GetNbinsZ();
@@ -1507,10 +1509,11 @@ template<> double HelperFunctions::computeChiSq<TH3F>(TH3F const* h1, TH3F const
           pow(h2->GetBinError(binx, biny, binz), 2)
         };
         double totalWsq=(sumWsq[0]+sumWsq[1]);
-        if (totalWsq!=0.) res += pow(sumW[1]-sumW[0], 2)/totalWsq;
+        if (totalWsq!=0.){ res += pow(sumW[1]-sumW[0], 2)/totalWsq; norm+=1; }
       }
     }
   }
+  if (norm!=0.) res /= norm;
   return res;
 }
 

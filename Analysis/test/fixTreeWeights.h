@@ -96,7 +96,7 @@ TTree* fixTreeWeights(TTree* tree){
   for (auto const& wgtcoll:wgtcollList){
     unsigned int ns=wgtcoll.size();
     float threshold=0.5*(wgtcoll.at(ns-1)+wgtcoll.at(ns-2));
-    if (threshold*5.<wgtcoll.front()) threshold=wgtcoll.front();
+    if (threshold*5.>wgtcoll.front()) threshold=wgtcoll.front();
     else MELAout
       << "fixTreeWeights(" << treename << "): "
       << "Threshold " << threshold << " is different from max. weight " << wgtcoll.front()
@@ -204,7 +204,7 @@ TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackv
     float threshold=0;
     if (ns>=3){
       threshold=0.5*(wgtcoll.at(ns-1)+wgtcoll.at(ns-2));
-      if (threshold*5.<wgtcoll.front()) threshold=wgtcoll.front();
+      if (threshold*5.>wgtcoll.front()) threshold=wgtcoll.front();
       else MELAout
         << "fixTreeWeights(" << treename << "): "
         << "Threshold " << threshold << " is different from max. weight " << wgtcoll.front()

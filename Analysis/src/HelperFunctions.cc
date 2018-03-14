@@ -1594,7 +1594,7 @@ template<> void HelperFunctions::multiplyHistograms<TH1F>(TH1F const* h1, TH1F c
     float sumWAll = h2->GetBinContent(binx);
     float sumWsq = pow(h1->GetBinError(binx), 2);
     float sumWsqAll = pow(h2->GetBinError(binx), 2);
-    float bincontent=0;
+    float bincontent=sumW*sumWAll;
     float binerror=0;
     if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
     else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
@@ -1615,7 +1615,7 @@ template<> void HelperFunctions::multiplyHistograms<TH2F>(TH2F const* h1, TH2F c
       float sumWAll = h2->GetBinContent(binx, biny);
       float sumWsq = pow(h1->GetBinError(binx, biny), 2);
       float sumWsqAll = pow(h2->GetBinError(binx, biny), 2);
-      float bincontent=0;
+      float bincontent=sumW*sumWAll;
       float binerror=0;
       if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
       else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
@@ -1639,7 +1639,7 @@ template<> void HelperFunctions::multiplyHistograms<TH3F>(TH3F const* h1, TH3F c
         float sumWAll = h2->GetBinContent(binx, biny, binz);
         float sumWsq = pow(h1->GetBinError(binx, biny, binz), 2);
         float sumWsqAll = pow(h2->GetBinError(binx, biny, binz), 2);
-        float bincontent=0;
+        float bincontent=sumW*sumWAll;
         float binerror=0;
         if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
         else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
@@ -1673,7 +1673,7 @@ template<> void HelperFunctions::multiplyHistograms<TH2F>(TH2F const* h1, TH1F c
         sumWsqAll = pow(h2->GetBinError(biny), 2);
         break;
       }
-      float bincontent=0;
+      float bincontent=sumW*sumWAll;
       float binerror=0;
       if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
       else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
@@ -1711,7 +1711,7 @@ template<> void HelperFunctions::multiplyHistograms<TH3F>(TH3F const* h1, TH1F c
           sumWsqAll = pow(h2->GetBinError(binz), 2);
           break;
         }
-        float bincontent=0;
+        float bincontent=sumW*sumWAll;
         float binerror=0;
         if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
         else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));

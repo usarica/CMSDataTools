@@ -236,13 +236,13 @@ ExtendedBinning TemplateHelpers::getDiscriminantFineBinning(const SampleHelpers:
     else{ for (unsigned int i=105; i<=140; i++) res.addBinBoundary(i); }
   }
   else if (strKD.Contains("int")){
-    unsigned int nbins=30;
-    double boundary=1; if (strKD.Contains(DiscriminantClasses::getKDLabel(DiscriminantClasses::kDintjjEWQCD))) boundary=0.5;
+    unsigned int nbins=20+10*(category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged);
+    double boundary=1; if (category==CategorizationHelpers::HadVHTagged && strKD.Contains(DiscriminantClasses::getKDName(DiscriminantClasses::kDintjjEWQCD))) boundary=0.4;
     double stepsize=2.*boundary/double(nbins);
     for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(-boundary+double(i)*stepsize);
   }
   else{
-    unsigned int nbins=30;
+    unsigned int nbins=20+10*(category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged);
     double stepsize=1./double(nbins);
     for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(double(i)*stepsize);
   }
@@ -282,7 +282,7 @@ ExtendedBinning TemplateHelpers::getDiscriminantCoarseBinning(const SampleHelper
   }
   else if (strKD.Contains("int")){
     unsigned int nbins=15+5*(category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged);
-    double boundary=1; if (strKD.Contains(DiscriminantClasses::getKDLabel(DiscriminantClasses::kDintjjEWQCD))) boundary=0.5;
+    double boundary=1; if (category==CategorizationHelpers::HadVHTagged && strKD.Contains(DiscriminantClasses::getKDName(DiscriminantClasses::kDintjjEWQCD))) boundary=0.4;
     double stepsize=2.*boundary/double(nbins);
     for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(-boundary+double(i)*stepsize);
   }

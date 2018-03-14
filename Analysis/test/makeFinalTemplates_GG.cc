@@ -13,6 +13,9 @@
 const TString user_output_dir = "output/";
 #endif
 
+#ifndef DOSMOOTHING
+#define DOSMOOTHING false
+#endif
 
 typedef GGProcessHandler ProcessHandleType;
 
@@ -118,6 +121,14 @@ bool getFilesAndTrees(
 
   for (auto& s:INPUT_NAME){
     TString cinput=cinput_common + s;
+    if (gSystem->AccessPathName(cinput)){
+      if (category==Untagged){
+        const Category category_inc = Inclusive;
+        const TString strCategory_inc = getCategoryName(category_inc);
+        MELAout << "getFilesAndTrees::File " << cinput << " is not found for untagged category! Attempting to substitute inclusive category..." << endl;
+        HelperFunctions::replaceString<TString, const TString>(cinput, strCategory, strCategory_inc);
+      }
+    }
     if (gSystem->AccessPathName(cinput)){
       MELAerr << "getFilesAndTrees::File " << cinput << " is not found! Run " << strStage << " functions first." << endl;
       treeList.clear();
@@ -419,7 +430,12 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
     vector<ExtendedBinning> KDbinning;
     for (auto& KDname:KDset) KDbinning.push_back(getDiscriminantFineBinning(channel, cat, KDname, true));
     vector<ExtendedBinning> KDbinning_coarse;
-    for (auto& KDname:KDset) KDbinning_coarse.push_back(getDiscriminantCoarseBinning(channel, cat, KDname, true));
+    if (DOSMOOTHING){
+      for (auto& KDname:KDset) KDbinning_coarse.push_back(getDiscriminantCoarseBinning(channel, cat, KDname, true));
+    }
+    else{
+      for (auto& KDname:KDset) KDbinning_coarse.push_back(getDiscriminantFineBinning(channel, cat, KDname, true));
+    }
     unsigned int nKDs = KDset.size();
     MELAout << "\t- Number of template dimensions = " << nKDs << endl;
 
@@ -457,6 +473,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         if (!isCategory){
           TString catFlagName = TString("is_") + strCategory + TString("_") + strACHypo;
           bookBranch(tree, catFlagName, &isCategory);
+          if (!branchExists(tree, catFlagName)) isCategory=true;
         }
 
         float& vartrack=KDvars.find("ZZMass")->second;
@@ -480,6 +497,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         if (!isCategory){
           TString catFlagName = TString("is_") + strCategory + TString("_") + strACHypo;
           bookBranch(tree, catFlagName, &isCategory);
+          if (!branchExists(tree, catFlagName)) isCategory=true;
         }
 
         float& vartrack=KDvars.find("ZZMass")->second;
@@ -559,10 +577,10 @@ template<> void getTemplatesPerCategory<2>(
     TTree*& tree=fixedTrees_POWHEG.at(t);
     ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
     ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-    TString templatename = thePerProcessHandle->getTemplateName(tpltype);
-    TString treename = thePerProcessHandle->getOutputTreeName(treetype);
+    TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_POWHEG";
+    TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
 
-    hTemplates_POWHEG.emplace_back(templatename, templatename, KDbinning_coarse.at(0), KDbinning_coarse.at(1));
+    hTemplates_POWHEG.emplace_back(templatename, templatetitle, KDbinning_coarse.at(0), KDbinning_coarse.at(1));
     int nEntries=tree->GetEntries();
     for (int ev=0; ev<nEntries; ev++){
       tree->GetEntry(ev);
@@ -595,10 +613,10 @@ template<> void getTemplatesPerCategory<2>(
     TTree*& tree=fixedTrees_MCFM.at(t);
     ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
     ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-    TString templatename = thePerProcessHandle->getTemplateName(tpltype);
-    TString treename = thePerProcessHandle->getOutputTreeName(treetype);
+    TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_MCFM";
+    TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
 
-    hTemplates_MCFM.emplace_back(templatename, templatename, KDbinning_coarse.at(0), KDbinning_coarse.at(1));
+    hTemplates_MCFM.emplace_back(templatename, templatetitle, KDbinning_coarse.at(0), KDbinning_coarse.at(1));
     int nEntries=tree->GetEntries();
     for (int ev=0; ev<nEntries; ev++){
       tree->GetEntry(ev);
@@ -629,7 +647,7 @@ template<> void getTemplatesPerCategory<2>(
     for (unsigned int t=0; t<ntpls; t++){
       double chisq = computeChiSq(hTemplates_POWHEG.at(t).getHistogram(), hTemplates_MCFM.at(t).getHistogram());
       MELAout << "Template " << hTemplates_POWHEG.at(t).getName() << " are compatible by chisq=" << chisq << endl;
-      if (chisq>1.2){ isCompatible=false; break; }
+      isCompatible &= (chisq<1.2);
     }
     if (isCompatible){ for (unsigned int t=0; t<ntpls; t++) ExtHist_t::averageHistograms(hTemplates_POWHEG.at(t), hTemplates_MCFM.at(t)); }
     hTemplates = &hTemplates_POWHEG;
@@ -637,6 +655,7 @@ template<> void getTemplatesPerCategory<2>(
   else if (!hTemplates_POWHEG.empty()) hTemplates = &hTemplates_POWHEG;
   else if (!hTemplates_MCFM.empty()) hTemplates = &hTemplates_MCFM;
   else assert(0);
+  for (auto& tpl:*hTemplates){ TString tplname=tpl.getName(); TString tpltitle=tpl.getTitle(); replaceString(tplname, "_POWHEG", ""); replaceString(tplname, "_MCFM", ""); tpl.setNameTitle(tplname, tpltitle); }
 
   for (unsigned int t=0; t<ntpls; t++){
     TProfile* prof_x = hTemplates->at(t).getProfileX();
@@ -646,12 +665,12 @@ template<> void getTemplatesPerCategory<2>(
     ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
     ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
     if (tpltype==ProcessHandleType::GGTplInt_Re || tpltype==ProcessHandleType::GGTplIntBSM_Re || tpltype==ProcessHandleType::GGTplSigBSMSMInt_Re){
-      rebinHistogram_NoCumulant(tplobj, KDbinning.at(0), prof_x, KDbinning.at(1), prof_y);
+      if (DOSMOOTHING) rebinHistogram_NoCumulant(tplobj, KDbinning.at(0), prof_x, KDbinning.at(1), prof_y);
     }
     else{
       vector<pair<TProfile const*, unsigned int>> condProfs; condProfs.push_back(pair<TProfile const*, unsigned int>(prof_x, 0));
       conditionalizeHistogram<TH_t>(tplobj, 0, nullptr, false);
-      rebinHistogram(tplobj, KDbinning.at(0), KDbinning.at(1), &condProfs);
+      if (DOSMOOTHING) rebinHistogram(tplobj, KDbinning.at(0), KDbinning.at(1), &condProfs);
       TH1F const* hMass=hMass_FromNominalInclusive.at(t).getHistogram();
       assert(hMass->GetNbinsX()==tplobj->GetNbinsX());
       multiplyHistograms(tplobj, hMass, 0, tplobj, true);
@@ -697,10 +716,10 @@ template<> void getTemplatesPerCategory<3>(
     TTree*& tree=fixedTrees_POWHEG.at(t);
     ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
     ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-    TString templatename = thePerProcessHandle->getTemplateName(tpltype);
-    TString treename = thePerProcessHandle->getOutputTreeName(treetype);
+    TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_POWHEG";
+    TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
 
-    hTemplates_POWHEG.emplace_back(templatename, templatename, KDbinning_coarse.at(0), KDbinning_coarse.at(1), KDbinning_coarse.at(2));
+    hTemplates_POWHEG.emplace_back(templatename, templatetitle, KDbinning_coarse.at(0), KDbinning_coarse.at(1), KDbinning_coarse.at(2));
     int nEntries=tree->GetEntries();
     for (int ev=0; ev<nEntries; ev++){
       tree->GetEntry(ev);
@@ -733,10 +752,10 @@ template<> void getTemplatesPerCategory<3>(
     TTree*& tree=fixedTrees_MCFM.at(t);
     ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
     ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-    TString templatename = thePerProcessHandle->getTemplateName(tpltype);
-    TString treename = thePerProcessHandle->getOutputTreeName(treetype);
+    TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_MCFM";
+    TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
 
-    hTemplates_MCFM.emplace_back(templatename, templatename, KDbinning_coarse.at(0), KDbinning_coarse.at(1), KDbinning_coarse.at(2));
+    hTemplates_MCFM.emplace_back(templatename, templatetitle, KDbinning_coarse.at(0), KDbinning_coarse.at(1), KDbinning_coarse.at(2));
     int nEntries=tree->GetEntries();
     for (int ev=0; ev<nEntries; ev++){
       tree->GetEntry(ev);
@@ -767,7 +786,25 @@ template<> void getTemplatesPerCategory<3>(
     for (unsigned int t=0; t<ntpls; t++){
       double chisq = computeChiSq(hTemplates_POWHEG.at(t).getHistogram(), hTemplates_MCFM.at(t).getHistogram());
       MELAout << "Template " << hTemplates_POWHEG.at(t).getName() << " are compatible by chisq=" << chisq << endl;
-      if (chisq>1.2){ isCompatible=false; break; }
+      MELAout << "POWHEG template integral during compatibility test: "
+        << getHistogramIntegralAndError(
+          hTemplates_POWHEG.at(t).getHistogram(),
+          1, hTemplates_POWHEG.at(t).getHistogram()->GetNbinsX(),
+          1, hTemplates_POWHEG.at(t).getHistogram()->GetNbinsY(),
+          1, hTemplates_POWHEG.at(t).getHistogram()->GetNbinsZ(),
+          false, nullptr
+        )
+        << endl;
+      MELAout << "MCFM template integral during compatibility test: "
+        << getHistogramIntegralAndError(
+          hTemplates_MCFM.at(t).getHistogram(),
+          1, hTemplates_MCFM.at(t).getHistogram()->GetNbinsX(),
+          1, hTemplates_MCFM.at(t).getHistogram()->GetNbinsY(),
+          1, hTemplates_MCFM.at(t).getHistogram()->GetNbinsZ(),
+          false, nullptr
+        )
+        << endl;
+      isCompatible &= (chisq<1.2);
     }
     if (isCompatible){ for (unsigned int t=0; t<ntpls; t++) ExtHist_t::averageHistograms(hTemplates_POWHEG.at(t), hTemplates_MCFM.at(t)); }
     hTemplates = &hTemplates_POWHEG;
@@ -775,6 +812,7 @@ template<> void getTemplatesPerCategory<3>(
   else if (!hTemplates_POWHEG.empty()) hTemplates = &hTemplates_POWHEG;
   else if (!hTemplates_MCFM.empty()) hTemplates = &hTemplates_MCFM;
   else assert(0);
+  for (auto& tpl:*hTemplates){ TString tplname=tpl.getName(); TString tpltitle=tpl.getTitle(); replaceString(tplname, "_POWHEG", ""); replaceString(tplname, "_MCFM", ""); tpl.setNameTitle(tplname, tpltitle); }
 
   for (unsigned int t=0; t<ntpls; t++){
     TProfile* prof_x = hTemplates->at(t).getProfileX();
@@ -785,15 +823,18 @@ template<> void getTemplatesPerCategory<3>(
     ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
     ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
     if (tpltype==ProcessHandleType::GGTplInt_Re || tpltype==ProcessHandleType::GGTplIntBSM_Re || tpltype==ProcessHandleType::GGTplSigBSMSMInt_Re){
-      rebinHistogram_NoCumulant(tplobj, KDbinning.at(0), prof_x, KDbinning.at(1), prof_y, KDbinning.at(2), prof_z);
+      if (DOSMOOTHING) rebinHistogram_NoCumulant(tplobj, KDbinning.at(0), prof_x, KDbinning.at(1), prof_y, KDbinning.at(2), prof_z);
     }
     else{
       vector<pair<TProfile const*, unsigned int>> condProfs; condProfs.push_back(pair<TProfile const*, unsigned int>(prof_x, 0));
+      MELAout << "Check template integral before cond.: " << getHistogramIntegralAndError(tplobj, 1, tplobj->GetNbinsX(), 1, tplobj->GetNbinsY(), 1, tplobj->GetNbinsZ(), false, nullptr) << endl;
       conditionalizeHistogram<TH_t>(tplobj, 0, nullptr, false);
-      rebinHistogram(tplobj, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2), &condProfs);
+      MELAout << "Check template integral after cond.: " << getHistogramIntegralAndError(tplobj, 1, tplobj->GetNbinsX(), 1, tplobj->GetNbinsY(), 1, tplobj->GetNbinsZ(), false, nullptr) << endl;
+      if (DOSMOOTHING) rebinHistogram(tplobj, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2), &condProfs);
       TH1F const* hMass=hMass_FromNominalInclusive.at(t).getHistogram();
       assert(hMass->GetNbinsX()==tplobj->GetNbinsX());
       multiplyHistograms(tplobj, hMass, 0, tplobj, true);
+      MELAout << "Check template integral after mass renorm: " << getHistogramIntegralAndError(tplobj, 1, tplobj->GetNbinsX(), 1, tplobj->GetNbinsY(), 1, tplobj->GetNbinsZ(), false, nullptr) << endl;
     }
   }
   if (!hTemplates->empty()){
@@ -801,7 +842,10 @@ template<> void getTemplatesPerCategory<3>(
     for (auto& tpl:*hTemplates) hTemplateObjects.push_back(tpl.getHistogram());
     thePerProcessHandle->recombineTemplatesWithPhaseRegularTemplates(hTemplateObjects, hypo);
     foutput->cd();
-    for (TH_t* htpl:hTemplateObjects) foutput->WriteTObject(htpl);
+    for (TH_t* htpl:hTemplateObjects){
+      MELAout << "Check template integral before writing: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), false, nullptr) << endl;
+      foutput->WriteTObject(htpl);
+    }
     rootdir->cd();
   }
 }

@@ -50,6 +50,8 @@ public:
 
   static ExtendedHistogram_2D divideHistograms(ExtendedHistogram_2D const& h1, ExtendedHistogram_2D const& h2, bool useEffErr, TString newname="");
 
+  static void averageHistograms(ExtendedHistogram_2D& hTarget, ExtendedHistogram_2D const& h2);
+
 };
 
 

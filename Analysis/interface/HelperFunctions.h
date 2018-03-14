@@ -91,6 +91,11 @@ namespace HelperFunctions{
   template<> void divideBinWidth<TH2F>(TH2F* histo);
   template<> void divideBinWidth<TH3F>(TH3F* histo);
 
+  template <typename T> void multiplyBinWidth(T* histo);
+  template<> void multiplyBinWidth<TH1F>(TH1F* histo);
+  template<> void multiplyBinWidth<TH2F>(TH2F* histo);
+  template<> void multiplyBinWidth<TH3F>(TH3F* histo);
+
   template <typename T> double getHistogramIntegralAndError(T const* histo, int ix, int jx, bool useWidth, double* error=nullptr);
   template <typename T> double getHistogramIntegralAndError(T const* histo, int ix, int jx, int iy, int jy, bool useWidth, double* error=nullptr);
   template <typename T> double getHistogramIntegralAndError(T const* histo, int ix, int jx, int iy, int jy, int iz, int jz, bool useWidth, double* error=nullptr);
@@ -100,10 +105,24 @@ namespace HelperFunctions{
   template<> float computeIntegral<TH2F>(TH2F* histo, bool useWidth);
   template<> float computeIntegral<TH3F>(TH3F* histo, bool useWidth);
 
-  template <typename T> void divideHistograms(T* hnum, T* hden, T*& hAssign, bool useEffErr);
-  template<> void divideHistograms<TH1F>(TH1F* hnum, TH1F* hden, TH1F*& hAssign, bool useEffErr);
-  template<> void divideHistograms<TH2F>(TH2F* hnum, TH2F* hden, TH2F*& hAssign, bool useEffErr);
-  template<> void divideHistograms<TH3F>(TH3F* hnum, TH3F* hden, TH3F*& hAssign, bool useEffErr);
+  template <typename T> double computeChiSq(T const* h1, T const* h2);
+  template<> double computeChiSq<TH1F>(TH1F const* h1, TH1F const* h2);
+  template<> double computeChiSq<TH2F>(TH2F const* h1, TH2F const* h2);
+  template<> double computeChiSq<TH3F>(TH3F const* h1, TH3F const* h2);
+
+  template <typename T> void divideHistograms(T const* hnum, T const* hden, T*& hAssign, bool useEffErr);
+  template<> void divideHistograms<TH1F>(TH1F const* hnum, TH1F const* hden, TH1F*& hAssign, bool useEffErr);
+  template<> void divideHistograms<TH2F>(TH2F const* hnum, TH2F const* hden, TH2F*& hAssign, bool useEffErr);
+  template<> void divideHistograms<TH3F>(TH3F const* hnum, TH3F const* hden, TH3F*& hAssign, bool useEffErr);
+
+  template <typename T> void multiplyHistograms(T const* h1, T const* h2, T*& hAssign, bool useEffErr);
+  template<> void multiplyHistograms<TH1F>(TH1F const* h1, TH1F const* h2, TH1F*& hAssign, bool useEffErr);
+  template<> void multiplyHistograms<TH2F>(TH2F const* h1, TH2F const* h2, TH2F*& hAssign, bool useEffErr);
+  template<> void multiplyHistograms<TH3F>(TH3F const* h1, TH3F const* h2, TH3F*& hAssign, bool useEffErr);
+
+  template <typename T> void multiplyHistograms(T const* h1, TH1F const* h2, unsigned int matchDimension, T*& hAssign, bool useEffErr);
+  template<> void multiplyHistograms<TH2F>(TH2F const* h1, TH1F const* h2, unsigned int matchDimension, TH2F*& hAssign, bool useEffErr);
+  template<> void multiplyHistograms<TH3F>(TH3F const* h1, TH1F const* h2, unsigned int matchDimension, TH3F*& hAssign, bool useEffErr);
 
   template <typename T> void symmetrizeHistogram(T* histo, unsigned int const axis=0);
   template <> void symmetrizeHistogram<TH1F>(TH1F* histo, unsigned int const axis);
@@ -124,6 +143,12 @@ namespace HelperFunctions{
   template <> void translateCumulantToHistogram<TH1F>(TH1F const* histo, TH1F*& res, TString newname, std::vector<unsigned int>* condDims);
   template <> void translateCumulantToHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname, std::vector<unsigned int>* condDims);
   template <> void translateCumulantToHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname, std::vector<unsigned int>* condDims);
+
+  template <typename T> void combineHistogramsByWeightedAverage(T const* h1, T const* h2, T*& hAssign);
+  template <> void combineHistogramsByWeightedAverage<TProfile>(TProfile const* h1, TProfile const* h2, TProfile*& hAssign);
+  template <> void combineHistogramsByWeightedAverage<TH1F>(TH1F const* h1, TH1F const* h2, TH1F*& hAssign);
+  template <> void combineHistogramsByWeightedAverage<TH2F>(TH2F const* h1, TH2F const* h2, TH2F*& hAssign);
+  template <> void combineHistogramsByWeightedAverage<TH3F>(TH3F const* h1, TH3F const* h2, TH3F*& hAssign);
 
   // Spline functions
   template<int N> TF1* getFcn_a0plusa1overXN(TSpline3* sp, double xmin, double xmax, bool useLowBound);
@@ -629,6 +654,8 @@ template void HelperFunctions::extractHistogramsFromDirectory<TSpline3>(TDirecto
 
 /****************************************************************/
 // Explicit instantiations
+template void HelperFunctions::appendVector<TString>(std::vector<TString>& a, std::vector<TString> const& b);
+
 template void HelperFunctions::addByLowest<SimpleEntry>(std::vector<SimpleEntry>& valArray, SimpleEntry val, bool unique);
 template void HelperFunctions::addByLowest<int>(std::vector<int>& valArray, int val, bool unique);
 template void HelperFunctions::addByLowest<float>(std::vector<float>& valArray, float val, bool unique);

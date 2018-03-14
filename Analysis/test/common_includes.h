@@ -37,6 +37,7 @@
 #include "SystematicsHelpers.h"
 #include "ExtendedHistogram_1D.h"
 #include "ExtendedHistogram_2D.h"
+#include "ExtendedHistogram_3D.h"
 #include "ACHypothesisHelpers.h"
 #include "TemplateHelpers.h"
 #include "QuantFuncMathCore.h"

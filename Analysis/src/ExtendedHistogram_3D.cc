@@ -135,47 +135,19 @@ ExtendedHistogram_3D ExtendedHistogram_3D::divideHistograms(ExtendedHistogram_3D
   if (!h1.histo || !h2.histo) return res;
   HelperFunctions::divideHistograms(h1.histo, h2.histo, res.histo, useEffErr);
   if (!useEffErr){
-    if (h1.prof_x && h2.prof_x){
-      for (unsigned int bin=0; bin<=h2.xbinning.getNbins()+1; bin++){
-        double val[2]={ h1.prof_x->GetBinContent(bin), h2.prof_x->GetBinContent(bin) };
-        double errsq[2]={ pow(h1.prof_x->GetBinError(bin), 2), pow(h2.prof_x->GetBinError(bin), 2) };
-        double valnew=0;
-        double wnew=0;
-        for (unsigned int ii=0; ii<2; ii++){ if (errsq[ii]!=0.){ valnew += val[ii]/errsq[ii]; wnew += 1./errsq[ii]; } }
-        if (wnew==0.) valnew = 0;
-        else valnew /= wnew;
-        res.prof_x->SetBinContent(bin, valnew);
-        res.prof_x->SetBinError(bin, sqrt(1./wnew));
-      }
-    }
-    if (h1.prof_y && h2.prof_y){
-      for (unsigned int bin=0; bin<=h2.ybinning.getNbins()+1; bin++){
-        double val[2]={ h1.prof_y->GetBinContent(bin), h2.prof_y->GetBinContent(bin) };
-        double errsq[2]={ pow(h1.prof_y->GetBinError(bin), 2), pow(h2.prof_y->GetBinError(bin), 2) };
-        double valnew=0;
-        double wnew=0;
-        for (unsigned int ii=0; ii<2; ii++){ if (errsq[ii]!=0.){ valnew += val[ii]/errsq[ii]; wnew += 1./errsq[ii]; } }
-        if (wnew==0.) valnew = 0;
-        else valnew /= wnew;
-        res.prof_y->SetBinContent(bin, valnew);
-        res.prof_y->SetBinError(bin, sqrt(1./wnew));
-      }
-    }
-    if (h1.prof_z && h2.prof_z){
-      for (unsigned int bin=0; bin<=h2.zbinning.getNbins()+1; bin++){
-        double val[2]={ h1.prof_z->GetBinContent(bin), h2.prof_z->GetBinContent(bin) };
-        double errsq[2]={ pow(h1.prof_z->GetBinError(bin), 2), pow(h2.prof_z->GetBinError(bin), 2) };
-        double valnew=0;
-        double wnew=0;
-        for (unsigned int ii=0; ii<2; ii++){ if (errsq[ii]!=0.){ valnew += val[ii]/errsq[ii]; wnew += 1./errsq[ii]; } }
-        if (wnew==0.) valnew = 0;
-        else valnew /= wnew;
-        res.prof_z->SetBinContent(bin, valnew);
-        res.prof_z->SetBinError(bin, sqrt(1./wnew));
-      }
-    }
+    if (h1.prof_x && h2.prof_x) combineHistogramsByWeightedAverage(h1.prof_x, h2.prof_x, res.prof_x);
+    if (h1.prof_y && h2.prof_y) combineHistogramsByWeightedAverage(h1.prof_y, h2.prof_y, res.prof_y);
+    if (h1.prof_z && h2.prof_z) combineHistogramsByWeightedAverage(h1.prof_z, h2.prof_z, res.prof_z);
   }
   return res;
+}
+
+void ExtendedHistogram_3D::averageHistograms(ExtendedHistogram_3D& hTarget, ExtendedHistogram_3D const& h2){
+  if (!hTarget.histo || !h2.histo) return;
+  combineHistogramsByWeightedAverage(hTarget.histo, h2.histo, hTarget.histo);
+  if (hTarget.prof_x && h2.prof_x) combineHistogramsByWeightedAverage(hTarget.prof_x, h2.prof_x, hTarget.prof_x);
+  if (hTarget.prof_y && h2.prof_y) combineHistogramsByWeightedAverage(hTarget.prof_y, h2.prof_y, hTarget.prof_y);
+  if (hTarget.prof_z && h2.prof_z) combineHistogramsByWeightedAverage(hTarget.prof_z, h2.prof_z, hTarget.prof_z);
 }
 
 void ExtendedHistogram_3D::constructFromTree(TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, ExtendedBinning const* binningX, ExtendedBinning const* binningY, ExtendedBinning const* binningZ){

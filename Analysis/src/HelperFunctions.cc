@@ -1366,6 +1366,45 @@ template<> void HelperFunctions::divideBinWidth<TH3F>(TH3F* histo){
   }
 }
 
+template<> void HelperFunctions::multiplyBinWidth<TH1F>(TH1F* histo){
+  TAxis const* xaxis = histo->GetXaxis();
+  for (int binx=1; binx<=histo->GetNbinsX(); binx++){
+    float binwidthX = xaxis->GetBinWidth(binx);
+    histo->SetBinContent(binx, histo->GetBinContent(binx)*binwidthX);
+    histo->SetBinError(binx, histo->GetBinError(binx)*binwidthX);
+  }
+}
+template<> void HelperFunctions::multiplyBinWidth<TH2F>(TH2F* histo){
+  TAxis const* xaxis = histo->GetXaxis();
+  TAxis const* yaxis = histo->GetYaxis();
+  for (int binx=1; binx<=histo->GetNbinsX(); binx++){
+    float binwidthX = xaxis->GetBinWidth(binx);
+    for (int biny=1; biny<=histo->GetNbinsY(); biny++){
+      float binwidthY = yaxis->GetBinWidth(biny);
+      float binwidth=binwidthX*binwidthY;
+      histo->SetBinContent(binx, biny, histo->GetBinContent(binx, biny)*binwidth);
+      histo->SetBinError(binx, biny, histo->GetBinError(binx, biny)*binwidth);
+    }
+  }
+}
+template<> void HelperFunctions::multiplyBinWidth<TH3F>(TH3F* histo){
+  TAxis const* xaxis = histo->GetXaxis();
+  TAxis const* yaxis = histo->GetYaxis();
+  TAxis const* zaxis = histo->GetZaxis();
+  for (int binx=1; binx<=histo->GetNbinsX(); binx++){
+    float binwidthX = xaxis->GetBinWidth(binx);
+    for (int biny=1; biny<=histo->GetNbinsY(); biny++){
+      float binwidthY = yaxis->GetBinWidth(biny);
+      for (int binz=1; binz<=histo->GetNbinsZ(); binz++){
+        float binwidthZ = zaxis->GetBinWidth(binz);
+        float binwidth=binwidthX*binwidthY*binwidthZ;
+        histo->SetBinContent(binx, biny, binz, histo->GetBinContent(binx, biny, binz)*binwidth);
+        histo->SetBinError(binx, biny, binz, histo->GetBinError(binx, biny, binz)*binwidth);
+      }
+    }
+  }
+}
+
 template<> float HelperFunctions::computeIntegral<TH1F>(TH1F* histo, bool useWidth){
   TAxis const* xaxis = histo->GetXaxis();
   float sum=0;
@@ -1414,7 +1453,68 @@ template<> float HelperFunctions::computeIntegral<TH3F>(TH3F* histo, bool useWid
   return sum;
 }
 
-template<> void HelperFunctions::divideHistograms<TH1F>(TH1F* hnum, TH1F* hden, TH1F*& hAssign, bool useEffErr){
+template<> double HelperFunctions::computeChiSq<TH1F>(TH1F const* h1, TH1F const* h2){
+  double res=0;
+  if (h1->GetNbinsX()!=h2->GetNbinsX()) return res; const int nbinsx = h1->GetNbinsX();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    double sumW[2] ={
+      h1->GetBinContent(binx),
+      h2->GetBinContent(binx)
+    };
+    double sumWsq[2] ={
+      pow(h1->GetBinError(binx), 2),
+      pow(h2->GetBinError(binx), 2)
+    };
+    double totalWsq=(sumWsq[0]+sumWsq[1]);
+    if (totalWsq!=0.) res += pow(sumW[1]-sumW[0], 2)/totalWsq;
+  }
+  return res;
+}
+template<> double HelperFunctions::computeChiSq<TH2F>(TH2F const* h1, TH2F const* h2){
+  double res=0;
+  if (h1->GetNbinsX()!=h2->GetNbinsX()) return res; const int nbinsx = h1->GetNbinsX();
+  if (h1->GetNbinsY()!=h2->GetNbinsY()) return res; const int nbinsy = h1->GetNbinsY();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    for (int biny=0; biny<=nbinsy+1; biny++){
+      double sumW[2] ={
+        h1->GetBinContent(binx, biny),
+        h2->GetBinContent(binx, biny)
+      };
+      double sumWsq[2] ={
+        pow(h1->GetBinError(binx, biny), 2),
+        pow(h2->GetBinError(binx, biny), 2)
+      };
+      double totalWsq=(sumWsq[0]+sumWsq[1]);
+      if (totalWsq!=0.) res += pow(sumW[1]-sumW[0], 2)/totalWsq;
+    }
+  }
+  return res;
+}
+template<> double HelperFunctions::computeChiSq<TH3F>(TH3F const* h1, TH3F const* h2){
+  double res=0;
+  if (h1->GetNbinsX()!=h2->GetNbinsX()) return res; const int nbinsx = h1->GetNbinsX();
+  if (h1->GetNbinsY()!=h2->GetNbinsY()) return res; const int nbinsy = h1->GetNbinsY();
+  if (h1->GetNbinsZ()!=h2->GetNbinsZ()) return res; const int nbinsz = h1->GetNbinsZ();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    for (int biny=0; biny<=nbinsy+1; biny++){
+      for (int binz=0; binz<=nbinsz+1; binz++){
+        double sumW[2] ={
+          h1->GetBinContent(binx, biny, binz),
+          h2->GetBinContent(binx, biny, binz)
+        };
+        double sumWsq[2] ={
+          pow(h1->GetBinError(binx, biny, binz), 2),
+          pow(h2->GetBinError(binx, biny, binz), 2)
+        };
+        double totalWsq=(sumWsq[0]+sumWsq[1]);
+        if (totalWsq!=0.) res += pow(sumW[1]-sumW[0], 2)/totalWsq;
+      }
+    }
+  }
+  return res;
+}
+
+template<> void HelperFunctions::divideHistograms<TH1F>(TH1F const* hnum, TH1F const* hden, TH1F*& hAssign, bool useEffErr){
   if (hnum->GetNbinsX()!=hden->GetNbinsX()) return; const int nbinsx = hnum->GetNbinsX();
   for (int binx=0; binx<=nbinsx+1; binx++){
     float sumW = hnum->GetBinContent(binx);
@@ -1434,7 +1534,7 @@ template<> void HelperFunctions::divideHistograms<TH1F>(TH1F* hnum, TH1F* hden, 
     hAssign->SetBinError(binx, binerror);
   }
 }
-template<> void HelperFunctions::divideHistograms<TH2F>(TH2F* hnum, TH2F* hden, TH2F*& hAssign, bool useEffErr){
+template<> void HelperFunctions::divideHistograms<TH2F>(TH2F const* hnum, TH2F const* hden, TH2F*& hAssign, bool useEffErr){
   if (hnum->GetNbinsX()!=hden->GetNbinsX()) return; const int nbinsx = hnum->GetNbinsX();
   if (hnum->GetNbinsY()!=hden->GetNbinsY()) return; const int nbinsy = hnum->GetNbinsY();
   for (int binx=0; binx<=nbinsx+1; binx++){
@@ -1457,7 +1557,7 @@ template<> void HelperFunctions::divideHistograms<TH2F>(TH2F* hnum, TH2F* hden, 
     }
   }
 }
-template<> void HelperFunctions::divideHistograms<TH3F>(TH3F* hnum, TH3F* hden, TH3F*& hAssign, bool useEffErr){
+template<> void HelperFunctions::divideHistograms<TH3F>(TH3F const* hnum, TH3F const* hden, TH3F*& hAssign, bool useEffErr){
   if (hnum->GetNbinsX()!=hden->GetNbinsX()) return; const int nbinsx = hnum->GetNbinsX();
   if (hnum->GetNbinsY()!=hden->GetNbinsY()) return; const int nbinsy = hnum->GetNbinsY();
   if (hnum->GetNbinsZ()!=hden->GetNbinsZ()) return; const int nbinsz = hnum->GetNbinsZ();
@@ -1472,6 +1572,145 @@ template<> void HelperFunctions::divideHistograms<TH3F>(TH3F* hnum, TH3F* hden, 
         float binerror=0;
         if (sumWAll!=0.) bincontent = sumW/sumWAll;
         if (useEffErr) binerror = calculateEfficiencyError(sumW, sumWAll, sumWsq, sumWsqAll);
+        else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+        if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
+          bincontent=0;
+          binerror=0;
+        }
+        hAssign->SetBinContent(binx, biny, binz, bincontent);
+        hAssign->SetBinError(binx, biny, binz, binerror);
+      }
+    }
+  }
+}
+
+template<> void HelperFunctions::multiplyHistograms<TH1F>(TH1F const* h1, TH1F const* h2, TH1F*& hAssign, bool useEffErr){
+  if (h1->GetNbinsX()!=h2->GetNbinsX()) return; const int nbinsx = h1->GetNbinsX();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    float sumW = h1->GetBinContent(binx);
+    float sumWAll = h2->GetBinContent(binx);
+    float sumWsq = pow(h1->GetBinError(binx), 2);
+    float sumWsqAll = pow(h2->GetBinError(binx), 2);
+    float bincontent=0;
+    float binerror=0;
+    if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
+    else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+    if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
+      bincontent=0;
+      binerror=0;
+    }
+    hAssign->SetBinContent(binx, bincontent);
+    hAssign->SetBinError(binx, binerror);
+  }
+}
+template<> void HelperFunctions::multiplyHistograms<TH2F>(TH2F const* h1, TH2F const* h2, TH2F*& hAssign, bool useEffErr){
+  if (h1->GetNbinsX()!=h2->GetNbinsX()) return; const int nbinsx = h1->GetNbinsX();
+  if (h1->GetNbinsY()!=h2->GetNbinsY()) return; const int nbinsy = h1->GetNbinsY();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    for (int biny=0; biny<=nbinsy+1; biny++){
+      float sumW = h1->GetBinContent(binx, biny);
+      float sumWAll = h2->GetBinContent(binx, biny);
+      float sumWsq = pow(h1->GetBinError(binx, biny), 2);
+      float sumWsqAll = pow(h2->GetBinError(binx, biny), 2);
+      float bincontent=0;
+      float binerror=0;
+      if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
+      else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+      if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
+        bincontent=0;
+        binerror=0;
+      }
+      hAssign->SetBinContent(binx, biny, bincontent);
+      hAssign->SetBinError(binx, biny, binerror);
+    }
+  }
+}
+template<> void HelperFunctions::multiplyHistograms<TH3F>(TH3F const* h1, TH3F const* h2, TH3F*& hAssign, bool useEffErr){
+  if (h1->GetNbinsX()!=h2->GetNbinsX()) return; const int nbinsx = h1->GetNbinsX();
+  if (h1->GetNbinsY()!=h2->GetNbinsY()) return; const int nbinsy = h1->GetNbinsY();
+  if (h1->GetNbinsZ()!=h2->GetNbinsZ()) return; const int nbinsz = h1->GetNbinsZ();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    for (int biny=0; biny<=nbinsy+1; biny++){
+      for (int binz=0; binz<=nbinsz+1; binz++){
+        float sumW = h1->GetBinContent(binx, biny, binz);
+        float sumWAll = h2->GetBinContent(binx, biny, binz);
+        float sumWsq = pow(h1->GetBinError(binx, biny, binz), 2);
+        float sumWsqAll = pow(h2->GetBinError(binx, biny, binz), 2);
+        float bincontent=0;
+        float binerror=0;
+        if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
+        else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+        if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
+          bincontent=0;
+          binerror=0;
+        }
+        hAssign->SetBinContent(binx, biny, binz, bincontent);
+        hAssign->SetBinError(binx, biny, binz, binerror);
+      }
+    }
+  }
+}
+
+template<> void HelperFunctions::multiplyHistograms<TH2F>(TH2F const* h1, TH1F const* h2, unsigned int matchDimension, TH2F*& hAssign, bool useEffErr){
+  if (matchDimension>1) assert(0);
+  if (matchDimension==0 && h1->GetNbinsX()!=h2->GetNbinsX()) return; const int nbinsx = h1->GetNbinsX();
+  if (matchDimension==1 && h1->GetNbinsY()!=h2->GetNbinsX()) return; const int nbinsy = h1->GetNbinsY();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    for (int biny=0; biny<=nbinsy+1; biny++){
+      float sumW = h1->GetBinContent(binx, biny);
+      float sumWsq = pow(h1->GetBinError(binx, biny), 2);
+      float sumWAll=0, sumWsqAll=0;
+      switch (matchDimension){
+      case 0:
+        sumWAll = h2->GetBinContent(binx);
+        sumWsqAll = pow(h2->GetBinError(binx), 2);
+        break;
+      case 1:
+        sumWAll = h2->GetBinContent(biny);
+        sumWsqAll = pow(h2->GetBinError(biny), 2);
+        break;
+      }
+      float bincontent=0;
+      float binerror=0;
+      if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
+      else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+      if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
+        bincontent=0;
+        binerror=0;
+      }
+      hAssign->SetBinContent(binx, biny, bincontent);
+      hAssign->SetBinError(binx, biny, binerror);
+    }
+  }
+}
+template<> void HelperFunctions::multiplyHistograms<TH3F>(TH3F const* h1, TH1F const* h2, unsigned int matchDimension, TH3F*& hAssign, bool useEffErr){
+  if (matchDimension>2) assert(0);
+  if (matchDimension==0 && h1->GetNbinsX()!=h2->GetNbinsX()) return; const int nbinsx = h1->GetNbinsX();
+  if (matchDimension==1 && h1->GetNbinsY()!=h2->GetNbinsX()) return; const int nbinsy = h1->GetNbinsY();
+  if (matchDimension==2 && h1->GetNbinsZ()!=h2->GetNbinsX()) return; const int nbinsz = h1->GetNbinsZ();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    for (int biny=0; biny<=nbinsy+1; biny++){
+      for (int binz=0; binz<=nbinsz+1; binz++){
+        float sumW = h1->GetBinContent(binx, biny, binz);
+        float sumWsq = pow(h1->GetBinError(binx, biny, binz), 2);
+        float sumWAll=0, sumWsqAll=0;
+        switch (matchDimension){
+        case 0:
+          sumWAll = h2->GetBinContent(binx);
+          sumWsqAll = pow(h2->GetBinError(binx), 2);
+          break;
+        case 1:
+          sumWAll = h2->GetBinContent(biny);
+          sumWsqAll = pow(h2->GetBinError(biny), 2);
+          break;
+        case 2:
+          sumWAll = h2->GetBinContent(binz);
+          sumWsqAll = pow(h2->GetBinError(binz), 2);
+          break;
+        }
+        float bincontent=0;
+        float binerror=0;
+        if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
         else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
         if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
           bincontent=0;
@@ -2012,6 +2251,140 @@ template <> void HelperFunctions::translateCumulantToHistogram<TH3F>(TH3F const*
           res->SetBinContent(ix, iy, iz, sumw);
           res->SetBinError(ix, iy, iz, sqrt(sumw2));
         }
+      }
+    }
+  }
+}
+
+template <> void HelperFunctions::combineHistogramsByWeightedAverage<TProfile>(TProfile const* h1, TProfile const* h2, TProfile*& hAssign){
+  if (h1->GetNbinsX()!=h2->GetNbinsX()) return; const int nbinsx = h1->GetNbinsX();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    double sumW[2]={
+      h1->GetBinContent(binx),
+      h2->GetBinContent(binx)
+    };
+    double sumWsq[2]={
+      pow(h1->GetBinError(binx), 2),
+      pow(h2->GetBinError(binx), 2)
+    };
+    float bincontent=0;
+    float binerror=0;
+    for (unsigned int ih=0; ih<2; ih++){
+      if (sumWsq[ih]>0.){
+        bincontent = sumW[ih]/sumWsq[ih];
+        binerror = 1./sumWsq[ih];
+      }
+    }
+    if (binerror>0.){
+      bincontent /= binerror;
+      binerror = sqrt(1./binerror);
+    }
+    if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
+      bincontent=0;
+      binerror=0;
+    }
+    hAssign->SetBinContent(binx, bincontent);
+    hAssign->SetBinError(binx, binerror);
+  }
+}
+template <> void HelperFunctions::combineHistogramsByWeightedAverage<TH1F>(TH1F const* h1, TH1F const* h2, TH1F*& hAssign){
+  if (h1->GetNbinsX()!=h2->GetNbinsX()) return; const int nbinsx = h1->GetNbinsX();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    double sumW[2]={
+      h1->GetBinContent(binx),
+      h2->GetBinContent(binx)
+    };
+    double sumWsq[2]={
+      pow(h1->GetBinError(binx), 2),
+      pow(h2->GetBinError(binx), 2)
+    };
+    float bincontent=0;
+    float binerror=0;
+    for (unsigned int ih=0; ih<2; ih++){
+      if (sumWsq[ih]>0.){
+        bincontent = sumW[ih]/sumWsq[ih];
+        binerror = 1./sumWsq[ih];
+      }
+    }
+    if (binerror>0.){
+      bincontent /= binerror;
+      binerror = sqrt(1./binerror);
+    }
+    if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
+      bincontent=0;
+      binerror=0;
+    }
+    hAssign->SetBinContent(binx, bincontent);
+    hAssign->SetBinError(binx, binerror);
+  }
+}
+template <> void HelperFunctions::combineHistogramsByWeightedAverage<TH2F>(TH2F const* h1, TH2F const* h2, TH2F*& hAssign){
+  if (h1->GetNbinsX()!=h2->GetNbinsX()) return; const int nbinsx = h1->GetNbinsX();
+  if (h1->GetNbinsY()!=h2->GetNbinsY()) return; const int nbinsy = h1->GetNbinsY();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    for (int biny=0; biny<=nbinsy+1; biny++){
+      double sumW[2]={
+        h1->GetBinContent(binx, biny),
+        h2->GetBinContent(binx, biny)
+      };
+      double sumWsq[2]={
+        pow(h1->GetBinError(binx, biny), 2),
+        pow(h2->GetBinError(binx, biny), 2)
+      };
+      float bincontent=0;
+      float binerror=0;
+      for (unsigned int ih=0; ih<2; ih++){
+        if (sumWsq[ih]>0.){
+          bincontent = sumW[ih]/sumWsq[ih];
+          binerror = 1./sumWsq[ih];
+        }
+      }
+      if (binerror>0.){
+        bincontent /= binerror;
+        binerror = sqrt(1./binerror);
+      }
+      if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
+        bincontent=0;
+        binerror=0;
+      }
+      hAssign->SetBinContent(binx, biny, bincontent);
+      hAssign->SetBinError(binx, biny, binerror);
+    }
+  }
+}
+template <> void HelperFunctions::combineHistogramsByWeightedAverage<TH3F>(TH3F const* h1, TH3F const* h2, TH3F*& hAssign){
+  if (h1->GetNbinsX()!=h2->GetNbinsX()) return; const int nbinsx = h1->GetNbinsX();
+  if (h1->GetNbinsY()!=h2->GetNbinsY()) return; const int nbinsy = h1->GetNbinsY();
+  if (h1->GetNbinsZ()!=h2->GetNbinsZ()) return; const int nbinsz = h1->GetNbinsZ();
+  for (int binx=0; binx<=nbinsx+1; binx++){
+    for (int biny=0; biny<=nbinsy+1; biny++){
+      for (int binz=0; binz<=nbinsz+1; binz++){
+        double sumW[2]={
+          h1->GetBinContent(binx, biny, binz),
+          h2->GetBinContent(binx, biny, binz)
+        };
+        double sumWsq[2]={
+          pow(h1->GetBinError(binx, biny, binz), 2),
+          pow(h2->GetBinError(binx, biny, binz), 2)
+        };
+        float bincontent=0;
+        float binerror=0;
+        for (unsigned int ih=0; ih<2; ih++){
+          if (sumWsq[ih]>0.){
+            bincontent = sumW[ih]/sumWsq[ih];
+            binerror = 1./sumWsq[ih];
+          }
+        }
+        if (binerror>0.){
+          bincontent /= binerror;
+          binerror = sqrt(1./binerror);
+        }
+        if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
+          bincontent=0;
+          binerror=0;
+        }
+        hAssign->SetBinContent(binx, biny, binz, bincontent);
+        hAssign->SetBinError(binx, biny, binz, binerror);
       }
     }
   }

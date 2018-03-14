@@ -93,21 +93,15 @@ ExtendedHistogram_1D ExtendedHistogram_1D::divideHistograms(ExtendedHistogram_1D
   if (!h1.histo || !h2.histo) return res;
   HelperFunctions::divideHistograms(h1.histo, h2.histo, res.histo, useEffErr);
   if (!useEffErr){
-    if (h1.prof_x && h2.prof_x){
-      for (unsigned int bin=0; bin<=h2.xbinning.getNbins()+1; bin++){
-        double val[2]={ h1.prof_x->GetBinContent(bin), h2.prof_x->GetBinContent(bin) };
-        double errsq[2]={ pow(h1.prof_x->GetBinError(bin), 2), pow(h2.prof_x->GetBinError(bin), 2) };
-        double valnew=0;
-        double wnew=0;
-        for (unsigned int ii=0; ii<2; ii++){ if (errsq[ii]!=0.){ valnew += val[ii]/errsq[ii]; wnew += 1./errsq[ii]; } }
-        if (wnew==0.) valnew = 0;
-        else valnew /= wnew;
-        res.prof_x->SetBinContent(bin, valnew);
-        res.prof_x->SetBinError(bin, sqrt(1./wnew));
-      }
-    }
+    if (h1.prof_x && h2.prof_x) combineHistogramsByWeightedAverage(h1.prof_x, h2.prof_x, res.prof_x);
   }
   return res;
+}
+
+void ExtendedHistogram_1D::averageHistograms(ExtendedHistogram_1D& hTarget, ExtendedHistogram_1D const& h2){
+  if (!hTarget.histo || !h2.histo) return;
+  combineHistogramsByWeightedAverage(hTarget.histo, h2.histo, hTarget.histo);
+  if (hTarget.prof_x && h2.prof_x) combineHistogramsByWeightedAverage(hTarget.prof_x, h2.prof_x, hTarget.prof_x);
 }
 
 void ExtendedHistogram_1D::constructFromTree(TTree* tree, float& xvar, float& weight, ExtendedBinning const* binningX){

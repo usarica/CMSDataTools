@@ -611,6 +611,114 @@ template<> void GGProcessHandler::recombineHistogramsToTemplatesWithPhase<TH3F*>
     }
   }
 }
+template<> void GGProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+  if (vals.empty()) return;
+  typedef TH1F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes) pairing.emplace_back(GGTplInt_Re);
+  if (vals.size()==nGGTplTypes){
+    pairing.emplace_back(GGTplIntBSM_Re);
+    pairing.emplace_back(GGTplSigBSMSMInt_Re);
+  }
+  assert(!pairing.empty());
+
+  for (TemplateContributionList const& pair:pairing){
+    htype_t*& tpl=vals.at(pair.type);
+    float const& coefficient = pair.coefficient;
+    // Loop over the bins
+    for (int ix=1; ix<=nx; ix++){
+      double bincontent = tpl->GetBinContent(ix);
+      double binerror = tpl->GetBinError(ix);
+      double divisor(coefficient);
+      for (auto const& componentPair:pair.TypePowerPair){
+        float const& componentPower=componentPair.second;
+        htype_t*& component = vals.at(componentPair.first);
+        divisor *= pow(component->GetBinContent(ix), componentPower);
+      }
+      if (divisor!=0.){ bincontent *= divisor; binerror *= divisor; }
+      else{ bincontent=0; binerror=0; }
+      tpl->SetBinContent(ix, bincontent);
+      tpl->SetBinError(ix, binerror);
+    }
+  }
+}
+template<> void GGProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+  if (vals.empty()) return;
+  typedef TH2F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+  int const ny = vals.at(0)->GetNbinsY();
+
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes) pairing.emplace_back(GGTplInt_Re);
+  if (vals.size()==nGGTplTypes){
+    pairing.emplace_back(GGTplIntBSM_Re);
+    pairing.emplace_back(GGTplSigBSMSMInt_Re);
+  }
+  assert(!pairing.empty());
+
+  for (TemplateContributionList const& pair:pairing){
+    htype_t*& tpl=vals.at(pair.type);
+    float const& coefficient = pair.coefficient;
+    // Loop over the bins
+    for (int ix=1; ix<=nx; ix++){
+      for (int iy=1; iy<=ny; iy++){
+        double bincontent = tpl->GetBinContent(ix, iy);
+        double binerror = tpl->GetBinError(ix, iy);
+        double divisor(coefficient);
+        for (auto const& componentPair:pair.TypePowerPair){
+          float const& componentPower=componentPair.second;
+          htype_t*& component = vals.at(componentPair.first);
+          divisor *= pow(component->GetBinContent(ix, iy), componentPower);
+        }
+        if (divisor!=0.){ bincontent *= divisor; binerror *= divisor; }
+        else{ bincontent=0; binerror=0; }
+        tpl->SetBinContent(ix, iy, bincontent);
+        tpl->SetBinError(ix, iy, binerror);
+      }
+    }
+  }
+}
+template<> void GGProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+  if (vals.empty()) return;
+  typedef TH3F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+  int const ny = vals.at(0)->GetNbinsY();
+  int const nz = vals.at(0)->GetNbinsZ();
+
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes) pairing.emplace_back(GGTplInt_Re);
+  if (vals.size()==nGGTplTypes){
+    pairing.emplace_back(GGTplIntBSM_Re);
+    pairing.emplace_back(GGTplSigBSMSMInt_Re);
+  }
+  assert(!pairing.empty());
+
+  for (TemplateContributionList const& pair:pairing){
+    htype_t*& tpl=vals.at(pair.type);
+    float const& coefficient = pair.coefficient;
+    // Loop over the bins
+    for (int ix=1; ix<=nx; ix++){
+      for (int iy=1; iy<=ny; iy++){
+        for (int iz=1; iz<=nz; iz++){
+          double bincontent = tpl->GetBinContent(ix, iy, iz);
+          double binerror = tpl->GetBinError(ix, iy, iz);
+          double divisor(coefficient);
+          for (auto const& componentPair:pair.TypePowerPair){
+            float const& componentPower=componentPair.second;
+            htype_t*& component = vals.at(componentPair.first);
+            divisor *= pow(component->GetBinContent(ix, iy, iz), componentPower);
+          }
+          if (divisor!=0.){ bincontent *= divisor; binerror *= divisor; }
+          else{ bincontent=0; binerror=0; }
+          tpl->SetBinContent(ix, iy, iz, bincontent);
+          tpl->SetBinError(ix, iy, iz, binerror);
+        }
+      }
+    }
+  }
+}
 
 
 /*************************/

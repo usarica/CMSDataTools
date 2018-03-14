@@ -96,7 +96,7 @@ TTree* fixTreeWeights(TTree* tree){
   for (auto const& wgtcoll:wgtcollList){
     unsigned int ns=wgtcoll.size();
     float threshold=0.5*(wgtcoll.at(ns-1)+wgtcoll.at(ns-2));
-    if (wgtcoll.front()*5.<threshold) threshold=wgtcoll.front();
+    if (threshold*5.<wgtcoll.front()) threshold=wgtcoll.front();
     else MELAout
       << "fixTreeWeights(" << treename << "): "
       << "Threshold " << threshold << " is different from max. weight " << wgtcoll.front()
@@ -108,6 +108,131 @@ TTree* fixTreeWeights(TTree* tree){
     tree->GetEntry(ev);
     int bin = binning.getBin(ZZMass);
     if (bin>=0 && bin<(int)binning.getNbins() && fabs(weight)>wgtThresholds.at(bin)) weight = pow(wgtThresholds.at(bin), 2)/weight;
+    newtree->Fill();
+  }
+  return newtree;
+}
+
+// Assumes trackvar and weight are booked
+// trimEdges==0 keeps underflow and overflow bins with no range restriction
+// trimEdges==1 keeps underflow and overflow bins but restricts their range
+// trimEdges==2 discards underflow and overflow bins
+TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackvar, float& weight, int trimEdges){
+  if (!tree) return nullptr;
+  const TString treename=tree->GetName();
+  const int nEntries = tree->GetEntries();
+  TTree* newtree = tree->CloneTree(0);
+
+  unsigned int nMarginalMax;
+  if (nEntries>100000) nMarginalMax=100;
+  else nMarginalMax=50;
+  unsigned int nMarginalMaxMult;
+  if (nEntries>100000) nMarginalMaxMult=1000;
+  else if (nEntries>50000) nMarginalMaxMult=500;
+  else nMarginalMaxMult=100;
+  const float nMarginalMaxFrac = 1./static_cast<float>(nMarginalMaxMult);
+  const unsigned int countThreshold=nMarginalMaxMult*nMarginalMax;
+
+  int nbins=binning.getNbins()+2;
+  vector<unsigned int> counts; counts.assign(nbins, 0);
+  // Initial loop over the tree to count the events in each bin
+  for (int ev=0; ev<nEntries; ev++){
+    tree->GetEntry(ev);
+    int bin = 1+binning.getBin(trackvar);
+    // Trim the tree
+    bool doPass=false;
+    switch (trimEdges){
+    case 1:
+    {
+      double thrlow=2.*binning.getBinLowEdge(0)-binning.getBinLowEdge(1);
+      double thrhigh=2.*binning.getBinLowEdge(nbins-2)-binning.getBinLowEdge(nbins-3);
+      doPass=(trackvar<thrlow || trackvar>thrhigh);
+      break;
+    }
+    case 2:
+      doPass=(bin==0 || bin==nbins-1);
+      break;
+    }
+    if (doPass) continue;
+    counts.at(bin)=counts.at(bin)+1;
+  }
+  MELAout
+    << "fixTreeWeights(" << treename << "): "
+    << "Counts: " << counts
+    << endl;
+
+  // Collect the count*nMarginalMaxFrac events with highest weights
+  MELAout
+    << "fixTreeWeights(" << treename << "): "
+    << "Collecting the count*" << nMarginalMaxFrac << " events with highest weights in " << nbins << " bins"
+    << endl;
+  vector<vector<float>> wgtcollList;
+  wgtcollList.assign(counts.size(), vector<float>());
+  for (int ev=0; ev<nEntries; ev++){
+    tree->GetEntry(ev);
+    int bin = 1+binning.getBin(trackvar);
+    // Trim the tree
+    bool doPass=false;
+    switch (trimEdges){
+    case 1:
+    {
+      double thrlow=2.*binning.getBinLowEdge(0)-binning.getBinLowEdge(1);
+      double thrhigh=2.*binning.getBinLowEdge(nbins-2)-binning.getBinLowEdge(nbins-3);
+      doPass=(trackvar<thrlow || trackvar>thrhigh);
+      break;
+    }
+    case 2:
+      doPass=(bin==0 || bin==nbins-1);
+      break;
+    }
+    if (doPass) continue;
+    vector<float>& wgtcoll=wgtcollList.at(bin);
+    const unsigned int maxPrunedSize = std::ceil(float(counts.at(bin))*nMarginalMaxFrac);
+    if (wgtcoll.size()<maxPrunedSize) addByHighest(wgtcoll, fabs(weight), false);
+    else if (wgtcoll.back()<fabs(weight)){
+      addByHighest(wgtcoll, fabs(weight), false);
+      wgtcoll.pop_back();
+    }
+  }
+  MELAout
+    << "fixTreeWeights(" << treename << "): "
+    << "Determining the weight thresholds"
+    << endl;
+  vector<float> wgtThresholds; wgtThresholds.reserve(wgtcollList.size());
+  for (auto const& wgtcoll:wgtcollList){
+    unsigned int ns=wgtcoll.size();
+    float threshold=0;
+    if (ns>=3){
+      threshold=0.5*(wgtcoll.at(ns-1)+wgtcoll.at(ns-2));
+      if (threshold*5.<wgtcoll.front()) threshold=wgtcoll.front();
+      else MELAout
+        << "fixTreeWeights(" << treename << "): "
+        << "Threshold " << threshold << " is different from max. weight " << wgtcoll.front()
+        << endl;
+    }
+    else if (ns>0) threshold=wgtcoll.front();
+    wgtThresholds.push_back(threshold);
+  }
+
+  for (int ev=0; ev<nEntries; ev++){
+    tree->GetEntry(ev);
+    int bin = 1+binning.getBin(trackvar);
+    // Trim the tree
+    bool doPass=false;
+    switch (trimEdges){
+    case 1:
+    {
+      double thrlow=2.*binning.getBinLowEdge(0)-binning.getBinLowEdge(1);
+      double thrhigh=2.*binning.getBinLowEdge(nbins-2)-binning.getBinLowEdge(nbins-3);
+      doPass=(trackvar<thrlow || trackvar>thrhigh);
+      break;
+    }
+    case 2:
+      doPass=(bin==0 || bin==nbins-1);
+      break;
+    }
+    if (doPass) continue;
+    if (fabs(weight)>wgtThresholds.at(bin)) weight = pow(wgtThresholds.at(bin), 2)/weight;
     newtree->Fill();
   }
   return newtree;

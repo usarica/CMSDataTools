@@ -40,7 +40,7 @@ int ExtendedBinning::getBin(double val) const{
   for (int bin=0; bin<(int)(vbinlow.size()-1); bin++){
     if (vbinlow.at(bin)<=val && val<vbinlow.at(bin+1)) return bin;
   }
-  if (val>=vbinlow.back()) return vbinlow.size();
+  if (val>=vbinlow.back()) return this->getNbins();
   else return -1;
 }
 double ExtendedBinning::getBinLowEdge(const int bin) const{

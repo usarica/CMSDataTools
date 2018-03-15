@@ -9,37 +9,69 @@ using namespace std;
 using namespace MELAStreamHelpers;
 
 
-ProcessHandler::ProcessHandler(ProcessType proctype_, bool useOffshell_) : proctype(proctype_), useOffshell(useOffshell_) {
+ProcessHandler::ProcessHandler(ProcessType proctype_, CategorizationHelpers::MassRegion massregion_) : proctype(proctype_), massregion(massregion_) {
   assignProcessName();
 }
 void ProcessHandler::assignProcessName(){
-  switch (proctype){
-  case kGG:
-    procname=(useOffshell ? "ggZZ_offshell" : "ggZZ");
-    break;
-  case kVV:
-    procname=(useOffshell ? "VVZZ_offshell" : "VVZZ");
-    break;
-  case kVBF:
-    procname=(useOffshell ? "VBF_offshell" : "VBF");
-    break;
-  case kZH:
-    procname=(useOffshell ? "ZZZ_offshell" : "ZH");
-    break;
-  case kWH:
-    procname=(useOffshell ? "WZZ_offshell" : "WH");
-    break;
-  case kQQBkg:
-    procname=(useOffshell ? "qqZZ" : "bkg_qqzz");
-    break;
-  case kZX:
-    procname=(useOffshell ? "Zjets" : "Zjets");
-    break;
-  default:
-    procname="";
-    assert(0);
-    break;
-  };
+  if (massregion==CategorizationHelpers::kOffshell){
+    switch (proctype){
+    case kGG:
+      procname="ggZZ_offshell";
+      break;
+    case kVV:
+      procname="VVZZ_offshell";
+      break;
+    case kVBF:
+      procname="VBF_offshell";
+      break;
+    case kZH:
+      procname="ZZZ_offshell";
+      break;
+    case kWH:
+      procname="WZZ_offshell";
+      break;
+    case kQQBkg:
+      procname="qqZZ";
+      break;
+    case kZX:
+      procname="Zjets";
+      break;
+    default:
+      procname="";
+      assert(0);
+      break;
+    }
+  }
+  else if (massregion==CategorizationHelpers::kOnshell){
+    switch (proctype){
+    case kGG:
+      procname="ggZZ";
+      break;
+    case kVV:
+      procname="VVZZ";
+      break;
+    case kVBF:
+      procname="VBF";
+      break;
+    case kZH:
+      procname="ZH";
+      break;
+    case kWH:
+      procname="WH";
+      break;
+    case kQQBkg:
+      procname="bkg_qqzz";
+      break;
+    case kZX:
+      procname="Zjets";
+      break;
+    default:
+      procname="";
+      assert(0);
+      break;
+    }
+  }
+  else assert(0);
 }
 const TString& ProcessHandler::getProcessName() const{ return procname; }
 const ProcessHandler::ProcessType& ProcessHandler::getProcessType() const{ return proctype; }
@@ -49,7 +81,7 @@ void ProcessHandler::imposeTplPhysicality(std::vector<float>& /*vals*/) const{}
 /****************/
 /* Gluon fusion */
 /****************/
-GGProcessHandler::GGProcessHandler(bool useOffshell_) : ProcessHandler(ProcessHandler::kGG, useOffshell_)
+GGProcessHandler::GGProcessHandler(CategorizationHelpers::MassRegion massregion_) : ProcessHandler(ProcessHandler::kGG, massregion_)
 {}
 
 GGProcessHandler::TemplateContributionList::TemplateContributionList(GGProcessHandler::TemplateType type_) : type(type_), coefficient(1){
@@ -721,7 +753,7 @@ template<> void GGProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH
 /*************************/
 /* EW VV fusion, VBF, VH */
 /*************************/
-VVProcessHandler::VVProcessHandler(bool useOffshell_, ProcessHandler::ProcessType proctype_) : ProcessHandler(proctype_, useOffshell_){
+VVProcessHandler::VVProcessHandler(CategorizationHelpers::MassRegion massregion_, ProcessHandler::ProcessType proctype_) : ProcessHandler(proctype_, massregion_){
   if (
     !(
       proctype==ProcessHandler::kVV
@@ -1452,7 +1484,7 @@ template<> void VVProcessHandler::recombineHistogramsToTemplatesWithPhase<TH3F*>
 /*****************/
 /* QQ background */
 /*****************/
-QQBkgProcessHandler::QQBkgProcessHandler(bool useOffshell_) : ProcessHandler(ProcessHandler::kQQBkg, useOffshell_)
+QQBkgProcessHandler::QQBkgProcessHandler(CategorizationHelpers::MassRegion massregion_) : ProcessHandler(ProcessHandler::kQQBkg, massregion_)
 {}
 
 TString QQBkgProcessHandler::getOutputTreeName() const{
@@ -1506,7 +1538,7 @@ template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::
 /******************/
 /* Z+X background */
 /******************/
-ZXProcessHandler::ZXProcessHandler(bool useOffshell_) : ProcessHandler(ProcessHandler::kZX, useOffshell_)
+ZXProcessHandler::ZXProcessHandler(CategorizationHelpers::MassRegion massregion_) : ProcessHandler(ProcessHandler::kZX, massregion_)
 {}
 
 TString ZXProcessHandler::getOutputTreeName() const{

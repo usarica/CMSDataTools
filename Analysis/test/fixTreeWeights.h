@@ -7,6 +7,8 @@
 TTree* fixTreeWeights(TTree* tree){
   if (!tree) return nullptr;
   const TString treename=tree->GetName();
+  MELAout << "Begin fixTreeWeights(" << treename << ")" << endl;
+
   float ZZMass, weight;
   tree->SetBranchAddress("ZZMass", &ZZMass);
   tree->SetBranchAddress("weight", &weight);
@@ -119,7 +121,15 @@ TTree* fixTreeWeights(TTree* tree){
 // trimEdges==2 discards underflow and overflow bins
 TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackvar, float& weight, int trimEdges){
   if (!tree) return nullptr;
+
+  if (!tree) return nullptr;
   const TString treename=tree->GetName();
+  MELAout << "Begin fixTreeWeights(" << treename << ")" << endl;
+  MELAout
+    << "fixTreeWeights(" << treename << "): "
+    << "Requested binning in " << binning.getNbins() << " bins: [ " << binning.getBinningVector() << " ]"
+    << endl;
+
   const int nEntries = tree->GetEntries();
   TTree* newtree = tree->CloneTree(0);
 

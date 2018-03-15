@@ -111,7 +111,7 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_3D>(
 bool getFilesAndTrees(
   const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
   const unsigned int istage, const TString fixedDate,
-  ProcessHandler const* thePerProcessHandle,
+  ProcessHandler const* inputProcessHandle,
   const TString strGenerator,
   std::vector<TFile*>& finputList, std::vector<TTree*>& treeList
 ){
@@ -132,7 +132,7 @@ bool getFilesAndTrees(
     "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_%s%s",
     strChannel.Data(), strCategory.Data(),
     getACHypothesisName(kSM).Data(),
-    thePerProcessHandle->getProcessName().Data(),
+    inputProcessHandle->getProcessName().Data(),
     strSystematics.Data(),
     strGenerator.Data(),
     ".root"
@@ -142,7 +142,7 @@ bool getFilesAndTrees(
     "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_%s%s",
     strChannel.Data(), strCategory.Data(),
     strACHypo.Data(),
-    thePerProcessHandle->getProcessName().Data(),
+    inputProcessHandle->getProcessName().Data(),
     strSystematics.Data(),
     strGenerator.Data(),
     ".root"
@@ -187,11 +187,12 @@ bool getFilesAndTrees(
 }
 
 
-void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage=1, const TString fixedDate=""){
+void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const SystematicVariationTypes syst, CategorizationHelpers::MassRegion massregion, const unsigned int istage=1, const TString fixedDate=""){
   const ProcessHandler::ProcessType proctype=ProcessHandler::kGG;
   if (channel==NChannels) return;
-  ProcessHandleType const* thePerProcessHandle=(ProcessHandleType const*) getOffshellProcessHandler(proctype);
-  if (!thePerProcessHandle) return;
+  ProcessHandleType const* inputProcessHandle=(ProcessHandleType const*) getProcessHandlerPerMassRegion(proctype, CategorizationHelpers::kOffshell); // Input is always organized in offshell conventions
+  ProcessHandleType const* outputProcessHandle=(ProcessHandleType const*) getProcessHandlerPerMassRegion(proctype, massregion);
+  if (!inputProcessHandle || !outputProcessHandle) return;
 
   const TString strChannel = getChannelName(channel);
   const TString strACHypo = getACHypothesisName(hypo);
@@ -203,9 +204,9 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
   const TString strSystematics_Nominal = getSystematicsName(sNominal);
   const TString strCategory_Inclusive = getCategoryName(Inclusive);
 
-  vector<ProcessHandleType::HypothesisType> tplset = thePerProcessHandle->getHypothesesForACHypothesis(kSM);
+  vector<ProcessHandleType::HypothesisType> tplset = inputProcessHandle->getHypothesesForACHypothesis(kSM);
   if (hypo!=kSM){
-    vector<ProcessHandleType::HypothesisType> tplset_tmp = thePerProcessHandle->getHypothesesForACHypothesis(hypo);
+    vector<ProcessHandleType::HypothesisType> tplset_tmp = inputProcessHandle->getHypothesesForACHypothesis(hypo);
     for (ProcessHandleType::HypothesisType& v:tplset_tmp) tplset.push_back(v);
   }
 
@@ -232,7 +233,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         "HtoZZ%s_%s_%s_MassRatiosToNominalInclusive_%s_%s_%s%s",
         strChannel.Data(), strCategory.Data(),
         strACHypo.Data(),
-        thePerProcessHandle->getProcessName().Data(),
+        inputProcessHandle->getProcessName().Data(),
         strSystematics_Nominal.Data(),
         "POWHEG",
         ".root"
@@ -247,13 +248,13 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       }
       CategorizationEfficiencies.emplace_back(cinput, cat, sNominal);
     }
-    if (syst!=sNominal && systematicAllowed(cat, channel, thePerProcessHandle->getProcessType(), syst, "POWHEG")){
+    if (syst!=sNominal && systematicAllowed(cat, channel, inputProcessHandle->getProcessType(), syst, "POWHEG")){
       const TString strCategory = getCategoryName(cat);
       TString INPUT_NAME = Form(
         "HtoZZ%s_%s_%s_MassRatios_SystToNominal_%s_%s_%s%s",
         strChannel.Data(), strCategory.Data(),
         strACHypo.Data(),
-        thePerProcessHandle->getProcessName().Data(),
+        inputProcessHandle->getProcessName().Data(),
         strSystematics.Data(),
         "POWHEG",
         ".root"
@@ -268,13 +269,13 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       }
       CategorizationSystRatios_POWHEG.emplace_back(cinput, cat, syst);
     }
-    if (syst!=sNominal && systematicAllowed(cat, channel, thePerProcessHandle->getProcessType(), syst, "MCFM")){
+    if (syst!=sNominal && systematicAllowed(cat, channel, inputProcessHandle->getProcessType(), syst, "MCFM")){
       const TString strCategory = getCategoryName(cat);
       TString INPUT_NAME = Form(
         "HtoZZ%s_%s_%s_MassRatios_SystToNominal_%s_%s_%s%s",
         strChannel.Data(), strCategory.Data(),
         strACHypo.Data(),
-        thePerProcessHandle->getProcessName().Data(),
+        inputProcessHandle->getProcessName().Data(),
         strSystematics.Data(),
         "MCFM",
         ".root"
@@ -297,7 +298,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
     "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_%s%s",
     strChannel.Data(), strCategory_Inclusive.Data(),
     strSMHypo.Data(),
-    thePerProcessHandle->getProcessName().Data(),
+    inputProcessHandle->getProcessName().Data(),
     strSystematics_Nominal.Data(),
     "MCFM",
     ".root"
@@ -307,7 +308,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
     "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_%s%s",
     strChannel.Data(), strCategory_Inclusive.Data(),
     strACHypo.Data(),
-    thePerProcessHandle->getProcessName().Data(),
+    inputProcessHandle->getProcessName().Data(),
     strSystematics_Nominal.Data(),
     "MCFM",
     ".root"
@@ -322,7 +323,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       "%s/HtoZZ%s_%s_FinalTemplates_%s_%s_%s",
       coutput_common.Data(),
       strChannel.Data(), strCategory.Data(),
-      thePerProcessHandle->getProcessName().Data(),
+      outputProcessHandle->getProcessName().Data(),
       strSystematics.Data(),
       ".root"
     );
@@ -338,7 +339,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
     unordered_map<TString, float> KDvars;
     for (auto& KDname:KDset) KDvars[KDname]=0;
     vector<ExtendedBinning> KDbinning;
-    for (auto& KDname:KDset) KDbinning.push_back(getDiscriminantFineBinning(channel, Inclusive, KDname, true));
+    for (auto& KDname:KDset) KDbinning.push_back(getDiscriminantFineBinning(channel, Inclusive, KDname, massregion));
 
     vector<TString> cinputList;
     vector<TFile*> finputList;
@@ -369,7 +370,8 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
 
       for (Category& cat:catList){
         const TString strCategory = getCategoryName(cat);
-        TString hname = treename; hname = hname + "_" + strCategory + "_" + strSystematics + "_" + KDset.at(0);
+        TString hname = outputProcessHandle->getOutputTreeName(ProcessHandleType::castIntToHypothesisType(it));
+        hname = hname + "_" + strCategory + "_" + strSystematics + "_" + KDset.at(0);
         MELAout << "Setting up mass histogram " << hname << endl;
         hMass_FromNominalInclusive[cat].emplace_back(hname, hname, KDbinning.at(0));
       }
@@ -458,13 +460,13 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
     unordered_map<TString, float> KDvars;
     for (auto& KDname:KDset) KDvars[KDname]=0;
     vector<ExtendedBinning> KDbinning;
-    for (auto& KDname:KDset) KDbinning.push_back(getDiscriminantFineBinning(channel, cat, KDname, true));
+    for (auto& KDname:KDset) KDbinning.push_back(getDiscriminantFineBinning(channel, cat, KDname, massregion));
     vector<ExtendedBinning> KDbinning_coarse;
     if (DOSMOOTHING){
-      for (auto& KDname:KDset) KDbinning_coarse.push_back(getDiscriminantCoarseBinning(channel, cat, KDname, true));
+      for (auto& KDname:KDset) KDbinning_coarse.push_back(getDiscriminantCoarseBinning(channel, cat, KDname, massregion));
     }
     else{
-      for (auto& KDname:KDset) KDbinning_coarse.push_back(getDiscriminantFineBinning(channel, cat, KDname, true));
+      for (auto& KDname:KDset) KDbinning_coarse.push_back(getDiscriminantFineBinning(channel, cat, KDname, massregion));
     }
     unsigned int nKDs = KDset.size();
     MELAout << "\t- Number of template dimensions = " << nKDs << endl;
@@ -478,14 +480,14 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
     MELAout << "\t- Obtaining POWHEG samples..." << endl;
     bool success_POWHEG = getFilesAndTrees(
       channel, cat, hypo, syst,
-      istage, fixedDate, thePerProcessHandle, "POWHEG",
+      istage, fixedDate, inputProcessHandle, "POWHEG",
       finput_POWHEG, treeList_POWHEG
     );
     MELAout << "\t-- " << (success_POWHEG ? "Success!" : "failure!") << endl;
     MELAout << "\t- Obtaining MCFM samples..." << endl;
     bool success_MCFM = getFilesAndTrees(
       channel, cat, hypo, syst,
-      istage, fixedDate, thePerProcessHandle, "MCFM",
+      istage, fixedDate, inputProcessHandle, "MCFM",
       finput_MCFM, treeList_MCFM
     );
     MELAout << "\t-- " << (success_MCFM ? "Success!" : "failure!") << endl;
@@ -515,6 +517,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         }
         fixedTrees_POWHEG.push_back(newtree);
       }
+      MELAout << "\t- Tree weights fixed" << endl;
     }
     rootdir->cd();
 
@@ -539,12 +542,13 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         }
         fixedTrees_MCFM.push_back(newtree);
       }
+      MELAout << "\t- Tree weights fixed" << endl;
     }
     rootdir->cd();
 
     MELAout << "\t- Attempting templates..." << endl;
     if (nKDs==2) getTemplatesPerCategory<2>(
-      rootdir, foutput[cat], thePerProcessHandle, cat, hypo,
+      rootdir, foutput[cat], outputProcessHandle, cat, hypo,
       tplset,
       fixedTrees_POWHEG, fixedTrees_MCFM,
       KDset, KDbinning, KDbinning_coarse,
@@ -552,7 +556,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       KDvars, weight, isCategory
       );
     else if (nKDs==3) getTemplatesPerCategory<3>(
-      rootdir, foutput[cat], thePerProcessHandle, cat, hypo,
+      rootdir, foutput[cat], outputProcessHandle, cat, hypo,
       tplset,
       fixedTrees_POWHEG, fixedTrees_MCFM,
       KDset, KDbinning, KDbinning_coarse,
@@ -685,13 +689,33 @@ template<> void getTemplatesPerCategory<2>(
     for (unsigned int t=0; t<ntpls; t++){
       double chisq = computeChiSq(hTemplates_POWHEG.at(t).getHistogram(), hTemplates_MCFM.at(t).getHistogram());
       MELAout << "Template " << hTemplates_POWHEG.at(t).getName() << " are compatible by chisq=" << chisq << endl;
-      isCompatible &= (chisq<CHISQCUT);
+      isCompatible &= (chisq<CHISQCUT && ProcessHandleType::castIntToTemplateType(t)==ProcessHandleType::GGTplSig); // EXCEPTIONAL CASE FOR GG
     }
-    if (isCompatible){ for (unsigned int t=0; t<ntpls; t++) ExtHist_t::averageHistograms(hTemplates_POWHEG.at(t), hTemplates_MCFM.at(t)); }
+    if (isCompatible){
+      MELAout << "Satisfies compatibility criteria, combining conditional templates..." << endl;
+      for (unsigned int t=0; t<ntpls; t++) ExtHist_t::averageHistograms(hTemplates_POWHEG.at(t), hTemplates_MCFM.at(t));
+      hTemplates = &hTemplates_POWHEG;
+    }
+    else{
+      MELAout << "Does not satisfy compatibility criteria, ";
+      if (category==Untagged || category==Inclusive){
+        MELAout << "using MCFM templates in untagged and inclusive categories." << endl;
+        hTemplates = &hTemplates_MCFM;
+      }
+      else{
+        MELAout << "using POWHEG templates in tagged categories." << endl;
+        hTemplates = &hTemplates_POWHEG;
+      }
+    }
+  }
+  else if (!hTemplates_POWHEG.empty()){
+    MELAout << "Only POWHEG samples are available." << endl;
     hTemplates = &hTemplates_POWHEG;
   }
-  else if (!hTemplates_POWHEG.empty()) hTemplates = &hTemplates_POWHEG;
-  else if (!hTemplates_MCFM.empty()) hTemplates = &hTemplates_MCFM;
+  else if (!hTemplates_MCFM.empty()){
+    MELAout << "Only MCFM samples are available." << endl;
+    hTemplates = &hTemplates_MCFM;
+  }
   else assert(0);
 
 
@@ -835,13 +859,33 @@ template<> void getTemplatesPerCategory<3>(
     for (unsigned int t=0; t<ntpls; t++){
       double chisq = computeChiSq(hTemplates_POWHEG.at(t).getHistogram(), hTemplates_MCFM.at(t).getHistogram());
       MELAout << "Template " << hTemplates_POWHEG.at(t).getName() << " are compatible by chisq=" << chisq << endl;
-      isCompatible &= (chisq<CHISQCUT);
+      isCompatible &= (chisq<CHISQCUT && ProcessHandleType::castIntToTemplateType(t)==ProcessHandleType::GGTplSig); // EXCEPTIONAL CASE FOR GG
     }
-    if (isCompatible){ for (unsigned int t=0; t<ntpls; t++) ExtHist_t::averageHistograms(hTemplates_POWHEG.at(t), hTemplates_MCFM.at(t)); }
+    if (isCompatible){
+      MELAout << "Satisfies compatibility criteria, combining conditional templates..." << endl;
+      for (unsigned int t=0; t<ntpls; t++) ExtHist_t::averageHistograms(hTemplates_POWHEG.at(t), hTemplates_MCFM.at(t));
+      hTemplates = &hTemplates_POWHEG;
+    }
+    else{
+      MELAout << "Does not satisfy compatibility criteria, ";
+      if (category==Untagged || category==Inclusive){
+        MELAout << "using MCFM templates in untagged and inclusive categories." << endl;
+        hTemplates = &hTemplates_MCFM;
+      }
+      else{
+        MELAout << "using POWHEG templates in tagged categories." << endl;
+        hTemplates = &hTemplates_POWHEG;
+      }
+    }
+  }
+  else if (!hTemplates_POWHEG.empty()){
+    MELAout << "Only POWHEG samples are available." << endl;
     hTemplates = &hTemplates_POWHEG;
   }
-  else if (!hTemplates_POWHEG.empty()) hTemplates = &hTemplates_POWHEG;
-  else if (!hTemplates_MCFM.empty()) hTemplates = &hTemplates_MCFM;
+  else if (!hTemplates_MCFM.empty()){
+    MELAout << "Only MCFM samples are available." << endl;
+    hTemplates = &hTemplates_MCFM;
+  }
   else assert(0);
 
   // Multiply with mass histogram only after combination

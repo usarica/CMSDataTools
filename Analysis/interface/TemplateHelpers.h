@@ -23,59 +23,60 @@ namespace TemplateHelpers{
 
   void getLikelihoodDiscriminants(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, const SystematicsHelpers::SystematicVariationTypes syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);
   void getCategorizationDiscriminants(const SystematicsHelpers::SystematicVariationTypes syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);
-  ExtendedBinning getDiscriminantFineBinning(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell);
-  ExtendedBinning getDiscriminantCoarseBinning(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, TString const strKD, bool const useOffshell);
+  ExtendedBinning getDiscriminantFineBinning(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, TString const strKD, CategorizationHelpers::MassRegion const massregion);
+  ExtendedBinning getDiscriminantCoarseBinning(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, TString const strKD, CategorizationHelpers::MassRegion const massregion);
 
   ProcessHandler const* getOnshellProcessHandler(ProcessHandler::ProcessType type);
   ProcessHandler const* getOffshellProcessHandler(ProcessHandler::ProcessType type);
+  ProcessHandler const* getProcessHandlerPerMassRegion(ProcessHandler::ProcessType type, CategorizationHelpers::MassRegion massregion);
 
   /****************/
   /* Gluon fusion */
   /****************/
-  const GGProcessHandler OnshellGGProcessHandle(false);
-  const GGProcessHandler OffshellGGProcessHandle(true);
+  const GGProcessHandler OnshellGGProcessHandle(CategorizationHelpers::kOnshell);
+  const GGProcessHandler OffshellGGProcessHandle(CategorizationHelpers::kOffshell);
 
 
   /****************/
   /* EW VV fusion */
   /****************/
-  const VVProcessHandler OnshellVVProcessHandle(false);
-  const VVProcessHandler OffshellVVProcessHandle(true);
+  const VVProcessHandler OnshellVVProcessHandle(CategorizationHelpers::kOnshell);
+  const VVProcessHandler OffshellVVProcessHandle(CategorizationHelpers::kOffshell);
 
 
   /*******/
   /* VBF */
   /*******/
-  const VVProcessHandler OnshellVBFProcessHandle(false, ProcessHandler::kVBF);
-  const VVProcessHandler OffshellVBFProcessHandle(true, ProcessHandler::kVBF);
+  const VVProcessHandler OnshellVBFProcessHandle(CategorizationHelpers::kOnshell, ProcessHandler::kVBF);
+  const VVProcessHandler OffshellVBFProcessHandle(CategorizationHelpers::kOffshell, ProcessHandler::kVBF);
 
 
   /******/
   /* ZH */
   /******/
-  const VVProcessHandler OnshellZHProcessHandle(false, ProcessHandler::kZH);
-  const VVProcessHandler OffshellZHProcessHandle(true, ProcessHandler::kZH);
+  const VVProcessHandler OnshellZHProcessHandle(CategorizationHelpers::kOnshell, ProcessHandler::kZH);
+  const VVProcessHandler OffshellZHProcessHandle(CategorizationHelpers::kOffshell, ProcessHandler::kZH);
 
 
   /******/
   /* WH */
   /******/
-  const VVProcessHandler OnshellWHProcessHandle(false, ProcessHandler::kWH);
-  const VVProcessHandler OffshellWHProcessHandle(true, ProcessHandler::kWH);
+  const VVProcessHandler OnshellWHProcessHandle(CategorizationHelpers::kOnshell, ProcessHandler::kWH);
+  const VVProcessHandler OffshellWHProcessHandle(CategorizationHelpers::kOffshell, ProcessHandler::kWH);
 
 
   /*****************/
   /* QQ background */
   /*****************/
-  const QQBkgProcessHandler OnshellQQBkgProcessHandle(false);
-  const QQBkgProcessHandler OffshellQQBkgProcessHandle(true);
+  const QQBkgProcessHandler OnshellQQBkgProcessHandle(CategorizationHelpers::kOnshell);
+  const QQBkgProcessHandler OffshellQQBkgProcessHandle(CategorizationHelpers::kOffshell);
 
 
   /******************/
   /* Z+X background */
   /******************/
-  const ZXProcessHandler OnshellZXProcessHandle(false);
-  const ZXProcessHandler OffshellZXProcessHandle(true);
+  const ZXProcessHandler OnshellZXProcessHandle(CategorizationHelpers::kOnshell);
+  const ZXProcessHandler OffshellZXProcessHandle(CategorizationHelpers::kOffshell);
   ZXFakeRateHandler* getFakeRateHandler(ZXFakeRateHandler::FakeRateMethod FRMethod, SystematicsHelpers::SystematicVariationTypes syst);
 
 }

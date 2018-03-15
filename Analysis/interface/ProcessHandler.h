@@ -19,14 +19,14 @@ public:
     nProcessTypes
   };
 
-  ProcessHandler(ProcessType proctype_, bool useOffshell_);
+  ProcessHandler(ProcessType proctype_, CategorizationHelpers::MassRegion massregion_);
 
   const TString& getProcessName() const;
   const ProcessHandler::ProcessType& getProcessType() const;
 
 protected:
   ProcessType const proctype;
-  bool const useOffshell;
+  CategorizationHelpers::MassRegion const massregion;
   TString procname;
 
   void assignProcessName();
@@ -67,7 +67,7 @@ public:
     TemplateContributionList(GGProcessHandler::TemplateType type_);
   };
 
-  GGProcessHandler(bool useOffshell_);
+  GGProcessHandler(CategorizationHelpers::MassRegion massregion_);
 
   TString getOutputTreeName(GGProcessHandler::HypothesisType type) const;
   TString getTemplateName(GGProcessHandler::TemplateType type) const;
@@ -176,7 +176,7 @@ public:
     TemplateContributionList(VVProcessHandler::TemplateType type_);
   };
 
-  VVProcessHandler(bool useOffshell_, ProcessHandler::ProcessType proctype_=ProcessHandler::kVV);
+  VVProcessHandler(CategorizationHelpers::MassRegion massregion_, ProcessHandler::ProcessType proctype_=ProcessHandler::kVV);
 
   TString getOutputTreeName(VVProcessHandler::HypothesisType type) const;
   TString getTemplateName(VVProcessHandler::TemplateType type) const;
@@ -265,7 +265,7 @@ public:
     nQQBkgTplTypes
   };
 
-  QQBkgProcessHandler(bool useOffshell_);
+  QQBkgProcessHandler(CategorizationHelpers::MassRegion massregion_);
 
   TString getOutputTreeName() const;
   TString getTemplateName() const;
@@ -304,7 +304,7 @@ public:
     nZXTplTypes
   };
 
-  ZXProcessHandler(bool useOffshell_);
+  ZXProcessHandler(CategorizationHelpers::MassRegion massregion_);
 
   TString getOutputTreeName() const;
   TString getTemplateName() const;

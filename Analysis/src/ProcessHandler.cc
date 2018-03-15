@@ -637,8 +637,7 @@ template<> void GGProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH
         htype_t*& component = vals.at(componentPair.first);
         divisor *= pow(component->GetBinContent(ix), componentPower);
       }
-      if (divisor!=0.){ bincontent *= divisor; binerror *= divisor; }
-      else{ bincontent=0; binerror=0; }
+      bincontent *= divisor; binerror *= divisor;
       tpl->SetBinContent(ix, bincontent);
       tpl->SetBinError(ix, binerror);
     }
@@ -672,8 +671,7 @@ template<> void GGProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH
           htype_t*& component = vals.at(componentPair.first);
           divisor *= pow(component->GetBinContent(ix, iy), componentPower);
         }
-        if (divisor!=0.){ bincontent *= divisor; binerror *= divisor; }
-        else{ bincontent=0; binerror=0; }
+        bincontent *= divisor; binerror *= divisor;
         tpl->SetBinContent(ix, iy, bincontent);
         tpl->SetBinError(ix, iy, binerror);
       }
@@ -710,8 +708,7 @@ template<> void GGProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH
             htype_t*& component = vals.at(componentPair.first);
             divisor *= pow(component->GetBinContent(ix, iy, iz), componentPower);
           }
-          if (divisor!=0.){ bincontent *= divisor; binerror *= divisor; }
-          else{ bincontent=0; binerror=0; }
+          bincontent *= divisor; binerror *= divisor;
           tpl->SetBinContent(ix, iy, iz, bincontent);
           tpl->SetBinError(ix, iy, iz, binerror);
         }

@@ -17,6 +17,10 @@ const TString user_output_dir = "output/";
 #define DOSMOOTHING false
 #endif
 
+#ifndef CHISQCUT
+#define CHISQCUT 3.841
+#endif
+
 typedef GGProcessHandler ProcessHandleType;
 
 
@@ -77,6 +81,32 @@ template<> void getTemplatesPerCategory<3>(
   std::vector<ExtendedHistogram_1D> const& hMass_FromNominalInclusive,
   std::unordered_map<TString, float>& KDvars, float& weight, bool& isCategory
   );
+
+template <typename T> void PostProcessTemplatesWithPhase(
+  TDirectory* rootdir,
+  ProcessHandleType const*& thePerProcessHandle, ACHypothesis const& hypo,
+  std::vector<ProcessHandleType::HypothesisType> const& tplset,
+  std::vector<ExtendedBinning> const& KDbinning,
+  std::vector<ExtendedHistogram_1D> const& hMass_FromNominalInclusive,
+  std::vector<T>& hTemplates
+);
+template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_2D>(
+  TDirectory* rootdir,
+  ProcessHandleType const*& thePerProcessHandle, ACHypothesis const& hypo,
+  std::vector<ProcessHandleType::HypothesisType> const& tplset,
+  std::vector<ExtendedBinning> const& KDbinning,
+  std::vector<ExtendedHistogram_1D> const& hMass_FromNominalInclusive,
+  std::vector<ExtendedHistogram_2D>& hTemplates
+  );
+template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_3D>(
+  TDirectory* rootdir,
+  ProcessHandleType const*& thePerProcessHandle, ACHypothesis const& hypo,
+  std::vector<ProcessHandleType::HypothesisType> const& tplset,
+  std::vector<ExtendedBinning> const& KDbinning,
+  std::vector<ExtendedHistogram_1D> const& hMass_FromNominalInclusive,
+  std::vector<ExtendedHistogram_3D>& hTemplates
+  );
+
 
 bool getFilesAndTrees(
   const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
@@ -600,11 +630,15 @@ template<> void getTemplatesPerCategory<2>(
       hTemplates_POWHEG.back().fill(KDvars[KDset.at(0)], KDvars[KDset.at(1)], weight);
     }
   }
-  if (!hTemplates_POWHEG.empty()){
-    vector<TH_t*> hTemplateObjects;
-    for (auto& tpl:hTemplates_POWHEG) hTemplateObjects.push_back(tpl.getHistogram());
-    thePerProcessHandle->recombineHistogramsToTemplatesWithPhase(hTemplateObjects, hypo);
-  }
+  // Do post-processing
+  PostProcessTemplatesWithPhase(
+    rootdir,
+    thePerProcessHandle, hypo,
+    tplset,
+    KDbinning,
+    hMass_FromNominalInclusive,
+    hTemplates_POWHEG
+  );
 
   // Fill templates from MCFM
   vector<ExtHist_t> hTemplates_MCFM;
@@ -636,18 +670,22 @@ template<> void getTemplatesPerCategory<2>(
       hTemplates_MCFM.back().fill(KDvars[KDset.at(0)], KDvars[KDset.at(1)], weight);
     }
   }
-  if (!hTemplates_MCFM.empty()){
-    vector<TH_t*> hTemplateObjects;
-    for (auto& tpl:hTemplates_MCFM) hTemplateObjects.push_back(tpl.getHistogram());
-    thePerProcessHandle->recombineHistogramsToTemplatesWithPhase(hTemplateObjects, hypo);
-  }
+  // Do post-processing
+  PostProcessTemplatesWithPhase(
+    rootdir,
+    thePerProcessHandle, hypo,
+    tplset,
+    KDbinning,
+    hMass_FromNominalInclusive,
+    hTemplates_MCFM
+  );
 
   if (!hTemplates_POWHEG.empty() && !hTemplates_MCFM.empty()){ // Compare the templates, combine if necessary
     bool isCompatible=true;
     for (unsigned int t=0; t<ntpls; t++){
       double chisq = computeChiSq(hTemplates_POWHEG.at(t).getHistogram(), hTemplates_MCFM.at(t).getHistogram());
       MELAout << "Template " << hTemplates_POWHEG.at(t).getName() << " are compatible by chisq=" << chisq << endl;
-      isCompatible &= (chisq<1.2);
+      isCompatible &= (chisq<CHISQCUT);
     }
     if (isCompatible){ for (unsigned int t=0; t<ntpls; t++) ExtHist_t::averageHistograms(hTemplates_POWHEG.at(t), hTemplates_MCFM.at(t)); }
     hTemplates = &hTemplates_POWHEG;
@@ -655,37 +693,40 @@ template<> void getTemplatesPerCategory<2>(
   else if (!hTemplates_POWHEG.empty()) hTemplates = &hTemplates_POWHEG;
   else if (!hTemplates_MCFM.empty()) hTemplates = &hTemplates_MCFM;
   else assert(0);
-  for (auto& tpl:*hTemplates){ TString tplname=tpl.getName(); TString tpltitle=tpl.getTitle(); replaceString(tplname, "_POWHEG", ""); replaceString(tplname, "_MCFM", ""); tpl.setNameTitle(tplname, tpltitle); }
 
+
+  // Multiply with mass histogram only after combination
   for (unsigned int t=0; t<ntpls; t++){
-    TProfile* prof_x = hTemplates->at(t).getProfileX();
-    TProfile* prof_y = hTemplates->at(t).getProfileY();
-    TH_t*& tplobj = hTemplates->at(t).getHistogram();
-
+    auto& tpl = hTemplates->at(t);
+    auto& htpl = tpl.getHistogram();
     ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
     ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-    if (tpltype==ProcessHandleType::GGTplInt_Re || tpltype==ProcessHandleType::GGTplIntBSM_Re || tpltype==ProcessHandleType::GGTplSigBSMSMInt_Re){
-      if (DOSMOOTHING) rebinHistogram_NoCumulant(tplobj, KDbinning.at(0), prof_x, KDbinning.at(1), prof_y);
-    }
-    else{
-      vector<pair<TProfile const*, unsigned int>> condProfs; condProfs.push_back(pair<TProfile const*, unsigned int>(prof_x, 0));
-      conditionalizeHistogram<TH_t>(tplobj, 0, nullptr, false);
-      if (DOSMOOTHING) rebinHistogram(tplobj, KDbinning.at(0), KDbinning.at(1), &condProfs);
+    if (!(tpltype==ProcessHandleType::GGTplInt_Re || tpltype==ProcessHandleType::GGTplIntBSM_Re || tpltype==ProcessHandleType::GGTplSigBSMSMInt_Re)){
       TH1F const* hMass=hMass_FromNominalInclusive.at(t).getHistogram();
-      assert(hMass->GetNbinsX()==tplobj->GetNbinsX());
-      multiplyHistograms(tplobj, hMass, 0, tplobj, true);
+      assert(hMass->GetNbinsX()==htpl->GetNbinsX());
+      multiplyHistograms(htpl, hMass, 0, htpl, true);
     }
+    MELAout << "Integral [ " << tpl.getName() << " ] after renormalizing mass: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), false, nullptr) << endl;
   }
+
   if (!hTemplates->empty()){
     vector<TH_t*> hTemplateObjects;
-    for (auto& tpl:*hTemplates) hTemplateObjects.push_back(tpl.getHistogram());
+    for (auto& tpl:*hTemplates){
+      TString tplname=tpl.getName(); TString tpltitle=tpl.getTitle(); replaceString(tplname, "_POWHEG", ""); replaceString(tplname, "_MCFM", ""); tpl.setNameTitle(tplname, tpltitle);
+      hTemplateObjects.push_back(tpl.getHistogram());
+    }
     thePerProcessHandle->recombineTemplatesWithPhaseRegularTemplates(hTemplateObjects, hypo);
     foutput->cd();
-    for (TH_t* htpl:hTemplateObjects) foutput->WriteTObject(htpl);
+    for (TH_t* htpl:hTemplateObjects){
+      doTemplatePostprocessing(htpl);
+      double integralerror=0;
+      double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), true, &integralerror);
+      MELAout << "Integral [ " << htpl->GetName() << " ] before writing: " << integral << " +- " << integralerror << endl;
+      foutput->WriteTObject(htpl);
+    }
     rootdir->cd();
   }
 }
-
 template<> void getTemplatesPerCategory<3>(
   TDirectory* rootdir, TFile* foutput,
   ProcessHandleType const*& thePerProcessHandle, Category const& category, ACHypothesis const& hypo,
@@ -739,11 +780,15 @@ template<> void getTemplatesPerCategory<3>(
       hTemplates_POWHEG.back().fill(KDvars[KDset.at(0)], KDvars[KDset.at(1)], KDvars[KDset.at(2)], weight);
     }
   }
-  if (!hTemplates_POWHEG.empty()){
-    vector<TH_t*> hTemplateObjects;
-    for (auto& tpl:hTemplates_POWHEG) hTemplateObjects.push_back(tpl.getHistogram());
-    thePerProcessHandle->recombineHistogramsToTemplatesWithPhase(hTemplateObjects, hypo);
-  }
+  // Do post-processing
+  PostProcessTemplatesWithPhase(
+    rootdir,
+    thePerProcessHandle, hypo,
+    tplset,
+    KDbinning,
+    hMass_FromNominalInclusive,
+    hTemplates_POWHEG
+  );
 
   // Fill templates from MCFM
   vector<ExtHist_t> hTemplates_MCFM;
@@ -775,36 +820,22 @@ template<> void getTemplatesPerCategory<3>(
       hTemplates_MCFM.back().fill(KDvars[KDset.at(0)], KDvars[KDset.at(1)], KDvars[KDset.at(2)], weight);
     }
   }
-  if (!hTemplates_MCFM.empty()){
-    vector<TH_t*> hTemplateObjects;
-    for (auto& tpl:hTemplates_MCFM) hTemplateObjects.push_back(tpl.getHistogram());
-    thePerProcessHandle->recombineHistogramsToTemplatesWithPhase(hTemplateObjects, hypo);
-  }
+  // Do post-processing
+  PostProcessTemplatesWithPhase(
+    rootdir,
+    thePerProcessHandle, hypo,
+    tplset,
+    KDbinning,
+    hMass_FromNominalInclusive,
+    hTemplates_MCFM
+  );
 
   if (!hTemplates_POWHEG.empty() && !hTemplates_MCFM.empty()){ // Compare the templates, combine if necessary
     bool isCompatible=true;
     for (unsigned int t=0; t<ntpls; t++){
       double chisq = computeChiSq(hTemplates_POWHEG.at(t).getHistogram(), hTemplates_MCFM.at(t).getHistogram());
       MELAout << "Template " << hTemplates_POWHEG.at(t).getName() << " are compatible by chisq=" << chisq << endl;
-      MELAout << "POWHEG template integral during compatibility test: "
-        << getHistogramIntegralAndError(
-          hTemplates_POWHEG.at(t).getHistogram(),
-          1, hTemplates_POWHEG.at(t).getHistogram()->GetNbinsX(),
-          1, hTemplates_POWHEG.at(t).getHistogram()->GetNbinsY(),
-          1, hTemplates_POWHEG.at(t).getHistogram()->GetNbinsZ(),
-          false, nullptr
-        )
-        << endl;
-      MELAout << "MCFM template integral during compatibility test: "
-        << getHistogramIntegralAndError(
-          hTemplates_MCFM.at(t).getHistogram(),
-          1, hTemplates_MCFM.at(t).getHistogram()->GetNbinsX(),
-          1, hTemplates_MCFM.at(t).getHistogram()->GetNbinsY(),
-          1, hTemplates_MCFM.at(t).getHistogram()->GetNbinsZ(),
-          false, nullptr
-        )
-        << endl;
-      isCompatible &= (chisq<1.2);
+      isCompatible &= (chisq<CHISQCUT);
     }
     if (isCompatible){ for (unsigned int t=0; t<ntpls; t++) ExtHist_t::averageHistograms(hTemplates_POWHEG.at(t), hTemplates_MCFM.at(t)); }
     hTemplates = &hTemplates_POWHEG;
@@ -812,43 +843,126 @@ template<> void getTemplatesPerCategory<3>(
   else if (!hTemplates_POWHEG.empty()) hTemplates = &hTemplates_POWHEG;
   else if (!hTemplates_MCFM.empty()) hTemplates = &hTemplates_MCFM;
   else assert(0);
-  for (auto& tpl:*hTemplates){ TString tplname=tpl.getName(); TString tpltitle=tpl.getTitle(); replaceString(tplname, "_POWHEG", ""); replaceString(tplname, "_MCFM", ""); tpl.setNameTitle(tplname, tpltitle); }
 
+  // Multiply with mass histogram only after combination
   for (unsigned int t=0; t<ntpls; t++){
-    TProfile* prof_x = hTemplates->at(t).getProfileX();
-    TProfile* prof_y = hTemplates->at(t).getProfileY();
-    TProfile* prof_z = hTemplates->at(t).getProfileZ();
-    TH_t*& tplobj = hTemplates->at(t).getHistogram();
-
+    auto& tpl = hTemplates->at(t);
+    auto& htpl = tpl.getHistogram();
     ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
     ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-    if (tpltype==ProcessHandleType::GGTplInt_Re || tpltype==ProcessHandleType::GGTplIntBSM_Re || tpltype==ProcessHandleType::GGTplSigBSMSMInt_Re){
-      if (DOSMOOTHING) rebinHistogram_NoCumulant(tplobj, KDbinning.at(0), prof_x, KDbinning.at(1), prof_y, KDbinning.at(2), prof_z);
-    }
-    else{
-      vector<pair<TProfile const*, unsigned int>> condProfs; condProfs.push_back(pair<TProfile const*, unsigned int>(prof_x, 0));
-      MELAout << "Check template integral before cond.: " << getHistogramIntegralAndError(tplobj, 1, tplobj->GetNbinsX(), 1, tplobj->GetNbinsY(), 1, tplobj->GetNbinsZ(), false, nullptr) << endl;
-      conditionalizeHistogram<TH_t>(tplobj, 0, nullptr, false);
-      MELAout << "Check template integral after cond.: " << getHistogramIntegralAndError(tplobj, 1, tplobj->GetNbinsX(), 1, tplobj->GetNbinsY(), 1, tplobj->GetNbinsZ(), false, nullptr) << endl;
-      if (DOSMOOTHING) rebinHistogram(tplobj, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2), &condProfs);
+    if (!(tpltype==ProcessHandleType::GGTplInt_Re || tpltype==ProcessHandleType::GGTplIntBSM_Re || tpltype==ProcessHandleType::GGTplSigBSMSMInt_Re)){
       TH1F const* hMass=hMass_FromNominalInclusive.at(t).getHistogram();
-      assert(hMass->GetNbinsX()==tplobj->GetNbinsX());
-      multiplyHistograms(tplobj, hMass, 0, tplobj, true);
-      MELAout << "Check template integral after mass renorm: " << getHistogramIntegralAndError(tplobj, 1, tplobj->GetNbinsX(), 1, tplobj->GetNbinsY(), 1, tplobj->GetNbinsZ(), false, nullptr) << endl;
+      assert(hMass->GetNbinsX()==htpl->GetNbinsX());
+      multiplyHistograms(htpl, hMass, 0, htpl, true);
     }
+    MELAout << "Integral [ " << tpl.getName() << " ] after renormalizing mass: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), false, nullptr) << endl;
   }
+
+  // Recombine all templates
   if (!hTemplates->empty()){
     vector<TH_t*> hTemplateObjects;
-    for (auto& tpl:*hTemplates) hTemplateObjects.push_back(tpl.getHistogram());
+    for (auto& tpl:*hTemplates){
+      TString tplname=tpl.getName(); TString tpltitle=tpl.getTitle(); replaceString(tplname, "_POWHEG", ""); replaceString(tplname, "_MCFM", ""); tpl.setNameTitle(tplname, tpltitle);
+      hTemplateObjects.push_back(tpl.getHistogram());
+    }
     thePerProcessHandle->recombineTemplatesWithPhaseRegularTemplates(hTemplateObjects, hypo);
     foutput->cd();
     for (TH_t* htpl:hTemplateObjects){
-      MELAout << "Check template integral before writing: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), false, nullptr) << endl;
+      doTemplatePostprocessing(htpl);
+      double integralerror=0;
+      double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), true, &integralerror);
+      MELAout << "Integral [ " << htpl->GetName() << " ] before writing: " << integral << " +- " << integralerror << endl;
       foutput->WriteTObject(htpl);
     }
     rootdir->cd();
   }
 }
 
+
+template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_2D>(
+  TDirectory* rootdir,
+  ProcessHandleType const*& thePerProcessHandle, ACHypothesis const& hypo,
+  std::vector<ProcessHandleType::HypothesisType> const& tplset,
+  std::vector<ExtendedBinning> const& KDbinning,
+  std::vector<ExtendedHistogram_1D> const& hMass_FromNominalInclusive,
+  std::vector<ExtendedHistogram_2D>& hTemplates
+  ){
+  typedef TH2F TH_t;
+
+  if (!hTemplates.empty()){
+    rootdir->cd();
+    unsigned int ntpls=hTemplates.size();
+    {
+      vector<TH_t*> hTemplateObjects;
+      for (auto& tpl:hTemplates){
+        TH_t*& htpl = tpl.getHistogram();
+        MELAout << "Integral [ " << tpl.getName() << " ] before recombineHistogramsToTemplatesWithPhase: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), false, nullptr) << endl;
+        hTemplateObjects.push_back(htpl);
+      }
+      thePerProcessHandle->recombineHistogramsToTemplatesWithPhase(hTemplateObjects, hypo);
+    }
+    for (unsigned int t=0; t<ntpls; t++){
+      auto& tpl = hTemplates.at(t);
+      TProfile* prof_x = tpl.getProfileX();
+      TProfile* prof_y = tpl.getProfileY();
+      TH_t*& htpl = tpl.getHistogram();
+
+      ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
+      ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
+      if (tpltype==ProcessHandleType::GGTplInt_Re || tpltype==ProcessHandleType::GGTplIntBSM_Re || tpltype==ProcessHandleType::GGTplSigBSMSMInt_Re){
+        if (DOSMOOTHING) rebinHistogram_NoCumulant(htpl, KDbinning.at(0), prof_x, KDbinning.at(1), prof_y);
+      }
+      else{
+        vector<pair<TProfile const*, unsigned int>> condProfs; condProfs.push_back(pair<TProfile const*, unsigned int>(prof_x, 0));
+        conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false);
+        if (DOSMOOTHING) rebinHistogram(htpl, KDbinning.at(0), KDbinning.at(1), &condProfs);
+      }
+      MELAout << "Integral [ " << tpl.getName() << " ] after post-processing function: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), false, nullptr) << endl;
+    }
+  }
+}
+template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_3D>(
+  TDirectory* rootdir,
+  ProcessHandleType const*& thePerProcessHandle, ACHypothesis const& hypo,
+  std::vector<ProcessHandleType::HypothesisType> const& tplset,
+  std::vector<ExtendedBinning> const& KDbinning,
+  std::vector<ExtendedHistogram_1D> const& hMass_FromNominalInclusive,
+  std::vector<ExtendedHistogram_3D>& hTemplates
+  ){
+  typedef TH3F TH_t;
+
+  if (!hTemplates.empty()){
+    rootdir->cd();
+    unsigned int ntpls=hTemplates.size();
+    {
+      vector<TH_t*> hTemplateObjects;
+      for (auto& tpl:hTemplates){
+        TH_t*& htpl = tpl.getHistogram();
+        MELAout << "Integral [ " << tpl.getName() << " ] before recombineHistogramsToTemplatesWithPhase: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), false, nullptr) << endl;
+        hTemplateObjects.push_back(htpl);
+      }
+      thePerProcessHandle->recombineHistogramsToTemplatesWithPhase(hTemplateObjects, hypo);
+    }
+    for (unsigned int t=0; t<ntpls; t++){
+      auto& tpl = hTemplates.at(t);
+      TProfile* prof_x = tpl.getProfileX();
+      TProfile* prof_y = tpl.getProfileY();
+      TProfile* prof_z = tpl.getProfileZ();
+      TH_t*& htpl = tpl.getHistogram();
+
+      ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
+      ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
+      if (tpltype==ProcessHandleType::GGTplInt_Re || tpltype==ProcessHandleType::GGTplIntBSM_Re || tpltype==ProcessHandleType::GGTplSigBSMSMInt_Re){
+        if (DOSMOOTHING) rebinHistogram_NoCumulant(htpl, KDbinning.at(0), prof_x, KDbinning.at(1), prof_y, KDbinning.at(2), prof_z);
+      }
+      else{
+        vector<pair<TProfile const*, unsigned int>> condProfs; condProfs.push_back(pair<TProfile const*, unsigned int>(prof_x, 0));
+        conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false);
+        if (DOSMOOTHING) rebinHistogram(htpl, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2), &condProfs);
+      }
+      MELAout << "Integral [ " << tpl.getName() << " ] after post-processing function: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), false, nullptr) << endl;
+    }
+  }
+}
 
 #endif

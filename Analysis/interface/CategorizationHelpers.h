@@ -13,6 +13,10 @@ namespace CategorizationHelpers{
     HadVHTagged,
     nCategories
   };
+  enum MassRegion{
+    kOnshell,
+    kOffshell
+  };
   enum CategorizationScheme{
     UntaggedOrJJVBF,
     UntaggedOrJJVBFOrHadVH,

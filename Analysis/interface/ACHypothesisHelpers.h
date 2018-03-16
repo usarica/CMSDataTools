@@ -15,9 +15,8 @@ namespace ACHypothesisHelpers{
 
   TString getACHypothesisName(ACHypothesisHelpers::ACHypothesis hypo);
 
-  std::vector<DiscriminantClasses::Type> getACHypothesisKDSet(ACHypothesisHelpers::ACHypothesis hypo, CategorizationHelpers::Category category);
-
-  std::vector<TString> getACHypothesisKDNameSet(ACHypothesisHelpers::ACHypothesis hypo, CategorizationHelpers::Category category);
+  std::vector<DiscriminantClasses::Type> getACHypothesisKDSet(ACHypothesisHelpers::ACHypothesis hypo, CategorizationHelpers::Category category, CategorizationHelpers::MassRegion massregion);
+  std::vector<TString> getACHypothesisKDNameSet(ACHypothesisHelpers::ACHypothesis hypo, CategorizationHelpers::Category category, CategorizationHelpers::MassRegion massregion);
 
   float getACHypothesisMEHZZGVal(ACHypothesisHelpers::ACHypothesis hypo);
   float getACHypothesisHZZGVal(ACHypothesisHelpers::ACHypothesis hypo);

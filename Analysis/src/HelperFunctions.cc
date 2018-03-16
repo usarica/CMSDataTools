@@ -829,6 +829,25 @@ void HelperFunctions::regularizeSlice(
 }
 
 
+float HelperFunctions::calculateSimpleProductError(
+  float const v1, float const e1, float const p1,
+  float const v2, float const e2, float const p2
+){
+  assert(e1>=0. && e2>=0.);
+  float d=0;
+  float val=0;
+  if (
+    ((p1<0. && v1!=0.) || p1>=0.)
+    &&
+    ((p2<0. && v2!=0.) || p2>=0.)
+    ){
+    val=pow(v1, p1)*pow(v2, p2);
+    if (v1!=0.) d += pow(p1*e1/v1, 2);
+    if (v2!=0.) d += pow(p2*e2/v2, 2);
+  }
+  d=std::abs(val)*sqrt(d);
+  return d;
+}
 float HelperFunctions::calculateEfficiencyError(
   float const sumW, float const sumWAll,
   float const sumWsq, float const sumWsqAll
@@ -846,7 +865,6 @@ float HelperFunctions::calculateEfficiencyError(
   }
   return ratio;
 }
-
 float HelperFunctions::translateEfficiencyErrorToNumeratorError(
   float const eff, float const sumWAll,
   float const effErr, float const sumWsqAll
@@ -956,6 +974,58 @@ template<> double HelperFunctions::evaluateTObject<TSpline3>(TSpline3* obj, floa
   if (val>xmax) val=xmax;
   else if (val<xmin) val=xmin;
   return obj->Eval(val);
+}
+
+template<> bool HelperFunctions::checkHistogramIntegrity<TH1F>(TH1F const* histo){
+  if (!histo) return false;
+  for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
+    double val=histo->GetBinContent(ix);
+    double err=histo->GetBinError(ix);
+    if (!checkVarNanInf(val) || !checkVarNanInf(err) || !checkVarNonNegative(err)){
+      MELAerr
+        << "HelperFunctions::checkHistogramIntegrity: Bin " << ix
+        << " failed integrity check. Value / error = " << val << " / " << err
+        << endl;
+      return false;
+    }
+  }
+  return true;
+}
+template<> bool HelperFunctions::checkHistogramIntegrity<TH2F>(TH2F const* histo){
+  if (!histo) return false;
+  for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
+    for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
+      double val=histo->GetBinContent(ix, iy);
+      double err=histo->GetBinError(ix, iy);
+      if (!checkVarNanInf(val) || !checkVarNanInf(err) || !checkVarNonNegative(err)){
+        MELAerr
+          << "HelperFunctions::checkHistogramIntegrity: Bin ( " << ix << "," << iy
+          << " ) failed integrity check. Value / error = " << val << " / " << err
+          << endl;
+        return false;
+      }
+    }
+  }
+  return true;
+}
+template<> bool HelperFunctions::checkHistogramIntegrity<TH3F>(TH3F const* histo){
+  if (!histo) return false;
+  for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
+    for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
+      for (int iz=0; iz<=histo->GetNbinsZ()+1; iz++){
+        double val=histo->GetBinContent(ix, iy, iz);
+        double err=histo->GetBinError(ix, iy, iz);
+        if (!checkVarNanInf(val) || !checkVarNanInf(err) || !checkVarNonNegative(err)){
+          MELAerr
+            << "HelperFunctions::checkHistogramIntegrity: Bin ( " << ix << "," << iy << "," << iz
+            << " ) failed integrity check. Value / error = " << val << " / " << err
+            << endl;
+          return false;
+        }
+      }
+    }
+  }
+  return true;
 }
 
 template<> void HelperFunctions::regularizeHistogram<TH1F>(TH1F*& histo, int nIter_, double threshold_, double acceleration_){
@@ -1090,7 +1160,8 @@ template<> void HelperFunctions::regularizeHistogram<TH2F>(TH2F*& histo, int nIt
   delete cumulant;
 }
 
-template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int iaxis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference, bool useWidth){
+template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int iaxis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference, bool useWidth, bool useEffErr){
+  const bool forceUseSimpleErr = (conditionalsReference || !useEffErr);
   TAxis* axis[2]={ nullptr };
   switch (iaxis){
   case 0:
@@ -1128,16 +1199,12 @@ template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsi
 
     if (!conditionalsReference) integral = getHistogramIntegralAndError<TH2F>(histo, int_xb[0], int_xb[1], int_yb[0], int_yb[1], useWidth, &integralerror);
     else{
-      std::vector<float> fractionalerrors;
       for (std::pair<TH2F*, float> const& hh:(*conditionalsReference)){
         double extraintegralerror=0;
         double extraintegral = getHistogramIntegralAndError<TH2F>(hh.first, int_xb[0], int_xb[1], int_yb[0], int_yb[1], useWidth, &extraintegralerror);
-        if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
+        integralerror = calculateSimpleProductError(extraintegral, extraintegralerror, hh.second, integral, integralerror, 1);
         integral *= pow(extraintegral, hh.second);
       }
-      integralerror = 0;
-      for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
-      integralerror = integral*sqrt(integralerror);
     }
     for (int j=0; j<=nbins[1]+1; j++){
       int ix=0, iy=0;
@@ -1162,8 +1229,8 @@ template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsi
       double herr=0;
       if (integral!=0.){
         hval = bincontent/integral;
-        if (!conditionalsReference) herr = calculateEfficiencyError(bincontent, integral, pow(binerror, 2), pow(integralerror, 2));
-        else herr = hval*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2));
+        if (!forceUseSimpleErr) herr = calculateEfficiencyError(bincontent, integral, pow(binerror, 2), pow(integralerror, 2));
+        else herr = calculateSimpleProductError(bincontent, binerror, 1, integral, integralerror, -1);
         hval /= width; herr /= width;
       }
 
@@ -1172,7 +1239,8 @@ template<> void HelperFunctions::conditionalizeHistogram<TH2F>(TH2F* histo, unsi
     }
   }
 }
-template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int iaxis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth){
+template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int iaxis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth, bool useEffErr){
+  const bool forceUseSimpleErr = (conditionalsReference || !useEffErr);
   TAxis* axis[3]={ nullptr };
   switch (iaxis){
   case 0:
@@ -1229,16 +1297,12 @@ template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsi
 
     if (!conditionalsReference) integral = getHistogramIntegralAndError<TH3F>(histo, int_xb[0], int_xb[1], int_yb[0], int_yb[1], int_zb[0], int_zb[1], useWidth, &integralerror);
     else{
-      std::vector<float> fractionalerrors;
       for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)){
         double extraintegralerror=0;
         double extraintegral = getHistogramIntegralAndError<TH3F>(hh.first, int_xb[0], int_xb[1], int_yb[0], int_yb[1], int_zb[0], int_zb[1], useWidth, &extraintegralerror);
-        if (extraintegral!=0.) fractionalerrors.push_back(pow(double(hh.second) * extraintegralerror/extraintegral, 2));
+        integralerror = calculateSimpleProductError(extraintegral, extraintegralerror, hh.second, integral, integralerror, 1);
         integral *= pow(extraintegral, hh.second);
       }
-      integralerror = 0;
-      for (float& fractionalerror:fractionalerrors) integralerror += fractionalerror;
-      integralerror = integral*sqrt(integralerror);
     }
     for (int j=0; j<=nbins[1]+1; j++){
       for (int k=0; k<=nbins[2]+1; k++){
@@ -1272,8 +1336,8 @@ template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsi
         double herr=0;
         if (integral!=0.){
           hval = bincontent/integral;
-          if (!conditionalsReference) herr = calculateEfficiencyError(bincontent, integral, pow(binerror, 2), pow(integralerror, 2));
-          else herr = hval*sqrt(pow(binerror/bincontent, 2)+pow(integralerror/integral, 2));
+          if (!forceUseSimpleErr) herr = calculateEfficiencyError(bincontent, integral, pow(binerror, 2), pow(integralerror, 2));
+          else herr = calculateSimpleProductError(bincontent, binerror, 1, integral, integralerror, -1);
           hval /= width; herr /= width;
         }
 
@@ -1466,7 +1530,7 @@ template<> double HelperFunctions::computeChiSq<TH1F>(TH1F const* h1, TH1F const
       pow(h2->GetBinError(binx), 2)
     };
     double totalWsq=(sumWsq[0]+sumWsq[1]);
-    if (totalWsq!=0.){ res += pow(sumW[1]-sumW[0], 2)/totalWsq; norm+=1; }
+    if (sumWsq[0]>0. && sumWsq[1]>0.){ res += pow(sumW[1]-sumW[0], 2)/totalWsq; norm+=1; }
   }
   if (norm!=0.) res /= norm;
   return res;
@@ -1486,7 +1550,7 @@ template<> double HelperFunctions::computeChiSq<TH2F>(TH2F const* h1, TH2F const
         pow(h2->GetBinError(binx, biny), 2)
       };
       double totalWsq=(sumWsq[0]+sumWsq[1]);
-      if (totalWsq!=0.){ res += pow(sumW[1]-sumW[0], 2)/totalWsq; norm+=1; }
+      if (sumWsq[0]>0. && sumWsq[1]>0.){ res += pow(sumW[1]-sumW[0], 2)/totalWsq; norm+=1; }
     }
   }
   if (norm!=0.) res /= norm;
@@ -1509,7 +1573,7 @@ template<> double HelperFunctions::computeChiSq<TH3F>(TH3F const* h1, TH3F const
           pow(h2->GetBinError(binx, biny, binz), 2)
         };
         double totalWsq=(sumWsq[0]+sumWsq[1]);
-        if (totalWsq!=0.){ res += pow(sumW[1]-sumW[0], 2)/totalWsq; norm+=1; }
+        if (sumWsq[0]>0. && sumWsq[1]>0.){ res += pow(sumW[1]-sumW[0], 2)/totalWsq; norm+=1; }
       }
     }
   }
@@ -1528,7 +1592,7 @@ template<> void HelperFunctions::divideHistograms<TH1F>(TH1F const* hnum, TH1F c
     float binerror=0;
     if (sumWAll!=0.) bincontent = sumW/sumWAll;
     if (useEffErr) binerror = calculateEfficiencyError(sumW, sumWAll, sumWsq, sumWsqAll);
-    else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+    else binerror = calculateSimpleProductError(sumW, sqrt(sumWsq), 1, sumWAll, sqrt(sumWsqAll), -1);
     if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
       bincontent=0;
       binerror=0;
@@ -1550,7 +1614,7 @@ template<> void HelperFunctions::divideHistograms<TH2F>(TH2F const* hnum, TH2F c
       float binerror=0;
       if (sumWAll!=0.) bincontent = sumW/sumWAll;
       if (useEffErr) binerror = calculateEfficiencyError(sumW, sumWAll, sumWsq, sumWsqAll);
-      else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+      else binerror = calculateSimpleProductError(sumW, sqrt(sumWsq), 1, sumWAll, sqrt(sumWsqAll), -1);
       if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
         bincontent=0;
         binerror=0;
@@ -1575,7 +1639,7 @@ template<> void HelperFunctions::divideHistograms<TH3F>(TH3F const* hnum, TH3F c
         float binerror=0;
         if (sumWAll!=0.) bincontent = sumW/sumWAll;
         if (useEffErr) binerror = calculateEfficiencyError(sumW, sumWAll, sumWsq, sumWsqAll);
-        else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+        else binerror = calculateSimpleProductError(sumW, sqrt(sumWsq), 1, sumWAll, sqrt(sumWsqAll), -1);
         if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
           bincontent=0;
           binerror=0;
@@ -1597,7 +1661,7 @@ template<> void HelperFunctions::multiplyHistograms<TH1F>(TH1F const* h1, TH1F c
     float bincontent=sumW*sumWAll;
     float binerror=0;
     if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
-    else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+    else binerror = calculateSimpleProductError(sumW, sqrt(sumWsq), 1, sumWAll, sqrt(sumWsqAll), 1);
     if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
       bincontent=0;
       binerror=0;
@@ -1618,7 +1682,7 @@ template<> void HelperFunctions::multiplyHistograms<TH2F>(TH2F const* h1, TH2F c
       float bincontent=sumW*sumWAll;
       float binerror=0;
       if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
-      else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+      else binerror = calculateSimpleProductError(sumW, sqrt(sumWsq), 1, sumWAll, sqrt(sumWsqAll), 1);
       if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
         bincontent=0;
         binerror=0;
@@ -1642,7 +1706,7 @@ template<> void HelperFunctions::multiplyHistograms<TH3F>(TH3F const* h1, TH3F c
         float bincontent=sumW*sumWAll;
         float binerror=0;
         if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
-        else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+        else binerror = calculateSimpleProductError(sumW, sqrt(sumWsq), 1, sumWAll, sqrt(sumWsqAll), 1);
         if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
           bincontent=0;
           binerror=0;
@@ -1676,7 +1740,7 @@ template<> void HelperFunctions::multiplyHistograms<TH2F>(TH2F const* h1, TH1F c
       float bincontent=sumW*sumWAll;
       float binerror=0;
       if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
-      else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+      else binerror = calculateSimpleProductError(sumW, sqrt(sumWsq), 1, sumWAll, sqrt(sumWsqAll), 1);
       if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
         bincontent=0;
         binerror=0;
@@ -1714,7 +1778,7 @@ template<> void HelperFunctions::multiplyHistograms<TH3F>(TH3F const* h1, TH1F c
         float bincontent=sumW*sumWAll;
         float binerror=0;
         if (useEffErr) binerror = translateEfficiencyErrorToNumeratorError(sumW, sumWAll, sumWsq, sumWsqAll);
-        else binerror = bincontent*sqrt(sumWsq/pow(sumW, 2) + sumWsqAll/pow(sumWAll, 2));
+        else binerror = calculateSimpleProductError(sumW, sqrt(sumWsq), 1, sumWAll, sqrt(sumWsqAll), 1);
         if (!checkVarNanInf(bincontent) || !checkVarNanInf(binerror)){
           bincontent=0;
           binerror=0;

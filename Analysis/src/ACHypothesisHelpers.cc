@@ -1,7 +1,10 @@
+#include <cassert>
 #include "ACHypothesisHelpers.h"
+#include "MELAStreamHelpers.hh"
 
 
 using namespace std;
+using namespace MELAStreamHelpers;
 
 
 TString ACHypothesisHelpers::getACHypothesisName(ACHypothesisHelpers::ACHypothesis hypo){
@@ -19,70 +22,133 @@ TString ACHypothesisHelpers::getACHypothesisName(ACHypothesisHelpers::ACHypothes
   };
 }
 
-std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet(ACHypothesisHelpers::ACHypothesis hypo, CategorizationHelpers::Category category){
+std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet(ACHypothesisHelpers::ACHypothesis hypo, CategorizationHelpers::Category category, CategorizationHelpers::MassRegion massregion){
   std::vector<DiscriminantClasses::Type> res;
-  if (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged){
-    res.push_back(DiscriminantClasses::kDbkgkin);
-    switch (hypo){
-    case kSM:
-      res.push_back(DiscriminantClasses::kDggint);
-      break;
-    case kL1:
-      res.push_back(DiscriminantClasses::kDL1dec);
-      break;
-    case kA2:
-      res.push_back(DiscriminantClasses::kDa2dec);
-      break;
-    case kA3:
-      res.push_back(DiscriminantClasses::kDa3dec);
-      break;
-    default:
-      break;
-    };
+  if (massregion==CategorizationHelpers::kOffshell){
+    if (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged){
+      res.push_back(DiscriminantClasses::kDbkgkin);
+      switch (hypo){
+      case kSM:
+        res.push_back(DiscriminantClasses::kDggint);
+        break;
+      case kL1:
+        res.push_back(DiscriminantClasses::kDL1dec);
+        break;
+      case kA2:
+        res.push_back(DiscriminantClasses::kDa2dec);
+        break;
+      case kA3:
+        res.push_back(DiscriminantClasses::kDa3dec);
+        break;
+      default:
+        break;
+      };
+    }
+    else if (category==CategorizationHelpers::JJVBFTagged){
+      res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
+      switch (hypo){
+      case kSM:
+        res.push_back(DiscriminantClasses::kDintjjEWQCD);
+        break;
+      case kL1:
+        res.push_back(DiscriminantClasses::kDL1jjVBFdec);
+        break;
+      case kA2:
+        res.push_back(DiscriminantClasses::kDa2jjVBFdec);
+        break;
+      case kA3:
+        res.push_back(DiscriminantClasses::kDa3jjVBFdec);
+        break;
+      default:
+        break;
+      };
+    }
+    else if (category==CategorizationHelpers::HadVHTagged){
+      res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
+      switch (hypo){
+      case kSM:
+        res.push_back(DiscriminantClasses::kDintjjEWQCD);
+        break;
+      case kL1:
+        res.push_back(DiscriminantClasses::kDL1jjVHdec);
+        break;
+      case kA2:
+        res.push_back(DiscriminantClasses::kDa2jjVHdec);
+        break;
+      case kA3:
+        res.push_back(DiscriminantClasses::kDa3jjVHdec);
+        break;
+      default:
+        break;
+      };
+    }
   }
-  else if (category==CategorizationHelpers::JJVBFTagged){
-    res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
-    switch (hypo){
-    case kSM:
-      res.push_back(DiscriminantClasses::kDintjjEWQCD);
-      break;
-    case kL1:
-      res.push_back(DiscriminantClasses::kDL1jjVBFdec);
-      break;
-    case kA2:
-      res.push_back(DiscriminantClasses::kDa2jjVBFdec);
-      break;
-    case kA3:
-      res.push_back(DiscriminantClasses::kDa3jjVBFdec);
-      break;
-    default:
-      break;
-    };
+  else if (massregion==CategorizationHelpers::kOnshell){
+    if (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged){
+      res.push_back(DiscriminantClasses::kDbkgkin);
+      switch (hypo){
+      case kSM:
+        break;
+      case kL1:
+        res.push_back(DiscriminantClasses::kDL1dec);
+        break;
+      case kA2:
+        res.push_back(DiscriminantClasses::kDa2dec);
+        break;
+      case kA3:
+        res.push_back(DiscriminantClasses::kDa3dec);
+        break;
+      default:
+        break;
+      };
+    }
+    else if (category==CategorizationHelpers::JJVBFTagged){
+      res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
+      switch (hypo){
+      case kSM:
+        break;
+      case kL1:
+        res.push_back(DiscriminantClasses::kDL1jjVBFdec);
+        break;
+      case kA2:
+        res.push_back(DiscriminantClasses::kDa2jjVBFdec);
+        break;
+      case kA3:
+        res.push_back(DiscriminantClasses::kDa3jjVBFdec);
+        break;
+      default:
+        break;
+      };
+    }
+    else if (category==CategorizationHelpers::HadVHTagged){
+      res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
+      switch (hypo){
+      case kSM:
+        break;
+      case kL1:
+        res.push_back(DiscriminantClasses::kDL1jjVHdec);
+        break;
+      case kA2:
+        res.push_back(DiscriminantClasses::kDa2jjVHdec);
+        break;
+      case kA3:
+        res.push_back(DiscriminantClasses::kDa3jjVHdec);
+        break;
+      default:
+        break;
+      };
+    }
   }
-  else if (category==CategorizationHelpers::HadVHTagged){
-    res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
-    switch (hypo){
-    case kSM:
-      res.push_back(DiscriminantClasses::kDintjjEWQCD);
-      break;
-    case kL1:
-      res.push_back(DiscriminantClasses::kDL1jjVHdec);
-      break;
-    case kA2:
-      res.push_back(DiscriminantClasses::kDa2jjVHdec);
-      break;
-    case kA3:
-      res.push_back(DiscriminantClasses::kDa3jjVHdec);
-      break;
-    default:
-      break;
-    };
+  else{
+    MELAerr << "ACHypothesisHelpers::getACHypothesisKDSet: Mass region " << massregion << " is not implemented." << endl;
+    assert(0);
   }
+
   return res;
 }
 
-std::vector<TString> ACHypothesisHelpers::getACHypothesisKDNameSet(ACHypothesisHelpers::ACHypothesis hypo, CategorizationHelpers::Category category){
-  std::vector<DiscriminantClasses::Type> KDset = ACHypothesisHelpers::getACHypothesisKDSet(hypo, category);
+std::vector<TString> ACHypothesisHelpers::getACHypothesisKDNameSet(ACHypothesisHelpers::ACHypothesis hypo, CategorizationHelpers::Category category, CategorizationHelpers::MassRegion massregion){
+  std::vector<DiscriminantClasses::Type> KDset = ACHypothesisHelpers::getACHypothesisKDSet(hypo, category, massregion);
   vector<TString> res;
   for (auto& type:KDset) res.push_back(DiscriminantClasses::getKDName(type));
   return res;

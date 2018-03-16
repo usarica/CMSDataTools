@@ -21,8 +21,11 @@ public:
 
   ProcessHandler(ProcessType proctype_, CategorizationHelpers::MassRegion massregion_);
 
-  const TString& getProcessName() const;
   const ProcessHandler::ProcessType& getProcessType() const;
+  const CategorizationHelpers::MassRegion& getProcessMassRegion() const;
+  const TString& getProcessName() const;
+
+  virtual void imposeTplPhysicality(std::vector<float>& vals) const;
 
 protected:
   ProcessType const proctype;
@@ -30,7 +33,6 @@ protected:
   TString procname;
 
   void assignProcessName();
-  virtual void imposeTplPhysicality(std::vector<float>& vals) const;
 
 };
 
@@ -80,6 +82,7 @@ public:
   static int castTemplateTypeToInt(GGProcessHandler::TemplateType type);
   static GGProcessHandler::HypothesisType castIntToHypothesisType(int type, bool useN=false);
   static GGProcessHandler::TemplateType castIntToTemplateType(int type, bool useN=false);
+  static bool isInterferenceContribution(GGProcessHandler::TemplateType const type);
 
   void imposeTplPhysicality(std::vector<float>& vals) const;
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
@@ -189,10 +192,12 @@ public:
   static int castTemplateTypeToInt(VVProcessHandler::TemplateType type);
   static VVProcessHandler::HypothesisType castIntToHypothesisType(int type, bool useN=false);
   static VVProcessHandler::TemplateType castIntToTemplateType(int type, bool useN=false);
+  static bool isInterferenceContribution(VVProcessHandler::TemplateType const type);
 
   void imposeTplPhysicality(std::vector<float>& vals) const;
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
   template<typename T> void recombineHistogramsToTemplatesWithPhase(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+  template<typename T> void recombineTemplatesWithPhaseRegularTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 
   template<typename T> void conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
 
@@ -204,6 +209,9 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vec
 template<> void VVProcessHandler::recombineHistogramsToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 template<> void VVProcessHandler::recombineHistogramsToTemplatesWithPhase<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 template<> void VVProcessHandler::recombineHistogramsToTemplatesWithPhase<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void VVProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void VVProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void VVProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 
 template<typename T> void VVProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const{
   if (vals.empty()) return;

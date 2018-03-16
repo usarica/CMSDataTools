@@ -75,6 +75,7 @@ void ProcessHandler::assignProcessName(){
 }
 const TString& ProcessHandler::getProcessName() const{ return procname; }
 const ProcessHandler::ProcessType& ProcessHandler::getProcessType() const{ return proctype; }
+const CategorizationHelpers::MassRegion& ProcessHandler::getProcessMassRegion() const{ return massregion; }
 void ProcessHandler::imposeTplPhysicality(std::vector<float>& /*vals*/) const{}
 
 
@@ -331,6 +332,9 @@ GGProcessHandler::TemplateType GGProcessHandler::castIntToTemplateType(int type,
     return nGGTplTypes;
   };
 }
+bool GGProcessHandler::isInterferenceContribution(GGProcessHandler::TemplateType const type){
+  return (type==GGTplInt_Re || type==GGTplSigBSMSMInt_Re || type==GGTplIntBSM_Re);
+}
 
 void GGProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
   vector<TemplateContributionList> pairing;
@@ -559,7 +563,7 @@ template<> void GGProcessHandler::recombineHistogramsToTemplatesWithPhase<TH1F*>
         htype_t*& component = vals.at(componentPair.first);
         divisor *= pow(component->GetBinContent(ix), componentPower);
       }
-      if (divisor!=0.){ bincontent /= divisor; binerror /= divisor; }
+      if (divisor!=0.){ bincontent /= divisor; binerror /= std::abs(divisor); }
       else{ bincontent=0; binerror=0; }
       tpl->SetBinContent(ix, bincontent);
       tpl->SetBinError(ix, binerror);
@@ -595,7 +599,7 @@ template<> void GGProcessHandler::recombineHistogramsToTemplatesWithPhase<TH2F*>
           htype_t*& component = vals.at(componentPair.first);
           divisor *= pow(component->GetBinContent(ix, iy), componentPower);
         }
-        if (divisor!=0.){ bincontent /= divisor; binerror /= divisor; }
+        if (divisor!=0.){ bincontent /= divisor; binerror /= std::abs(divisor); }
         else{ bincontent=0; binerror=0; }
         tpl->SetBinContent(ix, iy, bincontent);
         tpl->SetBinError(ix, iy, binerror);
@@ -634,7 +638,7 @@ template<> void GGProcessHandler::recombineHistogramsToTemplatesWithPhase<TH3F*>
             htype_t*& component = vals.at(componentPair.first);
             divisor *= pow(component->GetBinContent(ix, iy, iz), componentPower);
           }
-          if (divisor!=0.){ bincontent /= divisor; binerror /= divisor; }
+          if (divisor!=0.){ bincontent /= divisor; binerror /= std::abs(divisor); }
           else{ bincontent=0; binerror=0; }
           tpl->SetBinContent(ix, iy, iz, bincontent);
           tpl->SetBinError(ix, iy, iz, binerror);
@@ -669,7 +673,7 @@ template<> void GGProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH
         htype_t*& component = vals.at(componentPair.first);
         divisor *= pow(component->GetBinContent(ix), componentPower);
       }
-      bincontent *= divisor; binerror *= divisor;
+      bincontent *= divisor; binerror *= std::abs(divisor);
       tpl->SetBinContent(ix, bincontent);
       tpl->SetBinError(ix, binerror);
     }
@@ -703,7 +707,7 @@ template<> void GGProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH
           htype_t*& component = vals.at(componentPair.first);
           divisor *= pow(component->GetBinContent(ix, iy), componentPower);
         }
-        bincontent *= divisor; binerror *= divisor;
+        bincontent *= divisor; binerror *= std::abs(divisor);
         tpl->SetBinContent(ix, iy, bincontent);
         tpl->SetBinError(ix, iy, binerror);
       }
@@ -740,7 +744,7 @@ template<> void GGProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH
             htype_t*& component = vals.at(componentPair.first);
             divisor *= pow(component->GetBinContent(ix, iy, iz), componentPower);
           }
-          bincontent *= divisor; binerror *= divisor;
+          bincontent *= divisor; binerror *= std::abs(divisor);
           tpl->SetBinContent(ix, iy, iz, bincontent);
           tpl->SetBinError(ix, iy, iz, binerror);
         }
@@ -1051,6 +1055,9 @@ TString VVProcessHandler::getProcessLabel(VVProcessHandler::TemplateType type, A
   case ProcessHandler::kVV:
     proclabelbare="VV";
     break;
+  case ProcessHandler::kVBF:
+    proclabelbare="VBF";
+    break;
   case ProcessHandler::kZH:
     proclabelbare="ZH";
     break;
@@ -1150,6 +1157,13 @@ VVProcessHandler::TemplateType VVProcessHandler::castIntToTemplateType(int type,
     return nVVTplTypes;
   };
 }
+bool VVProcessHandler::isInterferenceContribution(VVProcessHandler::TemplateType const type){
+  return (
+    type==VVTplInt_Re || type==VVTplIntBSM_ai1_1_Re || type==VVTplIntBSM_ai1_2_Re
+    ||
+    type==VVTplSigBSMSMInt_ai1_1_Re || type==VVTplSigBSMSMInt_ai1_2_PosDef || type==VVTplSigBSMSMInt_ai1_3_Re
+    );
+}
 
 void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
   vector<TemplateContributionList> pairing;
@@ -1175,7 +1189,7 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<std::pair<float
   if (vals.empty()) return;
   std::vector<float> res, errs;
   res.assign(vals.size(), 0);
-  res.assign(errs.size(), 0);
+  errs.assign(vals.size(), 0);
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nVVSMTypes);
     const float invA[nVVSMTypes][nVVSMTypes]={
@@ -1389,7 +1403,7 @@ template<> void VVProcessHandler::recombineHistogramsToTemplatesWithPhase<TH1F*>
         htype_t*& component = vals.at(componentPair.first);
         divisor *= pow(component->GetBinContent(ix), componentPower);
       }
-      if (divisor!=0.){ bincontent /= divisor; binerror /= divisor; }
+      if (divisor!=0.){ bincontent /= divisor; binerror /= std::abs(divisor); }
       else{ bincontent=0; binerror=0; }
       tpl->SetBinContent(ix, bincontent);
       tpl->SetBinError(ix, binerror);
@@ -1428,7 +1442,7 @@ template<> void VVProcessHandler::recombineHistogramsToTemplatesWithPhase<TH2F*>
           htype_t*& component = vals.at(componentPair.first);
           divisor *= pow(component->GetBinContent(ix, iy), componentPower);
         }
-        if (divisor!=0.){ bincontent /= divisor; binerror /= divisor; }
+        if (divisor!=0.){ bincontent /= divisor; binerror /= std::abs(divisor); }
         else{ bincontent=0; binerror=0; }
         tpl->SetBinContent(ix, iy, bincontent);
         tpl->SetBinError(ix, iy, binerror);
@@ -1470,8 +1484,122 @@ template<> void VVProcessHandler::recombineHistogramsToTemplatesWithPhase<TH3F*>
             htype_t*& component = vals.at(componentPair.first);
             divisor *= pow(component->GetBinContent(ix, iy, iz), componentPower);
           }
-          if (divisor!=0.){ bincontent /= divisor; binerror /= divisor; }
+          if (divisor!=0.){ bincontent /= divisor; binerror /= std::abs(divisor); }
           else{ bincontent=0; binerror=0; }
+          tpl->SetBinContent(ix, iy, iz, bincontent);
+          tpl->SetBinError(ix, iy, iz, binerror);
+        }
+      }
+    }
+  }
+}
+template<> void VVProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+  if (vals.empty()) return;
+  typedef TH1F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nVVTplSMTypes || vals.size()==nVVTplTypes) pairing.emplace_back(VVTplInt_Re);
+  if (vals.size()==nVVTplTypes){
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_1_Re);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_2_PosDef);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_3_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_1_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_2_Re);
+  }
+  assert(!pairing.empty());
+
+  for (TemplateContributionList const& pair:pairing){
+    htype_t*& tpl=vals.at(pair.type);
+    float const& coefficient = pair.coefficient;
+    // Loop over the bins
+    for (int ix=1; ix<=nx; ix++){
+      double bincontent = tpl->GetBinContent(ix);
+      double binerror = tpl->GetBinError(ix);
+      double divisor(coefficient);
+      for (auto const& componentPair:pair.TypePowerPair){
+        float const& componentPower=componentPair.second;
+        htype_t*& component = vals.at(componentPair.first);
+        divisor *= pow(component->GetBinContent(ix), componentPower);
+      }
+      bincontent *= divisor; binerror *= std::abs(divisor);
+      tpl->SetBinContent(ix, bincontent);
+      tpl->SetBinError(ix, binerror);
+    }
+  }
+}
+template<> void VVProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+  if (vals.empty()) return;
+  typedef TH2F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+  int const ny = vals.at(0)->GetNbinsY();
+
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nVVTplSMTypes || vals.size()==nVVTplTypes) pairing.emplace_back(VVTplInt_Re);
+  if (vals.size()==nVVTplTypes){
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_1_Re);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_2_PosDef);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_3_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_1_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_2_Re);
+  }
+  assert(!pairing.empty());
+
+  for (TemplateContributionList const& pair:pairing){
+    htype_t*& tpl=vals.at(pair.type);
+    float const& coefficient = pair.coefficient;
+    // Loop over the bins
+    for (int ix=1; ix<=nx; ix++){
+      for (int iy=1; iy<=ny; iy++){
+        double bincontent = tpl->GetBinContent(ix, iy);
+        double binerror = tpl->GetBinError(ix, iy);
+        double divisor(coefficient);
+        for (auto const& componentPair:pair.TypePowerPair){
+          float const& componentPower=componentPair.second;
+          htype_t*& component = vals.at(componentPair.first);
+          divisor *= pow(component->GetBinContent(ix, iy), componentPower);
+        }
+        bincontent *= divisor; binerror *= std::abs(divisor);
+        tpl->SetBinContent(ix, iy, bincontent);
+        tpl->SetBinError(ix, iy, binerror);
+      }
+    }
+  }
+}
+template<> void VVProcessHandler::recombineTemplatesWithPhaseRegularTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+  if (vals.empty()) return;
+  typedef TH3F htype_t;
+  int const nx = vals.at(0)->GetNbinsX();
+  int const ny = vals.at(0)->GetNbinsY();
+  int const nz = vals.at(0)->GetNbinsZ();
+
+  vector<TemplateContributionList> pairing;
+  if (vals.size()==nVVTplSMTypes || vals.size()==nVVTplTypes) pairing.emplace_back(VVTplInt_Re);
+  if (vals.size()==nVVTplTypes){
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_1_Re);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_2_PosDef);
+    pairing.emplace_back(VVTplSigBSMSMInt_ai1_3_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_1_Re);
+    pairing.emplace_back(VVTplIntBSM_ai1_2_Re);
+  }
+  assert(!pairing.empty());
+
+  for (TemplateContributionList const& pair:pairing){
+    htype_t*& tpl=vals.at(pair.type);
+    float const& coefficient = pair.coefficient;
+    // Loop over the bins
+    for (int ix=1; ix<=nx; ix++){
+      for (int iy=1; iy<=ny; iy++){
+        for (int iz=1; iz<=nz; iz++){
+          double bincontent = tpl->GetBinContent(ix, iy, iz);
+          double binerror = tpl->GetBinError(ix, iy, iz);
+          double divisor(coefficient);
+          for (auto const& componentPair:pair.TypePowerPair){
+            float const& componentPower=componentPair.second;
+            htype_t*& component = vals.at(componentPair.first);
+            divisor *= pow(component->GetBinContent(ix, iy, iz), componentPower);
+          }
+          bincontent *= divisor; binerror *= std::abs(divisor);
           tpl->SetBinContent(ix, iy, iz, bincontent);
           tpl->SetBinError(ix, iy, iz, binerror);
         }

@@ -327,8 +327,8 @@ ProcessHandler const* TemplateHelpers::getOnshellProcessHandler(ProcessHandler::
   case ProcessHandler::kZX:
     return &TemplateHelpers::OnshellZXProcessHandle;
   default:
-    return nullptr;;
-  };
+    return nullptr;
+  }
 }
 ProcessHandler const* TemplateHelpers::getOffshellProcessHandler(ProcessHandler::ProcessType type){
   switch (type){
@@ -347,8 +347,8 @@ ProcessHandler const* TemplateHelpers::getOffshellProcessHandler(ProcessHandler:
   case ProcessHandler::kZX:
     return &TemplateHelpers::OffshellZXProcessHandle;
   default:
-    return nullptr;;
-  };
+    return nullptr;
+  }
 }
 ProcessHandler const* TemplateHelpers::getProcessHandlerPerMassRegion(ProcessHandler::ProcessType type, CategorizationHelpers::MassRegion massregion){
   switch (massregion){

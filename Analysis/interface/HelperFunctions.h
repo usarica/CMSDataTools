@@ -54,10 +54,13 @@ namespace HelperFunctions{
   template<typename T, typename U> void cleanUnorderedMap(std::unordered_map<T, U> um);
 
   // Non-zero and NaN/Inf checkers
+  template<typename T> bool checkVarNonNegative(T const& val);
   template<typename T> bool checkNonNegative(std::vector<T> const& vars, int ibegin=-1, int iend=-1);
+  template<typename T> bool checkVarNonZero(T const& val);
   template<typename T> bool checkNonZero(std::vector<T> const& vars, int ibegin=-1, int iend=-1);
+  template<typename T> bool checkVarPositiveDef(T const& val);
   template<typename T> bool checkPositiveDef(std::vector<T> const& vars, int ibegin=-1, int iend=-1);
-  template<typename T> bool checkVarNanInf(T const& var);
+  template<typename T> bool checkVarNanInf(T const& val);
   template<typename T> bool checkNanInf(std::vector<T> const& vars);
 
   // TGraph functions
@@ -72,14 +75,19 @@ namespace HelperFunctions{
   template<> double evaluateTObject<TGraph>(TGraph* obj, float val);
   template<> double evaluateTObject<TSpline3>(TSpline3* obj, float val);
 
+  template<typename T> bool checkHistogramIntegrity(T const* histo);
+  template<> bool checkHistogramIntegrity<TH1F>(TH1F const* histo);
+  template<> bool checkHistogramIntegrity<TH2F>(TH2F const* histo);
+  template<> bool checkHistogramIntegrity<TH3F>(TH3F const* histo);
+
   template <typename T> void regularizeHistogram(T*& histo, int nIter_, double threshold_, double acceleration_);
   template<> void regularizeHistogram<TH1F>(TH1F*& histo, int nIter_, double threshold_, double acceleration_);
   template<> void regularizeHistogram<TH2F>(TH2F*& histo, int nIter_, double threshold_, double acceleration_);
   //template<> void regularizeHistogram<TH3F>(TH3F*& histo, int nIter_, double threshold_, double acceleration_);
 
-  template <typename T> void conditionalizeHistogram(T* histo, unsigned int iaxis, std::vector<std::pair<T*, float>> const* conditionalsReference=nullptr, bool useWidth=true);
-  template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int iaxis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference, bool useWidth);
-  template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int iaxis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth);
+  template <typename T> void conditionalizeHistogram(T* histo, unsigned int iaxis, std::vector<std::pair<T*, float>> const* conditionalsReference=nullptr, bool useWidth=true, bool useEffErr=false);
+  template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int iaxis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference, bool useWidth, bool useEffErr);
+  template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int iaxis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth, bool useEffErr);
 
   template <typename T> void wipeOverUnderFlows(T* hwipe, bool rescale=false);
   template<> void wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool rescale);
@@ -236,6 +244,11 @@ namespace HelperFunctions{
   TH1F* getHistogramSlice(TH3F const* histo, unsigned char XDirection, int iy, int jy, int iz, int jz, TString newname=""); // "y" and "z" are cylical, so if Xdirection==1 (Y), "y"=Z and "z"=X
   TH2F* getHistogramSlice(TH3F const* histo, unsigned char XDirection, unsigned char YDirection, int iz, int jz, TString newname="");
 
+  // Function to calculate error in product/division
+  float calculateSimpleProductError(
+    float const v1, float const e1, float const p1,
+    float const v2, float const e2, float const p2
+  );
   // Function to calculate error in efficiency
   float calculateEfficiencyError(
     float const sumW, float const sumWAll,
@@ -438,47 +451,41 @@ template<typename T> bool HelperFunctions::checkListVariable(const std::vector<T
 template<typename T, typename U> void HelperFunctions::cleanUnorderedMap(std::unordered_map<T, U> um){ for (auto& it:um){ delete it.second; it.second=0; } }
 
 // Non-negative, non-zero, positive-definite and NaN/Inf checkers
+template<typename T> bool HelperFunctions::checkVarNonNegative(T const& val){ return (val>=0.); }
 template<typename T> bool HelperFunctions::checkNonNegative(std::vector<T> const& vars, int ibegin, int iend){
   int ipos=0;
   for (T const& v:vars){
     if ((ibegin>=0 && ipos<ibegin) || (iend>=0 && ipos>=iend)) continue;
     ipos++;
-    if (v<0.){
-      //std::cerr << "HelperFunctions::checkNonNegative found value " << v << " < 0" << std::endl;
-      return false;
-    }
+    if (!checkVarNonNegative<T>(v)) return false;
   }
   return true;
 }
+template<typename T> bool HelperFunctions::checkVarNonZero(T const& val){ return (val!=0.); }
 template<typename T> bool HelperFunctions::checkNonZero(std::vector<T> const& vars, int ibegin, int iend){
   int ipos=0;
   for (T const& v:vars){
     if ((ibegin>=0 && ipos<ibegin) || (iend>=0 && ipos>=iend)) continue;
     ipos++;
-    if (v==0.){
-      //std::cerr << "HelperFunctions::checkNonZero found value " << v << " == 0" << std::endl;
-      return false;
-    }
+    if (!checkVarNonZero<T>(v)) return false;
   }
   return true;
 }
+template<typename T> bool HelperFunctions::checkVarPositiveDef(T const& val){ return (val>0.); }
 template<typename T> bool HelperFunctions::checkPositiveDef(std::vector<T> const& vars, int ibegin, int iend){
   int ipos=0;
   for (T const& v:vars){
     if ((ibegin>=0 && ipos<ibegin) || (iend>=0 && ipos>=iend)) continue;
     ipos++;
-    if (v<=0.){
-      //std::cerr << "HelperFunctions::checkPositiveDef found value " << v << " <= 0" << std::endl;
-      return false;
-    }
+    if (!checkVarPositiveDef<T>(v)) return false;
   }
   return true;
 }
-template<typename T> bool HelperFunctions::checkVarNanInf(T const& var){
-  return !(std::isnan(var) || std::isinf(var));
+template<typename T> bool HelperFunctions::checkVarNanInf(T const& val){
+  return !(std::isnan(val) || std::isinf(val));
 }
 template<typename T> bool HelperFunctions::checkNanInf(std::vector<T> const& vars){
-  for (T const& v:vars){ if (std::isnan(v) || std::isinf(v)) return false; }
+  for (T const& v:vars){ if (!checkVarNanInf<T>(v)) return false; }
   return true;
 }
 
@@ -500,7 +507,7 @@ template <typename T> double HelperFunctions::getHistogramIntegralAndError(T con
       integraloutside=histo->IntegralAndError(ix, jx, integralerroroutside, "");
 
       res = res + integraloutside - integralinside;
-      reserror = sqrt(std::max(0., pow(reserror, 2) + pow(integralerroroutside, 2) - pow(integralinside, 2)));
+      reserror = sqrt(std::max(0., pow(reserror, 2) + pow(integralerroroutside, 2) - pow(integralerrorinside, 2)));
     }
   }
   if (error) *error=reserror;
@@ -524,7 +531,7 @@ template <typename T> double HelperFunctions::getHistogramIntegralAndError(T con
       integraloutside=histo->IntegralAndError(ix, jx, iy, jy, integralerroroutside, "");
 
       res = res + integraloutside - integralinside;
-      reserror = sqrt(std::max(0., pow(reserror, 2) + pow(integralerroroutside, 2) - pow(integralinside, 2)));
+      reserror = sqrt(std::max(0., pow(reserror, 2) + pow(integralerroroutside, 2) - pow(integralerrorinside, 2)));
     }
   }
   if (error) *error=reserror;
@@ -549,7 +556,7 @@ template <typename T> double HelperFunctions::getHistogramIntegralAndError(T con
       integraloutside=histo->IntegralAndError(ix, jx, iy, jy, iz, jz, integralerroroutside, "");
 
       res = res + integraloutside - integralinside;
-      reserror = sqrt(std::max(0., pow(reserror, 2) + pow(integralerroroutside, 2) - pow(integralinside, 2)));
+      reserror = sqrt(std::max(0., pow(reserror, 2) + pow(integralerroroutside, 2) - pow(integralerrorinside, 2)));
     }
   }
   if (error) *error=reserror;
@@ -696,12 +703,6 @@ template bool HelperFunctions::checkPositiveDef<unsigned int>(std::vector<unsign
 template bool HelperFunctions::checkPositiveDef<int>(std::vector<int> const& vars, int ibegin, int iend);
 template bool HelperFunctions::checkPositiveDef<float>(std::vector<float> const& vars, int ibegin, int iend);
 template bool HelperFunctions::checkPositiveDef<double>(std::vector<double> const& vars, int ibegin, int iend);
-
-template bool HelperFunctions::checkVarNanInf<short>(short const& var);
-template bool HelperFunctions::checkVarNanInf<unsigned int>(unsigned int const& var);
-template bool HelperFunctions::checkVarNanInf<int>(int const& var);
-template bool HelperFunctions::checkVarNanInf<float>(float const& var);
-template bool HelperFunctions::checkVarNanInf<double>(double const& var);
 
 template bool HelperFunctions::checkNanInf<short>(std::vector<short> const& vars);
 template bool HelperFunctions::checkNanInf<unsigned int>(std::vector<unsigned int> const& vars);

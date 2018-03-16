@@ -1,9 +1,8 @@
-#ifndef MAKEFINALTEMPLATES_QQBkg_H
-#define MAKEFINALTEMPLATES_QQBkg_H
+#ifndef MAKEFINALTEMPLATES_QQBKG_H
+#define MAKEFINALTEMPLATES_QQBKG_H
 
 #include "common_includes.h"
 #include "CheckSetTemplatesCategoryScheme.h"
-#include "fixTreeWeights.h"
 #include "acquireProcessMassRatios.cc"
 
 
@@ -454,15 +453,7 @@ void makeFinalTemplates_QQBkg(const Channel channel, const ACHypothesis hypo, co
           bookBranch(tree, catFlagName, &isCategory);
           if (!branchExists(tree, catFlagName)) isCategory=true;
         }
-
-        float& vartrack=KDvars.find("ZZMass")->second;
-        TTree* newtree = fixTreeWeights(tree, KDbinning.at(0), vartrack, weight, 1);
-        for (auto& KDname:KDset) bookBranch(newtree, KDname, &(KDvars.find(KDname)->second));
-        if (!isCategory){
-          TString catFlagName = TString("is_") + strCategory + TString("_") + strACHypo;
-          bookBranch(newtree, catFlagName, &isCategory);
-        }
-        fixedTrees.push_back(newtree);
+        fixedTrees.push_back(tree);
       }
       MELAout << "\t- Tree weights fixed" << endl;
     }

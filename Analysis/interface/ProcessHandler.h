@@ -323,6 +323,7 @@ public:
   static int castTemplateTypeToInt(ZXProcessHandler::TemplateType type);
   static ZXProcessHandler::HypothesisType castIntToHypothesisType(int type);
   static ZXProcessHandler::TemplateType castIntToTemplateType(int type);
+  std::vector<ZXProcessHandler::HypothesisType> getHypotheses() const;
 
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals) const;
 

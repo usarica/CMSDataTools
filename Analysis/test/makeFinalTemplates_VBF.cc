@@ -484,6 +484,7 @@ void makeFinalTemplates_VBF(const Channel channel, const ACHypothesis hypo, cons
 
         float& vartrack=KDvars.find("ZZMass")->second;
         TTree* newtree = fixTreeWeights(tree, KDbinning.at(0), vartrack, weight, 1);
+        bookBranch(newtree, "weight", &weight);
         for (auto& KDname:KDset) bookBranch(newtree, KDname, &(KDvars.find(KDname)->second));
         if (!isCategory){
           TString catFlagName = TString("is_") + strCategory + TString("_") + strACHypo;

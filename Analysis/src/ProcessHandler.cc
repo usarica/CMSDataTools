@@ -1684,6 +1684,12 @@ TString ZXProcessHandler::getTemplateName() const{
   return res;
 }
 TString ZXProcessHandler::getProcessLabel() const{ return "Z+jets"; }
+std::vector<ZXProcessHandler::HypothesisType> ZXProcessHandler::getHypotheses() const{
+  std::vector<ZXProcessHandler::HypothesisType> res;
+  res.push_back(ZX);
+  return res;
+}
+
 int ZXProcessHandler::castHypothesisTypeToInt(ZXProcessHandler::HypothesisType type){ return (int) type; }
 int ZXProcessHandler::castTemplateTypeToInt(ZXProcessHandler::TemplateType type){ return (int) type; }
 ZXProcessHandler::HypothesisType ZXProcessHandler::castIntToHypothesisType(int type){ return (HypothesisType) type; }

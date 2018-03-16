@@ -63,7 +63,7 @@ void ProcessHandler::assignProcessName(){
       procname="bkg_qqzz";
       break;
     case kZX:
-      procname="Zjets";
+      procname="zjets";
       break;
     default:
       procname="";

@@ -237,8 +237,18 @@ ExtendedBinning TemplateHelpers::getDiscriminantFineBinning(const SampleHelpers:
       break;
     }
     case CategorizationHelpers::kOnshell:
-      for (unsigned int i=105; i<=140; i++) res.addBinBoundary(i);
+    {
+      double vlow=105, vhigh=140;
+      if (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged){
+        unsigned int nbins = 35;
+        for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(vlow + double(i)/double(nbins)*(vhigh-vlow));
+      }
+      else if (category==CategorizationHelpers::JJVBFTagged || category==CategorizationHelpers::HadVHTagged){
+        unsigned int const nbins = 20;
+        for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(vlow + double(i)/double(nbins)*(vhigh-vlow));
+      }
       break;
+    }
     default:
       assert(0);
     }
@@ -290,8 +300,18 @@ ExtendedBinning TemplateHelpers::getDiscriminantCoarseBinning(const SampleHelper
       break;
     }
     case CategorizationHelpers::kOnshell:
-      for (unsigned int i=105; i<=140; i+=5) res.addBinBoundary(i);
+    {
+      double vlow=105, vhigh=140;
+      if (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged){
+        unsigned int nbins = 7;
+        for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(vlow + double(i)/double(nbins)*(vhigh-vlow));
+      }
+      else if (category==CategorizationHelpers::JJVBFTagged || category==CategorizationHelpers::HadVHTagged){
+        unsigned int const nbins = 5;
+        for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(vlow + double(i)/double(nbins)*(vhigh-vlow));
+      }
       break;
+    }
     default:
       assert(0);
     }

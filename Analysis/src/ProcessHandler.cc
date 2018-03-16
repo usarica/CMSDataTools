@@ -1632,6 +1632,12 @@ TString QQBkgProcessHandler::getMELAHypothesisWeight(unsigned int njets) const{
     return "p_Gen_QQB_BKG_MCFM";
   }
 }
+std::vector<QQBkgProcessHandler::HypothesisType> QQBkgProcessHandler::getHypotheses() const{
+  std::vector<QQBkgProcessHandler::HypothesisType> res;
+  res.push_back(QQBkg);
+  return res;
+}
+
 int QQBkgProcessHandler::castHypothesisTypeToInt(QQBkgProcessHandler::HypothesisType type){ return (int) type; }
 int QQBkgProcessHandler::castTemplateTypeToInt(QQBkgProcessHandler::TemplateType type){ return (int) type; }
 QQBkgProcessHandler::HypothesisType QQBkgProcessHandler::castIntToHypothesisType(int type){ return (HypothesisType) type; }

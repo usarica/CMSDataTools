@@ -279,6 +279,7 @@ public:
   TString getTemplateName() const;
   TString getMELAHypothesisWeight(unsigned int njets) const;
   TString getProcessLabel() const;
+  std::vector<QQBkgProcessHandler::HypothesisType> getHypotheses() const;
 
   static int castHypothesisTypeToInt(QQBkgProcessHandler::HypothesisType type);
   static int castTemplateTypeToInt(QQBkgProcessHandler::TemplateType type);

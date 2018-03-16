@@ -156,12 +156,13 @@ void makeZXTemplatesFromData_checkstage(
   const TString strCategory = getCategoryName(category);
   const TString strSystematics = getSystematicsName(syst);
   const TString strStage = Form("Stage%i", istage);
+  const MassRegion massregion = theProcess.getProcessMassRegion();
   const TString FRMethodName = ZXFakeRateHandler::TranslateFakeRateMethodToString(ZXFakeRateHandler::mSS);
   std::vector<ProcessHandleType::HypothesisType> tplset; tplset.push_back(ProcessHandleType::ZX);
   const unsigned int ntpls = tplset.size();
 
   // Get the KDs needed for the AC hypothesis
-  vector<TString> KDset = ACHypothesisHelpers::getACHypothesisKDNameSet(hypo, category);
+  vector<TString> KDset = ACHypothesisHelpers::getACHypothesisKDNameSet(hypo, category, massregion);
   const unsigned int nKDs = KDset.size();
   unordered_map<TString, float> KDvars;
   for (auto& KDname:KDset) KDvars[KDname]=0;

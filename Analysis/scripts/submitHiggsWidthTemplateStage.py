@@ -131,8 +131,7 @@ class StageXBatchManager:
 
    def submitJobs(self):
       channels = [ "NChannels", "k2e2mu", "k4e", "k4mu" ]
-      #categories = [ "Inclusive", "Untagged", "JJVBFTagged" ] # Not yet ready for VH-tagged categories
-      categories = [ "Inclusive", "Untagged", "JJVBFTagged", "HadVHTagged" ]
+      categories = [ "Inclusive", "HadVHTagged", "JJVBFTagged", "Untagged" ]
       hypos = [ "nACHypotheses", "kSM", "kL1", "kA2", "kA3" ]
       systematics = [
          "sNominal",
@@ -248,7 +247,12 @@ class StageXBatchManager:
                               continue
 
                      # Do not submit unnecessary jobs
-                     if (self.opt.generator == "MCFM" or cat == "Inclusive") and ("eJEC" in syst or "tMINLO" in syst or "tPythia" in syst):
+                     if cat == "Inclusive" and ("eJEC" in syst or "tMINLO" in syst or "tPythia" in syst):
+                        continue
+                     if self.opt.generator == "MCFM" and ("tMINLO" in syst or "tPythia" in syst):
+                        continue
+                     if self.opt.stage == 1 and cat == "Untagged" and not(self.opt.process == "ZH" or self.opt.process == "WH"):
+                        print "{} category distributions in process {} can be obtained from the distributions of inclusive and other categories.".format(cat, self.opt.process)
                         continue
                      if self.opt.process == "QQBkg" and ("tMINLO" in syst or "tPythia" in syst):
                         continue

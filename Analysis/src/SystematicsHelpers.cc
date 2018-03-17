@@ -153,12 +153,8 @@ std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::ge
       res.push_back(tQQBkgEWCorrUp);
     }
 
-    if (
-      (category==CategorizationHelpers::Untagged || category==CategorizationHelpers::JJVBFTagged || category==CategorizationHelpers::HadVHTagged)
-      &&
-      strGenerator!="MCFM"
-    ){
-      if (proc==ProcessHandler::kGG || proc==ProcessHandler::kVV){
+    if (category!=CategorizationHelpers::Inclusive){
+      if ((proc==ProcessHandler::kGG || proc==ProcessHandler::kVV) && strGenerator=="POWHEG"){
         res.push_back(tPythiaScaleDn);
         res.push_back(tPythiaScaleUp);
         res.push_back(tPythiaTuneDn);

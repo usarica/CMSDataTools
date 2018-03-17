@@ -21,7 +21,7 @@ class StageXBatchManager:
       self.parser.add_option("--outdir", dest="outdir", type="string", help="Name of the local output directory for your jobs. This directory will be created automatically.", default="./")
 
       self.parser.add_option("--process", dest="process", type="string", help="Name of the process")
-      self.parser.add_option("--generator", dest="generator", type="string", help="Name of the generator", default="POWHEG")
+      self.parser.add_option("--generator", dest="generator", type="string", help="Name of the generator")
       self.parser.add_option("--stage", dest="stage", type="int", default=1, help="Stage 1, 2 (default=1)")
       self.parser.add_option("--fixedDate", dest="fixedDate", type="string", help="Fixed output directory", default="")
 
@@ -33,6 +33,7 @@ class StageXBatchManager:
 
       self.parser.add_option("--dry", dest="dryRun", action="store_true", default=False, help="Do not submit jobs, just set up the files")
       self.parser.add_option("--interactive", dest="interactive", action="store_true", default=False, help="Do not submit jobs; run them interactively")
+
       self.parser.add_option("--checkstage", dest="checkstage", action="store_true", default=False, help="Submit checkstage functions instead of stage functions themselves")
       self.parser.add_option("--plotcheckstage", dest="plotcheckstage", action="store_true", default=False, help="Plot checkstage")
       self.parser.add_option("--plotcheckstagesystpairs", dest="plotcheckstagesystpairs", action="store_true", default=False, help="Plot checkstage systematics ratiso to nominal")
@@ -45,10 +46,13 @@ class StageXBatchManager:
          sys.exit("Need to set --generator option")
 
       if self.opt.process != "ZX":
-         strscript="make{}TemplatesFrom{}".format(self.opt.process, self.opt.generator)
+         self.generator = "Data"
       else:
-         strscript="make{}TemplatesFrom{}".format(self.opt.process, "Data")
+         self.generator = self.opt.generator
+
+      strscript="make{}TemplatesFrom{}".format(self.opt.process, self.generator)
       self.scriptname="{}.cc".format(strscript)
+
       if not os.path.isfile(self.scriptname):
          sys.exit("Script {} does not exist. Exiting...".format(self.scriptname))
 
@@ -249,7 +253,7 @@ class StageXBatchManager:
                      # Do not submit unnecessary jobs
                      if cat == "Inclusive" and ("eJEC" in syst or "tMINLO" in syst or "tPythia" in syst):
                         continue
-                     if self.opt.generator == "MCFM" and ("tMINLO" in syst or "tPythia" in syst):
+                     if self.generator == "MCFM" and ("tMINLO" in syst or "tPythia" in syst):
                         continue
                      if self.opt.stage == 1 and cat == "Untagged" and not(self.opt.process == "ZH" or self.opt.process == "WH"):
                         print "{} category distributions in process {} can be obtained from the distributions of inclusive and other categories.".format(cat, self.opt.process)

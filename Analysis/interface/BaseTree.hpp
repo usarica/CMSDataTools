@@ -45,6 +45,26 @@ template<> bool BaseTree::getBranchCIterator<std::vector<int>*>(TString branchna
   it = theMap.find(branchname);
   return (it!=theMap.end());
 }
+template<> bool BaseTree::getBranchCIterator<std::pair<unsigned long, unsigned long>*>(TString branchname, std::unordered_map<TString, std::pair<unsigned long, unsigned long>*>::iterator& it){
+  auto& theMap = valulongs;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
+template<> bool BaseTree::getBranchCIterator<std::vector<unsigned long>*>(TString branchname, std::unordered_map<TString, std::vector<unsigned long>*>::iterator& it){
+  auto& theMap = valVulongs;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
+template<> bool BaseTree::getBranchCIterator<std::pair<long, long>*>(TString branchname, std::unordered_map<TString, std::pair<long, long>*>::iterator& it){
+  auto& theMap = vallongs;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
+template<> bool BaseTree::getBranchCIterator<std::vector<long>*>(TString branchname, std::unordered_map<TString, std::vector<long>*>::iterator& it){
+  auto& theMap = valVlongs;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
 template<> bool BaseTree::getBranchCIterator<std::pair<float, float>*>(TString branchname, std::unordered_map<TString, std::pair<float, float>*>::iterator& it){
   auto& theMap = valfloats;
   it = theMap.find(branchname);
@@ -106,6 +126,26 @@ template<> bool BaseTree::getBranchCIterator<std::vector<int>*>(TString branchna
   it = theMap.find(branchname);
   return (it!=theMap.cend());
 }
+template<> bool BaseTree::getBranchCIterator<std::pair<unsigned long, unsigned long>*>(TString branchname, std::unordered_map<TString, std::pair<unsigned long, unsigned long>*>::const_iterator& it) const{
+  auto const& theMap = valulongs;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
+template<> bool BaseTree::getBranchCIterator<std::vector<unsigned long>*>(TString branchname, std::unordered_map<TString, std::vector<unsigned long>*>::const_iterator& it) const{
+  auto const& theMap = valVulongs;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
+template<> bool BaseTree::getBranchCIterator<std::pair<long, long>*>(TString branchname, std::unordered_map<TString, std::pair<long, long>*>::const_iterator& it) const{
+  auto const& theMap = vallongs;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
+template<> bool BaseTree::getBranchCIterator<std::vector<long>*>(TString branchname, std::unordered_map<TString, std::vector<long>*>::const_iterator& it) const{
+  auto const& theMap = valVlongs;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
 template<> bool BaseTree::getBranchCIterator<std::pair<float, float>*>(TString branchname, std::unordered_map<TString, std::pair<float, float>*>::const_iterator& it) const{
   auto const& theMap = valfloats;
   it = theMap.find(branchname);
@@ -136,6 +176,10 @@ template<> void BaseTree::resetBranch<BaseTree::BranchType_uint_t>(){ for (auto&
 template<> void BaseTree::resetBranch<BaseTree::BranchType_vuint_t>(){ for (auto& it:valVuints){ if (it.second) it.second->clear(); } }
 template<> void BaseTree::resetBranch<BaseTree::BranchType_int_t>(){ for (auto& it:valints){ if (it.second){ it.second->first=it.second->second; } } }
 template<> void BaseTree::resetBranch<BaseTree::BranchType_vint_t>(){ for (auto& it:valVints){ if (it.second) it.second->clear(); } }
+template<> void BaseTree::resetBranch<BaseTree::BranchType_ulong_t>(){ for (auto& it:valulongs){ if (it.second){ it.second->first=it.second->second; } } }
+template<> void BaseTree::resetBranch<BaseTree::BranchType_vulong_t>(){ for (auto& it:valVulongs){ if (it.second) it.second->clear(); } }
+template<> void BaseTree::resetBranch<BaseTree::BranchType_long_t>(){ for (auto& it:vallongs){ if (it.second){ it.second->first=it.second->second; } } }
+template<> void BaseTree::resetBranch<BaseTree::BranchType_vlong_t>(){ for (auto& it:valVlongs){ if (it.second) it.second->clear(); } }
 template<> void BaseTree::resetBranch<BaseTree::BranchType_float_t>(){ for (auto& it:valfloats){ if (it.second){ it.second->first=it.second->second; } } }
 template<> void BaseTree::resetBranch<BaseTree::BranchType_vfloat_t>(){ for (auto& it:valVfloats){ if (it.second) it.second->clear(); } }
 template<> void BaseTree::resetBranch<BaseTree::BranchType_double_t>(){ for (auto& it:valdoubles){ if (it.second){ it.second->first=it.second->second; } } }
@@ -149,6 +193,10 @@ template<> void BaseTree::removeBranch<BaseTree::BranchType_uint_t>(TString bran
 template<> void BaseTree::removeBranch<BaseTree::BranchType_vuint_t>(TString branchname){ for (auto& it:valVuints){ if (it.first){ delete it.second; it.second=0; } } valVuints.erase(branchname); }
 template<> void BaseTree::removeBranch<BaseTree::BranchType_int_t>(TString branchname){ for (auto& it:valints){ if (it.first){ delete it.second; it.second=0; } } valints.erase(branchname); }
 template<> void BaseTree::removeBranch<BaseTree::BranchType_vint_t>(TString branchname){ for (auto& it:valVints){ if (it.first){ delete it.second; it.second=0; } } valVints.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_ulong_t>(TString branchname){ for (auto& it:valulongs){ if (it.first){ delete it.second; it.second=0; } } valulongs.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vulong_t>(TString branchname){ for (auto& it:valVulongs){ if (it.first){ delete it.second; it.second=0; } } valVulongs.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_long_t>(TString branchname){ for (auto& it:vallongs){ if (it.first){ delete it.second; it.second=0; } } vallongs.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vlong_t>(TString branchname){ for (auto& it:valVlongs){ if (it.first){ delete it.second; it.second=0; } } valVlongs.erase(branchname); }
 template<> void BaseTree::removeBranch<BaseTree::BranchType_float_t>(TString branchname){ for (auto& it:valfloats){ if (it.first){ delete it.second; it.second=0; } } valfloats.erase(branchname); }
 template<> void BaseTree::removeBranch<BaseTree::BranchType_vfloat_t>(TString branchname){ for (auto& it:valVfloats){ if (it.first){ delete it.second; it.second=0; } } valVfloats.erase(branchname); }
 template<> void BaseTree::removeBranch<BaseTree::BranchType_double_t>(TString branchname){ for (auto& it:valdoubles){ if (it.first){ delete it.second; it.second=0; } } valdoubles.erase(branchname); }
@@ -206,6 +254,32 @@ template<> bool BaseTree::bookBranch<std::vector<int>*>(TString branchname, std:
   SampleHelpers::bookBranch(failedtree, branchname, &(valVints[branchname]));
   return true;
 }
+template<> bool BaseTree::bookBranch<unsigned long>(TString branchname, unsigned long valdef){
+  if (valulongs.find(branchname)==valulongs.end()) valulongs[branchname] = new std::pair<unsigned long, unsigned long>(valdef, valdef);
+  else{ valulongs[branchname]->first=valdef; valulongs[branchname]->second=valdef; }
+  SampleHelpers::bookBranch(tree, branchname, &(valulongs[branchname]->first));
+  SampleHelpers::bookBranch(failedtree, branchname, &(valulongs[branchname]->first));
+  return true;
+}
+template<> bool BaseTree::bookBranch<std::vector<unsigned long>*>(TString branchname, std::vector<unsigned long>*/* valdef*/){
+  valVulongs[branchname] = nullptr;
+  SampleHelpers::bookBranch(tree, branchname, &(valVulongs[branchname]));
+  SampleHelpers::bookBranch(failedtree, branchname, &(valVulongs[branchname]));
+  return true;
+}
+template<> bool BaseTree::bookBranch<long>(TString branchname, long valdef){
+  if (vallongs.find(branchname)==vallongs.end()) vallongs[branchname] = new std::pair<long, long>(valdef, valdef);
+  else{ vallongs[branchname]->first=valdef; vallongs[branchname]->second=valdef; }
+  SampleHelpers::bookBranch(tree, branchname, &(vallongs[branchname]->first));
+  SampleHelpers::bookBranch(failedtree, branchname, &(vallongs[branchname]->first));
+  return true;
+}
+template<> bool BaseTree::bookBranch<std::vector<long>*>(TString branchname, std::vector<long>*/* valdef*/){
+  valVlongs[branchname] = nullptr;
+  SampleHelpers::bookBranch(tree, branchname, &(valVlongs[branchname]));
+  SampleHelpers::bookBranch(failedtree, branchname, &(valVlongs[branchname]));
+  return true;
+}
 template<> bool BaseTree::bookBranch<float>(TString branchname, float valdef){
   if (valfloats.find(branchname)==valfloats.end()) valfloats[branchname] = new std::pair<float, float>(valdef, valdef);
   else{ valfloats[branchname]->first=valdef; valfloats[branchname]->second=valdef; }
@@ -241,6 +315,10 @@ template<> bool BaseTree::bookBranch<BaseTree::BranchType_uint_t>(TString branch
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_vuint_t>(TString branchname){ return this->bookBranch<std::vector<unsigned int>*>(branchname, 0); }
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_int_t>(TString branchname){ return this->bookBranch<int>(branchname, 0); }
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_vint_t>(TString branchname){ return this->bookBranch<std::vector<int>*>(branchname, 0); }
+template<> bool BaseTree::bookBranch<BaseTree::BranchType_ulong_t>(TString branchname){ return this->bookBranch<unsigned long>(branchname, 0); }
+template<> bool BaseTree::bookBranch<BaseTree::BranchType_vulong_t>(TString branchname){ return this->bookBranch<std::vector<unsigned long>*>(branchname, 0); }
+template<> bool BaseTree::bookBranch<BaseTree::BranchType_long_t>(TString branchname){ return this->bookBranch<long>(branchname, 0); }
+template<> bool BaseTree::bookBranch<BaseTree::BranchType_vlong_t>(TString branchname){ return this->bookBranch<std::vector<long>*>(branchname, 0); }
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_float_t>(TString branchname){ return this->bookBranch<float>(branchname, 0); }
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_vfloat_t>(TString branchname){ return this->bookBranch<std::vector<float>*>(branchname, 0); }
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_double_t>(TString branchname){ return this->bookBranch<double>(branchname, 0); }
@@ -294,6 +372,30 @@ template<> bool BaseTree::putBranch<std::vector<int>*>(TString branchname, std::
   SampleHelpers::putBranch(tree, branchname, *(valVints[branchname]));
   return true;
 }
+template<> bool BaseTree::putBranch<unsigned long>(TString branchname, unsigned long valdef){
+  if (valulongs.find(branchname)==valulongs.end()) valulongs[branchname] = new std::pair<unsigned long, unsigned long>(valdef, valdef);
+  else{ valulongs[branchname]->first=valdef; valulongs[branchname]->second=valdef; }
+  SampleHelpers::putBranch(tree, branchname, valulongs[branchname]->first);
+  return true;
+}
+template<> bool BaseTree::putBranch<std::vector<unsigned long>*>(TString branchname, std::vector<unsigned long>*/* valdef*/){
+  if (valVulongs.find(branchname)==valVulongs.end()) valVulongs[branchname] = new std::vector<unsigned long>();
+  else valVulongs[branchname]->clear();
+  SampleHelpers::putBranch(tree, branchname, *(valVulongs[branchname]));
+  return true;
+}
+template<> bool BaseTree::putBranch<long>(TString branchname, long valdef){
+  if (vallongs.find(branchname)==vallongs.end()) vallongs[branchname] = new std::pair<long, long>(valdef, valdef);
+  else{ vallongs[branchname]->first=valdef; vallongs[branchname]->second=valdef; }
+  SampleHelpers::putBranch(tree, branchname, vallongs[branchname]->first);
+  return true;
+}
+template<> bool BaseTree::putBranch<std::vector<long>*>(TString branchname, std::vector<long>*/* valdef*/){
+  if (valVlongs.find(branchname)==valVlongs.end()) valVlongs[branchname] = new std::vector<long>();
+  else valVlongs[branchname]->clear();
+  SampleHelpers::putBranch(tree, branchname, *(valVlongs[branchname]));
+  return true;
+}
 template<> bool BaseTree::putBranch<float>(TString branchname, float valdef){
   if (valfloats.find(branchname)==valfloats.end()) valfloats[branchname] = new std::pair<float, float>(valdef, valdef);
   else{ valfloats[branchname]->first=valdef; valfloats[branchname]->second=valdef; }
@@ -327,6 +429,10 @@ template<> bool BaseTree::putBranch<BaseTree::BranchType_uint_t>(TString branchn
 template<> bool BaseTree::putBranch<BaseTree::BranchType_vuint_t>(TString branchname){ return this->putBranch<std::vector<unsigned int>*>(branchname, 0); }
 template<> bool BaseTree::putBranch<BaseTree::BranchType_int_t>(TString branchname){ return this->putBranch<int>(branchname, 0); }
 template<> bool BaseTree::putBranch<BaseTree::BranchType_vint_t>(TString branchname){ return this->putBranch<std::vector<int>*>(branchname, 0); }
+template<> bool BaseTree::putBranch<BaseTree::BranchType_ulong_t>(TString branchname){ return this->putBranch<unsigned long>(branchname, 0); }
+template<> bool BaseTree::putBranch<BaseTree::BranchType_vulong_t>(TString branchname){ return this->putBranch<std::vector<unsigned long>*>(branchname, 0); }
+template<> bool BaseTree::putBranch<BaseTree::BranchType_long_t>(TString branchname){ return this->putBranch<long>(branchname, 0); }
+template<> bool BaseTree::putBranch<BaseTree::BranchType_vlong_t>(TString branchname){ return this->putBranch<std::vector<long>*>(branchname, 0); }
 template<> bool BaseTree::putBranch<BaseTree::BranchType_float_t>(TString branchname){ return this->putBranch<float>(branchname, 0); }
 template<> bool BaseTree::putBranch<BaseTree::BranchType_vfloat_t>(TString branchname){ return this->putBranch<std::vector<float>*>(branchname, 0); }
 template<> bool BaseTree::putBranch<BaseTree::BranchType_double_t>(TString branchname){ return this->putBranch<double>(branchname, 0); }
@@ -369,6 +475,26 @@ template<> void BaseTree::getVal<int>(TString branchname, int& val) const{
 }
 template<> void BaseTree::getVal<std::vector<int> const*>(TString branchname, std::vector<int> const*& val) const{
   typedef int itType;
+  std::unordered_map<TString, std::vector<itType>*>::const_iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = it->second;
+}
+template<> void BaseTree::getVal<unsigned long>(TString branchname, unsigned long& val) const{
+  typedef unsigned long itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::const_iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=tmp->first; }
+}
+template<> void BaseTree::getVal<std::vector<unsigned long> const*>(TString branchname, std::vector<unsigned long> const*& val) const{
+  typedef unsigned long itType;
+  std::unordered_map<TString, std::vector<itType>*>::const_iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = it->second;
+}
+template<> void BaseTree::getVal<long>(TString branchname, long& val) const{
+  typedef long itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::const_iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=tmp->first; }
+}
+template<> void BaseTree::getVal<std::vector<long> const*>(TString branchname, std::vector<long> const*& val) const{
+  typedef long itType;
   std::unordered_map<TString, std::vector<itType>*>::const_iterator it;
   if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = it->second;
 }
@@ -433,6 +559,26 @@ template<> void BaseTree::setVal<std::vector<int>*>(TString branchname, std::vec
   std::unordered_map<TString, std::vector<itType>*>::iterator it;
   if (this->getBranchCIterator<std::vector<itType>*>(branchname, it) && it->second && val) it->second->assign(val->begin(), val->end());
 }
+template<> void BaseTree::setVal<unsigned long>(TString branchname, unsigned long const& val){
+  typedef unsigned long itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) tmp->first=val; }
+}
+template<> void BaseTree::setVal<std::vector<unsigned long>*>(TString branchname, std::vector<unsigned long>* const& val){
+  typedef unsigned long itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it) && it->second && val) it->second->assign(val->begin(), val->end());
+}
+template<> void BaseTree::setVal<long>(TString branchname, long const& val){
+  typedef long itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) tmp->first=val; }
+}
+template<> void BaseTree::setVal<std::vector<long>*>(TString branchname, std::vector<long>* const& val){
+  typedef long itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it) && it->second && val) it->second->assign(val->begin(), val->end());
+}
 template<> void BaseTree::setVal<float>(TString branchname, float const& val){
   typedef float itType;
   std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
@@ -474,6 +620,16 @@ template<> void BaseTree::getValRef<int>(TString branchname, int*& val) const{
   std::unordered_map<TString, std::pair<itType, itType>*>::const_iterator it;
   if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
 }
+template<> void BaseTree::getValRef<unsigned long>(TString branchname, unsigned long*& val) const{
+  typedef unsigned long itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::const_iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
+template<> void BaseTree::getValRef<long>(TString branchname, long*& val) const{
+  typedef long itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::const_iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
 template<> void BaseTree::getValRef<float>(TString branchname, float*& val) const{
   typedef float itType;
   std::unordered_map<TString, std::pair<itType, itType>*>::const_iterator it;
@@ -505,6 +661,16 @@ template<> void BaseTree::getValRef<std::vector<int>>(TString branchname, std::v
   std::unordered_map<TString, std::vector<itType>*>::const_iterator it;
   if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = it->second;
 }
+template<> void BaseTree::getValRef<std::vector<unsigned long>>(TString branchname, std::vector<unsigned long>*& val) const{
+  typedef unsigned long itType;
+  std::unordered_map<TString, std::vector<itType>*>::const_iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = it->second;
+}
+template<> void BaseTree::getValRef<std::vector<long>>(TString branchname, std::vector<long>*& val) const{
+  typedef long itType;
+  std::unordered_map<TString, std::vector<itType>*>::const_iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = it->second;
+}
 template<> void BaseTree::getValRef<std::vector<float>>(TString branchname, std::vector<float>*& val) const{
   typedef float itType;
   std::unordered_map<TString, std::vector<itType>*>::const_iterator it;
@@ -533,6 +699,16 @@ template<> void BaseTree::getValRef<std::vector<unsigned int>* const>(TString br
 }
 template<> void BaseTree::getValRef<std::vector<int>* const>(TString branchname, std::vector<int>* const*& val) const{
   typedef int itType;
+  std::unordered_map<TString, std::vector<itType>*>::const_iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+template<> void BaseTree::getValRef<std::vector<unsigned long>* const>(TString branchname, std::vector<unsigned long>* const*& val) const{
+  typedef unsigned long itType;
+  std::unordered_map<TString, std::vector<itType>*>::const_iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+template<> void BaseTree::getValRef<std::vector<long>* const>(TString branchname, std::vector<long>* const*& val) const{
+  typedef long itType;
   std::unordered_map<TString, std::vector<itType>*>::const_iterator it;
   if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
 }

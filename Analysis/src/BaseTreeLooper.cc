@@ -8,9 +8,10 @@
 using namespace std;
 
 
-BaseTreeLooper::BaseTreeLooper() : maxNEvents(-1) { setExternalProductList(); setExternalProductTree(); }
-BaseTreeLooper::BaseTreeLooper(CJLSTTree* inTree) : maxNEvents(-1) { this->addTree(inTree); setExternalProductList(); setExternalProductTree(); }
+BaseTreeLooper::BaseTreeLooper() : sampleIdOpt(BaseTreeLooper::kNoStorage), maxNEvents(-1) { setExternalProductList(); setExternalProductTree(); }
+BaseTreeLooper::BaseTreeLooper(CJLSTTree* inTree) : sampleIdOpt(BaseTreeLooper::kNoStorage), maxNEvents(-1) { this->addTree(inTree); setExternalProductList(); setExternalProductTree(); }
 BaseTreeLooper::BaseTreeLooper(std::vector<CJLSTTree*> const& inTreeList) :
+  sampleIdOpt(BaseTreeLooper::kNoStorage),
   treeList(inTreeList),
   maxNEvents(-1)
 {
@@ -18,6 +19,7 @@ BaseTreeLooper::BaseTreeLooper(std::vector<CJLSTTree*> const& inTreeList) :
   setExternalProductTree();
 }
 BaseTreeLooper::BaseTreeLooper(CJLSTSet const* inTreeSet) :
+  sampleIdOpt(BaseTreeLooper::kNoStorage),
   treeList(inTreeSet->getCJLSTTreeList()),
   maxNEvents(-1)
 {
@@ -69,6 +71,8 @@ void BaseTreeLooper::setExternalProductTree(BaseTree* extTree){
 
 void BaseTreeLooper::setMaximumEvents(int n){ maxNEvents=n; }
 
+void BaseTreeLooper::setSampleIdStorageOption(BaseTreeLooper::SampleIdStorageType opt){ sampleIdOpt=opt; }
+
 void BaseTreeLooper::addProduct(SimpleEntry& product, unsigned int* ev_rec){
   this->productListRef->push_back(product);
   if (ev_rec) (*ev_rec)++;
@@ -104,6 +108,8 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
   // Loop over the trees
   unsigned int ev_acc=0;
   unsigned int ev_rec=0;
+  const bool storeSampleIdByMH = (sampleIdOpt==kStoreByMH);
+  const bool storeSampleIdByHashVal = (sampleIdOpt==kStoreByHashVal);
   for (CJLSTTree*& tree:treeList){
     // Skip the tree if it cannot be linked
     if (!(this->linkConsumes(tree))) continue;
@@ -116,6 +122,10 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
       continue;
     }
 
+    size_t sampleId=0;
+    if (storeSampleIdByMH) sampleId = tree->MHVal;
+    else if (storeSampleIdByHashVal){ std::hash<TString> tmphash; sampleId=tmphash(tree->sampleIdentifier); }
+
     // Loop over selected events
     if (loopSelected){
       MELAout << "BaseTreeLooper::loop: Looping over " << tree->sampleIdentifier << " selected events" << endl;
@@ -126,7 +136,13 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
         SimpleEntry product;
         if (tree->isValidEvent()){
           if (this->runEvent(tree, wgtExternal, product)){
-            if (keepProducts) this->addProduct(product, &ev_rec);
+            if (keepProducts){
+              if (storeSampleIdByMH || storeSampleIdByHashVal){
+                product.setNamedVal("SampleId", sampleId);
+                product.setNamedVal("EventNumber", ev_acc);
+              }
+              this->addProduct(product, &ev_rec);
+            }
           }
         }
         HelperFunctions::progressbar(ev, nevents);
@@ -143,7 +159,13 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
         SimpleEntry product;
         if (tree->isValidEvent()){
           if (this->runEvent(tree, wgtExternal, product)){
-            if (keepProducts) this->addProduct(product, &ev_rec);
+            if (keepProducts){
+              if (storeSampleIdByMH || storeSampleIdByHashVal){
+                product.setNamedVal("SampleId", sampleId);
+                product.setNamedVal("EventNumber", ev_acc);
+              }
+              this->addProduct(product, &ev_rec);
+            }
           }
         }
         HelperFunctions::progressbar(ev, nevents);

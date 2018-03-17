@@ -9,7 +9,16 @@
 
 
 class BaseTreeLooper{
+public:
+  enum SampleIdStorageType{
+    kNoStorage,
+    kStoreByMH,
+    kStoreByHashVal
+  };
+
 protected:
+  SampleIdStorageType sampleIdOpt; // When not kNoStorage, stores a sample identifier and original tree entry index in each output event
+
   // List of trees to loop over
   std::vector<CJLSTTree*> treeList;
 
@@ -20,12 +29,16 @@ protected:
   std::unordered_map<TString, short*> valshorts;
   std::unordered_map<TString, unsigned int*> valuints;
   std::unordered_map<TString, int*> valints;
+  std::unordered_map<TString, unsigned long*> valulongs;
+  std::unordered_map<TString, long*> vallongs;
   std::unordered_map<TString, float*> valfloats;
   std::unordered_map<TString, double*> valdoubles;
 
   std::unordered_map<TString, std::vector<short>*> valVshorts;
   std::unordered_map<TString, std::vector<unsigned int>*> valVuints;
   std::unordered_map<TString, std::vector<int>*> valVints;
+  std::unordered_map<TString, std::vector<unsigned long>*> valVulongs;
+  std::unordered_map<TString, std::vector<long>*> valVlongs;
   std::unordered_map<TString, std::vector<float>*> valVfloats;
   std::unordered_map<TString, std::vector<double>*> valVdoubles;
 
@@ -74,6 +87,10 @@ public:
 
   // Max. events
   void setMaximumEvents(int n);
+
+  // Sample id storage option
+  // POWHEG can be stored by mH, but might be better to use hash in others
+  void setSampleIdStorageOption(SampleIdStorageType opt);
 
   // Function to loop over the tree list
   virtual void loop(bool loopSelected, bool loopFailed, bool keepProducts);

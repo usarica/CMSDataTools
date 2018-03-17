@@ -14,13 +14,7 @@ const TString user_output_dir = "output/";
 
 ExtendedBinning getMassBinning(TTree* tree, bool separateZ4l=false);
 
-void acquireMassRatio_ProcessNominalToNominalInclusive(
-  const Channel channel, const Category category, const ACHypothesis hypo,
-  const unsigned int istage,
-  const TString fixedDate,
-  ProcessHandler::ProcessType proctype,
-  const TString strGenerator
-){
+void acquireMassRatio_ProcessNominalToNominalInclusive(const Channel channel, const Category category, const ACHypothesis hypo, const unsigned int istage, const TString fixedDate, ProcessHandler::ProcessType proctype, const TString strGenerator){
   const SystematicVariationTypes syst=sNominal;
 
   if (channel==NChannels) return;
@@ -290,14 +284,7 @@ void acquireMassRatio_ProcessNominalToNominalInclusive(
 }
 
 
-void acquireMassRatio_ProcessSystToNominal(
-  const Channel channel, const Category category, const ACHypothesis hypo,
-  const SystematicVariationTypes syst,
-  const unsigned int istage,
-  const TString fixedDate,
-  ProcessHandler::ProcessType proctype,
-  const TString strGenerator
-){
+void acquireMassRatio_ProcessSystToNominal(const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst, const unsigned int istage, const TString fixedDate, ProcessHandler::ProcessType proctype, const TString strGenerator){
   if (channel==NChannels) return;
   if (syst==sNominal) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;

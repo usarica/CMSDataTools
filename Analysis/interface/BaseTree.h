@@ -19,6 +19,8 @@ public:
     BranchType_short_t,
     BranchType_uint_t,
     BranchType_int_t,
+    BranchType_ulong_t,
+    BranchType_long_t,
     BranchType_float_t,
     BranchType_double_t,
 
@@ -26,6 +28,8 @@ public:
     BranchType_vshort_t,
     BranchType_vuint_t,
     BranchType_vint_t,
+    BranchType_vulong_t,
+    BranchType_vlong_t,
     BranchType_vfloat_t,
     BranchType_vdouble_t,
 
@@ -47,6 +51,8 @@ protected:
   std::unordered_map<TString, std::pair<short, short>*> valshorts;
   std::unordered_map<TString, std::pair<unsigned int, unsigned int>*> valuints;
   std::unordered_map<TString, std::pair<int, int>*> valints;
+  std::unordered_map<TString, std::pair<unsigned long, unsigned long>*> valulongs;
+  std::unordered_map<TString, std::pair<long, long>*> vallongs;
   std::unordered_map<TString, std::pair<float, float>*> valfloats;
   std::unordered_map<TString, std::pair<double, double>*> valdoubles;
 
@@ -54,6 +60,8 @@ protected:
   std::unordered_map<TString, std::vector<short>*> valVshorts;
   std::unordered_map<TString, std::vector<unsigned int>*> valVuints;
   std::unordered_map<TString, std::vector<int>*> valVints;
+  std::unordered_map<TString, std::vector<unsigned long>*> valVulongs;
+  std::unordered_map<TString, std::vector<long>*> valVlongs;
   std::unordered_map<TString, std::vector<float>*> valVfloats;
   std::unordered_map<TString, std::vector<double>*> valVdoubles;
 

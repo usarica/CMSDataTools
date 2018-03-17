@@ -108,6 +108,7 @@ template void SampleHelpers::bookBranch<bool>(TTree* tree, TString strname, bool
 template void SampleHelpers::bookBranch<short>(TTree* tree, TString strname, short* var);
 template void SampleHelpers::bookBranch<unsigned int>(TTree* tree, TString strname, unsigned int* var);
 template void SampleHelpers::bookBranch<int>(TTree* tree, TString strname, int* var);
+template void SampleHelpers::bookBranch<unsigned long>(TTree* tree, TString strname, unsigned long* var);
 template void SampleHelpers::bookBranch<long>(TTree* tree, TString strname, long* var);
 template void SampleHelpers::bookBranch<float>(TTree* tree, TString strname, float* var);
 template void SampleHelpers::bookBranch<double>(TTree* tree, TString strname, double* var);
@@ -115,6 +116,7 @@ template void SampleHelpers::bookBranch<std::vector<bool>*>(TTree* tree, TString
 template void SampleHelpers::bookBranch<std::vector<short>*>(TTree* tree, TString strname, std::vector<short>** var);
 template void SampleHelpers::bookBranch<std::vector<unsigned int>*>(TTree* tree, TString strname, std::vector<unsigned int>** var);
 template void SampleHelpers::bookBranch<std::vector<int>*>(TTree* tree, TString strname, std::vector<int>** var);
+template void SampleHelpers::bookBranch<std::vector<unsigned long>*>(TTree* tree, TString strname, std::vector<unsigned long>** var);
 template void SampleHelpers::bookBranch<std::vector<long>*>(TTree* tree, TString strname, std::vector<long>** var);
 template void SampleHelpers::bookBranch<std::vector<float>*>(TTree* tree, TString strname, std::vector<float>** var);
 template void SampleHelpers::bookBranch<std::vector<double>*>(TTree* tree, TString strname, std::vector<double>** var);
@@ -123,6 +125,7 @@ template void SampleHelpers::putBranch<bool>(TTree* tree, TString strname, bool&
 template void SampleHelpers::putBranch<short>(TTree* tree, TString strname, short& var);
 template void SampleHelpers::putBranch<unsigned int>(TTree* tree, TString strname, unsigned int& var);
 template void SampleHelpers::putBranch<int>(TTree* tree, TString strname, int& var);
+template void SampleHelpers::putBranch<unsigned long>(TTree* tree, TString strname, unsigned long& var);
 template void SampleHelpers::putBranch<long>(TTree* tree, TString strname, long& var);
 template void SampleHelpers::putBranch<float>(TTree* tree, TString strname, float& var);
 template void SampleHelpers::putBranch<double>(TTree* tree, TString strname, double& var);
@@ -130,6 +133,7 @@ template void SampleHelpers::putBranch<std::vector<bool>>(TTree* tree, TString s
 template void SampleHelpers::putBranch<std::vector<short>>(TTree* tree, TString strname, std::vector<short>& var);
 template void SampleHelpers::putBranch<std::vector<unsigned int>>(TTree* tree, TString strname, std::vector<unsigned int>& var);
 template void SampleHelpers::putBranch<std::vector<int>>(TTree* tree, TString strname, std::vector<int>& var);
+template void SampleHelpers::putBranch<std::vector<unsigned long>>(TTree* tree, TString strname, std::vector<unsigned long>& var);
 template void SampleHelpers::putBranch<std::vector<long>>(TTree* tree, TString strname, std::vector<long>& var);
 template void SampleHelpers::putBranch<std::vector<float>>(TTree* tree, TString strname, std::vector<float>& var);
 template void SampleHelpers::putBranch<std::vector<double>>(TTree* tree, TString strname, std::vector<double>& var);

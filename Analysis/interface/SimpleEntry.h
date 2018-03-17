@@ -19,6 +19,8 @@ struct SimpleEntry{
   std::unordered_map<TString, short> namedshorts;
   std::unordered_map<TString, unsigned int> nameduints;
   std::unordered_map<TString, int> namedints;
+  std::unordered_map<TString, unsigned long> namedulongs;
+  std::unordered_map<TString, long> namedlongs;
   std::unordered_map<TString, float> namedfloats;
   std::unordered_map<TString, double> nameddoubles;
 
@@ -26,6 +28,8 @@ struct SimpleEntry{
   std::unordered_map<TString, std::vector<short>> namedVshorts;
   std::unordered_map<TString, std::vector<unsigned int>> namedVuints;
   std::unordered_map<TString, std::vector<int>> namedVints;
+  std::unordered_map<TString, std::vector<unsigned long>> namedVulongs;
+  std::unordered_map<TString, std::vector<long>> namedVlongs;
   std::unordered_map<TString, std::vector<float>> namedVfloats;
   std::unordered_map<TString, std::vector<double>> namedVdoubles;
 

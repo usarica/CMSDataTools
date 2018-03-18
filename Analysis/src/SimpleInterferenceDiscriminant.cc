@@ -22,7 +22,7 @@ void SimpleInterferenceDiscriminant::eval(const std::vector<float>& vars, const 
     checkNanInf(vars) && (
     (isWithAvgME && checkNonNegative(vars))
     ||
-    (vars.size()==nvarsreq && checkNonNegative(vars, -1, 2) && checkNonNegative(vars, 3, -1))
+    (vars.size()==nvarsreq && checkNonNegative(vars, -1, 2))
     )
     ){
     float constant = getCval(valReco);

@@ -40,12 +40,12 @@ class StageXBatchManager:
 
       (self.opt,self.args) = self.parser.parse_args()
 
-      if not hasattr(self.opt, "process"):
+      if not hasattr(self.opt, "process") or self.opt.process is None:
          sys.exit("Need to set --process option")
-      elif self.opt.process != "ZX" and not hasattr(self.opt, "generator"):
+      elif self.opt.process != "ZX" and (not hasattr(self.opt, "generator") or self.opt.generator is None):
          sys.exit("Need to set --generator option")
 
-      if self.opt.process != "ZX":
+      if self.opt.process == "ZX":
          self.generator = "Data"
       else:
          self.generator = self.opt.generator

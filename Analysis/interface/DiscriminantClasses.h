@@ -11,6 +11,8 @@
 #include "JJEWQCDBkgDiscriminant.h"
 #include "SimpleInterferenceDiscriminant.h"
 #include "JJEWQCDInterferenceDiscriminant.h"
+#include "SimpleInterferenceTrigPhase.h"
+#include "SimpleAverageInterferenceTrigPhase.h"
 
 
 namespace DiscriminantClasses{
@@ -20,6 +22,7 @@ namespace DiscriminantClasses{
 
     kDggbkgkin,
     kDggint,
+    kCggint,
 
     kDjVBF,
     kDjjVBF,
@@ -40,6 +43,8 @@ namespace DiscriminantClasses{
 
     kDbkgjjEWQCD,
     kDintjjEWQCD,
+    kCjjVBFint,
+    kCjjVHint,
 
     kDL1dec,
     kDL1decint,

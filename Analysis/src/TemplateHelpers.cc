@@ -21,10 +21,16 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
       KDbkg.KD = constructKDFromType(kDbkgkin, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
       KDbkg.KDvars = getKDVars(kDbkgkin);
       KDlist.push_back(KDbkg);
+      /*
       KDspecs KDbkgsigint("Dggint");
       KDbkgsigint.KD = constructKDFromType(kDggint, Form("%s%s%s", "../data/SmoothKDConstant_m4l_Dggbkgkin_", strChannel.Data(), "_13TeV.root"), "sp_gr_varReco_Constant_Smooth");
       KDbkgsigint.KDvars = getKDVars(kDggint);
       KDlist.push_back(KDbkgsigint);
+      */
+      KDspecs KCggint("Cggint");
+      KCggint.KD = constructKDFromType(kCggint, "", "");
+      KCggint.KDvars = getKDVars(kCggint);
+      KDlist.push_back(KCggint);
     }
     KDspecs KDL1("DL1dec");
     KDL1.KD = constructKDFromType(kDL1dec, "", "", "../data/gConstant_HZZ2e2mu_L1.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_L1", 1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1));
@@ -54,6 +60,7 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
       );
       KDbkgjjEWQCD.KDvars = getKDVars(kDbkgjjEWQCD);
       KDlist.push_back(KDbkgjjEWQCD);
+      /*
       KDspecs KDintjjEWQCD("DintjjEWQCD");
       KDintjjEWQCD.KD = constructKDFromType(
         kDintjjEWQCD,
@@ -66,6 +73,11 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
       );
       KDintjjEWQCD.KDvars = getKDVars(kDintjjEWQCD);
       KDlist.push_back(KDintjjEWQCD);
+      */
+      KDspecs KCjjVBFint("CjjVBFint");
+      KCjjVBFint.KD = constructKDFromType(kCjjVBFint, "", "");
+      KCjjVBFint.KDvars = getKDVars(kCjjVBFint);
+      KDlist.push_back(KCjjVBFint);
     }
     KDspecs KDL1("DL1jjVBFdec");
     KDL1.KD = constructKDFromType(kDL1jjVBFdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1), 2));
@@ -101,6 +113,7 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
       );
       KDbkgjjEWQCD.KDvars = getKDVars(kDbkgjjEWQCD);
       KDlist.push_back(KDbkgjjEWQCD);
+      /*
       KDspecs KDintjjEWQCD("DintjjEWQCD");
       KDintjjEWQCD.KD = constructKDFromType(
         kDintjjEWQCD,
@@ -113,6 +126,11 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
       );
       KDintjjEWQCD.KDvars = getKDVars(kDintjjEWQCD);
       KDlist.push_back(KDintjjEWQCD);
+      */
+      KDspecs KCjjVHint("CjjVHint");
+      KCjjVHint.KD = constructKDFromType(kCjjVHint, "", "");
+      KCjjVHint.KDvars = getKDVars(kCjjVHint);
+      KDlist.push_back(KCjjVHint);
     }
     KDspecs KDL1("DL1jjVHdec");
     KDL1.KD = constructKDFromType(kDL1jjVHdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1), 2));

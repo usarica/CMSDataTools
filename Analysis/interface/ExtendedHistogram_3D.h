@@ -50,9 +50,9 @@ public:
 
   void fill(double x, double y, double z, double wgt=1.);
 
-  void rebin(ExtendedBinning const* binningX, ExtendedBinning const* binningY, ExtendedBinning const* binningZ);
+  void rebin(ExtendedBinning const* binningX, ExtendedBinning const* binningY, ExtendedBinning const* binningZ, signed char condDim=-1);
 
-  void constructFromTree(TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, ExtendedBinning const* binningX=nullptr, ExtendedBinning const* binningY=nullptr, ExtendedBinning const* binningZ=nullptr);
+  void constructFromTree(TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, bool* flag=nullptr, ExtendedBinning const* binningX=nullptr, ExtendedBinning const* binningY=nullptr, ExtendedBinning const* binningZ=nullptr);
 
   static ExtendedHistogram_3D divideHistograms(ExtendedHistogram_3D const& h1, ExtendedHistogram_3D const& h2, bool useEffErr, TString newname="");
 

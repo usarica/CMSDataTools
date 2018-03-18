@@ -98,26 +98,22 @@ void ExtendedHistogram_3D::fill(double x, double y, double z, double wgt){
   if (prof_z) prof_z->Fill(z, z, wgt);
 }
 
-void ExtendedHistogram_3D::rebin(ExtendedBinning const* binningX, ExtendedBinning const* binningY, ExtendedBinning const* binningZ){
-  bool condX=(!binningX);
-  bool condY=(!binningY);
-  bool condZ=(!binningZ);
-  if ((condX || binningX->isValid()) && (condY || binningY->isValid()) && (condZ || binningZ->isValid()) && !(condX && condY && condZ)){
+void ExtendedHistogram_3D::rebin(ExtendedBinning const* binningX, ExtendedBinning const* binningY, ExtendedBinning const* binningZ, signed char condDim){
+  if (!binningX) binningX=&xbinning;
+  if (!binningY) binningY=&ybinning;
+  if (!binningZ) binningZ=&zbinning;
+  bool condX=(condDim==0);
+  bool condY=(condDim==1);
+  bool condZ=(condDim==2);
+  if (binningX->isValid() && binningY->isValid() && binningZ->isValid()){
     std::vector<std::pair<TProfile const*, unsigned int>> condProfs;
-    if (condX && prof_x) condProfs.emplace_back(prof_x, 0);
-    if (condY && prof_y) condProfs.emplace_back(prof_y, 1);
-    if (condZ && prof_z) condProfs.emplace_back(prof_z, 2);
-    ExtendedBinning bX, bY, bZ;
-    if (!condX) bX=*binningX;
-    else bX=xbinning;
-    if (!condY) bY=*binningY;
-    else bY=ybinning;
-    if (!condZ) bZ=*binningZ;
-    else bZ=zbinning;
-    if (histo) rebinHistogram(histo, bX, bY, bZ, (condX || condY || condZ ? &condProfs : nullptr));
-    if (prof_x && !condX) rebinProfile(prof_x, bX);
-    if (prof_y && !condY) rebinProfile(prof_y, bY);
-    if (prof_z && !condZ) rebinProfile(prof_z, bZ);
+    if (condX) condProfs.emplace_back(prof_x, 0);
+    if (condY) condProfs.emplace_back(prof_y, 1);
+    if (condZ) condProfs.emplace_back(prof_z, 2);
+    if (histo) rebinHistogram(histo, *binningX, *binningY, *binningZ, (condX || condY || condZ ? &condProfs : nullptr));
+    if (prof_x) rebinProfile(prof_x, *binningX);
+    if (prof_y) rebinProfile(prof_y, *binningY);
+    if (prof_z) rebinProfile(prof_z, *binningZ);
   }
 }
 
@@ -150,14 +146,23 @@ void ExtendedHistogram_3D::averageHistograms(ExtendedHistogram_3D& hTarget, Exte
   if (hTarget.prof_z && h2.prof_z) combineHistogramsByWeightedAverage(hTarget.prof_z, h2.prof_z, hTarget.prof_z);
 }
 
-void ExtendedHistogram_3D::constructFromTree(TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, ExtendedBinning const* binningX, ExtendedBinning const* binningY, ExtendedBinning const* binningZ){
+void ExtendedHistogram_3D::constructFromTree(TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, bool* flag, ExtendedBinning const* binningX, ExtendedBinning const* binningY, ExtendedBinning const* binningZ){
   if (!tree) return;
   if (binningX) setBinning(*binningX, 0, binningX->getLabel());
   if (binningY) setBinning(*binningY, 1, binningY->getLabel());
   if (binningZ) setBinning(*binningZ, 2, binningZ->getLabel());
   build();
+  double xlow=xbinning.getMin() - xbinning.getBinWidth(0);
+  double xhigh=xbinning.getMax() + xbinning.getBinWidth(xbinning.getNbins()-1);
+  double ylow=ybinning.getMin() - ybinning.getBinWidth(0);
+  double yhigh=ybinning.getMax() + ybinning.getBinWidth(ybinning.getNbins()-1);
+  double zlow=zbinning.getMin() - zbinning.getBinWidth(0);
+  double zhigh=zbinning.getMax() + zbinning.getBinWidth(zbinning.getNbins()-1);
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
-    fill(xvar, yvar, zvar, weight);
+    if (xvar<xlow || xvar>=xhigh) continue;
+    if (yvar<ylow || yvar>=yhigh) continue;
+    if (zvar<zlow || zvar>=zhigh) continue;
+    if (!flag || (flag && *flag)) fill(xvar, yvar, zvar, weight);
   }
 }

@@ -42,7 +42,7 @@ public:
 
   void rebin(ExtendedBinning const* binningX);
 
-  void constructFromTree(TTree* tree, float& xvar, float& weight, ExtendedBinning const* binningX=nullptr);
+  void constructFromTree(TTree* tree, float& xvar, float& weight, bool* flag=nullptr, ExtendedBinning const* binningX=nullptr);
 
   static ExtendedHistogram_1D divideHistograms(ExtendedHistogram_1D const& h1, ExtendedHistogram_1D const& h2, bool useEffErr, TString newname="");
 

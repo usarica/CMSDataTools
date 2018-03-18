@@ -35,6 +35,7 @@ public:
   double getBinLowEdge(const int bin) const;
   double getBinHighEdge(const int bin) const;
   double getBinCenter(const int bin) const;
+  double getBinWidth(const int bin) const;
 
   double getMin() const;
   double getMax() const;

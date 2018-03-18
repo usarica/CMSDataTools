@@ -104,12 +104,15 @@ void ExtendedHistogram_1D::averageHistograms(ExtendedHistogram_1D& hTarget, Exte
   if (hTarget.prof_x && h2.prof_x) combineHistogramsByWeightedAverage(hTarget.prof_x, h2.prof_x, hTarget.prof_x);
 }
 
-void ExtendedHistogram_1D::constructFromTree(TTree* tree, float& xvar, float& weight, ExtendedBinning const* binningX){
+void ExtendedHistogram_1D::constructFromTree(TTree* tree, float& xvar, float& weight, bool* flag, ExtendedBinning const* binningX){
   if (!tree) return;
   if (binningX) setBinning(*binningX, 0, binningX->getLabel());
   build();
+  double xlow=xbinning.getMin() - xbinning.getBinWidth(0);
+  double xhigh=xbinning.getMax() + xbinning.getBinWidth(xbinning.getNbins()-1);
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
-    fill(xvar, weight);
+    if (xvar<xlow || xvar>=xhigh) continue;
+    if (!flag || (flag && *flag)) fill(xvar, weight);
   }
 }

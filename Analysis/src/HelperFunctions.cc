@@ -2846,22 +2846,14 @@ void HelperFunctions::rebinHistogram(TH2F*& histo, const ExtendedBinning& binnin
     for (pair<TProfile const*, unsigned int>& condProf:*condProfs) condDims->push_back(condProf.second);
   }
 
-  MELAout << "HERE1" << endl;
   TH2F* htmp_cumulant=nullptr;
   getCumulantHistogram(histo, htmp_cumulant, "", condDims);
-  MELAout << "HERE2" << endl;
   rebinCumulant(htmp_cumulant, binningX, binningY, condProfs);
-  MELAout << "HERE3" << endl;
   delete histo; histo=nullptr;
-  MELAout << "HERE4" << endl;
   translateCumulantToHistogram(htmp_cumulant, histo, hname, condDims);
-  MELAout << "HERE5" << endl;
   histo->SetTitle(htitle);
-  MELAout << "HERE6" << endl;
   delete htmp_cumulant;
-  MELAout << "HERE7" << endl;
   delete condDims;
-  MELAout << "HERE8" << endl;
 }
 void HelperFunctions::rebinHistogram(TH3F*& histo, const ExtendedBinning& binningX, const ExtendedBinning& binningY, const ExtendedBinning& binningZ, std::vector<std::pair<TProfile const*, unsigned int>>* condProfs){
   if (!histo) return;

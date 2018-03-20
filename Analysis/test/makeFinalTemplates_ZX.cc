@@ -182,12 +182,19 @@ bool getFilesAndTrees(
 }
 
 
-void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const SystematicVariationTypes syst, CategorizationHelpers::MassRegion massregion, const unsigned int istage=1, const TString fixedDate=""){
+void makeFinalTemplates_ZX_one(const Channel channel, const ACHypothesis hypo, const SystematicVariationTypes syst, CategorizationHelpers::MassRegion massregion, const unsigned int istage=1, const TString fixedDate=""){
   const ProcessHandler::ProcessType proctype=ProcessHandler::kZX;
   if (channel==NChannels) return;
   ProcessHandleType const* inputProcessHandle=(ProcessHandleType const*) getProcessHandlerPerMassRegion(proctype, CategorizationHelpers::kOffshell); // Input is always organized in offshell conventions
   ProcessHandleType const* outputProcessHandle=(ProcessHandleType const*) getProcessHandlerPerMassRegion(proctype, massregion);
   if (!inputProcessHandle || !outputProcessHandle) return;
+
+  vector<Category> catList = getAllowedCategories(globalCategorizationScheme);
+  {
+    bool doProceed=false;
+    for (auto& cat:catList) doProceed |= (systematicAllowed(cat, channel, proctype, syst, "Data"));
+    if (!doProceed) return;
+  }
 
   const TString strChannel = getChannelName(channel);
   const TString strACHypo = getACHypothesisName(hypo);
@@ -211,7 +218,6 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
 
   TDirectory* rootdir=gDirectory;
 
-  vector<Category> catList = getAllowedCategories(globalCategorizationScheme);
   // Nominal categorization efficiencies
   std::vector<MassRatioObject> CategorizationEfficiencies;
   // Systematic/nominal mass ratios
@@ -238,7 +244,7 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
       }
       CategorizationEfficiencies.emplace_back(cinput, cat, sNominal);
     }
-    if (syst!=sNominal && systematicAllowed(cat, channel, inputProcessHandle->getProcessType(), syst, "Data")){
+    if (syst!=sNominal && cat!=Untagged && systematicAllowed(cat, channel, inputProcessHandle->getProcessType(), syst, "Data")){
       const TString strCategory = getCategoryName(cat);
       TString INPUT_NAME = Form(
         "HtoZZ%s_%s_%s_MassRatios_SystToNominal_%s_%s_%s%s",
@@ -246,7 +252,7 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
         strACHypo.Data(),
         inputProcessHandle->getProcessName().Data(),
         strSystematics.Data(),
-        "POWHEG",
+        "Data",
         ".root"
       );
       TString cinput = user_output_dir + sqrtsDir + "Templates/" + strdate + "/MassRatios/" + strStage + "/" + INPUT_NAME;
@@ -513,7 +519,7 @@ template<> void getTemplatesPerCategory<2>(
   assert(fixedTrees.size()==ntpls);
   assert(nKDs==2);
 
-  // Fill templates from POWHEG
+  // Fill templates
   vector<ExtHist_t> hTemplates;
   hTemplates.reserve(ntpls);
   for (unsigned int t=0; t<ntpls; t++){
@@ -571,7 +577,7 @@ template<> void getTemplatesPerCategory<2>(
       auto& tpl = hTemplates.at(t);
       TH_t*& htpl = tpl.getHistogram();
 
-      TString tplname=tpl.getName(); TString tpltitle=tpl.getTitle(); replaceString(tplname, "_POWHEG", ""); tpl.setNameTitle(tplname, tpltitle);
+      TString tplname=tpl.getName(); TString tpltitle=tpl.getTitle(); replaceString(tplname, "_POWHEG", ""); replaceString(tplname, "_Data", ""); tpl.setNameTitle(tplname, tpltitle);
       ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(t);
 
       MELAout << "Checking integrity of [ " << htpl->GetName() << " ]" << endl;
@@ -612,7 +618,7 @@ template<> void getTemplatesPerCategory<3>(
   assert(fixedTrees.size()==ntpls);
   assert(nKDs==3);
 
-  // Fill templates from POWHEG
+  // Fill templates
   vector<ExtHist_t> hTemplates;
   hTemplates.reserve(ntpls);
   for (unsigned int t=0; t<ntpls; t++){
@@ -671,7 +677,7 @@ template<> void getTemplatesPerCategory<3>(
       auto& tpl = hTemplates.at(t);
       TH_t*& htpl = tpl.getHistogram();
 
-      TString tplname=tpl.getName(); TString tpltitle=tpl.getTitle(); replaceString(tplname, "_POWHEG", ""); tpl.setNameTitle(tplname, tpltitle);
+      TString tplname=tpl.getName(); TString tpltitle=tpl.getTitle(); replaceString(tplname, "_POWHEG", ""); replaceString(tplname, "_Data", ""); tpl.setNameTitle(tplname, tpltitle);
       ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(t);
 
       MELAout << "Checking integrity of [ " << htpl->GetName() << " ]" << endl;
@@ -783,6 +789,23 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_3D>(
       MELAout << "Checking integrity of [ " << htpl->GetName() << " ]" << endl;
       if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
       else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
+    }
+  }
+}
+
+
+void makeFinalTemplates_ZX(const unsigned int istage=1, const TString fixedDate=""){
+  const ProcessHandler::ProcessType proctype=ProcessHandler::kZX;
+  for (int hypo=0; hypo<(int) ACHypothesisHelpers::nACHypotheses; hypo++){
+    for (int channel=0; channel<(int) SampleHelpers::NChannels; channel++){
+      for (int syst=0; syst<(int) SystematicsHelpers::nSystematicVariations; syst++){
+        makeFinalTemplates_ZX_one(
+          (SampleHelpers::Channel) channel, (ACHypothesisHelpers::ACHypothesis) hypo, (SystematicsHelpers::SystematicVariationTypes) syst, kOnshell, istage, fixedDate
+        );
+        makeFinalTemplates_ZX_one(
+          (SampleHelpers::Channel) channel, (ACHypothesisHelpers::ACHypothesis) hypo, (SystematicsHelpers::SystematicVariationTypes) syst, kOffshell, istage, fixedDate
+        );
+      }
     }
   }
 }

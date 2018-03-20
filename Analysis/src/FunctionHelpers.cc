@@ -10,28 +10,62 @@ FunctionHelpers::SimpleGaussian::SimpleGaussian(double mean_, double sigma_, Sim
   mean(mean_), sigma(sigma_), rangeset(rangeset_), min(min_), max(max_)
 {}
 
-double FunctionHelpers::SimpleGaussian::eval(double x){ return TMath::Gaus(x, mean, sigma, false); }
+double FunctionHelpers::SimpleGaussian::eval(double x){
+  if (sigma==0.){
+    if (x==mean) return 1;
+    else return 0;
+  }
+  else return TMath::Gaus(x, mean, sigma, false);
+}
 double FunctionHelpers::SimpleGaussian::norm(){
-  double sigmasq=pow(sigma, 2);
-  double norm=sqrt(2.*TMath::Pi())*sigma;
-  if (rangeset==kHasInfRange) return norm;
-  else if (rangeset==kHasLowHighRange){
-    return norm*0.5*(TMath::Erfc(-(max-mean)/sqrt(2.*sigmasq))-TMath::Erfc(-(min-mean)/sqrt(2.*sigmasq)));
+  if (sigma==0.){
+    if (
+      rangeset==kHasInfRange
+      ||
+      (rangeset==kHasLowHighRange && min<=mean && mean<=max)
+      ||
+      (rangeset==kHasLowRange && min<mean)
+      ||
+      (rangeset==kHasHighRange && mean<=max)
+      ) return 1;
+    else return 0;
   }
-  else if (rangeset==kHasLowRange){
-    return norm*(1.-0.5*TMath::Erfc(-(min-mean)/sqrt(2.*sigmasq)));
+  else{
+    double sigmasq=pow(sigma, 2);
+    double norm=sqrt(2.*TMath::Pi())*sigma;
+    if (rangeset==kHasInfRange) return norm;
+    else if (rangeset==kHasLowHighRange){
+      return norm*0.5*(TMath::Erfc(-(max-mean)/sqrt(2.*sigmasq))-TMath::Erfc(-(min-mean)/sqrt(2.*sigmasq)));
+    }
+    else if (rangeset==kHasLowRange){
+      return norm*(1.-0.5*TMath::Erfc(-(min-mean)/sqrt(2.*sigmasq)));
+    }
+    else if (rangeset==kHasHighRange){
+      return norm*(0.5*TMath::Erfc(-(max-mean)/sqrt(2.*sigmasq)));
+    }
+    else return 1;
   }
-  else if (rangeset==kHasHighRange){
-    return norm*(0.5*TMath::Erfc(-(max-mean)/sqrt(2.*sigmasq)));
-  }
-  else return 1;
 }
 double FunctionHelpers::SimpleGaussian::integral(double xmin, double xmax){
   if (rangeset==kHasLowHighRange || rangeset==kHasLowRange) xmin=std::max(xmin, min);
   if (rangeset==kHasLowHighRange || rangeset==kHasHighRange) xmax=std::min(xmax, max);
-  double sigmasq=pow(sigma, 2);
-  double norm=sqrt(2.*TMath::Pi())*sigma;
-  return 0.5*norm*(TMath::Erfc(-(xmax-mean)/sqrt(2.*sigmasq))-TMath::Erfc(-(xmin-mean)/sqrt(2.*sigmasq)));
+  if (sigma==0.){
+    if (
+      rangeset==kHasInfRange
+      ||
+      (rangeset==kHasLowHighRange && xmin<=mean && mean<=xmax)
+      ||
+      (rangeset==kHasLowRange && xmin<mean)
+      ||
+      (rangeset==kHasHighRange && mean<=xmax)
+      ) return 1;
+    else return 0;
+  }
+  else{
+    double sigmasq=pow(sigma, 2);
+    double norm=sqrt(2.*TMath::Pi())*sigma;
+    return 0.5*norm*(TMath::Erfc(-(xmax-mean)/sqrt(2.*sigmasq))-TMath::Erfc(-(xmin-mean)/sqrt(2.*sigmasq)));
+  }
 }
 double FunctionHelpers::SimpleGaussian::evalNorm(double x){
   double val = eval(x);

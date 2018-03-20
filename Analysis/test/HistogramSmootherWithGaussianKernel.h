@@ -93,6 +93,7 @@ TH1F* getSmoothHistogram(
     gausX.setMean(xvar); gausX.setSigma(sX);
 
     for (unsigned int i=0; i<bX.getNbins(); i++){
+      if (sX==0. && (int) i!=ix) continue;
       double fX = gausX.integralNorm(bX.getBinLowEdge(i), bX.getBinHighEdge(i));
       if (fX>1. || fX<0.){ MELAerr << "fX=" << fX << endl; continue; }
       if (fX==0.) continue;
@@ -162,10 +163,12 @@ TH2F* getSmoothHistogram(
     assert(checkVarNanInf(sX) && checkVarNanInf(sY));
 
     for (unsigned int i=0; i<bX.getNbins(); i++){
+      if (sX==0. && (int) i!=ix) continue;
       double fX = gausX.integralNorm(bX.getBinLowEdge(i), bX.getBinHighEdge(i));
       if (fX>1. || fX<0.){ MELAerr << "fX=" << fX << endl; continue; }
       if (fX==0.) continue;
       for (unsigned int j=0; j<bY.getNbins(); j++){
+        if (sY==0. && (int) j!=iy) continue;
         double fY = gausY.integralNorm(bY.getBinLowEdge(j), bY.getBinHighEdge(j));
         if (fY>1. || fY<0.){ MELAerr << "fY=" << fY << endl; continue; }
         if (fY==0.) continue;
@@ -246,14 +249,17 @@ TH3F* getSmoothHistogram(
     assert(checkVarNanInf(sX) && checkVarNanInf(sY) && checkVarNanInf(sZ));
 
     for (unsigned int i=0; i<bX.getNbins(); i++){
+      if (sX==0. && (int) i!=ix) continue;
       double fX = gausX.integralNorm(bX.getBinLowEdge(i), bX.getBinHighEdge(i));
       if (fX>1. || fX<0.){ MELAerr << "fX=" << fX << endl; continue; }
       if (fX==0.) continue;
       for (unsigned int j=0; j<bY.getNbins(); j++){
+        if (sY==0. && (int) j!=iy) continue;
         double fY = gausY.integralNorm(bY.getBinLowEdge(j), bY.getBinHighEdge(j));
         if (fY>1. || fY<0.){ MELAerr << "fY=" << fY << endl; continue; }
         if (fY==0.) continue;
         for (unsigned int k=0; k<bZ.getNbins(); k++){
+          if (sZ==0. && (int) k!=iz) continue;
           double fZ = gausZ.integralNorm(bZ.getBinLowEdge(k), bZ.getBinHighEdge(k));
           if (fZ>1. || fZ<0.){ MELAerr << "fZ=" << fZ << endl; continue; }
           if (fZ==0.) continue;

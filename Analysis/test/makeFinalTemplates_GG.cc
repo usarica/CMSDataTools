@@ -5,16 +5,13 @@
 #include "CheckSetTemplatesCategoryScheme.h"
 #include "fixTreeWeights.h"
 #include "acquireProcessMassRatios.cc"
+#include "HistogramSmootherWithGaussianKernel.h"
 
 
 // Constants to affect the template code
 #ifndef outputdir_def
 #define outputdir_def
 const TString user_output_dir = "output/";
-#endif
-
-#ifndef DOSMOOTHING
-#define DOSMOOTHING false
 #endif
 
 #ifndef CHISQCUT
@@ -60,7 +57,6 @@ template <unsigned char N> void getTemplatesPerCategory(
   std::vector<TTree*>& fixedTrees_MCFM,
   std::vector<TString> const& KDset,
   std::vector<ExtendedBinning> const& KDbinning,
-  std::vector<ExtendedBinning> const& KDbinning_coarse,
   std::vector<ExtendedHistogram_1D> const& hMass_FromNominalInclusive,
   std::unordered_map<TString, float>& KDvars, float& weight, bool& isCategory
 );
@@ -72,7 +68,6 @@ template<> void getTemplatesPerCategory<2>(
   std::vector<TTree*>& fixedTrees_MCFM,
   std::vector<TString> const& KDset,
   std::vector<ExtendedBinning> const& KDbinning,
-  std::vector<ExtendedBinning> const& KDbinning_coarse,
   std::vector<ExtendedHistogram_1D> const& hMass_FromNominalInclusive,
   std::unordered_map<TString, float>& KDvars, float& weight, bool& isCategory
   );
@@ -83,7 +78,6 @@ template<> void getTemplatesPerCategory<3>(
   std::vector<TTree*>& fixedTrees_POWHEG, std::vector<TTree*>& fixedTrees_MCFM,
   std::vector<TString> const& KDset,
   std::vector<ExtendedBinning> const& KDbinning,
-  std::vector<ExtendedBinning> const& KDbinning_coarse,
   std::vector<ExtendedHistogram_1D> const& hMass_FromNominalInclusive,
   std::unordered_map<TString, float>& KDvars, float& weight, bool& isCategory
   );
@@ -254,7 +248,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       }
       CategorizationEfficiencies.emplace_back(cinput, cat, sNominal);
     }
-    if (syst!=sNominal && systematicAllowed(cat, channel, inputProcessHandle->getProcessType(), syst, "POWHEG")){
+    if (syst!=sNominal && cat!=Untagged && systematicAllowed(cat, channel, inputProcessHandle->getProcessType(), syst, "POWHEG")){
       const TString strCategory = getCategoryName(cat);
       TString INPUT_NAME = Form(
         "HtoZZ%s_%s_%s_MassRatios_SystToNominal_%s_%s_%s%s",
@@ -275,7 +269,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       }
       CategorizationSystRatios_POWHEG.emplace_back(cinput, cat, syst);
     }
-    if (syst!=sNominal && systematicAllowed(cat, channel, inputProcessHandle->getProcessType(), syst, "MCFM")){
+    if (syst!=sNominal && cat!=Untagged && systematicAllowed(cat, channel, inputProcessHandle->getProcessType(), syst, "MCFM")){
       const TString strCategory = getCategoryName(cat);
       TString INPUT_NAME = Form(
         "HtoZZ%s_%s_%s_MassRatios_SystToNominal_%s_%s_%s%s",
@@ -476,13 +470,6 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
     for (auto& KDname:KDset) KDvars[KDname]=0;
     vector<ExtendedBinning> KDbinning;
     for (auto& KDname:KDset) KDbinning.push_back(getDiscriminantFineBinning(channel, cat, KDname, massregion));
-    vector<ExtendedBinning> KDbinning_coarse;
-    if (DOSMOOTHING){
-      for (auto& KDname:KDset) KDbinning_coarse.push_back(getDiscriminantCoarseBinning(channel, cat, KDname, massregion));
-    }
-    else{
-      for (auto& KDname:KDset) KDbinning_coarse.push_back(getDiscriminantFineBinning(channel, cat, KDname, massregion));
-    }
     unsigned int nKDs = KDset.size();
     MELAout << "\t- Number of template dimensions = " << nKDs << endl;
 
@@ -567,7 +554,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       rootdir, foutput[cat], outputProcessHandle, cat, hypo,
       tplset,
       fixedTrees_POWHEG, fixedTrees_MCFM,
-      KDset, KDbinning, KDbinning_coarse,
+      KDset, KDbinning,
       hMass_FromNominalInclusive.find(cat)->second,
       KDvars, weight, isCategory
       );
@@ -575,7 +562,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       rootdir, foutput[cat], outputProcessHandle, cat, hypo,
       tplset,
       fixedTrees_POWHEG, fixedTrees_MCFM,
-      KDset, KDbinning, KDbinning_coarse,
+      KDset, KDbinning,
       hMass_FromNominalInclusive.find(cat)->second,
       KDvars, weight, isCategory
       );
@@ -605,7 +592,6 @@ template<> void getTemplatesPerCategory<2>(
   std::vector<TTree*>& fixedTrees_MCFM,
   std::vector<TString> const& KDset,
   std::vector<ExtendedBinning> const& KDbinning,
-  std::vector<ExtendedBinning> const& KDbinning_coarse,
   std::vector<ExtendedHistogram_1D> const& hMass_FromNominalInclusive,
   std::unordered_map<TString, float>& KDvars, float& weight, bool& isCategory
   ){
@@ -616,7 +602,7 @@ template<> void getTemplatesPerCategory<2>(
   const unsigned int ntpls=tplset.size();
   const unsigned int nKDs=KDbinning.size();
   assert(fixedTrees_POWHEG.size()==ntpls || fixedTrees_MCFM.size()==ntpls);
-  assert(nKDs==2 && nKDs==KDbinning_coarse.size());
+  assert(nKDs==2);
 
   vector<ExtHist_t>* hTemplates=nullptr;
 
@@ -630,27 +616,15 @@ template<> void getTemplatesPerCategory<2>(
     TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_POWHEG";
     TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
 
-    hTemplates_POWHEG.emplace_back(templatename, templatetitle, KDbinning_coarse.at(0), KDbinning_coarse.at(1));
-    int nEntries=tree->GetEntries();
-    for (int ev=0; ev<nEntries; ev++){
-      tree->GetEntry(ev);
-      progressbar(ev, nEntries);
-
-      if (!isCategory) continue;
-      for (unsigned int ikd=0; ikd<nKDs; ikd++){
-        TString KDname=KDset.at(ikd);
-        int nKDbins=KDbinning.at(ikd).getNbins();
-        float& KDval=KDvars.find(KDname)->second;
-        if (KDname=="ZZMass"){
-          double minval=(2.*KDbinning.at(ikd).getBinLowEdge(0)-KDbinning.at(ikd).getBinLowEdge(1));
-          double maxval=(2.*KDbinning.at(ikd).getBinLowEdge(nKDbins)-KDbinning.at(ikd).getBinLowEdge(nKDbins-1));
-          if (KDval<minval || KDval>maxval) continue;
-        }
-        else if (KDval<KDbinning.at(ikd).getBinLowEdge(0)) KDval=KDbinning.at(ikd).getBinLowEdge(0)*(1.-0.999*double(ev)/double(nEntries)) + KDbinning.at(ikd).getBinLowEdge(1)*(0.999*double(ev)/double(nEntries));
-        else if (KDval>KDbinning.at(ikd).getBinLowEdge(nKDbins)) KDval=KDbinning.at(ikd).getBinLowEdge(nKDbins-1)*(1.-0.999*double(ev)/double(nEntries)) + KDbinning.at(ikd).getBinLowEdge(nKDbins)*(0.999*double(ev)/double(nEntries));
-      }
-      hTemplates_POWHEG.back().fill(KDvars[KDset.at(0)], KDvars[KDset.at(1)], weight);
-    }
+    hTemplates_POWHEG.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1));
+    TH_t* hSmooth=getSmoothHistogram(
+      templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1),
+      tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, weight, isCategory,
+      2, 2
+    );
+    *(hTemplates_POWHEG.back().getHistogram()) = *hSmooth;
+    delete hSmooth;
+    hTemplates_POWHEG.back().getHistogram()->SetNameTitle(templatename, templatetitle);
   }
   // Do post-processing
   PostProcessTemplatesWithPhase(
@@ -672,27 +646,15 @@ template<> void getTemplatesPerCategory<2>(
     TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_MCFM";
     TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
 
-    hTemplates_MCFM.emplace_back(templatename, templatetitle, KDbinning_coarse.at(0), KDbinning_coarse.at(1));
-    int nEntries=tree->GetEntries();
-    for (int ev=0; ev<nEntries; ev++){
-      tree->GetEntry(ev);
-      progressbar(ev, nEntries);
-
-      if (!isCategory) continue;
-      for (unsigned int ikd=0; ikd<nKDs; ikd++){
-        TString KDname=KDset.at(ikd);
-        int nKDbins=KDbinning.at(ikd).getNbins();
-        float& KDval=KDvars.find(KDname)->second;
-        if (KDname=="ZZMass"){
-          double minval=(2.*KDbinning.at(ikd).getBinLowEdge(0)-KDbinning.at(ikd).getBinLowEdge(1));
-          double maxval=(2.*KDbinning.at(ikd).getBinLowEdge(nKDbins)-KDbinning.at(ikd).getBinLowEdge(nKDbins-1));
-          if (KDval<minval || KDval>maxval) continue;
-        }
-        else if (KDval<KDbinning.at(ikd).getBinLowEdge(0)) KDval=KDbinning.at(ikd).getBinLowEdge(0)*(1.-0.999*double(ev)/double(nEntries)) + KDbinning.at(ikd).getBinLowEdge(1)*(0.999*double(ev)/double(nEntries));
-        else if (KDval>KDbinning.at(ikd).getBinLowEdge(nKDbins)) KDval=KDbinning.at(ikd).getBinLowEdge(nKDbins-1)*(1.-0.999*double(ev)/double(nEntries)) + KDbinning.at(ikd).getBinLowEdge(nKDbins)*(0.999*double(ev)/double(nEntries));
-      }
-      hTemplates_MCFM.back().fill(KDvars[KDset.at(0)], KDvars[KDset.at(1)], weight);
-    }
+    hTemplates_MCFM.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1));
+    TH_t* hSmooth=getSmoothHistogram(
+      templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1),
+      tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, weight, isCategory,
+      2, 2
+    );
+    *(hTemplates_MCFM.back().getHistogram()) = *hSmooth;
+    delete hSmooth;
+    hTemplates_MCFM.back().getHistogram()->SetNameTitle(templatename, templatetitle);
   }
   // Do post-processing
   PostProcessTemplatesWithPhase(
@@ -801,7 +763,6 @@ template<> void getTemplatesPerCategory<3>(
   std::vector<TTree*>& fixedTrees_MCFM,
   std::vector<TString> const& KDset,
   std::vector<ExtendedBinning> const& KDbinning,
-  std::vector<ExtendedBinning> const& KDbinning_coarse,
   std::vector<ExtendedHistogram_1D> const& hMass_FromNominalInclusive,
   std::unordered_map<TString, float>& KDvars, float& weight, bool& isCategory
   ){
@@ -812,7 +773,7 @@ template<> void getTemplatesPerCategory<3>(
   const unsigned int ntpls=tplset.size();
   const unsigned int nKDs=KDbinning.size();
   assert(fixedTrees_POWHEG.size()==ntpls || fixedTrees_MCFM.size()==ntpls);
-  assert(nKDs==3 && nKDs==KDbinning_coarse.size());
+  assert(nKDs==3);
 
   vector<ExtHist_t>* hTemplates=nullptr;
 
@@ -826,27 +787,15 @@ template<> void getTemplatesPerCategory<3>(
     TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_POWHEG";
     TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
 
-    hTemplates_POWHEG.emplace_back(templatename, templatetitle, KDbinning_coarse.at(0), KDbinning_coarse.at(1), KDbinning_coarse.at(2));
-    int nEntries=tree->GetEntries();
-    for (int ev=0; ev<nEntries; ev++){
-      tree->GetEntry(ev);
-      progressbar(ev, nEntries);
-
-      if (!isCategory) continue;
-      for (unsigned int ikd=0; ikd<nKDs; ikd++){
-        TString KDname=KDset.at(ikd);
-        int nKDbins=KDbinning.at(ikd).getNbins();
-        float& KDval=KDvars.find(KDname)->second;
-        if (KDname=="ZZMass"){
-          double minval=(2.*KDbinning.at(ikd).getBinLowEdge(0)-KDbinning.at(ikd).getBinLowEdge(1));
-          double maxval=(2.*KDbinning.at(ikd).getBinLowEdge(nKDbins)-KDbinning.at(ikd).getBinLowEdge(nKDbins-1));
-          if (KDval<minval || KDval>maxval) continue;
-        }
-        else if (KDval<KDbinning.at(ikd).getBinLowEdge(0)) KDval=KDbinning.at(ikd).getBinLowEdge(0)*(1.-0.999*double(ev)/double(nEntries)) + KDbinning.at(ikd).getBinLowEdge(1)*(0.999*double(ev)/double(nEntries));
-        else if (KDval>KDbinning.at(ikd).getBinLowEdge(nKDbins)) KDval=KDbinning.at(ikd).getBinLowEdge(nKDbins-1)*(1.-0.999*double(ev)/double(nEntries)) + KDbinning.at(ikd).getBinLowEdge(nKDbins)*(0.999*double(ev)/double(nEntries));
-      }
-      hTemplates_POWHEG.back().fill(KDvars[KDset.at(0)], KDvars[KDset.at(1)], KDvars[KDset.at(2)], weight);
-    }
+    hTemplates_POWHEG.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2));
+    TH_t* hSmooth=getSmoothHistogram(
+      templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
+      tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
+      2, 2, 2
+    );
+    *(hTemplates_POWHEG.back().getHistogram()) = *hSmooth;
+    delete hSmooth;
+    hTemplates_POWHEG.back().getHistogram()->SetNameTitle(templatename, templatetitle);
   }
   // Do post-processing
   PostProcessTemplatesWithPhase(
@@ -868,27 +817,15 @@ template<> void getTemplatesPerCategory<3>(
     TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_MCFM";
     TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
 
-    hTemplates_MCFM.emplace_back(templatename, templatetitle, KDbinning_coarse.at(0), KDbinning_coarse.at(1), KDbinning_coarse.at(2));
-    int nEntries=tree->GetEntries();
-    for (int ev=0; ev<nEntries; ev++){
-      tree->GetEntry(ev);
-      progressbar(ev, nEntries);
-
-      if (!isCategory) continue;
-      for (unsigned int ikd=0; ikd<nKDs; ikd++){
-        TString KDname=KDset.at(ikd);
-        int nKDbins=KDbinning.at(ikd).getNbins();
-        float& KDval=KDvars.find(KDname)->second;
-        if (KDname=="ZZMass"){
-          double minval=(2.*KDbinning.at(ikd).getBinLowEdge(0)-KDbinning.at(ikd).getBinLowEdge(1));
-          double maxval=(2.*KDbinning.at(ikd).getBinLowEdge(nKDbins)-KDbinning.at(ikd).getBinLowEdge(nKDbins-1));
-          if (KDval<minval || KDval>maxval) continue;
-        }
-        else if (KDval<KDbinning.at(ikd).getBinLowEdge(0)) KDval=KDbinning.at(ikd).getBinLowEdge(0)*(1.-0.999*double(ev)/double(nEntries)) + KDbinning.at(ikd).getBinLowEdge(1)*(0.999*double(ev)/double(nEntries));
-        else if (KDval>KDbinning.at(ikd).getBinLowEdge(nKDbins)) KDval=KDbinning.at(ikd).getBinLowEdge(nKDbins-1)*(1.-0.999*double(ev)/double(nEntries)) + KDbinning.at(ikd).getBinLowEdge(nKDbins)*(0.999*double(ev)/double(nEntries));
-      }
-      hTemplates_MCFM.back().fill(KDvars[KDset.at(0)], KDvars[KDset.at(1)], KDvars[KDset.at(2)], weight);
-    }
+    hTemplates_MCFM.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2));
+    TH_t* hSmooth=getSmoothHistogram(
+      templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
+      tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
+      2, 2, 2
+    );
+    *(hTemplates_MCFM.back().getHistogram()) = *hSmooth;
+    delete hSmooth;
+    hTemplates_MCFM.back().getHistogram()->SetNameTitle(templatename, templatetitle);
   }
   // Do post-processing
   PostProcessTemplatesWithPhase(
@@ -1025,13 +962,9 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_2D>(
 
       ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
       ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-      if (ProcessHandleType::isInterferenceContribution(tpltype)){
-        if (DOSMOOTHING) rebinHistogram_NoCumulant(htpl, KDbinning.at(0), prof_x, KDbinning.at(1), prof_y);
-      }
-      else{
+      if (!ProcessHandleType::isInterferenceContribution(tpltype)){
         vector<pair<TProfile const*, unsigned int>> condProfs; condProfs.push_back(pair<TProfile const*, unsigned int>(prof_x, 0));
         conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false, USEEFFERRINCOND);
-        if (DOSMOOTHING) rebinHistogram(htpl, KDbinning.at(0), KDbinning.at(1), &condProfs);
       }
       MELAout << "Integral [ " << tpl.getName() << " ] after post-processing function: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), false, nullptr) << endl;
       MELAout << "Checking integrity of [ " << htpl->GetName() << " ]" << endl;
@@ -1075,13 +1008,9 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_3D>(
 
       ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
       ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-      if (ProcessHandleType::isInterferenceContribution(tpltype)){
-        if (DOSMOOTHING) rebinHistogram_NoCumulant(htpl, KDbinning.at(0), prof_x, KDbinning.at(1), prof_y, KDbinning.at(2), prof_z);
-      }
-      else{
+      if (!ProcessHandleType::isInterferenceContribution(tpltype)){
         vector<pair<TProfile const*, unsigned int>> condProfs; condProfs.push_back(pair<TProfile const*, unsigned int>(prof_x, 0));
         conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false, USEEFFERRINCOND);
-        if (DOSMOOTHING) rebinHistogram(htpl, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2), &condProfs);
       }
       MELAout << "Integral [ " << tpl.getName() << " ] after post-processing function: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), false, nullptr) << endl;
       MELAout << "Checking integrity of [ " << htpl->GetName() << " ]" << endl;

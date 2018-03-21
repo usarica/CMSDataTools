@@ -364,3 +364,134 @@ TString SystematicsHelpers::getSystematicsName(SystematicsHelpers::SystematicVar
     return "";
   }
 }
+TString SystematicsHelpers::getSystematicsCombineName(
+  CategorizationHelpers::Category const category,
+  SampleHelpers::Channel const channel,
+  ProcessHandler::ProcessType const proc,
+  SystematicsHelpers::SystematicVariationTypes const syst
+){
+  TString systname;
+  switch (syst){
+  case sNominal:
+    systname="Nominal";
+    break;
+  case tPDFScaleDn:
+  case tPDFScaleUp:
+    systname="QCDscale_fac_[process]";
+    break;
+  case tQCDScaleDn:
+  case tQCDScaleUp:
+    systname="QCDscale_ren_[process]";
+    break;
+  case tAsMZDn:
+  case tAsMZUp:
+    systname="pdf_asmz_[process]";
+    break;
+  case tPDFReplicaDn:
+  case tPDFReplicaUp:
+    systname="pdf_variation_[process]";
+    break;
+  case tPythiaScaleDn:
+  case tPythiaScaleUp:
+    systname="CMS_scale_pythia";
+    break;
+  case tPythiaTuneDn:
+  case tPythiaTuneUp:
+    systname="CMS_tune_pythia";
+    break;
+  case tQQBkgEWCorrDn:
+  case tQQBkgEWCorrUp:
+    systname="EWcorr_[process]";
+    break;
+  case eLepSFEleDn:
+  case eLepSFEleUp:
+    systname="CMS_eff_e";
+    break;
+  case eLepSFMuDn:
+  case eLepSFMuUp:
+    systname="CMS_eff_mu";
+    break;
+  case eJECDn:
+  case eJECUp:
+    systname="CMS_scale_j_[sqrts]TeV_[year]";
+    break;
+  case eZXStatsDn:
+  case eZXStatsUp:
+    systname="CMS_zz[channel]_[process]_[category]";
+    break;
+  default:
+    MELAerr << "SystematicsHelpers::getSystematicsCombineName: Combine name for systematic " << getSystematicsName(syst) << " is not found! Aborting..." << endl;
+    assert(0);
+  }
+
+  TString strProcess;
+  switch (proc){
+  case ProcessHandler::kGG:
+  {
+    if (
+      syst==tQCDScaleDn || syst==tQCDScaleUp
+      ||
+      syst==tPDFScaleDn || syst==tPDFScaleUp
+      ) strProcess="ggH";
+    else strProcess="Higgs_gg";
+    break;
+  }
+  case ProcessHandler::kVV:
+  case ProcessHandler::kVBF:
+  {
+    if (
+      syst==tQCDScaleDn || syst==tQCDScaleUp
+      ||
+      syst==tPDFScaleDn || syst==tPDFScaleUp
+      ) strProcess="qqH";
+    else strProcess="Higgs_qqbar";
+    break;
+  }
+  case ProcessHandler::kZH:
+  case ProcessHandler::kWH:
+  {
+    if (
+      syst==tQCDScaleDn || syst==tQCDScaleUp
+      ||
+      syst==tPDFScaleDn || syst==tPDFScaleUp
+      ) strProcess="VH";
+    else strProcess="Higgs_qqbar";
+    break;
+  }
+  case ProcessHandler::kQQBkg:
+  {
+    if (
+      syst==tQCDScaleDn || syst==tQCDScaleUp
+      ||
+      syst==tPDFScaleDn || syst==tPDFScaleUp
+      ||
+      syst==tQQBkgEWCorrDn || syst==tQQBkgEWCorrUp
+      ) strProcess="VV";
+    else strProcess="qqbar";
+    break;
+  }
+  case ProcessHandler::kZX:
+    strProcess="zjets";
+    break;
+  default:
+    MELAerr << "SystematicsHelpers::getSystematicsCombineName: " << proc << " process name of systematic " << getSystematicsName(syst) << " is not found! Aborting..." << endl;
+    assert(0);
+  }
+  assert(!systname.Contains("[process]") || strProcess!=""); HelperFunctions::replaceString(systname, "[process]", strProcess.Data());
+
+  TString strSqrts = Form("%iTeV", theSqrts);
+  assert(!systname.Contains("[sqrts]") || strSqrts!=""); HelperFunctions::replaceString(systname, "[sqrts]", strSqrts.Data());
+
+  TString strYear = theDataPeriod;
+  assert(!systname.Contains("[year]") || strYear!=""); HelperFunctions::replaceString(systname, "[year]", strYear.Data());
+
+  TString strChannel = SampleHelpers::getChannelName(channel);
+  assert(!systname.Contains("[channel]") || strChannel!=""); HelperFunctions::replaceString(systname, "[channel]", strChannel.Data());
+
+  TString strCategory = CategorizationHelpers::getCategoryName(category);
+  assert(!systname.Contains("[category]") || strCategory!=""); HelperFunctions::replaceString(systname, "[category]", strCategory.Data());
+
+  if (((int) syst)%2==1) systname += "Down";
+  else if (syst!=sNominal) systname += "Up";
+  return systname;
+}

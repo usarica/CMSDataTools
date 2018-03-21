@@ -36,10 +36,10 @@ class HiggsWidthROOTExecutor:
 
 
    def run(self):
-      jobcmd = ""
-      if self.opt.loadlib is not None: jobcmd += "gROOT->ProcessLine(\\\".x {}\\\");".format(self.opt.loadlib)
-      jobcmd += "gROOT->ProcessLine(\\\".L {}+\\\");".format(self.opt.script)
-      jobcmd += "gROOT->ProcessLine(\\\"{}({})\\\");".format(self.opt.function, self.opt.fcncmd)
+      jobcmd = r""
+      if self.opt.loadlib is not None: jobcmd += r"gROOT->ProcessLine(\".x {}\");".format(self.opt.loadlib)
+      jobcmd += r"gROOT->ProcessLine(\".L {}+\");".format(self.opt.script)
+      jobcmd += r"gROOT->ProcessLine(\"{}({})\");".format(self.opt.function, self.opt.fcncmd)
       jobcmd = "root -l -b -q -e \"{}\"".format(jobcmd)
       if self.opt.dryRun:
          jobcmd = "echo " + jobcmd

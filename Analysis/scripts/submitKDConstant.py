@@ -64,20 +64,26 @@ class StageXBatchManager:
    def getFcnArguments( self, fname, fcnname ):
       fcnargs=[]
       fcnfound=False
+      fcnendfound=False
       with open(fname) as testfile:
          for line in testfile:
+            if fcnfound and fcnendfound: break
             if fcnname in line:
                fcnfound=True
-               line=line.rstrip()
-               line=line.replace(' ','')
-               line=line.replace(fcnname,'')
-               line=line.replace('(','')
-               line=line.replace(')','')
-               line=line.replace('{','')
-               tmpargs=line.split(',')
+            if fcnfound:
+               linecpy=line
+               linecpy=linecpy.rstrip()
+               linecpy=linecpy.replace(' ','')
+               linecpy=linecpy.replace(fcnname,'')
+               linecpy=linecpy.replace('(','')
+               linecpy=linecpy.replace(')','')
+               linecpy=linecpy.replace('{','')
+               tmpargs=linecpy.split(',')
                for tmparg in tmpargs:
                   fcnargs.append(tmparg.lower())
-      if not fcnfound:
+            if fcnfound and ')' in line:
+               fcnendfound=True
+      if not (fcnfound and fcnendfound):
          sys.exit("Function {} is not found in file {}!".format(fcnname,fname))
       return fcnargs
 

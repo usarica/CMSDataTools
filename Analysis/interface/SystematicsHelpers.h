@@ -90,6 +90,13 @@ namespace SystematicsHelpers{
 
   TString getSystematicsName(SystematicsHelpers::SystematicVariationTypes const syst);
 
+  TString getSystematicsCombineName(
+    CategorizationHelpers::Category const category,
+    SampleHelpers::Channel const channel,
+    ProcessHandler::ProcessType const proc,
+    SystematicsHelpers::SystematicVariationTypes const syst
+  );
+
 }
 
 #endif

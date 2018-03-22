@@ -14,10 +14,6 @@
 const TString user_output_dir = "output/";
 #endif
 
-#ifndef DOSMOOTHING
-#define DOSMOOTHING false
-#endif
-
 #ifndef CHISQCUT
 #define CHISQCUT 3.841
 #endif
@@ -196,6 +192,13 @@ void makeFinalTemplates_ZH(const Channel channel, const ACHypothesis hypo, const
   ProcessHandleType const* outputProcessHandle=(ProcessHandleType const*) getProcessHandlerPerMassRegion(proctype, massregion);
   if (!inputProcessHandle || !outputProcessHandle) return;
 
+  vector<Category> catList = getAllowedCategories(globalCategorizationScheme);
+  {
+    bool doProceed=false;
+    for (auto& cat:catList) doProceed |= (systematicAllowed(cat, channel, proctype, syst, "Data"));
+    if (!doProceed) return;
+  }
+
   const TString strChannel = getChannelName(channel);
   const TString strACHypo = getACHypothesisName(hypo);
   const TString strStage = Form("Stage%i", istage);
@@ -222,7 +225,6 @@ void makeFinalTemplates_ZH(const Channel channel, const ACHypothesis hypo, const
 
   TDirectory* rootdir=gDirectory;
 
-  vector<Category> catList = getAllowedCategories(globalCategorizationScheme);
   // Nominal categorization efficiencies
   std::vector<MassRatioObject> CategorizationEfficiencies;
   // Systematic/nominal mass ratios
@@ -241,7 +243,7 @@ void makeFinalTemplates_ZH(const Channel channel, const ACHypothesis hypo, const
       );
       TString cinput = user_output_dir + sqrtsDir + "Templates/" + strdate + "/MassRatios/" + strStage + "/" + INPUT_NAME;
       if (gSystem->AccessPathName(cinput)){
-        acquireMassRatio_ProcessNominalToNominalInclusive(channel, cat, hypo, istage, fixedDate, proctype, "POWHEG");
+        acquireMassRatio_ProcessNominalToNominalInclusive_one(channel, cat, hypo, istage, fixedDate, proctype, "POWHEG");
         if (gSystem->AccessPathName(cinput)){
           MELAerr << "Efficiency file " << cinput << " is not found! Run " << strStage << " functions first." << endl;
           return;
@@ -262,7 +264,7 @@ void makeFinalTemplates_ZH(const Channel channel, const ACHypothesis hypo, const
       );
       TString cinput = user_output_dir + sqrtsDir + "Templates/" + strdate + "/MassRatios/" + strStage + "/" + INPUT_NAME;
       if (gSystem->AccessPathName(cinput)){
-        acquireMassRatio_ProcessSystToNominal(channel, cat, hypo, syst, istage, fixedDate, proctype, "POWHEG");
+        acquireMassRatio_ProcessSystToNominal_one(channel, cat, hypo, syst, istage, fixedDate, proctype, "POWHEG");
         if (gSystem->AccessPathName(cinput)){
           MELAerr << "Systematic ratio file " << cinput << " is not found! Run " << strStage << " functions first." << endl;
           return;
@@ -295,16 +297,35 @@ void makeFinalTemplates_ZH(const Channel channel, const ACHypothesis hypo, const
   )
   );
 
+  // Setup colors
+  gStyle->SetOptStat(0);
+  {
+    int colors[100];
+    Double_t Red[]    ={ 0.3, 0.4, 1.0 };
+    Double_t Green[]  ={ 0.0, 1.0, 0.8 };
+    Double_t Blue[]   ={ 1.0, 0.0, 0.3 };
+    Double_t Length[] ={ 0.00, 0.50, 1.00 };
+    int FI = TColor::CreateGradientColorTable(3, Length, Red, Green, Blue, 100);
+    const unsigned int ncolors = gStyle->GetNumberOfColors();
+    if (FI<0) MELAout << "Failed to set color palette" << endl;
+    else{
+      for (unsigned int ic=0; ic<100; ic++) colors[ic] = FI+ic;
+      gStyle->SetPalette(100, colors);
+    }
+    MELAout << "Ncolors: " << ncolors << endl;
+  }
+
   // Output files
   unordered_map<Category, TFile*, std::hash<int>> foutput;
   for (Category& cat:catList){
     const TString strCategory = getCategoryName(cat);
+    const TString strSystematicsOutput = getSystematicsCombineName(cat, channel, proctype, syst);
     TString OUTPUT_NAME = Form(
       "%s/HtoZZ%s_%s_FinalTemplates_%s_%s_%s",
       coutput_common.Data(),
       strChannel.Data(), strCategory.Data(),
       outputProcessHandle->getProcessName().Data(),
-      strSystematics.Data(),
+      strSystematicsOutput.Data(),
       ".root"
     );
     foutput[cat]=TFile::Open(OUTPUT_NAME, "recreate");
@@ -617,7 +638,7 @@ template<> void getTemplatesPerCategory<2>(
         !ProcessHandleType::isInterferenceContribution(tpltype)
         ) conditionalizeHistogram<TH_t>(htpl, 0, nullptr, true, USEEFFERRINCOND);
 
-      MELAout << "final integrity check on [ " << htpl->GetName() << " ]" << endl;
+      MELAout << "Final integrity check on [ " << htpl->GetName() << " ]" << endl;
       if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
       else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
       foutput->WriteTObject(htpl);
@@ -723,7 +744,7 @@ template<> void getTemplatesPerCategory<3>(
         !ProcessHandleType::isInterferenceContribution(tpltype)
         ) conditionalizeHistogram<TH_t>(htpl, 0, nullptr, true, USEEFFERRINCOND);
 
-      MELAout << "final integrity check on [ " << htpl->GetName() << " ]" << endl;
+      MELAout << "Final integrity check on [ " << htpl->GetName() << " ]" << endl;
       if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
       else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
       foutput->WriteTObject(htpl);
@@ -767,13 +788,9 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_2D>(
 
       ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
       ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-      if (ProcessHandleType::isInterferenceContribution(tpltype)){
-        if (DOSMOOTHING) rebinHistogram_NoCumulant(htpl, KDbinning.at(0), prof_x, KDbinning.at(1), prof_y);
-      }
-      else{
+      if (!ProcessHandleType::isInterferenceContribution(tpltype)){
         vector<pair<TProfile const*, unsigned int>> condProfs; condProfs.push_back(pair<TProfile const*, unsigned int>(prof_x, 0));
         conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false, USEEFFERRINCOND);
-        if (DOSMOOTHING) rebinHistogram(htpl, KDbinning.at(0), KDbinning.at(1), &condProfs);
       }
       MELAout << "Integral [ " << tpl.getName() << " ] after post-processing function: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), false, nullptr) << endl;
       MELAout << "Checking integrity of [ " << htpl->GetName() << " ]" << endl;
@@ -817,13 +834,9 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_3D>(
 
       ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
       ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-      if (ProcessHandleType::isInterferenceContribution(tpltype)){
-        if (DOSMOOTHING) rebinHistogram_NoCumulant(htpl, KDbinning.at(0), prof_x, KDbinning.at(1), prof_y, KDbinning.at(2), prof_z);
-      }
-      else{
+      if (!ProcessHandleType::isInterferenceContribution(tpltype)){
         vector<pair<TProfile const*, unsigned int>> condProfs; condProfs.push_back(pair<TProfile const*, unsigned int>(prof_x, 0));
         conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false, USEEFFERRINCOND);
-        if (DOSMOOTHING) rebinHistogram(htpl, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2), &condProfs);
       }
       MELAout << "Integral [ " << tpl.getName() << " ] after post-processing function: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), false, nullptr) << endl;
       MELAout << "Checking integrity of [ " << htpl->GetName() << " ]" << endl;

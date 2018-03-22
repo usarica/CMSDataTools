@@ -18,6 +18,7 @@
 #include "TGraph.h"
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
+#include "TColor.h"
 #include "TCanvas.h"
 #include "TLegend.h"
 #include "TStyle.h"

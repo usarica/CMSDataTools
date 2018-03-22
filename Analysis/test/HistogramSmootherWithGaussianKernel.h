@@ -29,6 +29,11 @@
 #include "Mela.h"
 
 
+#ifndef GAUSSIANWIDTHPRECISION
+#define GAUSSIANWIDTHPRECISION 5.
+#endif
+
+
 using namespace std;
 using namespace HelperFunctions;
 using namespace FunctionHelpers;
@@ -56,7 +61,8 @@ ExtendedBinning getIntermediateBinning(ExtendedBinning const& binning){
 TH1F* getSmoothHistogram(
   TString const hname, TString const htitle, ExtendedBinning const& finalXBinning,
   TTree* tree, float& xvar, float& weight, bool& flag,
-  double sigmaXmult=1
+  double sigmaXmult=1,
+  TH1F** hRawPtr=nullptr
 ){
   assert(tree && finalXBinning.isValid());
 
@@ -69,12 +75,22 @@ TH1F* getSmoothHistogram(
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
     progressbar(ev, tree->GetEntries());
-    if (flag) reference.fill(xvar, weight);
+    if (flag) reference.fill(xvar, fabs(weight));
   }
   TH1F* res = new TH1F(
     hname, htitle,
     finalXBinning.getNbins(), finalXBinning.getBinning()
-  ); res->Sumw2();
+  );
+  res->Sumw2();
+  res->GetXaxis()->SetTitle(finalXBinning.getLabel());
+  if (hRawPtr){
+    *hRawPtr = new TH1F(
+      hname+"_raw", htitle,
+      finalXBinning.getNbins(), finalXBinning.getBinning()
+    );
+    (*hRawPtr)->Sumw2();
+    (*hRawPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
+  }
 
   SimpleGaussian gausX(0, 1, SimpleGaussian::kHasLowHighRange, bX.getMin(), bX.getMax());
 
@@ -85,15 +101,22 @@ TH1F* getSmoothHistogram(
 
     if (!flag) continue;
     if (xvar<bX.getMin() || xvar>=bX.getMax()) continue;
+    if (hRawPtr) (*hRawPtr)->Fill(xvar, weight);
 
     int ix=bX.getBin(xvar);
     double Neff=pow(reference.getBinSumW(ix), 2)/reference.getBinSumWsq(ix);
     double widthGlobalScale = 1./sqrt(Neff);
+
     double sX = bX.getBinWidth(ix)*widthGlobalScale*sigmaXmult;
+    if (std::min(fabs(xvar-bX.getBinLowEdge(ix)), fabs(xvar-bX.getBinHighEdge(ix)))>=sX*GAUSSIANWIDTHPRECISION) sX=0.;
+    unsigned int ibegin, iend;
+    if (sX!=0. || ix<0){ ibegin=0; iend=bX.getNbins(); }
+    else{ ibegin=ix; iend=ix; }
     gausX.setMean(xvar); gausX.setSigma(sX);
 
-    for (unsigned int i=0; i<bX.getNbins(); i++){
-      if (sX==0. && (int) i!=ix) continue;
+    assert(checkVarNanInf(sX));
+
+    for (unsigned int i=ibegin; i<iend; i++){
       double fX = gausX.integralNorm(bX.getBinLowEdge(i), bX.getBinHighEdge(i));
       if (fX>1. || fX<0.){ MELAerr << "fX=" << fX << endl; continue; }
       if (fX==0.) continue;
@@ -117,7 +140,8 @@ TH1F* getSmoothHistogram(
 TH2F* getSmoothHistogram(
   TString const hname, TString const htitle, ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning,
   TTree* tree, float& xvar, float& yvar, float& weight, bool& flag,
-  double sigmaXmult=1, double sigmaYmult=1
+  double sigmaXmult=1, double sigmaYmult=1,
+  TH2F** hRawPtr=nullptr
 ){
   assert(tree && finalXBinning.isValid() && finalYBinning.isValid());
 
@@ -132,13 +156,26 @@ TH2F* getSmoothHistogram(
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
     progressbar(ev, tree->GetEntries());
-    if (flag) reference.fill(xvar, yvar, weight);
+    if (flag) reference.fill(xvar, yvar, fabs(weight));
   }
   TH2F* res = new TH2F(
     hname, htitle,
     finalXBinning.getNbins(), finalXBinning.getBinning(),
     finalYBinning.getNbins(), finalYBinning.getBinning()
-  ); res->Sumw2();
+  );
+  res->Sumw2();
+  res->GetXaxis()->SetTitle(finalXBinning.getLabel());
+  res->GetYaxis()->SetTitle(finalYBinning.getLabel());
+  if (hRawPtr){
+    *hRawPtr = new TH2F(
+      hname+"_raw", htitle,
+      finalXBinning.getNbins(), finalXBinning.getBinning(),
+      finalYBinning.getNbins(), finalYBinning.getBinning()
+    );
+    (*hRawPtr)->Sumw2();
+    (*hRawPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
+    (*hRawPtr)->GetYaxis()->SetTitle(finalYBinning.getLabel());
+  }
 
   SimpleGaussian gausX(0, 1, SimpleGaussian::kHasLowHighRange, bX.getMin(), bX.getMax());
   SimpleGaussian gausY(0, 1, SimpleGaussian::kHasLowHighRange, bY.getMin(), bY.getMax());
@@ -151,24 +188,34 @@ TH2F* getSmoothHistogram(
     if (!flag) continue;
     if (xvar<bX.getMin() || xvar>=bX.getMax()) continue;
     if (yvar<bY.getMin() || yvar>=bY.getMax()) continue;
+    if (hRawPtr) (*hRawPtr)->Fill(xvar, yvar, weight);
 
     int ix=bX.getBin(xvar);
     int iy=bY.getBin(yvar);
     double Neff=pow(reference.getBinSumW(ix, iy), 2)/reference.getBinSumWsq(ix, iy);
     double widthGlobalScale = 1./sqrt(Neff);
+
     double sX = bX.getBinWidth(ix)*widthGlobalScale*sigmaXmult;
+    if (std::min(fabs(xvar-bX.getBinLowEdge(ix)), fabs(xvar-bX.getBinHighEdge(ix)))>=sX*GAUSSIANWIDTHPRECISION) sX=0.;
+    unsigned int ibegin, iend;
+    if (sX!=0. || ix<0){ ibegin=0; iend=bX.getNbins(); }
+    else{ ibegin=ix; iend=ix; }
     gausX.setMean(xvar); gausX.setSigma(sX);
+
     double sY = bY.getBinWidth(iy)*widthGlobalScale*sigmaYmult;
+    if (std::min(fabs(yvar-bY.getBinLowEdge(iy)), fabs(yvar-bY.getBinHighEdge(iy)))>=sY*GAUSSIANWIDTHPRECISION) sY=0.;
+    unsigned int jbegin, jend;
+    if (sY!=0. || iy<0){ jbegin=0; jend=bY.getNbins(); }
+    else{ jbegin=iy; jend=iy; }
     gausY.setMean(yvar); gausY.setSigma(sY);
+
     assert(checkVarNanInf(sX) && checkVarNanInf(sY));
 
-    for (unsigned int i=0; i<bX.getNbins(); i++){
-      if (sX==0. && (int) i!=ix) continue;
+    for (unsigned int i=ibegin; i<iend; i++){
       double fX = gausX.integralNorm(bX.getBinLowEdge(i), bX.getBinHighEdge(i));
       if (fX>1. || fX<0.){ MELAerr << "fX=" << fX << endl; continue; }
       if (fX==0.) continue;
-      for (unsigned int j=0; j<bY.getNbins(); j++){
-        if (sY==0. && (int) j!=iy) continue;
+      for (unsigned int j=jbegin; j<jend; j++){
         double fY = gausY.integralNorm(bY.getBinLowEdge(j), bY.getBinHighEdge(j));
         if (fY>1. || fY<0.){ MELAerr << "fY=" << fY << endl; continue; }
         if (fY==0.) continue;
@@ -195,7 +242,8 @@ TH2F* getSmoothHistogram(
 TH3F* getSmoothHistogram(
   TString const hname, TString const htitle, ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning, ExtendedBinning const& finalZBinning,
   TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, bool& flag,
-  double sigmaXmult=1, double sigmaYmult=1, double sigmaZmult=1
+  double sigmaXmult=1, double sigmaYmult=1, double sigmaZmult=1,
+  TH3F** hRawPtr=nullptr
 ){
   assert(tree && finalXBinning.isValid() && finalYBinning.isValid() && finalZBinning.isValid());
 
@@ -212,14 +260,30 @@ TH3F* getSmoothHistogram(
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
     progressbar(ev, tree->GetEntries());
-    if (flag) reference.fill(xvar, yvar, zvar, weight);
+    if (flag) reference.fill(xvar, yvar, zvar, fabs(weight));
   }
   TH3F* res = new TH3F(
     hname, htitle,
     finalXBinning.getNbins(), finalXBinning.getBinning(),
     finalYBinning.getNbins(), finalYBinning.getBinning(),
     finalZBinning.getNbins(), finalZBinning.getBinning()
-  ); res->Sumw2();
+  );
+  res->Sumw2();
+  res->GetXaxis()->SetTitle(finalXBinning.getLabel());
+  res->GetYaxis()->SetTitle(finalYBinning.getLabel());
+  res->GetZaxis()->SetTitle(finalZBinning.getLabel());
+  if (hRawPtr){
+    *hRawPtr = new TH3F(
+      hname+"_raw", htitle,
+      finalXBinning.getNbins(), finalXBinning.getBinning(),
+      finalYBinning.getNbins(), finalYBinning.getBinning(),
+      finalZBinning.getNbins(), finalZBinning.getBinning()
+    );
+    (*hRawPtr)->Sumw2();
+    (*hRawPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
+    (*hRawPtr)->GetYaxis()->SetTitle(finalYBinning.getLabel());
+    (*hRawPtr)->GetZaxis()->SetTitle(finalZBinning.getLabel());
+  }
 
   SimpleGaussian gausX(0, 1, SimpleGaussian::kHasLowHighRange, bX.getMin(), bX.getMax());
   SimpleGaussian gausY(0, 1, SimpleGaussian::kHasLowHighRange, bY.getMin(), bY.getMax());
@@ -234,32 +298,46 @@ TH3F* getSmoothHistogram(
     if (xvar<bX.getMin() || xvar>=bX.getMax()) continue;
     if (yvar<bY.getMin() || yvar>=bY.getMax()) continue;
     if (zvar<bZ.getMin() || zvar>=bZ.getMax()) continue;
+    if (hRawPtr) (*hRawPtr)->Fill(xvar, yvar, zvar, weight);
 
     int ix=bX.getBin(xvar);
     int iy=bY.getBin(yvar);
     int iz=bZ.getBin(zvar);
     double Neff=pow(reference.getBinSumW(ix, iy, iz), 2)/reference.getBinSumWsq(ix, iy, iz);
     double widthGlobalScale = 1./sqrt(Neff);
+
     double sX = bX.getBinWidth(ix)*widthGlobalScale*sigmaXmult;
+    if (std::min(fabs(xvar-bX.getBinLowEdge(ix)), fabs(xvar-bX.getBinHighEdge(ix)))>=sX*GAUSSIANWIDTHPRECISION) sX=0.;
+    unsigned int ibegin, iend;
+    if (sX!=0. || ix<0){ ibegin=0; iend=bX.getNbins(); }
+    else{ ibegin=ix; iend=ix; }
     gausX.setMean(xvar); gausX.setSigma(sX);
+
     double sY = bY.getBinWidth(iy)*widthGlobalScale*sigmaYmult;
+    if (std::min(fabs(yvar-bY.getBinLowEdge(iy)), fabs(yvar-bY.getBinHighEdge(iy)))>=sY*GAUSSIANWIDTHPRECISION) sY=0.;
+    unsigned int jbegin, jend;
+    if (sY!=0. || iy<0){ jbegin=0; jend=bY.getNbins(); }
+    else{ jbegin=iy; jend=iy; }
     gausY.setMean(yvar); gausY.setSigma(sY);
+
     double sZ = bZ.getBinWidth(iz)*widthGlobalScale*sigmaZmult;
+    if (std::min(fabs(zvar-bZ.getBinLowEdge(iz)), fabs(zvar-bZ.getBinHighEdge(iz)))>=sZ*GAUSSIANWIDTHPRECISION) sZ=0.;
+    unsigned int kbegin, kend;
+    if (sZ!=0. || iz<0){ kbegin=0; kend=bZ.getNbins(); }
+    else{ kbegin=iz; kend=iz; }
     gausZ.setMean(zvar); gausZ.setSigma(sZ);
+
     assert(checkVarNanInf(sX) && checkVarNanInf(sY) && checkVarNanInf(sZ));
 
-    for (unsigned int i=0; i<bX.getNbins(); i++){
-      if (sX==0. && (int) i!=ix) continue;
+    for (unsigned int i=ibegin; i<iend; i++){
       double fX = gausX.integralNorm(bX.getBinLowEdge(i), bX.getBinHighEdge(i));
       if (fX>1. || fX<0.){ MELAerr << "fX=" << fX << endl; continue; }
       if (fX==0.) continue;
-      for (unsigned int j=0; j<bY.getNbins(); j++){
-        if (sY==0. && (int) j!=iy) continue;
+      for (unsigned int j=jbegin; j<jend; j++){
         double fY = gausY.integralNorm(bY.getBinLowEdge(j), bY.getBinHighEdge(j));
         if (fY>1. || fY<0.){ MELAerr << "fY=" << fY << endl; continue; }
         if (fY==0.) continue;
-        for (unsigned int k=0; k<bZ.getNbins(); k++){
-          if (sZ==0. && (int) k!=iz) continue;
+        for (unsigned int k=kbegin; k<kend; k++){
           double fZ = gausZ.integralNorm(bZ.getBinLowEdge(k), bZ.getBinHighEdge(k));
           if (fZ>1. || fZ<0.){ MELAerr << "fZ=" << fZ << endl; continue; }
           if (fZ==0.) continue;

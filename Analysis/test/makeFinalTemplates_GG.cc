@@ -107,6 +107,13 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_3D>(
   std::vector<ExtendedHistogram_3D>& hTemplates
   );
 
+void getControl2DXSlices(
+  TDirectory* rootdir, TFile* foutput,
+  ProcessHandleType const*& thePerProcessHandle, const ACHypothesis hypo,
+  std::vector<ExtendedBinning> const& KDbinning,
+  std::vector<ExtendedHistogram_3D> const& hTemplates
+);
+
 
 bool getFilesAndTrees(
   const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
@@ -949,6 +956,7 @@ template<> void getTemplatesPerCategory<3>(
       foutput->WriteTObject(htpl);
     }
     rootdir->cd();
+    getControl2DXSlices(rootdir, foutput, thePerProcessHandle, hypo, KDbinning, *hTemplates);
   }
 }
 
@@ -1044,5 +1052,54 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_3D>(
     }
   }
 }
+
+void getControl2DXSlices(
+  TDirectory* rootdir, TFile* foutput,
+  ProcessHandleType const*& thePerProcessHandle, const ACHypothesis hypo,
+  std::vector<ExtendedBinning> const& KDbinning,
+  std::vector<ExtendedHistogram_3D> const& hTemplates
+){
+  foutput->cd();
+  vector<TH3F*> hList;
+  for (auto& htpl:hTemplates){
+    TString tplname=htpl.getName();
+    TH3F* htmp = new TH3F(*(htpl.getHistogram())); htmp->SetName(tplname+"_tmp");
+    multiplyBinWidth(htmp);
+    hList.push_back(htmp);
+  }
+  thePerProcessHandle->recombineHistogramsToTemplatesWithPhase(hList, hypo);
+  for (unsigned int t=0; t<hTemplates.size(); t++){
+    ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(t);
+    bool isPhaseHist = (ProcessHandleType::isInterferenceContribution(tpltype));
+    auto*& htpl=hList.at(t);
+    TString tplname=hTemplates.at(t).getName();
+    TString tpltitle=hTemplates.at(t).getTitle();
+    TString tplxtitle=hTemplates.at(t).getHistogram()->GetXaxis()->GetTitle();
+    TString tplytitle=hTemplates.at(t).getHistogram()->GetYaxis()->GetTitle();
+    TString tplztitle=hTemplates.at(t).getHistogram()->GetZaxis()->GetTitle();
+    TDirectory* savedir=foutput->mkdir(tplname+"_control_" + tplxtitle + "_slices");
+    savedir->cd();
+    for (int ix=1; ix<=htpl->GetNbinsX(); ix++){
+      TString slicename=tplname+(isPhaseHist ? "_Phase_" : "_")+Form("%s_Slice%i", KDbinning.at(0).getLabel().Data(), ix);
+      TString slicetitle = tplxtitle + Form(": [%.1f, %.1f]", KDbinning.at(0).getBinLowEdge(ix-1), KDbinning.at(0).getBinLowEdge(ix));
+      TH2F* hSlice = getHistogramSlice(htpl, 1, 2, ix, ix, slicename);
+      if (!isPhaseHist){
+        double integral = getHistogramIntegralAndError(hSlice, 1, hSlice->GetNbinsX(), 1, hSlice->GetNbinsY(), false, nullptr);
+        if (integral!=0.) hSlice->Scale(1./integral);
+      }
+      divideBinWidth(hSlice);
+      hSlice->SetOption("colz");
+      hSlice->SetTitle(slicetitle);
+      hSlice->GetXaxis()->SetTitle(tplytitle);
+      hSlice->GetYaxis()->SetTitle(tplztitle);
+      savedir->WriteTObject(hSlice);
+      delete hSlice;
+    }
+    foutput->cd();
+  }
+  for (auto& h:hList) delete h;
+  rootdir->cd();
+}
+
 
 #endif

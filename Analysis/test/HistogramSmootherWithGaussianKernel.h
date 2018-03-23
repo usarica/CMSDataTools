@@ -43,6 +43,47 @@ using namespace TemplateHelpers;
 using namespace MELAStreamHelpers;
 
 
+class TreeHistogramAssociation_1D{
+public:
+  TString const hname;
+  TString const htitle;
+
+  TTree* const tree;
+  float& xvar;
+  float& weight;
+  bool& flag;
+
+  TreeHistogramAssociation_1D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& weight_, bool& flag_);
+};
+TreeHistogramAssociation_1D::TreeHistogramAssociation_1D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& weight_, bool& flag_) :
+  hname(hname_), htitle(htitle_),
+  tree(tree_), xvar(xvar_),
+  weight(weight_), flag(flag_)
+{
+  assert(tree);
+}
+class TreeHistogramAssociation_2D : public TreeHistogramAssociation_1D{
+public:
+  float& yvar;
+
+  TreeHistogramAssociation_2D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& yvar_, float& weight_, bool& flag_);
+};
+TreeHistogramAssociation_2D::TreeHistogramAssociation_2D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& yvar_, float& weight_, bool& flag_) :
+  TreeHistogramAssociation_1D(hname_, htitle_, tree_, xvar_, weight_, flag_),
+  yvar(yvar_)
+{}
+class TreeHistogramAssociation_3D : public TreeHistogramAssociation_2D{
+public:
+  float& zvar;
+
+  TreeHistogramAssociation_3D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& yvar_, float& zvar_, float& weight_, bool& flag_);
+};
+TreeHistogramAssociation_3D::TreeHistogramAssociation_3D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& yvar_, float& zvar_, float& weight_, bool& flag_) :
+  TreeHistogramAssociation_2D(hname_, htitle_, tree_, xvar_, yvar_, weight_, flag_),
+  zvar(zvar_)
+{}
+
+
 ExtendedBinning getIntermediateBinning(ExtendedBinning const& binning){
   ExtendedBinning res(binning);
   TString namelower=res.getLabel(); namelower.ToLower();

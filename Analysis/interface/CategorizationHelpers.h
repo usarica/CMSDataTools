@@ -15,7 +15,8 @@ namespace CategorizationHelpers{
   };
   enum MassRegion{
     kOnshell,
-    kOffshell
+    kOffshell,
+    NMassRegions
   };
   enum CategorizationScheme{
     UntaggedOrJJVBF,

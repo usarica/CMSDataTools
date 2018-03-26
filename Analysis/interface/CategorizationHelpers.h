@@ -34,6 +34,8 @@ namespace CategorizationHelpers{
 
   CategorizationHelpers::Category getCategory(const float& DjjVBF, const float& DjjZH, const float& DjjWH, const bool forceUntagged);
 
+  TString getMassRegionName(CategorizationHelpers::MassRegion massregion);
+
 }
 
 

@@ -87,14 +87,19 @@ public:
   template<typename T> bool putBranch(TString branchname, T valdef);
   template<BranchType T> bool putBranch(TString branchname);
 
+  TTree* getSelectedTree();
+  TTree* getFailedTree();
+  TTree const* getSelectedTree() const;
+  TTree const* getFailedTree() const;
+
   bool getSelectedEvent(int ev);
   bool getFailedEvent(int ev);
   bool getEvent(int ev);
   void refreshCurrentEvent();
 
-  int getSelectedNEvents();
-  int getFailedNEvents();
-  int getNEvents();
+  int getSelectedNEvents() const;
+  int getFailedNEvents() const;
+  int getNEvents() const;
 
   template<typename T> void getVal(TString branchname, T& val) const;
   template<typename T> void setVal(TString branchname, T const& val);

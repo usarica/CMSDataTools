@@ -1,6 +1,7 @@
 #ifndef FIXTREEWEIGHTS_H
 #define FIXTREEWEIGHTS_H
 
+#include <cassert>
 #include "common_includes.h"
 
 
@@ -119,10 +120,9 @@ TTree* fixTreeWeights(TTree* tree){
 // trimEdges==0 keeps underflow and overflow bins with no range restriction
 // trimEdges==1 keeps underflow and overflow bins but restricts their range
 // trimEdges==2 discards underflow and overflow bins
-TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackvar, float& weight, int trimEdges){
+TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackvar, float& weight, int trimEdges, TH1* hShapeRewgt=nullptr){
   if (!tree) return nullptr;
 
-  if (!tree) return nullptr;
   const TString treename=tree->GetName();
   MELAout << "Begin fixTreeWeights(" << treename << ")" << endl;
   MELAout
@@ -244,6 +244,69 @@ TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackv
     if (doPass) continue;
     if (fabs(weight)>wgtThresholds.at(bin)) weight = pow(wgtThresholds.at(bin), 2)/weight;
     newtree->Fill();
+  }
+  return newtree;
+}
+
+// Fix tree weights with the histogram given
+TTree* fixTreeWeights(
+  TH2F* hRatio,
+  TTree* tree,
+  float& xvar, float& yvar, float& weight, bool& flag
+){
+  if (!tree || !hRatio) return nullptr;
+
+  const TString treename=tree->GetName();
+  MELAout << "Begin fixTreeWeights(" << treename << ")" << endl;
+
+  const int nEntries = tree->GetEntries();
+  TTree* newtree = tree->CloneTree(0);
+
+  MELAout
+    << "fixTreeWeights(" << treename << "): "
+    << "Fixing tree weights with the histogram " << hRatio->GetName() << "."
+    << endl;
+
+  for (int ev=0; ev<nEntries; ev++){
+    tree->GetEntry(ev);
+    if (!flag) continue;
+
+    int ix=hRatio->GetXaxis()->FindBin(xvar);
+    int iy=hRatio->GetYaxis()->FindBin(yvar);
+    weight *= hRatio->GetBinContent(ix, iy);
+
+    if (weight>0.) newtree->Fill();
+  }
+  return newtree;
+}
+TTree* fixTreeWeights(
+  TH3F* hRatio,
+  TTree* tree,
+  float& xvar, float& yvar, float& zvar, float& weight, bool& flag
+){
+  if (!tree || !hRatio) return nullptr;
+
+  const TString treename=tree->GetName();
+  MELAout << "Begin fixTreeWeights(" << treename << ")" << endl;
+
+  const int nEntries = tree->GetEntries();
+  TTree* newtree = tree->CloneTree(0);
+
+  MELAout
+    << "fixTreeWeights(" << treename << "): "
+    << "Fixing tree weights with the histogram " << hRatio->GetName() << "."
+    << endl;
+
+  for (int ev=0; ev<nEntries; ev++){
+    tree->GetEntry(ev);
+    if (!flag) continue;
+
+    int ix=hRatio->GetXaxis()->FindBin(xvar);
+    int iy=hRatio->GetYaxis()->FindBin(yvar);
+    int iz=hRatio->GetZaxis()->FindBin(zvar);
+    weight *= hRatio->GetBinContent(ix, iy, iz);
+
+    if (weight>0.) newtree->Fill();
   }
   return newtree;
 }

@@ -99,6 +99,11 @@ BaseTree::BranchType BaseTree::searchBranchType(TString branchname) const{
   else return BranchType_unknown_t;
 }
 
+TTree* BaseTree::getSelectedTree(){ return tree; }
+TTree* BaseTree::getFailedTree(){ return failedtree; }
+TTree const* BaseTree::getSelectedTree() const{ return tree; }
+TTree const* BaseTree::getFailedTree() const{ return failedtree; }
+
 bool BaseTree::getSelectedEvent(int ev){
   resetBranches();
   bool result=false;
@@ -134,9 +139,9 @@ void BaseTree::refreshCurrentEvent(){
   }
 }
 
-int BaseTree::getSelectedNEvents(){ return (tree ? tree->GetEntries() : 0); }
-int BaseTree::getFailedNEvents(){ return (failedtree ? failedtree->GetEntries() : 0); }
-int BaseTree::getNEvents(){ return (this->getSelectedNEvents() + this->getFailedNEvents()); }
+int BaseTree::getSelectedNEvents() const{ return (tree ? tree->GetEntries() : 0); }
+int BaseTree::getFailedNEvents() const{ return (failedtree ? failedtree->GetEntries() : 0); }
+int BaseTree::getNEvents() const{ return (this->getSelectedNEvents() + this->getFailedNEvents()); }
 
 bool BaseTree::isValid() const{ return valid; }
 bool BaseTree::branchExists(TString branchname, BranchType* type){

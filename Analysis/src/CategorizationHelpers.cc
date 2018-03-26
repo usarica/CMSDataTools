@@ -1,6 +1,11 @@
 #include <cmath>
+#include <cassert>
 #include "CategorizationHelpers.h"
+#include "MELAStreamHelpers.hh"
 
+
+using namespace std;
+using namespace MELAStreamHelpers;
 
 
 namespace CategorizationHelpers{
@@ -93,5 +98,18 @@ bool CategorizationHelpers::testCategoryAgainstGlobalScheme(CategorizationHelper
   std::vector<Category> cats=getAllowedCategories(globalCategorizationScheme);
   for (Category const& cat:cats){ if (cat==theCategory) return true; }
   return false;
+}
+
+TString CategorizationHelpers::getMassRegionName(CategorizationHelpers::MassRegion massregion){
+  switch (massregion){
+  case kOnshell:
+    return "Onshell";
+  case kOffshell:
+    return "Offshell";
+  default:
+    MELAerr << "CategorizationHelpers::getMassRegionName: Mass region " << massregion << " has undefined name!" << endl;
+    assert(0);
+    return "";
+  }
 }
 

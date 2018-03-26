@@ -2338,8 +2338,8 @@ template <> void HelperFunctions::combineHistogramsByWeightedAverage<TProfile>(T
     float binerror=0;
     for (unsigned int ih=0; ih<2; ih++){
       if (sumWsq[ih]>0.){
-        bincontent = sumW[ih]/sumWsq[ih];
-        binerror = 1./sumWsq[ih];
+        bincontent += sumW[ih]/sumWsq[ih];
+        binerror += 1./sumWsq[ih];
       }
     }
     if (binerror>0.){
@@ -2350,6 +2350,7 @@ template <> void HelperFunctions::combineHistogramsByWeightedAverage<TProfile>(T
       bincontent=0;
       binerror=0;
     }
+    hAssign->SetBinEntries(binx, (binerror>0. ? std::min(1., double(bincontent/binerror)) : 1.));
     hAssign->SetBinContent(binx, bincontent);
     hAssign->SetBinError(binx, binerror);
   }
@@ -2369,8 +2370,8 @@ template <> void HelperFunctions::combineHistogramsByWeightedAverage<TH1F>(TH1F 
     float binerror=0;
     for (unsigned int ih=0; ih<2; ih++){
       if (sumWsq[ih]>0.){
-        bincontent = sumW[ih]/sumWsq[ih];
-        binerror = 1./sumWsq[ih];
+        bincontent += sumW[ih]/sumWsq[ih];
+        binerror += 1./sumWsq[ih];
       }
     }
     if (binerror>0.){
@@ -2402,8 +2403,8 @@ template <> void HelperFunctions::combineHistogramsByWeightedAverage<TH2F>(TH2F 
       float binerror=0;
       for (unsigned int ih=0; ih<2; ih++){
         if (sumWsq[ih]>0.){
-          bincontent = sumW[ih]/sumWsq[ih];
-          binerror = 1./sumWsq[ih];
+          bincontent += sumW[ih]/sumWsq[ih];
+          binerror += 1./sumWsq[ih];
         }
       }
       if (binerror>0.){
@@ -2438,8 +2439,8 @@ template <> void HelperFunctions::combineHistogramsByWeightedAverage<TH3F>(TH3F 
         float binerror=0;
         for (unsigned int ih=0; ih<2; ih++){
           if (sumWsq[ih]>0.){
-            bincontent = sumW[ih]/sumWsq[ih];
-            binerror = 1./sumWsq[ih];
+            bincontent += sumW[ih]/sumWsq[ih];
+            binerror += 1./sumWsq[ih];
           }
         }
         if (binerror>0.){

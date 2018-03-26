@@ -32,9 +32,13 @@ struct MassRatioObject{
   SystematicVariationTypes const systematic;
   TFile* finput;
   unordered_map<TString, TSpline3*> interpolators;
-  MassRatioObject(TString cinput, Category cat, SystematicVariationTypes syst) : category(cat), systematic(syst){
+  TH2F* hKDRatio2D;
+  TH3F* hKDRatio3D;
+  MassRatioObject(TString cinput, Category cat, SystematicVariationTypes syst, MassRegion massregion=NMassRegions) : category(cat), systematic(syst), finput(nullptr), hKDRatio2D(nullptr), hKDRatio3D(nullptr){
+    MELAout << "Begin MassRatioObject::MassRatioObject" << endl;
     TDirectory* tmpdir=gDirectory;
     finput = TFile::Open(cinput);
+    finput->cd();
     vector<TSpline3*> tmplist;
     HelperFunctions::extractHistogramsFromDirectory<TSpline3>(finput, tmplist);
     for (TSpline3*& s:tmplist){
@@ -43,9 +47,43 @@ struct MassRatioObject{
       replaceString(sname, "_Smooth_Patched", ""); // sname becomes name of the tree
       interpolators[sname]=s;
     }
+    if (massregion!=NMassRegions){ // Special reweighting for KD shapes, conditional in mass
+      TString massregionname = getMassRegionName((CategorizationHelpers::MassRegion) massregion);
+      TH2F* hKDRatio2D_tmp;
+      TH3F* hKDRatio3D_tmp;
+      finput->GetObject(massregionname + "/RatioWithKD", hKDRatio2D_tmp);
+      finput->GetObject(massregionname + "/RatioWithKD", hKDRatio3D_tmp);
+
+      if (!hKDRatio2D_tmp && !hKDRatio3D_tmp) MELAerr << "MassRatioObject::MassRatioObject: Acquiring the 'Ratio' histogram did not succeed!" << endl;
+      else if (hKDRatio2D_tmp && hKDRatio3D_tmp) MELAerr << "MassRatioObject::MassRatioObject: Acquiring two 'Ratio' histograms! Somthing is wrong..." << endl;
+      else if (hKDRatio2D_tmp) MELAout << "MassRatioObject::MassRatioObject: Ratio histogram [" << hKDRatio2D_tmp->GetName() << "] is 2D." << endl;
+      else MELAout << "MassRatioObject::MassRatioObject: Ratio histogram [" << hKDRatio3D_tmp->GetName() << "] is 3D." << endl;
+
+      tmpdir->cd(); // Go back to the previous directory
+      if (hKDRatio2D_tmp){ hKDRatio2D = new TH2F(*hKDRatio2D_tmp); hKDRatio2D->SetName("RatioWithKD_2D"); }
+      if (hKDRatio3D_tmp){ hKDRatio3D = new TH3F(*hKDRatio3D_tmp); hKDRatio3D->SetName("RatioWithKD_3D"); }
+    }
     tmpdir->cd(); // Go back to the previous directory
+    MELAout << "End MassRatioObject::MassRatioObject" << endl;
   }
-  ~MassRatioObject(){ if (finput) finput->Close(); }
+  MassRatioObject(MassRatioObject const& other) :
+    category(other.category), systematic(other.systematic),
+    finput(nullptr),
+    interpolators(other.interpolators),
+    hKDRatio2D(nullptr), hKDRatio3D(nullptr)
+  {
+    MELAout << "Begin MassRatioObject::MassRatioObject copy constructor" << endl;
+    if (other.hKDRatio2D){ hKDRatio2D=new TH2F(*(other.hKDRatio2D)); hKDRatio2D->SetName(TString(other.hKDRatio2D->GetName()) + "_copy"); }
+    if (other.hKDRatio3D){ hKDRatio3D=new TH3F(*(other.hKDRatio3D)); hKDRatio3D->SetName(TString(other.hKDRatio3D->GetName()) + "_copy"); }
+    MELAout << "End MassRatioObject::MassRatioObject copy constructor" << endl;
+  }
+  ~MassRatioObject(){
+    MELAout << "Begin ~MassRatioObject::MassRatioObject" << endl;
+    if (hKDRatio2D) delete hKDRatio2D;
+    if (hKDRatio3D) delete hKDRatio3D;
+    if (finput) finput->Close();
+    MELAout << "End ~MassRatioObject::MassRatioObject" << endl;
+  }
 };
 
 
@@ -118,12 +156,17 @@ bool getFilesAndTrees(
   const unsigned int istage, const TString fixedDate,
   ProcessHandler const* inputProcessHandle,
   const TString strGenerator,
-  std::vector<TFile*>& finputList, std::vector<TTree*>& treeList
+  std::vector<TFile*>& finputList, std::vector<TTree*>& treeList,
+  bool forceUseNominal=false
 ){
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
   const TString strStage = Form("Stage%i", istage);
   const TString strSystematics = getSystematicsName(syst);
+  const TString strSystematics_Nominal = getSystematicsName(sNominal);
+  TString strSystematics_effective=strSystematics;
+  if (forceUseNominal) strSystematics_effective=strSystematics_Nominal;
+
   vector<ZXFakeRateHandler::FakeRateMethod> FRMethods;
   FRMethods.push_back(ZXFakeRateHandler::mSS);
 
@@ -140,7 +183,7 @@ bool getFilesAndTrees(
       "HtoZZ%s_%s_FinalTemplates_%s_%s_%s_%s%s",
       strChannel.Data(), strCategory.Data(),
       inputProcessHandle->getProcessName().Data(), FRMethodName.Data(),
-      strSystematics.Data(),
+      strSystematics_effective.Data(),
       strGenerator.Data(),
       ".root"
     )
@@ -198,6 +241,7 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
     for (auto& cat:catList) doProceed |= (systematicAllowed(cat, channel, proctype, syst, "Data"));
     if (!doProceed) return;
   }
+  bool needsKDreweighting = false;
 
   const TString strChannel = getChannelName(channel);
   const TString strACHypo = getACHypothesisName(hypo);
@@ -220,6 +264,16 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
   gSystem->Exec("mkdir -p " + coutput_common);
 
   TDirectory* rootdir=gDirectory;
+
+  TString OUTPUT_LOG_NAME = Form(
+    "%s/HtoZZ%s_%s_FinalTemplates_%s_%s_%s",
+    coutput_common.Data(),
+    strChannel.Data(), "AllCategories",
+    outputProcessHandle->getProcessName().Data(),
+    strSystematics.Data(),
+    ".log"
+  );
+  MELAout.open(OUTPUT_LOG_NAME.Data());
 
   // Nominal categorization efficiencies
   std::vector<MassRatioObject> CategorizationEfficiencies;
@@ -449,6 +503,8 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
 
     float weight=0;
     bool isCategory=(cat==Inclusive);
+    TString catFlagName="";
+    if (!isCategory) catFlagName = TString("is_") + strCategory + TString("_") + strACHypo;
     vector<TString> KDset; KDset.push_back("ZZMass"); { vector<TString> KDset2=getACHypothesisKDNameSet(hypo, cat, massregion); appendVector(KDset, KDset2); }
     unordered_map<TString, float> KDvars;
     for (auto& KDname:KDset) KDvars[KDname]=0;
@@ -464,13 +520,26 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
     bool success = getFilesAndTrees(
       channel, cat, syst,
       istage, fixedDate, inputProcessHandle, "Data",
-      finputs, treeList
+      finputs, treeList,
+      false
     );
     MELAout << "\t-- " << (success ? "Success!" : "failure!") << endl;
 
     rootdir->cd();
 
     MELAout << "\t- Processing templates for category " << strCategory << endl;
+    MassRatioObject* systratio_KDfix=nullptr;
+    if (needsKDreweighting){
+      for (MassRatioObject& systratio:CategorizationSystRatios){
+        if (systratio.category==cat){
+          if (systratio.hKDRatio2D || systratio.hKDRatio3D){
+            systratio_KDfix=&systratio;
+            if (systratio_KDfix->hKDRatio2D) MELAout << "systratio_KDfix has 2D histogram " << systratio_KDfix->hKDRatio2D->GetName() << endl;
+            if (systratio_KDfix->hKDRatio3D) MELAout << "systratio_KDfix has 3D histogram " << systratio_KDfix->hKDRatio3D->GetName() << endl;
+          }
+        }
+      }
+    }
 
     if (success){
       MELAout << "\t- Fixing Zjets tree weights" << endl;
@@ -478,11 +547,32 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
         tree->SetBranchStatus("*", 0);
         bookBranch(tree, "weight", &weight);
         for (auto& KDname:KDset) bookBranch(tree, KDname, &(KDvars[KDname]));
-        if (!isCategory){
-          TString catFlagName = TString("is_") + strCategory + TString("_") + strACHypo;
+        if (catFlagName!=""){
           bookBranch(tree, catFlagName, &isCategory);
           if (!branchExists(tree, catFlagName)) isCategory=true;
         }
+
+        // Fix KD shapes for Pythia or MINLO systematics
+        if (systratio_KDfix){
+          TTree* tmptree=nullptr;
+          switch (nKDs){
+          case 2:
+            tmptree=fixTreeWeights(systratio_KDfix->hKDRatio2D, tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, weight, isCategory);
+            break;
+          case 3:
+            tmptree=fixTreeWeights(systratio_KDfix->hKDRatio3D, tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory);
+            break;
+          }
+          if (tmptree){
+            tree=tmptree;
+
+            // Need to re-book branches
+            bookBranch(tree, "weight", &weight);
+            for (auto& KDname:KDset) bookBranch(tree, KDname, &(KDvars.find(KDname)->second));
+            if (catFlagName!="") bookBranch(tree, catFlagName, &isCategory);
+          }
+        }
+
         fixedTrees.push_back(tree);
       }
       MELAout << "\t- Tree weights fixed" << endl;
@@ -520,6 +610,7 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
     if (foutput[cat]) foutput[cat]->Close();
     else MELAerr << "Something went wrong. Category " << cat << " file is invalid!" << endl;
   }
+  MELAout.close();
 }
 
 template<> void getTemplatesPerCategory<2>(

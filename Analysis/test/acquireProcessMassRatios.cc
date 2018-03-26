@@ -3,6 +3,8 @@
 
 #include "common_includes.h"
 #include "CheckSetTemplatesCategoryScheme.h"
+#include "TemplatesEventAnalyzer.h"
+#include "HistogramSmootherWithGaussianKernel.h"
 
 
 // Constants to affect the template code
@@ -13,6 +15,11 @@ const TString user_output_dir = "output/";
 
 
 ExtendedBinning getMassBinning(TTree* tree, bool separateZ4l=false);
+void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
+  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
+  const unsigned int istage, const TString fixedDate,
+  ProcessHandler::ProcessType proctype, const TString strGenerator
+);
 
 void acquireMassRatio_ProcessNominalToNominalInclusive_one(
   const Channel channel, const Category category, const ACHypothesis hypo,
@@ -300,6 +307,14 @@ void acquireMassRatio_ProcessSystToNominal_one(
   if (!thePerProcessHandle) return;
   if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst, strGenerator)) return;
   if (proctype==ProcessHandler::kZX && strGenerator!="Data") return;
+  if (
+    syst==tPythiaScaleDn || syst==tPythiaScaleUp
+    ||
+    syst==tPythiaTuneDn || syst==tPythiaTuneUp
+    ){
+    acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(channel, category, hypo, syst, istage, fixedDate, proctype, strGenerator);
+    return;
+  }
 
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
@@ -554,6 +569,360 @@ void acquireMassRatio_ProcessSystToNominal_one(
   }
 
   for (unsigned int it=0; it<InputTypeSize; it++){ for (auto& finput:finputList.at(it)) finput->Close(); }
+  foutput->Close();
+  MELAout.close();
+}
+
+
+void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
+  const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
+  const unsigned int istage, const TString fixedDate,
+  ProcessHandler::ProcessType proctype, const TString strGenerator
+){
+  if (channel==NChannels) return;
+  if (syst==sNominal) return;
+  if (!CheckSetTemplatesCategoryScheme(category)) return;
+  ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
+  if (!thePerProcessHandle) return;
+  if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst, strGenerator)) return;
+  if (proctype==ProcessHandler::kQQBkg || proctype==ProcessHandler::kZX) return;
+  if (strGenerator!="POWHEG") return;
+
+  TDirectory* rootdir = gDirectory;
+
+  const TString strChannel = getChannelName(channel);
+  const TString strCategory = getCategoryName(category);
+  const TString strACHypo = getACHypothesisName(hypo);
+  const TString strStage = Form("Stage%i", istage);
+  const TString strSystematics = getSystematicsName(syst);
+  const TString strSystematics_Nominal = getSystematicsName(sNominal);
+
+  // Setup the output directories
+  TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
+  TString strdate = todaysdate();
+  if (fixedDate!="") strdate=fixedDate;
+  cout << "Today's date: " << strdate << endl;
+  TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/" + strStage + "/";
+  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/MassRatios/" + strStage + "/";
+
+  gSystem->Exec("mkdir -p " + coutput_common);
+
+  TString OUTPUT_NAME = Form(
+    "HtoZZ%s_%s_%s_MassRatios_SystToNominal_%s_%s_%s",
+    strChannel.Data(), strCategory.Data(),
+    strACHypo.Data(),
+    thePerProcessHandle->getProcessName().Data(),
+    strSystematics.Data(),
+    strGenerator.Data()
+  );
+  TString OUTPUT_LOG_NAME = OUTPUT_NAME;
+  OUTPUT_NAME += ".root";
+  OUTPUT_LOG_NAME += ".log";
+
+  TString coutput = coutput_common + OUTPUT_NAME;
+  TString coutput_log = coutput_common + OUTPUT_LOG_NAME;
+  MELAout.open(coutput_log.Data());
+  MELAout << "Opened log file " << coutput_log << endl;
+
+  TFile* foutput = TFile::Open(coutput, "recreate");
+  MELAout << "Opened output file " << coutput << endl;
+  MELAout << "===============================" << endl;
+  MELAout << "CoM Energy: " << theSqrts << " TeV" << endl;
+  MELAout << "Decay Channel: " << strChannel << endl;
+  MELAout << "===============================" << endl;
+  MELAout << endl;
+
+  // Need to loop over each sample from scratch, so begin setting up samples
+
+  vector<int> mHListGlobal; // For ZZMass binning
+  BaseTree* theOutputTree[2]={ nullptr };
+  for (unsigned int i=0; i<2; i++){
+    TString treename = Form("OutputTree_%i", i);
+    theOutputTree[i] = new BaseTree(treename);
+  }
+
+  // Loop over the samples from scratch
+  vector<TString> strSampleIdentifiers;
+  if (proctype==ProcessHandler::kGG) strSampleIdentifiers.push_back("gg_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kVBF) strSampleIdentifiers.push_back("VBF_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kZH) strSampleIdentifiers.push_back("ZH_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kWH){
+    strSampleIdentifiers.push_back("WminusH_Sig_POWHEG");
+    strSampleIdentifiers.push_back("WplusH_Sig_POWHEG");
+  }
+  else assert(0);
+
+  // Ignore any Kfactors
+  // ...
+
+  // Register the discriminants
+  vector<KDspecs> KDlist;
+  getLikelihoodDiscriminants(channel, category, syst, KDlist);
+  getCategorizationDiscriminants(syst, KDlist);
+
+  for (TString const& identifier:strSampleIdentifiers){
+    // For the non-nominal tree
+    std::vector<ReweightingBuilder*> extraEvaluators;
+    SystematicsClass* systhandle = nullptr;
+
+    CJLSTSet* theSampleSet[2]={ nullptr };
+    vector<TString> strSamples[2];
+    vector<TString> idvector; idvector.push_back(identifier);
+    getSamplesList(theSqrts, idvector, strSamples[0], sNominal);
+    getSamplesList(theSqrts, idvector, strSamples[1], syst);
+    unordered_map<int, std::vector<TString>> mh_samplelist_map[2];
+    vector<int> mHList;
+    for (unsigned int i=0; i<2; i++){
+      for (TString& strSample:strSamples[i]){
+        int MHVal = SampleHelpers::findPoleMass(strSample);
+        TString cinput = CJLSTTree::constructCJLSTSamplePath(strSample);
+        if (MHVal>0 && !gSystem->AccessPathName(cinput)){
+          auto it=mh_samplelist_map[i].find(MHVal);
+          if (it!=mh_samplelist_map[i].end()) it->second.push_back(strSample);
+          else{
+            vector<TString> vtmp; vtmp.push_back(strSample);
+            mh_samplelist_map[i][MHVal]=vtmp;
+          }
+        }
+      }
+      strSamples[i].clear();
+    }
+    for (auto it=mh_samplelist_map[0].begin(); it!=mh_samplelist_map[0].end(); it++){
+      bool mhfound=false;
+      for (auto jt=mh_samplelist_map[1].begin(); jt!=mh_samplelist_map[1].end(); jt++){
+        if (it->first==jt->first){ mhfound=true; break; }
+      }
+      if (mhfound){
+        addByLowest(mHList, it->first, true);
+        addByLowest(mHListGlobal, it->first, true);
+      }
+    }
+
+
+    for (int const& mh:mHList){
+      for (unsigned int i=0; i<2; i++){
+        for (auto& v:mh_samplelist_map[i][mh]) strSamples[i].push_back(v);
+      }
+    }
+
+    for (unsigned int i=0; i<2; i++){
+      MELAout << "Looping over tree set " << i << endl;
+
+      theSampleSet[i]=new CJLSTSet(strSamples[i]);
+      // Book common variables
+      theSampleSet[i]->bookXS(); // "xsec"
+      theSampleSet[i]->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
+      for (auto& tree:theSampleSet[i]->getCJLSTTreeList()){
+        // Book common variables needed for analysis
+        tree->bookBranch<float>("GenHMass", 0);
+        tree->bookBranch<float>("ZZMass", -1);
+        tree->bookBranch<short>("Z1Flav", 0);
+        tree->bookBranch<short>("Z2Flav", 0);
+        // Variables for KDs
+        for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
+        tree->silenceUnused(); // Will no longer book another branch
+      }
+      theSampleSet[i]->setPermanentWeights(CJLSTSet::NormScheme_OneOverNgen, false, true); // One/Ngen is a better choice when we have a sparse set of samples
+
+      if (i==1) systhandle = constructSystematic(category, channel, proctype, syst, theSampleSet[i]->getCJLSTTreeList(), extraEvaluators, strGenerator);
+
+      // Build the analyzer and loop over the events
+      TemplatesEventAnalyzer theAnalyzer(theSampleSet[i], channel, category);
+      theAnalyzer.setExternalProductTree(theOutputTree[i]);
+      // Book common variables needed for analysis
+      theAnalyzer.addConsumed<float>("PUWeight");
+      theAnalyzer.addConsumed<float>("genHEPMCweight");
+      theAnalyzer.addConsumed<float>("dataMCWeight");
+      theAnalyzer.addConsumed<float>("trigEffWeight");
+      theAnalyzer.addConsumed<float>("GenHMass");
+      theAnalyzer.addConsumed<float>("ZZMass");
+      theAnalyzer.addConsumed<short>("Z1Flav");
+      theAnalyzer.addConsumed<short>("Z2Flav");
+      // Add discriminant builders
+      for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
+      // Add systematics handle
+      theAnalyzer.addSystematic(strSystematics, systhandle);
+      // Loop
+      theAnalyzer.loop(true, false, true);
+
+      MELAout << "Looped over tree set " << i << endl;
+    }
+
+    delete systhandle;
+    for (auto& rb:extraEvaluators) delete rb;
+
+    MELAout << "End Loop over tree sets" << endl;
+  }
+  for (auto& KD:KDlist) delete KD.KD;
+
+  // The output tree now has all the information needed
+  for (unsigned int i=0; i<2; i++){
+    MELAout << "There are " << theOutputTree[i]->getNEvents() << " products" << endl;
+    //theOutputTree[i]->writeToFile(foutput);
+  }
+
+  ExtendedBinning binning_mass("ZZMass");
+  binning_mass.addBinBoundary(70.);
+  binning_mass.addBinBoundary(theSqrts*1000.);
+  if (mHListGlobal.size()>2){ // Approximate ZZMass binning with GenHMass binning
+    for (unsigned int imh=0; imh<mHListGlobal.size()-1; imh++) binning_mass.addBinBoundary((mHListGlobal.at(imh) + mHListGlobal.at(imh+1)) / 2.);
+  }
+  else if (mHListGlobal.size()==2 && mHListGlobal.at(1)>210.) binning_mass.addBinBoundary(210);
+
+  vector<TString> treenamelist;
+  if (proctype==ProcessHandler::kGG){
+    vector<GGProcessHandler::HypothesisType> tplset = ((GGProcessHandler*) thePerProcessHandle)->getHypothesesForACHypothesis(hypo);
+    for (auto& t:tplset) treenamelist.push_back(((GGProcessHandler*) thePerProcessHandle)->getOutputTreeName(t));
+  }
+  else if (proctype==ProcessHandler::kVBF || proctype==ProcessHandler::kZH || proctype==ProcessHandler::kWH){
+    vector<VVProcessHandler::HypothesisType> tplset = ((VVProcessHandler*) thePerProcessHandle)->getHypothesesForACHypothesis(hypo);
+    for (auto& t:tplset) treenamelist.push_back(((VVProcessHandler*) thePerProcessHandle)->getOutputTreeName(t));
+  }
+  else if (proctype==ProcessHandler::kQQBkg){
+    treenamelist.push_back(((QQBkgProcessHandler*) thePerProcessHandle)->getOutputTreeName());
+  }
+  else assert(0);
+
+  {
+    foutput->cd();
+    vector<ExtendedHistogram_1D*> hMass; hMass.assign(2, nullptr);
+    for (unsigned int i=0; i<2; i++){
+      ExtendedHistogram_1D*& hh = hMass.at(i);
+      hh = new ExtendedHistogram_1D(Form("MassDistribution_%i", i), "", binning_mass);
+      TTree* tree = theOutputTree[i]->getSelectedTree();
+      bool isCategory=(category==Inclusive);
+      float ZZMass, weight;
+      tree->SetBranchAddress("ZZMass", &ZZMass);
+      tree->SetBranchAddress("weight", &weight);
+      if (!isCategory){
+        TString catFlagName = TString("is_") + strCategory + TString("_") + strACHypo;
+        tree->SetBranchAddress(catFlagName, &isCategory);
+      }
+      for (int ev=0; ev<tree->GetEntries(); ev++){
+        tree->GetEntry(ev);
+        if (!isCategory) continue;
+        hh->fill(ZZMass, weight);
+      }
+      MELAout << "Mass integral of " << hh->getName() << ": " << hh->getHistogram()->Integral() << endl;
+      //foutput->WriteTObject(hh->getHistogram());
+      //foutput->WriteTObject(hh->getProfileX());
+    }
+    ExtendedHistogram_1D*& hh = hMass.at(1);
+    ExtendedHistogram_1D*& hi = hMass.at(0);
+    ExtendedHistogram_1D hRatio = ExtendedHistogram_1D::divideHistograms(*hh, *hi, false, Form("MassRatio"));
+    foutput->WriteTObject(hRatio.getHistogram());
+    foutput->WriteTObject(hRatio.getProfileX());
+    for (auto& htmp:hMass) delete htmp;
+
+    for (auto& name:treenamelist){
+      TString hname=hRatio.getName() + "_" + name;
+      TGraphErrors* gr = hRatio.getGraph(Form("gr_%s", hname.Data()));
+      foutput->WriteTObject(gr);
+      {
+        gr->SetName(Form("%s_Smooth", gr->GetName()));
+        foutput->WriteTObject(gr);
+
+        double* yy=gr->GetY();
+        double* xx=gr->GetX();
+        int np=gr->GetN();
+        std::vector<pair<double, double>> xy_new;
+        for (int ip=0; ip<int(binning_mass.getMax()-binning_mass.getMin()); ip++){ // Add a point every GeV
+          double xval=ip+binning_mass.getMin();
+          if (xval<xx[0]){
+            xy_new.emplace_back(xval, yy[0]);
+          }
+          else if (xval>=xx[np-1]){
+            xy_new.emplace_back(xval, yy[np-1]);
+          }
+          else{
+            for (int jp=0; jp<np-1; jp++){
+              if (xval>=xx[jp] && xval<xx[jp+1]){
+                double f=(xval-xx[jp])/(xx[jp+1]-xx[jp]);
+                xy_new.emplace_back(xval, yy[jp]*(1.-f)+f*yy[jp+1]);
+              }
+            }
+          }
+        }
+
+        TGraph* grPatched = makeGraphFromPair(xy_new, TString(gr->GetName())+"_Patched");
+        foutput->WriteTObject(grPatched);
+        TSpline3* spPatched = convertGraphToSpline3(grPatched, false, false);
+        TString spname=grPatched->GetName(); replaceString(spname, "gr_", "");
+        spPatched->SetName(spname); spPatched->SetTitle(gr->GetName());
+        foutput->WriteTObject(spPatched);
+        delete spPatched;
+        delete grPatched;
+      }
+      delete gr;
+    }
+  }
+
+  // Get KD binning
+  for (int massregion=0; massregion<(int) NMassRegions; massregion++){
+    TString massregionname = getMassRegionName((CategorizationHelpers::MassRegion) massregion);
+    foutput->cd();
+    TDirectory* savedir = foutput->mkdir(massregionname); savedir->cd();
+    MELAout << "Making " << massregionname << " distributions" << endl;
+
+    bool isCategory=(category==Inclusive);
+    float weight=0;
+    vector<TString> KDset; KDset.push_back("ZZMass"); { vector<TString> KDset2=getACHypothesisKDNameSet(hypo, category, (CategorizationHelpers::MassRegion) massregion); appendVector(KDset, KDset2); }
+    unordered_map<TString, float> KDvars;
+    for (auto& KDname:KDset) KDvars[KDname]=0;
+    vector<ExtendedBinning> KDbinning;
+    for (auto& KDname:KDset){
+      if (KDname!="ZZMass") KDbinning.push_back(getDiscriminantFineBinning(channel, category, KDname, (CategorizationHelpers::MassRegion) massregion));
+      else KDbinning.push_back(binning_mass);
+    }
+    unsigned int nKDs = KDset.size();
+    TString catFlagName="";
+    if (!isCategory) catFlagName = TString("is_") + strCategory + TString("_") + strACHypo;
+
+    for (unsigned int i=0; i<2; i++){
+      TTree* tree = theOutputTree[i]->getSelectedTree();
+      bookBranch(tree, "weight", &weight);
+      for (auto& KDname:KDset) bookBranch(tree, KDname, &(KDvars[KDname]));
+      if (catFlagName!="") bookBranch(tree, catFlagName, &isCategory);
+    }
+
+    if (nKDs==2){
+      TH2F* hDistro[2];
+      for (unsigned int i=0; i<2; i++){
+        TTree* tree = theOutputTree[i]->getSelectedTree();
+        hDistro[i] = getSmoothHistogram(
+          (i==0 ? strSystematics_Nominal.Data() : strSystematics.Data()), "",
+          KDbinning.at(0), KDbinning.at(1),
+          tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, weight, isCategory,
+          1, 10
+        );
+        conditionalizeHistogram<TH2F>(hDistro[i], 0, nullptr, false, true);
+      }
+      TH2F* hRatio = new TH2F("RatioWithKD", "", KDbinning.at(0).getNbins(), KDbinning.at(0).getBinning(), KDbinning.at(1).getNbins(), KDbinning.at(1).getBinning());
+      divideHistograms(hDistro[1], hDistro[0], hRatio, false);
+      savedir->WriteTObject(hRatio); delete hRatio;
+      for (unsigned int i=0; i<2; i++) delete hDistro[i];
+    }
+    else if (nKDs==3){
+      TH3F* hDistro[2];
+      for (unsigned int i=0; i<2; i++){
+        TTree* tree = theOutputTree[i]->getSelectedTree();
+        hDistro[i] = getSmoothHistogram(
+          (i==0 ? strSystematics_Nominal.Data() : strSystematics.Data()), "",
+          KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
+          tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
+          1, 10, 10
+        );
+        conditionalizeHistogram<TH3F>(hDistro[i], 0, nullptr, false, true);
+      }
+      TH3F* hRatio = new TH3F("RatioWithKD", "", KDbinning.at(0).getNbins(), KDbinning.at(0).getBinning(), KDbinning.at(1).getNbins(), KDbinning.at(1).getBinning(), KDbinning.at(2).getNbins(), KDbinning.at(2).getBinning());
+      divideHistograms(hDistro[1], hDistro[0], hRatio, false);
+      savedir->WriteTObject(hRatio); delete hRatio;
+      for (unsigned int i=0; i<2; i++) delete hDistro[i];
+    }
+  }
+  foutput->cd();
+
+  for (unsigned int i=0; i<2; i++) delete theOutputTree[i];
   foutput->Close();
   MELAout.close();
 }

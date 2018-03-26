@@ -41,7 +41,7 @@ if [[ -f $SCRIPT ]]; then
     bsub -q 2nd -C 0 -o "./output/Logs/lsflog_"$extLog".txt" -e "./output/Logs/lsferr_"$extLog".err" submitHiggsWidthROOTCommand.lsf.sh $SCRIPT $FCN $FCNARGS
   elif [[ "$hname" == *"login-node"* ]]; then
     echo "Host is on MARCC, so need to use SLURM batch"
-    #sbatch --output="./output/Logs/lsflog_"$extLog".txt" --error="./output/Logs/lsferr_"$extLog".err" submitHiggsWidthROOTCommand.slurm.sh $SCRIPT $FCN $FCNARGS
+    sbatch --output="./output/Logs/lsflog_"$extLog".txt" --error="./output/Logs/lsferr_"$extLog".err" submitHiggsWidthROOTCommand.slurm.sh $SCRIPT $FCN $FCNARGS
   fi
 
 fi

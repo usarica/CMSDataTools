@@ -771,11 +771,19 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
 
   vector<TString> treenamelist;
   if (proctype==ProcessHandler::kGG){
-    vector<GGProcessHandler::HypothesisType> tplset = ((GGProcessHandler*) thePerProcessHandle)->getHypothesesForACHypothesis(hypo);
+    vector<GGProcessHandler::HypothesisType> tplset = ((GGProcessHandler*) thePerProcessHandle)->getHypothesesForACHypothesis(kSM);
+    if (hypo!=kSM){
+      vector<GGProcessHandler::HypothesisType> tplset_tmp = ((GGProcessHandler*) thePerProcessHandle)->getHypothesesForACHypothesis(hypo);
+      for (GGProcessHandler::HypothesisType& v:tplset_tmp) tplset.push_back(v);
+    }
     for (auto& t:tplset) treenamelist.push_back(((GGProcessHandler*) thePerProcessHandle)->getOutputTreeName(t));
   }
   else if (proctype==ProcessHandler::kVBF || proctype==ProcessHandler::kZH || proctype==ProcessHandler::kWH){
-    vector<VVProcessHandler::HypothesisType> tplset = ((VVProcessHandler*) thePerProcessHandle)->getHypothesesForACHypothesis(hypo);
+    vector<VVProcessHandler::HypothesisType> tplset = ((VVProcessHandler*) thePerProcessHandle)->getHypothesesForACHypothesis(kSM);
+    if (hypo!=kSM){
+      vector<VVProcessHandler::HypothesisType> tplset_tmp = ((VVProcessHandler*) thePerProcessHandle)->getHypothesesForACHypothesis(hypo);
+      for (VVProcessHandler::HypothesisType& v:tplset_tmp) tplset.push_back(v);
+    }
     for (auto& t:tplset) treenamelist.push_back(((VVProcessHandler*) thePerProcessHandle)->getOutputTreeName(t));
   }
   else if (proctype==ProcessHandler::kQQBkg){

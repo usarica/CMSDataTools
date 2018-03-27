@@ -280,7 +280,7 @@ void makeFinalTemplates_WH(const Channel channel, const ACHypothesis hypo, const
   TDirectory* rootdir=gDirectory;
 
   TString OUTPUT_LOG_NAME = Form(
-    "%s/HtoZZ%s_%s_FinalTemplates_%s_%s_%s",
+    "%s/HtoZZ%s_%s_FinalTemplates_%s_%s%s",
     coutput_common.Data(),
     strChannel.Data(), "AllCategories",
     outputProcessHandle->getProcessName().Data(),
@@ -385,7 +385,7 @@ void makeFinalTemplates_WH(const Channel channel, const ACHypothesis hypo, const
     const TString strCategory = getCategoryName(cat);
     const TString strSystematicsOutput = getSystematicsCombineName(cat, channel, proctype, syst);
     TString OUTPUT_NAME = Form(
-      "%s/HtoZZ%s_%s_FinalTemplates_%s_%s_%s",
+      "%s/HtoZZ%s_%s_FinalTemplates_%s_%s%s",
       coutput_common.Data(),
       strChannel.Data(), strCategory.Data(),
       outputProcessHandle->getProcessName().Data(),
@@ -454,7 +454,7 @@ void makeFinalTemplates_WH(const Channel channel, const ACHypothesis hypo, const
 
         for (MassRatioObject& systratio:CategorizationSystRatios){
           if (systratio.category==Inclusive){
-            one=systratio.interpolators[treename]->Eval(KDvars[KDset.at(0)]);
+            one=std::max(0., systratio.interpolators[treename]->Eval(KDvars[KDset.at(0)]));
             break;
           }
         }
@@ -466,21 +466,22 @@ void makeFinalTemplates_WH(const Channel channel, const ACHypothesis hypo, const
               float systadj=1;
               for (MassRatioObject& systratio:CategorizationSystRatios){
                 if (systratio.category==cateff.category){
-                  systadj=systratio.interpolators[treename]->Eval(KDvars[KDset.at(0)]);;
+                  systadj = std::max(0., systratio.interpolators[treename]->Eval(KDvars[KDset.at(0)]));
                   break;
                 }
               }
-              extraweight -= systadj * cateff.interpolators[treename]->Eval(KDvars[KDset.at(0)]);
+              extraweight -= systadj * std::min(1., std::max(0., cateff.interpolators[treename]->Eval(KDvars[KDset.at(0)])));
             }
+            extraweight = std::min(one, std::max(float(0), extraweight));
           }
           else if (cat!=Inclusive){
             extraweight=0;
             for (MassRatioObject& cateff:CategorizationEfficiencies){
               if (cateff.category==cat){
-                extraweight = cateff.interpolators[treename]->Eval(KDvars[KDset.at(0)]);
+                extraweight = std::min(1., std::max(0., cateff.interpolators[treename]->Eval(KDvars[KDset.at(0)])));
                 for (MassRatioObject& systratio:CategorizationSystRatios){
                   if (systratio.category==cateff.category){
-                    extraweight *= systratio.interpolators[treename]->Eval(KDvars[KDset.at(0)]);;
+                    extraweight *= std::max(0., systratio.interpolators[treename]->Eval(KDvars[KDset.at(0)]));
                     break;
                   }
                 }
@@ -497,7 +498,7 @@ void makeFinalTemplates_WH(const Channel channel, const ACHypothesis hypo, const
     for (Category& cat:catList){ // Check integrity of mass histograms
       MELAout << "Checking integrity of mass histograms for category " << getCategoryName(cat) << endl;
       for (ExtendedHistogram_1D const& ehmass:hMass_FromNominalInclusive[cat]){
-        if (checkHistogramIntegrity(ehmass.getHistogram())) MELAout << "Integrity of " << ehmass.getName() << " is GOOD." << endl;
+        if (checkHistogramIntegrity(ehmass.getHistogram()) && checkVarNonNegative(*(ehmass.getHistogram()))) MELAout << "Integrity of " << ehmass.getName() << " is GOOD." << endl;
         else MELAout << "WARNING: Integrity of " << ehmass.getName() << " is BAD." << endl;
       }
     }
@@ -979,8 +980,8 @@ void getControl2DXSlices(
       if (!isPhaseHist){
         double integral = getHistogramIntegralAndError(hSlice, 1, hSlice->GetNbinsX(), 1, hSlice->GetNbinsY(), false, nullptr);
         if (integral!=0.) hSlice->Scale(1./integral);
+        divideBinWidth(hSlice);
       }
-      divideBinWidth(hSlice);
       hSlice->SetOption("colz");
       hSlice->SetTitle(slicetitle);
       hSlice->GetXaxis()->SetTitle(tplytitle);

@@ -3,7 +3,6 @@
 
 #include "common_includes.h"
 #include "CheckSetTemplatesCategoryScheme.h"
-#include "smoothenHistograms.h"
 #include "TText.h"
 #include "TPaveText.h"
 #include "TColor.h"

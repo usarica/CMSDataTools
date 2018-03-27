@@ -321,7 +321,7 @@ void makeGGTemplatesFromPOWHEG_checkstage(
     if (f==1 && hypo==kSM) break;
     ACHypothesis fhypo = (f==1 ? hypo : kSM);
     TString INPUT_NAME = Form(
-      "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG",
+      "HtoZZ%s_%s_%s_FinalTemplates_%s_%s_POWHEG.root",
       strChannel.Data(), strCategory.Data(),
       getACHypothesisName(fhypo).Data(), theProcess.getProcessName().Data(),
       strSystematics.Data()

@@ -976,6 +976,43 @@ template<> double HelperFunctions::evaluateTObject<TSpline3>(TSpline3* obj, floa
   return obj->Eval(val);
 }
 
+template<> bool HelperFunctions::checkVarNonNegative<TH1F>(TH1F const& val){
+  bool res=true;
+  int nx=val.GetNbinsX();
+  for (int ix=0; ix<=nx+1; ix++){
+    res &= checkVarNonNegative(val.GetBinContent(ix));
+    res &= checkVarNonNegative(val.GetBinError(ix));
+  }
+  return res;
+}
+template<> bool HelperFunctions::checkVarNonNegative<TH2F>(TH2F const& val){
+  bool res=true;
+  int nx=val.GetNbinsX();
+  int ny=val.GetNbinsY();
+  for (int ix=0; ix<=nx+1; ix++){
+    for (int iy=0; iy<=ny+1; iy++){
+      res &= checkVarNonNegative(val.GetBinContent(ix, iy));
+      res &= checkVarNonNegative(val.GetBinError(ix, iy));
+    }
+  }
+  return res;
+}
+template<> bool HelperFunctions::checkVarNonNegative<TH3F>(TH3F const& val){
+  bool res=true;
+  int nx=val.GetNbinsX();
+  int ny=val.GetNbinsY();
+  int nz=val.GetNbinsZ();
+  for (int ix=0; ix<=nx+1; ix++){
+    for (int iy=0; iy<=ny+1; iy++){
+      for (int iz=0; iz<=nz+1; iz++){
+        res &= checkVarNonNegative(val.GetBinContent(ix, iy, iz));
+        res &= checkVarNonNegative(val.GetBinError(ix, iy, iz));
+      }
+    }
+  }
+  return res;
+}
+
 template<> bool HelperFunctions::checkHistogramIntegrity<TH1F>(TH1F const* histo){
   if (!histo) return false;
   for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
@@ -983,8 +1020,8 @@ template<> bool HelperFunctions::checkHistogramIntegrity<TH1F>(TH1F const* histo
     double err=histo->GetBinError(ix);
     if (!checkVarNanInf(val) || !checkVarNanInf(err) || !checkVarNonNegative(err)){
       MELAerr
-        << "HelperFunctions::checkHistogramIntegrity: Bin " << ix
-        << " failed integrity check. Value / error = " << val << " / " << err
+        << "HelperFunctions::checkHistogramIntegrity[" << histo->GetName() << "]: "
+        << "Bin " << ix << " failed integrity check. Value / error = " << val << " / " << err
         << endl;
       return false;
     }
@@ -999,7 +1036,8 @@ template<> bool HelperFunctions::checkHistogramIntegrity<TH2F>(TH2F const* histo
       double err=histo->GetBinError(ix, iy);
       if (!checkVarNanInf(val) || !checkVarNanInf(err) || !checkVarNonNegative(err)){
         MELAerr
-          << "HelperFunctions::checkHistogramIntegrity: Bin ( " << ix << "," << iy
+          << "HelperFunctions::checkHistogramIntegrity[" << histo->GetName() << "]: "
+          << "Bin ( " << ix << "," << iy
           << " ) failed integrity check. Value / error = " << val << " / " << err
           << endl;
         return false;
@@ -1017,7 +1055,8 @@ template<> bool HelperFunctions::checkHistogramIntegrity<TH3F>(TH3F const* histo
         double err=histo->GetBinError(ix, iy, iz);
         if (!checkVarNanInf(val) || !checkVarNanInf(err) || !checkVarNonNegative(err)){
           MELAerr
-            << "HelperFunctions::checkHistogramIntegrity: Bin ( " << ix << "," << iy << "," << iz
+            << "HelperFunctions::checkHistogramIntegrity[" << histo->GetName() << "]: "
+            << "Bin ( " << ix << "," << iy << "," << iz
             << " ) failed integrity check. Value / error = " << val << " / " << err
             << endl;
           return false;

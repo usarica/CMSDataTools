@@ -63,6 +63,10 @@ namespace HelperFunctions{
   template<typename T> bool checkVarNanInf(T const& val);
   template<typename T> bool checkNanInf(std::vector<T> const& vars);
 
+  template<> bool checkVarNonNegative<TH1F>(TH1F const& val);
+  template<> bool checkVarNonNegative<TH2F>(TH2F const& val);
+  template<> bool checkVarNonNegative<TH3F>(TH3F const& val);
+
   // TGraph functions
   template<typename T> TGraph* makeGraphFromPair(std::vector<std::pair<T, T>> points, TString name);
 

@@ -479,7 +479,7 @@ TString SystematicsHelpers::getSystematicsCombineName(
   }
   assert(!systname.Contains("[process]") || strProcess!=""); HelperFunctions::replaceString(systname, "[process]", strProcess.Data());
 
-  TString strSqrts = Form("%iTeV", theSqrts);
+  TString strSqrts = Form("%i", theSqrts);
   assert(!systname.Contains("[sqrts]") || strSqrts!=""); HelperFunctions::replaceString(systname, "[sqrts]", strSqrts.Data());
 
   TString strYear = theDataPeriod;

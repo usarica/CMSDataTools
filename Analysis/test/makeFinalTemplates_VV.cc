@@ -54,10 +54,14 @@ bool getFile(
         finputList.push_back(finput);
       }
       else if (finput->IsOpen()){
+        MELAerr << "getFilesAndTrees::File " << cinput << " is zombie! Re-run " << strStage << " functions first." << endl;
         finput->Close();
         return false;
       }
-      else return false;
+      else{
+        MELAerr << "getFilesAndTrees::File " << cinput << " could not be opened! Re-run " << strStage << " functions first." << endl;
+        return false;
+      }
     }
   }
   return true;
@@ -71,8 +75,7 @@ void getControl2DXSlices(
   std::vector<TH3F*> const& hTemplates
 );
 
-
-void makeFinalTemplates_VV(const Channel channel, const ACHypothesis hypo, const SystematicVariationTypes syst, CategorizationHelpers::MassRegion massregion, const unsigned int istage=1, const TString fixedDate=""){
+void makeFinalTemplates_VV_one(const Channel channel, const ACHypothesis hypo, const SystematicVariationTypes syst, CategorizationHelpers::MassRegion massregion, const unsigned int istage=1, const TString fixedDate=""){
   const ProcessHandler::ProcessType proctype=ProcessHandler::kVV;
   if (channel==NChannels) return;
   ProcessHandleType const* outputProcessHandle=(ProcessHandleType const*) getProcessHandlerPerMassRegion(proctype, massregion);
@@ -252,6 +255,27 @@ void getControl2DXSlices(
   for (auto& h:hList) delete h;
   rootdir->cd();
 }
+
+
+void makeFinalTemplates_VV(CategorizationHelpers::MassRegion massregion, const unsigned int istage=1, const TString fixedDate=""){
+  vector<Category> allowedCats = getAllowedCategories(globalCategorizationScheme);
+  for (int ch=0; ch<(int) NChannels; ch++){
+    Channel channel = (Channel) ch;
+    if (channel==k4l || channel==k2l2l) continue;
+    for (int ih=0; ih<nACHypotheses; ih++){
+      ACHypothesis hypo = (ACHypothesis) ih;
+
+      vector<SystematicsHelpers::SystematicVariationTypes> allowedSysts;
+      for (auto& cat:allowedCats){
+        vector<SystematicsHelpers::SystematicVariationTypes> allowedSysts_cat = getProcessSystematicVariations(cat, channel, ProcessHandler::kVV, "");
+        for (auto& s:allowedSysts_cat) allowedSysts.push_back(s);
+      }
+
+      for (auto& syst:allowedSysts) makeFinalTemplates_VV_one(channel, hypo, syst, massregion, istage, fixedDate);
+    }
+  }
+}
+
 
 
 #endif

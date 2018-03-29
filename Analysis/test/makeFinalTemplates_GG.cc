@@ -206,6 +206,10 @@ bool getFilesAndTrees(
         const TString strCategory_inc = getCategoryName(category_inc);
         MELAout << "getFilesAndTrees::File " << cinput << " is not found for untagged category! Attempting to substitute inclusive category..." << endl;
         HelperFunctions::replaceString<TString, const TString>(cinput, strCategory, strCategory_inc);
+        if (gSystem->AccessPathName(cinput) && syst!=sNominal){
+          MELAout << "getFilesAndTrees::File " << cinput << " is not found for untagged category in systematic " << strSystematics_effective << "! Attempting to substitute inclusive category with nominal systematic..." << endl;
+          HelperFunctions::replaceString<TString, const TString>(cinput, strSystematics_effective, strSystematics_Nominal);
+        }
       }
     }
     if (gSystem->AccessPathName(cinput)){

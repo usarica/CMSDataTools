@@ -27,6 +27,9 @@ public:
 
   virtual void imposeTplPhysicality(std::vector<float>& vals) const;
 
+  virtual std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo) const = 0;
+  virtual std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo) const = 0;
+
 protected:
   ProcessType const proctype;
   CategorizationHelpers::MassRegion const massregion;
@@ -73,8 +76,11 @@ public:
 
   TString getOutputTreeName(GGProcessHandler::HypothesisType type) const;
   TString getTemplateName(GGProcessHandler::TemplateType type) const;
-  TString getMELAHypothesisWeight(GGProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const;
+  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo) const;
+  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo) const;
   std::vector<GGProcessHandler::HypothesisType> getHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const;
+  std::vector<GGProcessHandler::TemplateType> getTemplateTypesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const;
+  TString getMELAHypothesisWeight(GGProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const;
   TString getProcessLabel(GGProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const;
   TString getProcessLabel(GGProcessHandler::TemplateType type, ACHypothesisHelpers::ACHypothesis hypo) const;
 
@@ -187,8 +193,11 @@ public:
 
   TString getOutputTreeName(VVProcessHandler::HypothesisType type) const;
   TString getTemplateName(VVProcessHandler::TemplateType type) const;
-  TString getMELAHypothesisWeight(VVProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const;
+  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo) const;
+  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo) const;
   std::vector<VVProcessHandler::HypothesisType> getHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const;
+  std::vector<VVProcessHandler::TemplateType> getTemplateTypesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const;
+  TString getMELAHypothesisWeight(VVProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const;
   TString getProcessLabel(VVProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const;
   TString getProcessLabel(VVProcessHandler::TemplateType type, ACHypothesisHelpers::ACHypothesis hypo) const;
 
@@ -285,9 +294,12 @@ public:
 
   TString getOutputTreeName() const;
   TString getTemplateName() const;
+  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo=ACHypothesisHelpers::kSM) const;
+  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo=ACHypothesisHelpers::kSM) const;
+  std::vector<QQBkgProcessHandler::HypothesisType> getHypotheses() const;
+  std::vector<QQBkgProcessHandler::TemplateType> getTemplateTypes() const;
   TString getMELAHypothesisWeight(unsigned int njets) const;
   TString getProcessLabel() const;
-  std::vector<QQBkgProcessHandler::HypothesisType> getHypotheses() const;
 
   static int castHypothesisTypeToInt(QQBkgProcessHandler::HypothesisType type);
   static int castTemplateTypeToInt(QQBkgProcessHandler::TemplateType type);
@@ -325,13 +337,16 @@ public:
 
   TString getOutputTreeName() const;
   TString getTemplateName() const;
+  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo=ACHypothesisHelpers::kSM) const;
+  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo=ACHypothesisHelpers::kSM) const;
+  std::vector<ZXProcessHandler::HypothesisType> getHypotheses() const;
+  std::vector<ZXProcessHandler::TemplateType> getTemplateTypes() const;
   TString getProcessLabel() const;
 
   static int castHypothesisTypeToInt(ZXProcessHandler::HypothesisType type);
   static int castTemplateTypeToInt(ZXProcessHandler::TemplateType type);
   static ZXProcessHandler::HypothesisType castIntToHypothesisType(int type);
   static ZXProcessHandler::TemplateType castIntToTemplateType(int type);
-  std::vector<ZXProcessHandler::HypothesisType> getHypotheses() const;
 
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals) const;
 

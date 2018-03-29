@@ -162,6 +162,46 @@ TString GGProcessHandler::getTemplateName(GGProcessHandler::TemplateType type) c
   if (res!="") res = Form("T_%s_%s", getProcessName().Data(), res.Data());
   return res;
 }
+std::vector<TString> GGProcessHandler::getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo) const{
+  vector<TString> res;
+  for (auto& t:this->getHypothesesForACHypothesis(hypo)) res.push_back(this->getOutputTreeName(t));
+  return res;
+}
+std::vector<TString> GGProcessHandler::getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo) const{
+  vector<TString> res;
+  for (auto& t:this->getTemplateTypesForACHypothesis(hypo)) res.push_back(this->getTemplateName(t));
+  return res;
+}
+std::vector<GGProcessHandler::HypothesisType> GGProcessHandler::getHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const{
+  std::vector<GGProcessHandler::HypothesisType> res;
+  // Order matters!
+  if (hypo==ACHypothesisHelpers::kSM){
+    res.push_back(GGBkg);
+    res.push_back(GGSig);
+    res.push_back(GGBSI);
+  }
+  else{
+    res.push_back(GGSigBSM);
+    res.push_back(GGSigBSMSMInt);
+    res.push_back(GGBBI);
+  }
+  return res;
+}
+std::vector<GGProcessHandler::TemplateType> GGProcessHandler::getTemplateTypesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const{
+  std::vector<GGProcessHandler::TemplateType> res;
+  // Order matters!
+  if (hypo==ACHypothesisHelpers::kSM){
+    res.push_back(GGTplBkg);
+    res.push_back(GGTplSig);
+    res.push_back(GGTplInt_Re);
+  }
+  else{
+    res.push_back(GGTplSigBSM);
+    res.push_back(GGTplSigBSMSMInt_Re);
+    res.push_back(GGTplIntBSM_Re);
+  }
+  return res;
+}
 TString GGProcessHandler::getMELAHypothesisWeight(GGProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const{
   TString strWeight;
   if (type==GGBkg) strWeight = "p_Gen_GG_BKG_MCFM";
@@ -213,21 +253,6 @@ TString GGProcessHandler::getMELAHypothesisWeight(GGProcessHandler::HypothesisTy
     };
   }
   return strWeight;
-}
-std::vector<GGProcessHandler::HypothesisType> GGProcessHandler::getHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const{
-  std::vector<GGProcessHandler::HypothesisType> res;
-  // Order matters!
-  if (hypo==ACHypothesisHelpers::kSM){
-    res.push_back(GGBkg);
-    res.push_back(GGSig);
-    res.push_back(GGBSI);
-  }
-  else{
-    res.push_back(GGSigBSM);
-    res.push_back(GGSigBSMSMInt);
-    res.push_back(GGBBI);
-  }
-  return res;
 }
 TString GGProcessHandler::getProcessLabel(GGProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const{
   TString acname;
@@ -990,6 +1015,46 @@ TString VVProcessHandler::getTemplateName(VVProcessHandler::TemplateType type) c
   if (res!="") res = Form("T_%s_%s", getProcessName().Data(), res.Data());
   return res;
 }
+std::vector<VVProcessHandler::HypothesisType> VVProcessHandler::getHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const{
+  std::vector<HypothesisType> res;
+  // Order matters!
+  if (hypo==ACHypothesisHelpers::kSM){
+    for (int i=0; i<castHypothesisTypeToInt(nVVSMTypes); i++){
+      res.push_back(castIntToHypothesisType(i, false));
+    }
+  }
+  else{
+    for (int i=castHypothesisTypeToInt(nVVSMTypes); i<castHypothesisTypeToInt(nVVTypes); i++){
+      res.push_back(castIntToHypothesisType(i, false));
+    }
+  }
+  return res;
+}
+std::vector<VVProcessHandler::TemplateType> VVProcessHandler::getTemplateTypesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const{
+  std::vector<TemplateType> res;
+  // Order matters!
+  if (hypo==ACHypothesisHelpers::kSM){
+    for (int i=0; i<castTemplateTypeToInt(nVVTplSMTypes); i++){
+      res.push_back(castIntToTemplateType(i, false));
+    }
+  }
+  else{
+    for (int i=castTemplateTypeToInt(nVVTplSMTypes); i<castTemplateTypeToInt(nVVTplTypes); i++){
+      res.push_back(castIntToTemplateType(i, false));
+    }
+  }
+  return res;
+}
+std::vector<TString> VVProcessHandler::getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo) const{
+  vector<TString> res;
+  for (auto& t:this->getHypothesesForACHypothesis(hypo)) res.push_back(this->getOutputTreeName(t));
+  return res;
+}
+std::vector<TString> VVProcessHandler::getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo) const{
+  vector<TString> res;
+  for (auto& t:this->getTemplateTypesForACHypothesis(hypo)) res.push_back(this->getTemplateName(t));
+  return res;
+}
 TString VVProcessHandler::getMELAHypothesisWeight(VVProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const{
   TString strWeight;
   if (type==VVBkg) strWeight = "p_Gen_JJEW_BKG_MCFM";
@@ -1087,21 +1152,6 @@ TString VVProcessHandler::getMELAHypothesisWeight(VVProcessHandler::HypothesisTy
     };
   }
   return strWeight;
-}
-std::vector<VVProcessHandler::HypothesisType> VVProcessHandler::getHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const{
-  std::vector<HypothesisType> res;
-  // Order matters!
-  if (hypo==ACHypothesisHelpers::kSM){
-    for (int i=0; i<castHypothesisTypeToInt(nVVSMTypes); i++){
-      res.push_back(castIntToHypothesisType(i, false));
-    }
-  }
-  else{
-    for (int i=castHypothesisTypeToInt(nVVSMTypes); i<castHypothesisTypeToInt(nVVTypes); i++){
-      res.push_back(castIntToHypothesisType(i, false));
-    }
-  }
-  return res;
 }
 TString VVProcessHandler::getProcessLabel(VVProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const{
   TString proclabelbare;
@@ -1848,7 +1898,28 @@ TString QQBkgProcessHandler::getTemplateName() const{
   TString res = Form("T_%s", getProcessName().Data());
   return res;
 }
-TString QQBkgProcessHandler::getProcessLabel() const{ return "q#bar{q} #rightarrow 4l"; }
+std::vector<QQBkgProcessHandler::HypothesisType> QQBkgProcessHandler::getHypotheses() const{
+  std::vector<QQBkgProcessHandler::HypothesisType> res;
+  res.push_back(QQBkg);
+  return res;
+}
+std::vector<QQBkgProcessHandler::TemplateType> QQBkgProcessHandler::getTemplateTypes() const{
+  std::vector<QQBkgProcessHandler::TemplateType> res;
+  res.push_back(QQBkgTpl);
+  return res;
+}
+std::vector<TString> QQBkgProcessHandler::getOutputTreeNames(ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
+  vector<TString> res;
+  //for (auto& t:this->getHypotheses()) res.push_back(this->getOutputTreeName(t));
+  res.push_back(this->getOutputTreeName());
+  return res;
+}
+std::vector<TString> QQBkgProcessHandler::getTemplateNames(ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
+  vector<TString> res;
+  //for (auto& t:this->getTemplateTypes()) res.push_back(this->getTemplateName(t));
+  res.push_back(this->getTemplateName());
+  return res;
+}
 TString QQBkgProcessHandler::getMELAHypothesisWeight(unsigned int njets) const{
   switch (njets){
   case 2:
@@ -1857,11 +1928,7 @@ TString QQBkgProcessHandler::getMELAHypothesisWeight(unsigned int njets) const{
     return "p_Gen_QQB_BKG_MCFM";
   }
 }
-std::vector<QQBkgProcessHandler::HypothesisType> QQBkgProcessHandler::getHypotheses() const{
-  std::vector<QQBkgProcessHandler::HypothesisType> res;
-  res.push_back(QQBkg);
-  return res;
-}
+TString QQBkgProcessHandler::getProcessLabel() const{ return "q#bar{q} #rightarrow 4l"; }
 
 int QQBkgProcessHandler::castHypothesisTypeToInt(QQBkgProcessHandler::HypothesisType type){ return (int) type; }
 int QQBkgProcessHandler::castTemplateTypeToInt(QQBkgProcessHandler::TemplateType type){ return (int) type; }
@@ -1908,12 +1975,29 @@ TString ZXProcessHandler::getTemplateName() const{
   TString res = Form("T_%s", getProcessName().Data());
   return res;
 }
-TString ZXProcessHandler::getProcessLabel() const{ return "Z+jets"; }
 std::vector<ZXProcessHandler::HypothesisType> ZXProcessHandler::getHypotheses() const{
   std::vector<ZXProcessHandler::HypothesisType> res;
   res.push_back(ZX);
   return res;
 }
+std::vector<ZXProcessHandler::TemplateType> ZXProcessHandler::getTemplateTypes() const{
+  std::vector<ZXProcessHandler::TemplateType> res;
+  res.push_back(ZXTpl);
+  return res;
+}
+std::vector<TString> ZXProcessHandler::getOutputTreeNames(ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
+  vector<TString> res;
+  //for (auto& t:this->getHypotheses()) res.push_back(this->getOutputTreeName(t));
+  res.push_back(this->getOutputTreeName());
+  return res;
+}
+std::vector<TString> ZXProcessHandler::getTemplateNames(ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
+  vector<TString> res;
+  //for (auto& t:this->getTemplateTypes()) res.push_back(this->getTemplateName(t));
+  res.push_back(this->getTemplateName());
+  return res;
+}
+TString ZXProcessHandler::getProcessLabel() const{ return "Z+jets"; }
 
 int ZXProcessHandler::castHypothesisTypeToInt(ZXProcessHandler::HypothesisType type){ return (int) type; }
 int ZXProcessHandler::castTemplateTypeToInt(ZXProcessHandler::TemplateType type){ return (int) type; }

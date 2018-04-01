@@ -530,12 +530,15 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       } // End loop over tree events
     } // End loop over trees
 
-    for (Category& cat:catList){ // Check integrity of mass histograms
+    for (Category& cat:catList){ // Check integrity of mass histograms and scale them as necessary
+      vector<TH1F*> ehmassbare;
       MELAout << "Checking integrity of mass histograms for category " << getCategoryName(cat) << endl;
-      for (ExtendedHistogram_1D const& ehmass:hMass_FromNominalInclusive[cat]){
+      for (ExtendedHistogram_1D& ehmass:hMass_FromNominalInclusive[cat]){
         if (checkHistogramIntegrity(ehmass.getHistogram()) && checkVarNonNegative(*(ehmass.getHistogram()))) MELAout << "Integrity of " << ehmass.getName() << " is GOOD." << endl;
         else MELAout << "WARNING: Integrity of " << ehmass.getName() << " is BAD." << endl;
+        ehmassbare.push_back(ehmass.getHistogram());
       }
+      outputProcessHandle->recombineHistogramsToTemplates(ehmassbare, hypo);
     }
 
     for (auto& finput:finputList) finput->Close();
@@ -885,7 +888,7 @@ template<> void getTemplatesPerCategory<2>(
       if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
       else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
 
-      doTemplatePostprocessing(htpl);
+      doTemplatePostprocessing(htpl, true);
       double integralerror=0;
       double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), true, &integralerror);
       MELAout << "Integral [ " << htpl->GetName() << " ] before writing: " << integral << " +- " << integralerror << endl;
@@ -988,11 +991,13 @@ template<> void getTemplatesPerCategory<3>(
 
   if (!hTemplates_POWHEG.empty() && !hTemplates_MCFM.empty()){ // Compare the templates, combine if necessary
     bool isCompatible=true;
+    /*
     for (unsigned int t=0; t<ntpls; t++){
       double chisq = computeChiSq(hTemplates_POWHEG.at(t).getHistogram(), hTemplates_MCFM.at(t).getHistogram());
       MELAout << "Template " << hTemplates_POWHEG.at(t).getName() << " are compatible by chisq=" << chisq << endl;
       if (ProcessHandleType::castIntToTemplateType(t)==ProcessHandleType::GGTplSig) isCompatible = (chisq<CHISQCUT || category==Inclusive || category==Untagged); // EXCEPTIONAL CASE FOR GG
     }
+    */
     if (isCompatible){
       MELAout << "Satisfies compatibility criteria, combining conditional templates..." << endl;
       for (unsigned int t=0; t<ntpls; t++) ExtHist_t::averageHistograms(hTemplates_POWHEG.at(t), hTemplates_MCFM.at(t));
@@ -1056,7 +1061,7 @@ template<> void getTemplatesPerCategory<3>(
       if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
       else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
 
-      doTemplatePostprocessing(htpl);
+      doTemplatePostprocessing(htpl, true);
       double integralerror=0;
       double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), true, &integralerror);
       MELAout << "Integral [ " << htpl->GetName() << " ] before writing: " << integral << " +- " << integralerror << endl;

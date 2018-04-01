@@ -696,7 +696,7 @@ template<> void getTemplatesPerCategory<2>(
       if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
       else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
 
-      doTemplatePostprocessing(htpl);
+      doTemplatePostprocessing(htpl, true);
       double integralerror=0;
       double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), true, &integralerror);
       MELAout << "Integral [ " << htpl->GetName() << " ] before writing: " << integral << " +- " << integralerror << endl;
@@ -796,7 +796,7 @@ template<> void getTemplatesPerCategory<3>(
       if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
       else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
 
-      doTemplatePostprocessing(htpl);
+      doTemplatePostprocessing(htpl, true);
       double integralerror=0;
       double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), true, &integralerror);
       MELAout << "Integral [ " << htpl->GetName() << " ] before writing: " << integral << " +- " << integralerror << endl;

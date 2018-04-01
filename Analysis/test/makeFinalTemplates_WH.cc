@@ -499,12 +499,15 @@ void makeFinalTemplates_WH(const Channel channel, const ACHypothesis hypo, const
       } // End loop over tree events
     } // End loop over trees
 
-    for (Category& cat:catList){ // Check integrity of mass histograms
+    for (Category& cat:catList){ // Check integrity of mass histograms and scale them as necessary
+      vector<TH1F*> ehmassbare;
       MELAout << "Checking integrity of mass histograms for category " << getCategoryName(cat) << endl;
-      for (ExtendedHistogram_1D const& ehmass:hMass_FromNominalInclusive[cat]){
+      for (ExtendedHistogram_1D& ehmass:hMass_FromNominalInclusive[cat]){
         if (checkHistogramIntegrity(ehmass.getHistogram()) && checkVarNonNegative(*(ehmass.getHistogram()))) MELAout << "Integrity of " << ehmass.getName() << " is GOOD." << endl;
         else MELAout << "WARNING: Integrity of " << ehmass.getName() << " is BAD." << endl;
+        ehmassbare.push_back(ehmass.getHistogram());
       }
+      outputProcessHandle->recombineHistogramsToTemplates(ehmassbare, hypo);
     }
 
     for (auto& finput:finputList) finput->Close();
@@ -731,7 +734,7 @@ template<> void getTemplatesPerCategory<2>(
       if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
       else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
 
-      doTemplatePostprocessing(htpl);
+      doTemplatePostprocessing(htpl, true);
       double integralerror=0;
       double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), true, &integralerror);
       MELAout << "Integral [ " << htpl->GetName() << " ] before writing: " << integral << " +- " << integralerror << endl;
@@ -837,7 +840,7 @@ template<> void getTemplatesPerCategory<3>(
       if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
       else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
 
-      doTemplatePostprocessing(htpl);
+      doTemplatePostprocessing(htpl, true);
       double integralerror=0;
       double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), true, &integralerror);
       MELAout << "Integral [ " << htpl->GetName() << " ] before writing: " << integral << " +- " << integralerror << endl;

@@ -32,14 +32,17 @@ template void TemplateHelpers::setTemplateAxisLabels<TH1F>(TH1F* histo);
 template void TemplateHelpers::setTemplateAxisLabels<TH2F>(TH2F* histo);
 template void TemplateHelpers::setTemplateAxisLabels<TH3F>(TH3F* histo);
 
-template<typename T> void TemplateHelpers::doTemplatePostprocessing(T* tpl){
+template<typename T> void TemplateHelpers::doTemplatePostprocessing(T* tpl, bool isMC){
   HelperFunctions::wipeOverUnderFlows(tpl);
   HelperFunctions::divideBinWidth(tpl);
   TemplateHelpers::setTemplateAxisLabels(tpl);
+  if (isMC){
+    tpl->Scale(xsecScale);
+  }
 }
-template void TemplateHelpers::doTemplatePostprocessing<TH1F>(TH1F* tpl);
-template void TemplateHelpers::doTemplatePostprocessing<TH2F>(TH2F* tpl);
-template void TemplateHelpers::doTemplatePostprocessing<TH3F>(TH3F* tpl);
+template void TemplateHelpers::doTemplatePostprocessing<TH1F>(TH1F* tpl, bool isMC);
+template void TemplateHelpers::doTemplatePostprocessing<TH2F>(TH2F* tpl, bool isMC);
+template void TemplateHelpers::doTemplatePostprocessing<TH3F>(TH3F* tpl, bool isMC);
 
 
 #endif

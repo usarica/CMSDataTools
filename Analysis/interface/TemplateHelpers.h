@@ -19,7 +19,7 @@ namespace TemplateHelpers{
   /* General functions */
   /*********************/
   template<typename T> void setTemplateAxisLabels(T* histo);
-  template<typename T> void doTemplatePostprocessing(T* tpl);
+  template<typename T> void doTemplatePostprocessing(T* tpl, bool isMC);
 
   void getLikelihoodDiscriminants(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, const SystematicsHelpers::SystematicVariationTypes syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);
   void getCategorizationDiscriminants(const SystematicsHelpers::SystematicVariationTypes syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);

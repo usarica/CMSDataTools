@@ -460,7 +460,6 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vec
     for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
     for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
 
-    hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel(type, hypo));
   }
 }
@@ -506,7 +505,6 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vec
     for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
     for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
 
-    hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel(type, hypo));
   }
 }
@@ -557,7 +555,6 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vec
     for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
     for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
 
-    hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel(type, hypo));
   }
 }
@@ -1430,7 +1427,6 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vec
     for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
     for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
 
-    hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel(type, hypo));
   }
 }
@@ -1476,7 +1472,6 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vec
     for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
     for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
 
-    hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel(type, hypo));
   }
 }
@@ -1527,7 +1522,6 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vec
     for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
     for (unsigned int const& ia:asymAxes) HelperFunctions::antisymmetrizeHistogram(hh, ia);
 
-    hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel(type, hypo));
   }
 }
@@ -1939,7 +1933,6 @@ template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::
   typedef TH1F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nQQBkgTypes)) return;
   for (T*& hh:vals){
-    hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel());
   }
 }
@@ -1947,7 +1940,6 @@ template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::
   typedef TH2F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nQQBkgTypes)) return;
   for (T*& hh:vals){
-    hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel());
   }
 }
@@ -1955,7 +1947,6 @@ template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::
   typedef TH3F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nQQBkgTypes)) return;
   for (T*& hh:vals){
-    hh->Scale(xsecScale);
     hh->SetTitle(getProcessLabel());
   }
 }

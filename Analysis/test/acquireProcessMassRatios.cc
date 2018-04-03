@@ -809,6 +809,7 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
       for (int ev=0; ev<tree->GetEntries(); ev++){
         tree->GetEntry(ev);
         if (!isCategory) continue;
+        if (proctype==ProcessHandler::kZH && i==1 && CJLSTversion<=180224 && theDataPeriod=="2016") weight /= 0.148; // FIXME: Rescale Pythia variation samples for missing filter efficiency; should be part of xsec in the future
         hh->fill(ZZMass, weight);
       }
       MELAout << "Mass integral of " << hh->getName() << ": " << hh->getHistogram()->Integral() << endl;

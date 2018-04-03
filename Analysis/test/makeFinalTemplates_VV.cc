@@ -81,6 +81,9 @@ void makeFinalTemplates_VV_one(const Channel channel, const ACHypothesis hypo, c
   ProcessHandleType const* outputProcessHandle=(ProcessHandleType const*) getProcessHandlerPerMassRegion(proctype, massregion);
   if (!outputProcessHandle) return;
 
+  vector<TString> outtplnamelist = outputProcessHandle->getTemplateNames(hypo, true);
+  const unsigned int ntpls=outtplnamelist.size();
+
   vector<ProcessHandler::ProcessType> inputproctypes = { ProcessHandler::kVBF, ProcessHandler::kZH, ProcessHandler::kWH };
   const unsigned int ninputproctypes=inputproctypes.size();
 
@@ -115,15 +118,6 @@ void makeFinalTemplates_VV_one(const Channel channel, const ACHypothesis hypo, c
     const TString strCategory = getCategoryName(cat);
     const TString strSystematicsOutput = getSystematicsCombineName(cat, channel, outputProcessHandle->getProcessType(), syst);
 
-    vector<ProcessHandleType::TemplateType> tplset;
-    vector<ProcessHandleType::HypothesisType> hyposet = outputProcessHandle->getHypothesesForACHypothesis(kSM);
-    if (hypo!=kSM){
-      vector<ProcessHandleType::HypothesisType> hyposet_tmp = outputProcessHandle->getHypothesesForACHypothesis(hypo);
-      for (ProcessHandleType::HypothesisType& v:hyposet_tmp) hyposet.push_back(v);
-    }
-    for(auto& hypotype:hyposet) tplset.push_back(ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(hypotype)));
-    const unsigned int ntpls=tplset.size();
-
     vector<TFile*> finputList;
     for (unsigned int ip=0; ip<ninputproctypes; ip++){
       auto& inputproctype=inputproctypes.at(ip);
@@ -154,16 +148,19 @@ void makeFinalTemplates_VV_one(const Channel channel, const ACHypothesis hypo, c
     for (unsigned int ip=0; ip<ninputproctypes; ip++){
       auto& inputproctype=inputproctypes.at(ip);
       ProcessHandleType const* inputProcessHandle=(ProcessHandleType const*) getProcessHandlerPerMassRegion(inputproctype, massregion);
+      vector<TString> intplnamelist = inputProcessHandle->getTemplateNames(hypo, true);
+      assert(intplnamelist.size()==ntpls);
+      
       TFile*& finput=finputList.at(ip);
-      for (auto& tpltype:tplset){
-        TString intplname = inputProcessHandle->getTemplateName(tpltype);
+      for (unsigned int t=0; t<ntpls;t++){
+        TString const& intplname = intplnamelist.at(t);
         TH2F* htmp_2D;
         TH3F* htmp_3D;
         finput->GetObject(intplname, htmp_2D);
         finput->GetObject(intplname, htmp_3D);
 
         foutput->cd();
-        TString outtplname = outputProcessHandle->getTemplateName(tpltype);
+        TString const& outtplname = outtplnamelist.at(t);
         if (htmp_2D){
           TH2F* htplfound=nullptr;
           for (auto& htmp:htpls_2D){
@@ -173,7 +170,7 @@ void makeFinalTemplates_VV_one(const Channel channel, const ACHypothesis hypo, c
             }
           }
           if (htplfound) htplfound->Add(htmp_2D);
-          else{ htplfound = new TH2F(*htmp_2D); htplfound->SetName(outtplname); htplfound->SetTitle(outputProcessHandle->getProcessLabel(tpltype, hypo)); htpls_2D.push_back(htplfound); }
+          else{ htplfound = new TH2F(*htmp_2D); htplfound->SetName(outtplname); htplfound->SetTitle(outputProcessHandle->getProcessLabel(outputProcessHandle->castIntToTemplateType(t), hypo)); htpls_2D.push_back(htplfound); }
         }
         if (htmp_3D){
           TH3F* htplfound=nullptr;
@@ -184,7 +181,7 @@ void makeFinalTemplates_VV_one(const Channel channel, const ACHypothesis hypo, c
             }
           }
           if (htplfound) htplfound->Add(htmp_3D);
-          else{ htplfound = new TH3F(*htmp_3D); htplfound->SetName(outtplname); htplfound->SetTitle(outputProcessHandle->getProcessLabel(tpltype, hypo)); htpls_3D.push_back(htplfound); }
+          else{ htplfound = new TH3F(*htmp_3D); htplfound->SetName(outtplname); htplfound->SetTitle(outputProcessHandle->getProcessLabel(outputProcessHandle->castIntToTemplateType(t), hypo)); htpls_3D.push_back(htplfound); }
         }
       }
       rootdir->cd();

@@ -409,7 +409,7 @@ TString SystematicsHelpers::getSystematicsCombineName(
     break;
   case eLepSFMuDn:
   case eLepSFMuUp:
-    systname="CMS_eff_mu";
+    systname="CMS_eff_m";
     break;
   case eJECDn:
   case eJECUp:

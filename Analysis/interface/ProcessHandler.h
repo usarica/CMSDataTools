@@ -27,8 +27,8 @@ public:
 
   virtual void imposeTplPhysicality(std::vector<float>& vals) const;
 
-  virtual std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo) const = 0;
-  virtual std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo) const = 0;
+  virtual std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo, bool includeSM) const = 0;
+  virtual std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo, bool includeSM) const = 0;
 
 protected:
   ProcessType const proctype;
@@ -76,8 +76,8 @@ public:
 
   TString getOutputTreeName(GGProcessHandler::HypothesisType type) const;
   TString getTemplateName(GGProcessHandler::TemplateType type) const;
-  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo) const;
-  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo) const;
+  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo, bool includeSM) const;
+  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo, bool includeSM) const;
   std::vector<GGProcessHandler::HypothesisType> getHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const;
   std::vector<GGProcessHandler::TemplateType> getTemplateTypesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const;
   TString getMELAHypothesisWeight(GGProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const;
@@ -193,8 +193,8 @@ public:
 
   TString getOutputTreeName(VVProcessHandler::HypothesisType type) const;
   TString getTemplateName(VVProcessHandler::TemplateType type) const;
-  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo) const;
-  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo) const;
+  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo, bool includeSM) const;
+  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo, bool includeSM) const;
   std::vector<VVProcessHandler::HypothesisType> getHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const;
   std::vector<VVProcessHandler::TemplateType> getTemplateTypesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const;
   TString getMELAHypothesisWeight(VVProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const;
@@ -294,8 +294,8 @@ public:
 
   TString getOutputTreeName() const;
   TString getTemplateName() const;
-  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo=ACHypothesisHelpers::kSM) const;
-  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo=ACHypothesisHelpers::kSM) const;
+  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo=ACHypothesisHelpers::kSM, bool includeSM=true) const;
+  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo=ACHypothesisHelpers::kSM, bool includeSM=true) const;
   std::vector<QQBkgProcessHandler::HypothesisType> getHypotheses() const;
   std::vector<QQBkgProcessHandler::TemplateType> getTemplateTypes() const;
   TString getMELAHypothesisWeight(unsigned int njets) const;
@@ -337,8 +337,8 @@ public:
 
   TString getOutputTreeName() const;
   TString getTemplateName() const;
-  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo=ACHypothesisHelpers::kSM) const;
-  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo=ACHypothesisHelpers::kSM) const;
+  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo=ACHypothesisHelpers::kSM, bool includeSM=true) const;
+  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo=ACHypothesisHelpers::kSM, bool includeSM=true) const;
   std::vector<ZXProcessHandler::HypothesisType> getHypotheses() const;
   std::vector<ZXProcessHandler::TemplateType> getTemplateTypes() const;
   TString getProcessLabel() const;

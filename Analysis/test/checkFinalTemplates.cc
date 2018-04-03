@@ -1,5 +1,5 @@
-#ifndef MAKEFINALTEMPLATES_VV_H
-#define MAKEFINALTEMPLATES_VV_H
+#ifndef CHECKFINALTEMPLATES_VV_H
+#define CHECKFINALTEMPLATES_VV_H
 
 #include "common_includes.h"
 #include "CheckSetTemplatesCategoryScheme.h"
@@ -44,19 +44,20 @@ bool getFile(
     return false;
   }
   if (cinput!=""){
+    TString timestamp = HostHelpers::GetTimestampConverted(cinput.Data());
     TFile* finput = TFile::Open(cinput, "read");
     if (finput){
       if (!finput->IsZombie()){
-        MELAout << "getFile: Opening file " << cinput << endl;
+        MELAout << "getFile: Opening file " << cinput << " with timestamp " << timestamp << endl;
         finputList.push_back(finput);
       }
       else if (finput->IsOpen()){
-        MELAerr << "getFilesAndTrees::File " << cinput << " is zombie! Re-run " << strStage << " functions first." << endl;
+        MELAerr << "getFilesAndTrees::File " << cinput << " with timestamp " << timestamp << " is zombie! Re-run " << strStage << " functions first." << endl;
         finput->Close();
         return false;
       }
       else{
-        MELAerr << "getFilesAndTrees::File " << cinput << " could not be opened! Re-run " << strStage << " functions first." << endl;
+        MELAerr << "getFilesAndTrees::File " << cinput << " with timestamp " << timestamp << " could not be opened! Re-run " << strStage << " functions first." << endl;
         return false;
       }
     }
@@ -82,7 +83,7 @@ void checkFinalTemplates_one(const Channel channel, const Category category, con
 
       vector<TFile*> finputList;
       ProcessHandler const* inputProcessHandle=getProcessHandlerPerMassRegion(proctype, massregion);
-      vector<TString> tplnamelist = inputProcessHandle->getTemplateNames(hypo);
+      vector<TString> tplnamelist = inputProcessHandle->getTemplateNames(hypo, true);
       if (
         !getFile(
           channel, category, hypo, syst,
@@ -99,8 +100,20 @@ void checkFinalTemplates_one(const Channel channel, const Category category, con
           TH3F* htmp_3D;
           finput->GetObject(tplname, htmp_2D);
           finput->GetObject(tplname, htmp_3D);
-          if (!htmp_2D && !htmp_3D) MELAerr << "Template " << tplname << " could not be found! BAD FILE..." << endl;
-          else if (htmp_2D && htmp_3D) MELAerr << "Template " << tplname << " is both 2 and 3D!? BAD FILE..." << endl;
+          double integral=0, integralerror=0;
+          if (!htmp_2D && !htmp_3D) MELAerr << "Template " << tplname << " could not be found! BAD FILE...";
+          else if (htmp_2D && htmp_3D) MELAerr << "Template " << tplname << " is both 2 and 3D!? BAD FILE...";
+          else if (htmp_2D){
+            MELAout << "2D template " << tplname << " is GOOD. ";
+            integral = getHistogramIntegralAndError(htmp_2D, 1, htmp_2D->GetNbinsX(), 1, htmp_2D->GetNbinsY(), true, &integralerror);
+            MELAout << "Integral: " << integral << " +- " << integralerror << ".";
+          }
+          else /*if (htmp_3D)*/{
+            MELAout << "3D template " << tplname << " is GOOD. ";
+            integral = getHistogramIntegralAndError(htmp_3D, 1, htmp_3D->GetNbinsX(), 1, htmp_3D->GetNbinsY(), 1, htmp_3D->GetNbinsZ(), true, &integralerror);
+            MELAout << "Integral: " << integral << " +- " << integralerror << ".";
+          }
+          MELAout << endl;
         }
         finput->Close();
       }
@@ -112,12 +125,12 @@ void checkFinalTemplates_one(const Channel channel, const Category category, con
 
 void checkFinalTemplates(CategorizationHelpers::MassRegion massregion, const unsigned int istage=1, const TString fixedDate=""){
   vector<Category> allowedCats = getAllowedCategories(globalCategorizationScheme);
-  for (int ch=0; ch<(int) NChannels; ch++){
-    Channel channel = (Channel) ch;
-    if (channel==k4l || channel==k2l2l) continue;
+  for (int ih=0; ih<nACHypotheses; ih++){
+    ACHypothesis hypo = (ACHypothesis) ih;
     for (auto& category:allowedCats){
-      for (int ih=0; ih<nACHypotheses; ih++){
-        ACHypothesis hypo = (ACHypothesis) ih;
+      for (int ch=0; ch<(int) NChannels; ch++){
+        Channel channel = (Channel) ch;
+        if (channel==k4l || channel==k2l2l) continue;
 
         checkFinalTemplates_one(channel, category, hypo, massregion, istage, fixedDate);
       }

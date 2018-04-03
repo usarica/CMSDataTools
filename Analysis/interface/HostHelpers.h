@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <sys/stat.h>
 #include <cstdio>
+#include <ctime>
 #include "TString.h"
 #include <cassert>
 
@@ -18,6 +19,9 @@ namespace HostHelpers{
 
   Hosts GetHostLocation();
   bool DirectoryExists(const char* dirname);
+
+  time_t GetTimestamp(const char* fname);
+  TString GetTimestampConverted(const char* fname);
 
   TString GetCJLSTSamplesDirectory(const TString proddir);
 

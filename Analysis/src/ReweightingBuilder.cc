@@ -83,22 +83,22 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
   const unsigned int ns = (!noBoundaries ? binning.getNbins() : 1);
 
   // Get sum of weights
-  weightThresholds[theTree]=std::vector<float>();
   sumPostThrWeights[theTree]=std::vector<float>();
+  sumPostThrSqWeights[theTree]=std::vector<float>();
+  weightThresholds[theTree]=std::vector<float>();
   sumEvents[theTree]=std::vector<unsigned int>();
   sumNonZeroWgtEvents[theTree]=std::vector<unsigned int>();
-  weightThresholds[theTree].assign(ns, 0);
   sumPostThrWeights[theTree].assign(ns, 0);
-  sumEvents[theTree].assign(ns, 0);
-  sumNonZeroWgtEvents[theTree].assign(ns, 0);
-
-  if (fractionRequirement<0.){
-    for (unsigned int ibin=0; ibin<ns; ibin++){
-      weightThresholds[theTree].at(ibin)=-1;
-      sumPostThrWeights[theTree].at(ibin)=0;
-      sumEvents[theTree].at(ibin)=-1;
-      sumNonZeroWgtEvents[theTree].at(ibin)=-1;
-    }
+  sumPostThrSqWeights[theTree].assign(ns, 0);
+  if (fractionRequirement>=0.){
+    weightThresholds[theTree].assign(ns, 0);
+    sumEvents[theTree].assign(ns, 0);
+    sumNonZeroWgtEvents[theTree].assign(ns, 0);
+  }
+  else{
+    weightThresholds[theTree].assign(ns, -1);
+    sumEvents[theTree].assign(ns, -1);
+    sumNonZeroWgtEvents[theTree].assign(ns, -1);
     return;
   }
 
@@ -169,15 +169,18 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
     //MELAout << "\t- Looping over the " << nTotalPerBin << " events to find the sum of weights after threshold " << threshold << " in bin " << ibin << endl;
     // Do a precise summation with the Kahan method
     KahanAccumulator<float> sum;
+    KahanAccumulator<float> sumsq;
     for (auto& theEntry:index){
       float weight = theEntry.weight;
       if (fabs(weight)>threshold) weight = pow(threshold, 2)/weight;
       sum += weight;
+      sumsq += pow(weight, 2);
     }
     // Assign the sum
     sumPostThrWeights[theTree].at(ibin)=sum;
+    sumPostThrSqWeights[theTree].at(ibin)=sumsq;
     if (sumEvents[theTree].at(ibin)>0) MELAout << "\t- Threshold at bin " << ibin << ": " << threshold
-      << ", sum of post-threshold weights: " << sumPostThrWeights[theTree].at(ibin)
+      << ", sum of post-threshold weights: " << sumPostThrWeights[theTree].at(ibin) << " +- " << sqrt(sumPostThrSqWeights[theTree].at(ibin))
       << ", Nevents: " << sumNonZeroWgtEvents[theTree].at(ibin) << " / " << sumEvents[theTree].at(ibin)
       << endl;
   }
@@ -206,9 +209,23 @@ float ReweightingBuilder::getPostThresholdWeight(CJLSTTree* theTree) const{
   }
   return weight;
 }
+float ReweightingBuilder::getPostThresholdSqWeight(CJLSTTree* theTree) const{
+  float weight = this->eval(theTree);
+  int bin=this->findBin(theTree);
+  if (bin>=0){
+    const float& threshold=weightThresholds.find(theTree)->second.at(bin);
+    if (threshold>=0. && fabs(weight)>threshold) weight = pow(threshold, 2)/weight;
+  }
+  return pow(weight, 2);
+}
 float ReweightingBuilder::getSumPostThresholdWeights(CJLSTTree* theTree) const{
   int bin=this->findBin(theTree);
   if (bin>=0) return sumPostThrWeights.find(theTree)->second.at(bin);
+  else return 0;
+}
+float ReweightingBuilder::getSumPostThresholdSqWeights(CJLSTTree* theTree) const{
+  int bin=this->findBin(theTree);
+  if (bin>=0) return sumPostThrSqWeights.find(theTree)->second.at(bin);
   else return 0;
 }
 unsigned int ReweightingBuilder::getSumEvents(CJLSTTree* theTree) const{
@@ -231,6 +248,17 @@ float ReweightingBuilder::getSumAllPostThresholdWeights(int bin) const{
   if (bin<0) return 0;
   KahanAccumulator<float> sum;
   auto const& theMap=this->sumPostThrWeights;
+  for (auto it=theMap.cbegin(); it!=theMap.cend(); it++) sum += it->second.at(bin);
+  return sum;
+}
+float ReweightingBuilder::getSumAllPostThresholdSqWeights(CJLSTTree* theTree) const{
+  int bin=this->findBin(theTree);
+  return this->getSumAllPostThresholdSqWeights(bin);
+}
+float ReweightingBuilder::getSumAllPostThresholdSqWeights(int bin) const{
+  if (bin<0) return 0;
+  KahanAccumulator<float> sum;
+  auto const& theMap=this->sumPostThrSqWeights;
   for (auto it=theMap.cbegin(); it!=theMap.cend(); it++) sum += it->second.at(bin);
   return sum;
 }
@@ -269,27 +297,43 @@ float ReweightingBuilder::getNormComponent(int bin) const{
   KahanAccumulator<float> numerator;
   KahanAccumulator<float> denominator;
 
-  // Numerator: sum{t} (sum_wgts_tj * N_tj / N_t)
-  // Denominator: sum{t} (N_tj)
+  // Numerator: sum{t} ((S_tj/N_t) / (V_tj/N_t^2))
+  // Denominator: sum{t} (1/(V_tj/N_t^2))
   for (auto& tree:trees){
     auto itSumWeights = this->sumPostThrWeights.find(tree); if (itSumWeights==this->sumPostThrWeights.cend()) continue;
+    auto itSumSqWeights = this->sumPostThrSqWeights.find(tree); if (itSumSqWeights==this->sumPostThrSqWeights.cend()) continue;
     auto itNNonZeroWgtEvents = this->sumNonZeroWgtEvents.find(tree); if (itNNonZeroWgtEvents==this->sumNonZeroWgtEvents.cend()) continue;
     //auto itNEvents = this->sumEvents.find(tree); if (itNEvents==this->sumEvents.cend()) continue;
 
-    float const& sumwgts = itSumWeights->second.at(bin);
-    float const& nevtsnonzerowgt = itNNonZeroWgtEvents->second.at(bin); // N_tj
+    float const& sumwgts = itSumWeights->second.at(bin); // S_tj
+    float const& sumsqwgts = itSumSqWeights->second.at(bin); // V_tj
+    //float const& nevtsnonzerowgt = itNNonZeroWgtEvents->second.at(bin); // N_tj
     //auto const& nevts = itNEvents->second.at(bin);
 
     // N_t = sum{j} (N_tj)
     unsigned int nSumNonZeroWgt = 0;
     for (unsigned int const& nn:itNNonZeroWgtEvents->second) nSumNonZeroWgt += nn;
 
-    unsigned int nSample = 1;
-    if (divideByNSample) nSample=tree->getNGenNoPU();
-
-    // sum_wgts_tj * N_tj / N_t
     float numerator_pertree = 0;
-    if (nSumNonZeroWgt!=0) numerator_pertree = sumwgts * static_cast<float>(nevtsnonzerowgt*nSample)/static_cast<float>(nSumNonZeroWgt);
+    float denominator_pertree = 0;
+    if (nSumNonZeroWgt!=0){
+      // S_tj * N_tj / N_t
+      //numerator_pertree = sumwgts * static_cast<float>(nevtsnonzerowgt*nSample)/static_cast<float>(nSumNonZeroWgt);
+
+      float scalefactor=1;
+      if (divideByNSample){
+        unsigned int nSample = tree->getNGenNoPU();
+        scalefactor = static_cast<float>(nSample)/static_cast<float>(nSumNonZeroWgt);
+        denominator_pertree = 1./(sumsqwgts*pow(scalefactor, 2));
+      }
+      else{
+        unsigned int nSample = 1;
+        scalefactor = static_cast<float>(nSample)/static_cast<float>(nSumNonZeroWgt);
+        denominator_pertree = 1./(sumsqwgts*pow(scalefactor, 2));
+      }
+
+      numerator_pertree = sumwgts*scalefactor*denominator_pertree;
+    }
     /*
     if (divideByNSample && fabs(static_cast<float>(nSample)/static_cast<float>(nSumNonZeroWgt)-1.)>0.01)
       MELAerr
@@ -308,10 +352,12 @@ float ReweightingBuilder::getNormComponent(int bin) const{
       << endl;
     */
 
-    // Numerator += sum_wgts_tj * N_tj / N_t
+    // Numerator += (S_tj/N_t) / (V_tj/N_t^2)
     numerator += numerator_pertree;
     // Denominator += N_tj
-    denominator += nevtsnonzerowgt;
+    //denominator += nevtsnonzerowgt;
+    // Denominator += 1/(V_tj/N_t^2)
+    denominator += 1./sumsqwgts;
   }
 
   float result=0;
@@ -326,10 +372,10 @@ float ReweightingBuilder::getNorm() const{
   const int ns = (!noBoundaries ? binning.getNbins() : 1);
 
   KahanAccumulator<float> sum;
-  unsigned int sumN=0;
+  unsigned int sumN=1;
   for (int bin=0; bin<ns; bin++){
     sum += this->getNormComponent(bin);
-    sumN += this->getSumAllNonZeroWgtEvents(bin);
+    if (divideByNSample) sumN += this->getSumAllNonZeroWgtEvents(bin);
   }
   if (sumN!=0) sum /= float(sumN);
   return sum;

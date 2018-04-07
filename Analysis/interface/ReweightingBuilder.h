@@ -18,6 +18,7 @@ protected:
   std::unordered_map<CJLSTTree*, std::vector<float*>> componentRefs;
   std::unordered_map<CJLSTTree*, std::vector<float>> weightThresholds;
   std::unordered_map<CJLSTTree*, std::vector<float>> sumPostThrWeights;
+  std::unordered_map<CJLSTTree*, std::vector<float>> sumPostThrSqWeights;
   std::unordered_map<CJLSTTree*, std::vector<unsigned int>> sumEvents;
   std::unordered_map<CJLSTTree*, std::vector<unsigned int>> sumNonZeroWgtEvents;
 
@@ -31,7 +32,9 @@ public:
 
   std::vector<float> getWeightThresholds(CJLSTTree* theTree) const;
   float getPostThresholdWeight(CJLSTTree* theTree) const;
+  float getPostThresholdSqWeight(CJLSTTree* theTree) const;
   float getSumPostThresholdWeights(CJLSTTree* theTree) const;
+  float getSumPostThresholdSqWeights(CJLSTTree* theTree) const;
   unsigned int getSumEvents(CJLSTTree* theTree) const;
   unsigned int getSumNonZeroWgtEvents(CJLSTTree* theTree) const;
   int findBin(CJLSTTree* theTree) const;
@@ -44,6 +47,9 @@ public:
 
   float getSumAllPostThresholdWeights(CJLSTTree* theTree) const; // Tree is passed here to find the bin
   float getSumAllPostThresholdWeights(int bin) const;
+
+  float getSumAllPostThresholdSqWeights(CJLSTTree* theTree) const; // Tree is passed here to find the bin
+  float getSumAllPostThresholdSqWeights(int bin) const;
 
   unsigned int getSumAllEvents(CJLSTTree* theTree) const; // Tree is passed here to find the bin
   unsigned int getSumAllEvents(int bin) const;

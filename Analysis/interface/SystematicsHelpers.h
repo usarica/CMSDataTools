@@ -89,6 +89,7 @@ namespace SystematicsHelpers{
   void adjustDiscriminantJECVariables(SystematicsHelpers::SystematicVariationTypes const syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);
 
   TString getSystematicsName(SystematicsHelpers::SystematicVariationTypes const syst);
+  TString getSystematicsLabel(SystematicsHelpers::SystematicVariationTypes const syst);
 
   TString getSystematicsCombineName(
     CategorizationHelpers::Category const category,

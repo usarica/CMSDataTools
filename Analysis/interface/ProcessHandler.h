@@ -96,6 +96,8 @@ public:
   template<typename T> void recombineTemplatesWithPhaseToRegularTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
   template<typename T> void recombineRegularTemplatesToTemplatesWithPhase(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 
+  template<typename T> void getHypothesisHistogramFromTemplates(T& res, std::vector<T> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg=1, float scaleSig=1, float scaleBSM=1) const;
+
   template<typename T> void conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
 
 };
@@ -112,6 +114,34 @@ template<> void GGProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
 template<> void GGProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 template<> void GGProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 template<> void GGProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+
+template<typename T> void GGProcessHandler::getHypothesisHistogramFromTemplates(T& res, std::vector<T> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const{
+  if (!res) return;
+  if (vals.empty()) return;
+  vector<float> coeffs;
+  if (hypo==ACHypothesisHelpers::kSM){
+    assert(vals.size()==nGGSMTypes);
+    coeffs.reserve(vals.size());
+    coeffs.push_back(scaleBkg);
+    coeffs.push_back(scaleSig);
+    coeffs.push_back(sqrt(scaleBkg*scaleSig));
+  }
+  else{
+    assert(vals.size()==nGGTypes);
+    coeffs.push_back(scaleBkg);
+    coeffs.push_back(scaleSig);
+    coeffs.push_back(sqrt(scaleBkg*scaleSig));
+    coeffs.push_back(scaleBSM);
+    coeffs.push_back(sqrt(scaleSig*scaleBSM));
+    coeffs.push_back(sqrt(scaleBkg*scaleBSM));
+  }
+  assert(coeffs.size()==vals.size());
+  res->Reset("ICES");
+  for (unsigned int i=0; i<coeffs.size(); i++) res->Add(vals.at(i), coeffs.at(i));
+}
+template void GGProcessHandler::getHypothesisHistogramFromTemplates<TH1F*>(TH1F*& res, std::vector<TH1F*> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const;
+template void GGProcessHandler::getHypothesisHistogramFromTemplates<TH2F*>(TH2F*& res, std::vector<TH2F*> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const;
+template void GGProcessHandler::getHypothesisHistogramFromTemplates<TH3F*>(TH3F*& res, std::vector<TH3F*> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const;
 
 template<typename T> void GGProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const{
   if (vals.empty()) return;
@@ -213,6 +243,8 @@ public:
   template<typename T> void recombineTemplatesWithPhaseToRegularTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
   template<typename T> void recombineRegularTemplatesToTemplatesWithPhase(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 
+  template<typename T> void getHypothesisHistogramFromTemplates(T& res, std::vector<T> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg=1, float scaleSig=1, float scaleBSM=1) const;
+
   template<typename T> void conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
 
 };
@@ -229,6 +261,40 @@ template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
 template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+
+template<typename T> void VVProcessHandler::getHypothesisHistogramFromTemplates(T& res, std::vector<T> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const{
+  if (!res) return;
+  if (vals.empty()) return;
+  vector<float> coeffs;
+  if (hypo==ACHypothesisHelpers::kSM){
+    assert(vals.size()==nVVSMTypes);
+    coeffs.reserve(vals.size());
+    coeffs.push_back(scaleBkg);
+    coeffs.push_back(scaleSig);
+    coeffs.push_back(sqrt(scaleBkg*scaleSig));
+  }
+  else{
+    assert(vals.size()==nVVTypes);
+
+    coeffs.push_back(scaleBkg);
+    coeffs.push_back(scaleSig);
+    coeffs.push_back(sqrt(scaleBkg*scaleSig));
+
+    coeffs.push_back(scaleBSM);
+    coeffs.push_back(pow(scaleSig, 0.75)*pow(scaleBSM, 0.25));
+    coeffs.push_back(pow(scaleSig, 0.5)*pow(scaleBSM, 0.5));
+    coeffs.push_back(pow(scaleSig, 0.25)*pow(scaleBSM, 0.75));
+
+    coeffs.push_back(pow(scaleBkg, 0.5)*pow(scaleSig*scaleBSM, 0.25));
+    coeffs.push_back(pow(scaleBkg, 0.5)*pow(scaleBSM, 0.5));
+  }
+  assert(coeffs.size()==vals.size());
+  res->Reset("ICES");
+  for (unsigned int i=0; i<coeffs.size(); i++) res->Add(vals.at(i), coeffs.at(i));
+}
+template void VVProcessHandler::getHypothesisHistogramFromTemplates<TH1F*>(TH1F*& res, std::vector<TH1F*> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const;
+template void VVProcessHandler::getHypothesisHistogramFromTemplates<TH2F*>(TH2F*& res, std::vector<TH2F*> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const;
+template void VVProcessHandler::getHypothesisHistogramFromTemplates<TH3F*>(TH3F*& res, std::vector<TH3F*> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const;
 
 template<typename T> void VVProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const{
   if (vals.empty()) return;

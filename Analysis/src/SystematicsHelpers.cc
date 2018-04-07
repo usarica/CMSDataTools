@@ -364,6 +364,59 @@ TString SystematicsHelpers::getSystematicsName(SystematicsHelpers::SystematicVar
     return "";
   }
 }
+TString SystematicsHelpers::getSystematicsLabel(SystematicsHelpers::SystematicVariationTypes const syst){
+  switch (syst){
+  case sNominal:
+    return "";
+  case tPDFScaleDn:
+    return "PDF scale down";
+  case tPDFScaleUp:
+    return "PDF scale up";
+  case tQCDScaleDn:
+    return "QCD scale dn";
+  case tQCDScaleUp:
+    return "QCD scale up";
+  case tAsMZDn:
+    return "#alpha_{s}(m_{Z}) down";
+  case tAsMZUp:
+    return "#alpha_{s}(m_{Z}) up";
+  case tPDFReplicaDn:
+    return "PDF replica down";
+  case tPDFReplicaUp:
+    return "PDF replica up";
+  case tPythiaScaleDn:
+    return "Pythia scale down";
+  case tPythiaScaleUp:
+    return "Pythia scale up";
+  case tPythiaTuneDn:
+    return "Pythia tune down";
+  case tPythiaTuneUp:
+    return "Pythia tune up";
+  case tQQBkgEWCorrDn:
+    return "NLO EW down";
+  case tQQBkgEWCorrUp:
+    return "NLO EW up";
+  case eLepSFEleDn:
+    return "#epsilon_{e} down";
+  case eLepSFEleUp:
+    return "#epsilon_{e} up";
+  case eLepSFMuDn:
+    return "#epsilon_{#mu} down";
+  case eLepSFMuUp:
+    return "#epsilon_{#mu} up";
+  case eJECDn:
+    return "JEC down";
+  case eJECUp:
+    return "JEC up";
+  case eZXStatsDn:
+    return "Fake rate down";
+  case eZXStatsUp:
+    return "Fake rate up";
+  default:
+    assert(0);
+    return "";
+  }
+}
 TString SystematicsHelpers::getSystematicsCombineName(
   CategorizationHelpers::Category const category,
   SampleHelpers::Channel const channel,

@@ -22,6 +22,7 @@
 #include "TMath.h"
 #include "TF1.h"
 #include "TSpline.h"
+#include "TCanvas.h"
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TH3F.h"
@@ -662,6 +663,8 @@ template void HelperFunctions::extractHistogramsFromDirectory<TGraphErrors>(TDir
 template void HelperFunctions::extractHistogramsFromDirectory<TGraph>(TDirectory* source, std::vector<TGraph*>& histolist);
 // Overloads for TSpline that can be used just like histograms
 template void HelperFunctions::extractHistogramsFromDirectory<TSpline3>(TDirectory* source, std::vector<TSpline3*>& histolist);
+// Overloads for TCanvas that can be used just like histograms
+template void HelperFunctions::extractHistogramsFromDirectory<TCanvas>(TDirectory* source, std::vector<TCanvas*>& histolist);
 
 /****************************************************************/
 // Explicit instantiations

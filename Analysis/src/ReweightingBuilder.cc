@@ -307,7 +307,7 @@ float ReweightingBuilder::getNormComponent(int bin) const{
 
     float const& sumwgts = itSumWeights->second.at(bin); // S_tj
     float const& sumsqwgts = itSumSqWeights->second.at(bin); // V_tj
-    //float const& nevtsnonzerowgt = itNNonZeroWgtEvents->second.at(bin); // N_tj
+    unsigned int const& nevtsnonzerowgt = itNNonZeroWgtEvents->second.at(bin); // N_tj
     //auto const& nevts = itNEvents->second.at(bin);
 
     // N_t = sum{j} (N_tj)
@@ -316,7 +316,7 @@ float ReweightingBuilder::getNormComponent(int bin) const{
 
     float numerator_pertree = 0;
     float denominator_pertree = 0;
-    if (nSumNonZeroWgt!=0){
+    if (nevtsnonzerowgt>0){
       // S_tj * N_tj / N_t
       //numerator_pertree = sumwgts * static_cast<float>(nevtsnonzerowgt*nSample)/static_cast<float>(nSumNonZeroWgt);
 
@@ -328,20 +328,21 @@ float ReweightingBuilder::getNormComponent(int bin) const{
     }
     /*
     if (divideByNSample && fabs(static_cast<float>(nSample)/static_cast<float>(nSumNonZeroWgt)-1.)>0.01)
-      MELAerr
-      << "ReweightingBuilder::getNormComponent: WARNING! N events with non-zero weights (" << nSumNonZeroWgt
-      << ") is more than 1% different from N of sample (" << nSample
-      << ") in reweighting bin " << bin << " of tree " << tree->sampleIdentifier
-      << endl;
+    MELAerr
+    << "ReweightingBuilder::getNormComponent: WARNING! N events with non-zero weights (" << nSumNonZeroWgt
+    << ") is more than 1% different from N of sample (" << nSample
+    << ") in reweighting bin " << bin << " of tree " << tree->sampleIdentifier
+    << endl;
     */
     /*
     MELAout << "- Tree " << tree->sampleIdentifier << " bin " << bin << " norm: \n"
-      << "- sum_wgts_tj: " << sumwgts << '\n'
-      << "- N_tj: " << nevtsnonzerowgt << '\n'
-      << "- 1/N_t: " << static_cast<float>(nSample)/static_cast<float>(nSumNonZeroWgt) << '\n'
-      << "- Num per tree: " << numerator_pertree << '\n'
-      << "- Den per tree: " << nevtsnonzerowgt
-      << endl;
+    << "- sum_wgts_tj: " << sumwgts << '\n'
+    << "- sum_wgtsq_tj: " << sumsqwgts << '\n'
+    << "- N_tj: " << nevtsnonzerowgt << '\n'
+    << "- N_t: " << nSumNonZeroWgt << '\n'
+    << "- Num per tree: " << numerator_pertree << '\n'
+    << "- Den per tree: " << denominator_pertree
+    << endl;
     */
 
     // Numerator += (S_tj/N_t) / (V_tj/N_t^2)

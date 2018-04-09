@@ -320,18 +320,10 @@ float ReweightingBuilder::getNormComponent(int bin) const{
       // S_tj * N_tj / N_t
       //numerator_pertree = sumwgts * static_cast<float>(nevtsnonzerowgt*nSample)/static_cast<float>(nSumNonZeroWgt);
 
-      float scalefactor=1;
-      if (divideByNSample){
-        unsigned int nSample = tree->getNGenNoPU();
-        scalefactor = static_cast<float>(nSample)/static_cast<float>(nSumNonZeroWgt);
-        denominator_pertree = 1./(sumsqwgts*pow(scalefactor, 2));
-      }
-      else{
-        unsigned int nSample = 1;
-        scalefactor = static_cast<float>(nSample)/static_cast<float>(nSumNonZeroWgt);
-        denominator_pertree = 1./(sumsqwgts*pow(scalefactor, 2));
-      }
-
+      unsigned int nSample = 1;
+      if (divideByNSample) nSample = tree->getNGenNoPU();
+      float scalefactor = static_cast<float>(nSample)/static_cast<float>(nSumNonZeroWgt);
+      denominator_pertree = 1./(sumsqwgts*pow(scalefactor, 2));
       numerator_pertree = sumwgts*scalefactor*denominator_pertree;
     }
     /*
@@ -357,7 +349,7 @@ float ReweightingBuilder::getNormComponent(int bin) const{
     // Denominator += N_tj
     //denominator += nevtsnonzerowgt;
     // Denominator += 1/(V_tj/N_t^2)
-    denominator += 1./sumsqwgts;
+    denominator += denominator_pertree;
   }
 
   float result=0;

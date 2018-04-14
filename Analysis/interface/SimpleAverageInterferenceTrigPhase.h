@@ -10,6 +10,7 @@ protected:
 
 public:
   SimpleAverageInterferenceTrigPhase();
+
 };
 
 typedef SimpleAverageInterferenceTrigPhase CjjVHint_t;

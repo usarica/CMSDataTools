@@ -9,16 +9,20 @@
 #include "PA1PB2PBp2Discriminant.h"
 #include "VHProdDecACDiscriminant.h"
 #include "JJEWQCDBkgDiscriminant.h"
+#include "JJEWQCDBkgM4LDiscriminant.h"
 #include "SimpleInterferenceDiscriminant.h"
+#include "VHProdIntACDiscriminant.h"
 #include "JJEWQCDInterferenceDiscriminant.h"
 #include "SimpleInterferenceTrigPhase.h"
 #include "SimpleAverageInterferenceTrigPhase.h"
+#include "VHProdIntTrigPhaseACDiscriminant.h"
 
 
 namespace DiscriminantClasses{
   enum Type{
     kDbkgkin,
     kDbkgdec,
+    kDbkgm4l,
 
     kDggbkgkin,
     kDggint,
@@ -42,30 +46,40 @@ namespace DiscriminantClasses{
     kDjjWHa3,
 
     kDbkgjjEWQCD,
+    kDbkgm4ljjEWQCD,
     kDintjjEWQCD,
     kCjjVBFint,
     kCjjVHint,
 
     kDL1dec,
     kDL1decint,
+    kCL1decint,
     kDa2dec,
     kDa2decint,
+    kCa2decint,
     kDa3dec,
     kDa3decint,
+    kCa3decint,
 
     kDL1jjVBFdec,
     kDL1jjVBFint,
+    kCL1jjVBFint,
     kDa2jjVBFdec,
     kDa2jjVBFint,
+    kCa2jjVBFint,
     kDa3jjVBFdec,
     kDa3jjVBFint,
+    kCa3jjVBFint,
 
     kDL1jjVHdec,
     kDL1jjVHint,
+    kCL1jjVHint,
     kDa2jjVHdec,
     kDa2jjVHint,
+    kCa2jjVHint,
     kDa3jjVHdec,
     kDa3jjVHint,
+    kCa3jjVHint,
 
     kNTypes
   };

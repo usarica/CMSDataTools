@@ -4,6 +4,7 @@
 #include "DiscriminantClasses.h"
 #include "CategorizationHelpers.h"
 
+
 namespace ACHypothesisHelpers{
   enum ACHypothesis{
     kSM=0,

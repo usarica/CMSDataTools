@@ -12,6 +12,7 @@ public:
   SimpleInterferenceTrigPhase();
 };
 
+typedef SimpleInterferenceTrigPhase Cintkin_t;
 typedef SimpleInterferenceTrigPhase Cggint_t;
 typedef SimpleInterferenceTrigPhase CjjVBFint_t;
 

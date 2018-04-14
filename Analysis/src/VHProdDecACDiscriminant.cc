@@ -39,7 +39,7 @@ void VHProdDecACDiscriminant::eval(const std::vector<float>& vars, const float& 
     float pVHdecSM = (pZHSM + pWHSM)*vars[iDecSM];
     float pVHdecBSM = (pZHBSM + pWHBSM)*vars[iDecBSM];
 
-    float gCommon = pow((theG.at(0).second->Eval(valReco))*(theG.at(1).second->Eval(valReco))*gscale, 2);
+    float gCommon = pow((theG.at(iGVH).second->Eval(valReco))*(theG.at(iGDec).second->Eval(valReco))*gscale, 2);
 
     val = pVHdecSM / (pVHdecSM + gCommon*pVHdecBSM);
   }

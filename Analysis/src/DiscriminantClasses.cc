@@ -15,6 +15,7 @@ std::unordered_map<TString, DiscriminantClasses::Type> DiscriminantClasses::getK
 
   res["Dbkgkin"] = kDbkgkin;
   res["Dbkgdec"] = kDbkgdec;
+  res["Dbkgm4l"] = kDbkgm4l;
 
   res["Dggbkgkin"] = kDggbkgkin;
   res["Dggint"] = kDggint;
@@ -35,30 +36,46 @@ std::unordered_map<TString, DiscriminantClasses::Type> DiscriminantClasses::getK
   res["DjjWHa3"] = kDjjWHa3;
 
   res["DbkgjjEWQCD"] = kDbkgjjEWQCD;
+  res["Dbkgm4ljjEWQCD"] = kDbkgm4ljjEWQCD;
   res["DintjjEWQCD"] = kDintjjEWQCD;
   res["CjjVBFint"] = kCjjVBFint;
   res["CjjVHint"] = kCjjVHint;
 
   res["DL1dec"] = kDL1dec;
-  res["DL1decint"] = kDL1decint;
   res["Da2dec"] = kDa2dec;
-  res["Da2decint"] = kDa2decint;
   res["Da3dec"] = kDa3dec;
+
+  res["DL1decint"] = kDL1decint;
+  res["Da2decint"] = kDa2decint;
   res["Da3decint"] = kDa3decint;
 
+  res["CL1decint"] = kCL1decint;
+  res["Ca2decint"] = kCa2decint;
+  res["Ca3decint"] = kCa3decint;
+
   res["DL1jjVBFdec"] = kDL1jjVBFdec;
-  res["DL1jjVBFint"] = kDL1jjVBFint;
   res["Da2jjVBFdec"] = kDa2jjVBFdec;
-  res["Da2jjVBFint"] = kDa2jjVBFint;
   res["Da3jjVBFdec"] = kDa3jjVBFdec;
+
+  res["DL1jjVBFint"] = kDL1jjVBFint;
+  res["Da2jjVBFint"] = kDa2jjVBFint;
   res["Da3jjVBFint"] = kDa3jjVBFint;
 
+  res["CL1jjVBFint"] = kCL1jjVBFint;
+  res["Ca2jjVBFint"] = kCa2jjVBFint;
+  res["Ca3jjVBFint"] = kCa3jjVBFint;
+
   res["DL1jjVHdec"] = kDL1jjVHdec;
-  res["DL1jjVHint"] = kDL1jjVHint;
   res["Da2jjVHdec"] = kDa2jjVHdec;
-  res["Da2jjVHint"] = kDa2jjVHint;
   res["Da3jjVHdec"] = kDa3jjVHdec;
+
+  res["DL1jjVHint"] = kDL1jjVHint;
+  res["Da2jjVHint"] = kDa2jjVHint;
   res["Da3jjVHint"] = kDa3jjVHint;
+
+  res["CL1jjVHint"] = kCL1jjVHint;
+  res["Ca2jjVHint"] = kCa2jjVHint;
+  res["Ca3jjVHint"] = kCa3jjVHint;
 
   return res;
 }
@@ -79,6 +96,8 @@ TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
     return "D^{kin}_{bkg}";
   case kDbkgdec:
     return "D^{dec}_{bkg}";
+  case kDbkgm4l:
+    return "D_{bkg}";
 
   case kDggbkgkin:
     return "D^{gg}_{bkg}";
@@ -116,6 +135,8 @@ TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
 
   case kDbkgjjEWQCD:
     return "D^{jj+dec}_{bkg}";
+  case kDbkgm4ljjEWQCD:
+    return "D^{jj+dec+m4l}_{bkg}";
   case kDintjjEWQCD:
     return "D^{jj+dec}_{int}";
   case kCjjVBFint:
@@ -129,6 +150,7 @@ TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
     return "D^{dec}_{0h+}";
   case kDa3dec:
     return "D^{dec}_{0-}";
+
   case kDL1decint:
     return "D^{dec}_{#Lambda1, int}";
   case kDa2decint:
@@ -136,12 +158,20 @@ TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
   case kDa3decint:
     return "D^{dec}_{CP}";
 
+  case kCL1decint:
+    return "cos (#phi^{dec}_{#Lambda1, int})";
+  case kCa2decint:
+    return "cos (#phi^{dec}_{int})";
+  case kCa3decint:
+    return "cos (#phi^{dec}_{CP})";
+
   case kDL1jjVBFdec:
     return "D^{jjVBF+dec}_{#Lambda1}";
   case kDa2jjVBFdec:
     return "D^{jjVBF+dec}_{0h+}";
   case kDa3jjVBFdec:
     return "D^{jjVBF+dec}_{0-}";
+
   case kDL1jjVBFint:
     return "D^{jjVBF}_{#Lambda1, int}";
   case kDa2jjVBFint:
@@ -149,18 +179,33 @@ TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
   case kDa3jjVBFint:
     return "D^{jjVBF}_{CP}";
 
+  case kCL1jjVBFint:
+    return "cos (#phi^{jjVBF}_{#Lambda1, int})";
+  case kCa2jjVBFint:
+    return "cos (#phi^{jjVBF}_{int})";
+  case kCa3jjVBFint:
+    return "cos (#phi^{jjVBF}_{CP})";
+
   case kDL1jjVHdec:
     return "D^{jjVH+dec}_{#Lambda1}";
   case kDa2jjVHdec:
     return "D^{jjVH+dec}_{0h+}";
   case kDa3jjVHdec:
     return "D^{jjVH+dec}_{0-}";
+
   case kDL1jjVHint:
     return "D^{jjVH}_{#Lambda1, int}";
   case kDa2jjVHint:
     return "D^{jjVH}_{int}";
   case kDa3jjVHint:
     return "D^{jjVH}_{CP}";
+
+  case kCL1jjVHint:
+    return "cos (#phi^{jjVH}_{#Lambda1, int})";
+  case kCa2jjVHint:
+    return "cos (#phi^{jjVH}_{int})";
+  case kCa3jjVHint:
+    return "cos (#phi^{jjVH}_{CP})";
 
   default:
     return "";
@@ -204,6 +249,8 @@ Discriminant* DiscriminantClasses::constructKDFromType(
     return new Dbkgkin_t(cfilename, splinename, gfilename, gsplinename, gscale);
   case kDbkgdec:
     return new Dbkgdec_t(cfilename, splinename, gfilename, gsplinename, gscale);
+  case kDbkgm4l:
+    return new Dbkgm4l_t(cfilename, splinename, gfilename, gsplinename, gscale);
 
   case kDggbkgkin:
     return new Dggbkgkin_t(cfilename, splinename, gfilename, gsplinename, gscale);
@@ -231,6 +278,8 @@ Discriminant* DiscriminantClasses::constructKDFromType(
 
   case kDbkgjjEWQCD:
     return new DbkgjjEWQCD_t(cfilename, splinename, gfilename, gsplinename, gscale);
+  case kDbkgm4ljjEWQCD:
+    return new Dbkgm4ljjEWQCD_t(cfilename, splinename, gfilename, gsplinename, gscale);
   case kDintjjEWQCD:
     return new DintjjEWQCD_t(cfilename, splinename, gfilename, gsplinename, gscale);
   case kCjjVBFint:
@@ -246,6 +295,12 @@ Discriminant* DiscriminantClasses::constructKDFromType(
   case kDL1decint:
   case kDa2decint:
   case kDa3decint:
+    return new Dintkin_t(cfilename, splinename, gfilename, gsplinename, gscale);
+
+  case kCL1decint:
+  case kCa2decint:
+  case kCa3decint:
+    return new Cintkin_t();
 
   case kDL1jjVBFdec:
   case kDa2jjVBFdec:
@@ -262,10 +317,20 @@ Discriminant* DiscriminantClasses::constructKDFromType(
   case kDa3jjVBFint:
     return new Dintkin_t(cfilename, splinename, gfilename, gsplinename, gscale);
 
+  case kCL1jjVBFint:
+  case kCa2jjVBFint:
+  case kCa3jjVBFint:
+    return new CjjVBFint_t();
+
   case kDL1jjVHint:
   case kDa2jjVHint:
   case kDa3jjVHint:
-    // Not yet implemented
+    return new DaiVHint_t(cfilename, splinename, gfilename, gsplinename, gscale);
+
+  case kCL1jjVHint:
+  case kCa2jjVHint:
+  case kCa3jjVHint:
+    return new CaiVHint_t();
 
   default:
     return res;
@@ -291,6 +356,12 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     res.push_back("p_QQB_BKG_MCFM");
     res.push_back("pConst_GG_BKG_MCFM");
     res.push_back("pConst_QQB_BKG_MCFM");
+    break;
+  case kDbkgm4l:
+    res.push_back("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
+    res.push_back("p_m4l_SIG");
+    res.push_back("p_QQB_BKG_MCFM");
+    res.push_back("p_m4l_BKG");
     break;
 
   case kDggbkgkin:
@@ -399,6 +470,29 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     res.push_back("pConst_JJQCD_BKG_MCFM_JECNominal");
     break;
 
+  case kDbkgm4ljjEWQCD:
+    res.push_back("p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal");
+    res.push_back("p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal");
+    res.push_back("p_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"); // FIXME
+    res.push_back("p_JJVBF_BKG_MCFM_JECNominal");
+    res.push_back("p_HadZH_BKG_MCFM_JECNominal");
+    res.push_back("p_HadWH_BKG_MCFM_JECNominal");
+    res.push_back("p_JJQCD_BKG_MCFM_JECNominal");
+    res.push_back("p_HadZH_mavjj_JECNominal");
+    res.push_back("p_HadZH_mavjj_true_JECNominal");
+    res.push_back("p_HadWH_mavjj_JECNominal");
+    res.push_back("p_HadWH_mavjj_true_JECNominal");
+    res.push_back("pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal");
+    res.push_back("pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal");
+    res.push_back("pConst_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"); // FIXME
+    res.push_back("pConst_JJVBF_BKG_MCFM_JECNominal");
+    res.push_back("pConst_HadZH_BKG_MCFM_JECNominal");
+    res.push_back("pConst_HadWH_BKG_MCFM_JECNominal");
+    res.push_back("pConst_JJQCD_BKG_MCFM_JECNominal");
+    res.push_back("p_m4l_SIG");
+    res.push_back("p_m4l_BKG");
+    break;
+
   case kDintjjEWQCD:
     res.push_back("p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal");
     res.push_back("p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal");
@@ -458,16 +552,19 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     break;
 
   case kDL1decint:
+  case kCL1decint:
     res.push_back("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
     res.push_back("p_GG_SIG_ghg2_1_ghz1prime2_1E4_JHUGen");
     res.push_back("p_GG_SIG_ghg2_1_ghz1_1_ghz1prime2_1E4_JHUGen");
     break;
   case kDa2decint:
+  case kCa2decint:
     res.push_back("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
     res.push_back("p_GG_SIG_ghg2_1_ghz2_1_JHUGen");
     res.push_back("p_GG_SIG_ghg2_1_ghz1_1_ghz2_1_JHUGen");
     break;
   case kDa3decint:
+  case kCa3decint:
     res.push_back("p_GG_SIG_ghg2_1_ghz1_1_JHUGen");
     res.push_back("p_GG_SIG_ghg2_1_ghz4_1_JHUGen");
     res.push_back("p_GG_SIG_ghg2_1_ghz1_1_ghz4_1_JHUGen");
@@ -524,25 +621,56 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     break;
 
   case kDL1jjVBFint:
+  case kCL1jjVBFint:
     res.push_back("p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal");
     res.push_back("p_JJVBF_SIG_ghv1prime2_1E4_JHUGen_JECNominal");
     res.push_back("p_JJVBF_SIG_ghv1_1_ghv1prime2_1E4_JHUGen_JECNominal");
     break;
   case kDa2jjVBFint:
+  case kCa2jjVBFint:
     res.push_back("p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal");
     res.push_back("p_JJVBF_SIG_ghv2_1_JHUGen_JECNominal");
     res.push_back("p_JJVBF_SIG_ghv1_1_ghv2_1_JHUGen_JECNominal");
     break;
   case kDa3jjVBFint:
+  case kCa3jjVBFint:
     res.push_back("p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal");
     res.push_back("p_JJVBF_SIG_ghv4_1_JHUGen_JECNominal");
     res.push_back("p_JJVBF_SIG_ghv1_1_ghv4_1_JHUGen_JECNominal");
     break;
 
   case kDL1jjVHint:
+  case kCL1jjVHint:
+    res.push_back("p_HadZH_SIG_ghz1_1_JHUGen_JECNominal");
+    res.push_back("p_HadZH_SIG_ghz1prime2_1E4_JHUGen_JECNominal");
+    res.push_back("p_HadZH_SIG_ghz1_1_ghz1prime2_1E4_JHUGen_JECNominal");
+    res.push_back("pConst_HadZH_SIG_ghz1_1_JHUGen_JECNominal");
+    res.push_back("p_HadWH_SIG_ghw1_1_JHUGen_JECNominal");
+    res.push_back("p_HadWH_SIG_ghw1prime2_1E4_JHUGen_JECNominal");
+    res.push_back("p_HadWH_SIG_ghw1_1_ghw1prime2_1E4_JHUGen_JECNominal");
+    res.push_back("pConst_HadWH_SIG_ghw1_1_JHUGen_JECNominal");
+    break;
   case kDa2jjVHint:
+  case kCa2jjVHint:
+    res.push_back("p_HadZH_SIG_ghz1_1_JHUGen_JECNominal");
+    res.push_back("p_HadZH_SIG_ghz2_1_JHUGen_JECNominal");
+    res.push_back("p_HadZH_SIG_ghz1_1_ghz2_1_JHUGen_JECNominal");
+    res.push_back("pConst_HadZH_SIG_ghz1_1_JHUGen_JECNominal");
+    res.push_back("p_HadWH_SIG_ghw1_1_JHUGen_JECNominal");
+    res.push_back("p_HadWH_SIG_ghw2_1_JHUGen_JECNominal");
+    res.push_back("p_HadWH_SIG_ghw1_1_ghw2_1_JHUGen_JECNominal");
+    res.push_back("pConst_HadWH_SIG_ghw1_1_JHUGen_JECNominal");
+    break;
   case kDa3jjVHint:
-    // Not yet implemented
+  case kCa3jjVHint:
+    res.push_back("p_HadZH_SIG_ghz1_1_JHUGen_JECNominal");
+    res.push_back("p_HadZH_SIG_ghz4_1_JHUGen_JECNominal");
+    res.push_back("p_HadZH_SIG_ghz1_1_ghz4_1_JHUGen_JECNominal");
+    res.push_back("pConst_HadZH_SIG_ghz1_1_JHUGen_JECNominal");
+    res.push_back("p_HadWH_SIG_ghw1_1_JHUGen_JECNominal");
+    res.push_back("p_HadWH_SIG_ghw4_1_JHUGen_JECNominal");
+    res.push_back("p_HadWH_SIG_ghw1_1_ghw4_1_JHUGen_JECNominal");
+    res.push_back("pConst_HadWH_SIG_ghw1_1_JHUGen_JECNominal");
     break;
 
   default:
@@ -553,7 +681,7 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
 std::vector<TString> DiscriminantClasses::getKDVars(const TString name){ return getKDVars(getKDType(name)); }
 
 bool DiscriminantClasses::isCPSensitive(const Type type){
-  bool res = (type==kDa3decint || type==kDa3jjVBFint || type==kDa3jjVHint);
+  bool res = (type==kDa3decint || type==kDa3jjVBFint || type==kDa3jjVHint || type==kCa3decint || type==kCa3jjVBFint || type==kCa3jjVHint);
   return res;
 }
 bool DiscriminantClasses::isCPSensitive(const TString name){

@@ -24,7 +24,7 @@ TString ACHypothesisHelpers::getACHypothesisName(ACHypothesisHelpers::ACHypothes
 
 std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet(ACHypothesisHelpers::ACHypothesis hypo, CategorizationHelpers::Category category, CategorizationHelpers::MassRegion massregion){
   std::vector<DiscriminantClasses::Type> res;
-  if (massregion==CategorizationHelpers::kOffshell){
+  if (massregion==CategorizationHelpers::kOffshell){ // First dimension, "mass", is added separately
     if (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged){
       res.push_back(DiscriminantClasses::kDbkgkin);
       switch (hypo){
@@ -85,54 +85,72 @@ std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet
   }
   else if (massregion==CategorizationHelpers::kOnshell){
     if (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged){
-      res.push_back(DiscriminantClasses::kDbkgkin);
       switch (hypo){
-      case kSM:
+      case kSM: // First dimension, "mass", is added separately
+        res.push_back(DiscriminantClasses::kDbkgkin);
         break;
       case kL1:
+        res.push_back(DiscriminantClasses::kDbkgm4l);
         res.push_back(DiscriminantClasses::kDL1dec);
+        res.push_back(DiscriminantClasses::kCL1decint);
         break;
       case kA2:
+        res.push_back(DiscriminantClasses::kDbkgm4l);
         res.push_back(DiscriminantClasses::kDa2dec);
+        res.push_back(DiscriminantClasses::kCa2decint);
         break;
       case kA3:
+        res.push_back(DiscriminantClasses::kDbkgm4l);
         res.push_back(DiscriminantClasses::kDa3dec);
+        res.push_back(DiscriminantClasses::kCa3decint);
         break;
       default:
         break;
       };
     }
     else if (category==CategorizationHelpers::JJVBFTagged){
-      res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
       switch (hypo){
-      case kSM:
+      case kSM: // First dimension, "mass", is added separately
+        res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
         break;
       case kL1:
+        res.push_back(DiscriminantClasses::kDbkgm4ljjEWQCD);
         res.push_back(DiscriminantClasses::kDL1jjVBFdec);
+        res.push_back(DiscriminantClasses::kCL1jjVBFint);
         break;
       case kA2:
+        res.push_back(DiscriminantClasses::kDbkgm4ljjEWQCD);
         res.push_back(DiscriminantClasses::kDa2jjVBFdec);
+        res.push_back(DiscriminantClasses::kCa2jjVBFint);
         break;
       case kA3:
+        res.push_back(DiscriminantClasses::kDbkgm4ljjEWQCD);
         res.push_back(DiscriminantClasses::kDa3jjVBFdec);
+        res.push_back(DiscriminantClasses::kCa3jjVBFint);
         break;
       default:
         break;
       };
     }
     else if (category==CategorizationHelpers::HadVHTagged){
-      res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
       switch (hypo){
-      case kSM:
+      case kSM: // First dimension, "mass", is added separately
+        res.push_back(DiscriminantClasses::kDbkgjjEWQCD);
         break;
       case kL1:
+        res.push_back(DiscriminantClasses::kDbkgm4ljjEWQCD);
         res.push_back(DiscriminantClasses::kDL1jjVHdec);
+        res.push_back(DiscriminantClasses::kCL1jjVHint);
         break;
       case kA2:
+        res.push_back(DiscriminantClasses::kDbkgm4ljjEWQCD);
         res.push_back(DiscriminantClasses::kDa2jjVHdec);
+        res.push_back(DiscriminantClasses::kCa2jjVHint);
         break;
       case kA3:
+        res.push_back(DiscriminantClasses::kDbkgm4ljjEWQCD);
         res.push_back(DiscriminantClasses::kDa3jjVHdec);
+        res.push_back(DiscriminantClasses::kCa3jjVHint);
         break;
       default:
         break;

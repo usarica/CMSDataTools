@@ -33,6 +33,6 @@ void VHProdIntTrigPhaseACDiscriminant::eval(const std::vector<float>& vars, cons
     float pVHBSM = (pZHBSM + pWHBSM);
     float pVHBSMSMInt = (pZHBSMSMInt + pWHBSMSMInt);
 
-    val = pVHBSMSMInt / sqrt(pVHSM*pVHBSM);
+    val = pVHBSMSMInt / (2.*sqrt(pVHSM*pVHBSM));
   }
 }

@@ -33,8 +33,10 @@ public:
   std::vector<float> getWeightThresholds(CJLSTTree* theTree) const;
   float getPostThresholdWeight(CJLSTTree* theTree) const;
   float getPostThresholdSqWeight(CJLSTTree* theTree) const;
+  float getPostThresholdSqWeightInv(CJLSTTree* theTree) const;
   float getSumPostThresholdWeights(CJLSTTree* theTree) const;
   float getSumPostThresholdSqWeights(CJLSTTree* theTree) const;
+  float getSumPostThresholdSqWeightInvs(CJLSTTree* theTree) const;
   unsigned int getSumEvents(CJLSTTree* theTree) const;
   unsigned int getSumNonZeroWgtEvents(CJLSTTree* theTree) const;
   int findBin(CJLSTTree* theTree) const;
@@ -50,6 +52,9 @@ public:
 
   float getSumAllPostThresholdSqWeights(CJLSTTree* theTree) const; // Tree is passed here to find the bin
   float getSumAllPostThresholdSqWeights(int bin) const;
+
+  float getSumAllPostThresholdSqWeightInvs(CJLSTTree* theTree) const; // Tree is passed here to find the bin
+  float getSumAllPostThresholdSqWeightInvs(int bin) const;
 
   unsigned int getSumAllEvents(CJLSTTree* theTree) const; // Tree is passed here to find the bin
   unsigned int getSumAllEvents(int bin) const;

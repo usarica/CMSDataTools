@@ -26,7 +26,13 @@ void VHProdIntACDiscriminant::eval(const std::vector<float>& vars, const float& 
     nvarsreq
   };
   this->resetVal();
-  if (checkNanInf(vars) && checkNonNegative(vars) && vars.size()==(unsigned int) nvarsreq){
+  if (
+    checkNanInf(vars)
+    &&
+    checkNonNegative(vars, -1, (int) iZHBSMSMInt) && checkNonNegative(vars, (int) iZHConst, (int) iWHBSMSMInt) && checkNonNegative(vars, (int) iWHConst, -1)
+    &&
+    vars.size()==(unsigned int) nvarsreq
+    ){
     float constant = getCval(valReco);
 
     float pZHSM = vars[iZHSM]/vars[iZHConst];

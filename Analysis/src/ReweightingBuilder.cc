@@ -218,6 +218,15 @@ float ReweightingBuilder::getPostThresholdSqWeight(CJLSTTree* theTree) const{
   }
   return pow(weight, 2);
 }
+float ReweightingBuilder::getPostThresholdSqWeightInv(CJLSTTree* theTree) const{
+  float weight = this->eval(theTree);
+  int bin=this->findBin(theTree);
+  if (bin>=0){
+    const float& threshold=weightThresholds.find(theTree)->second.at(bin);
+    if (threshold>=0. && fabs(weight)>threshold) weight = pow(threshold, 2)/weight;
+  }
+  return pow(weight, -2);
+}
 float ReweightingBuilder::getSumPostThresholdWeights(CJLSTTree* theTree) const{
   int bin=this->findBin(theTree);
   if (bin>=0) return sumPostThrWeights.find(theTree)->second.at(bin);
@@ -226,6 +235,11 @@ float ReweightingBuilder::getSumPostThresholdWeights(CJLSTTree* theTree) const{
 float ReweightingBuilder::getSumPostThresholdSqWeights(CJLSTTree* theTree) const{
   int bin=this->findBin(theTree);
   if (bin>=0) return sumPostThrSqWeights.find(theTree)->second.at(bin);
+  else return 0;
+}
+float ReweightingBuilder::getSumPostThresholdSqWeightInvs(CJLSTTree* theTree) const{
+  int bin=this->findBin(theTree);
+  if (bin>=0) return 1./sumPostThrSqWeights.find(theTree)->second.at(bin);
   else return 0;
 }
 unsigned int ReweightingBuilder::getSumEvents(CJLSTTree* theTree) const{
@@ -260,6 +274,17 @@ float ReweightingBuilder::getSumAllPostThresholdSqWeights(int bin) const{
   KahanAccumulator<float> sum;
   auto const& theMap=this->sumPostThrSqWeights;
   for (auto it=theMap.cbegin(); it!=theMap.cend(); it++) sum += it->second.at(bin);
+  return sum;
+}
+float ReweightingBuilder::getSumAllPostThresholdSqWeightInvs(CJLSTTree* theTree) const{
+  int bin=this->findBin(theTree);
+  return this->getSumAllPostThresholdSqWeightInvs(bin);
+}
+float ReweightingBuilder::getSumAllPostThresholdSqWeightInvs(int bin) const{
+  if (bin<0) return 0;
+  KahanAccumulator<float> sum;
+  auto const& theMap=this->sumPostThrSqWeights;
+  for (auto it=theMap.cbegin(); it!=theMap.cend(); it++) sum += 1./it->second.at(bin);
   return sum;
 }
 unsigned int ReweightingBuilder::getSumAllEvents(CJLSTTree* theTree) const{

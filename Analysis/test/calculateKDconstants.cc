@@ -44,9 +44,12 @@ bool EventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEn
       if (rewgt_it->first=="MELARewgt"){
         float mela_wgt_sum = rewgtBuilder->getSumPostThresholdWeights(tree);
         float mela_wgt = (mela_wgt_sum!=0. ? rewgtBuilder->getPostThresholdWeight(tree)/mela_wgt_sum : 0.); // Normalized to unit
-        unsigned int mela_nevts = rewgtBuilder->getSumNonZeroWgtEvents(tree);
-        unsigned int mela_sumnevts = rewgtBuilder->getSumAllNonZeroWgtEvents(tree);
-        if (mela_sumnevts!=0) mela_wgt *= static_cast<float>(mela_nevts) / static_cast<float>(mela_sumnevts);
+        float mela_samplewgt = rewgtBuilder->getSumPostThresholdSqWeightInvs(tree);
+        float mela_sumsamplewgts = rewgtBuilder->getSumAllPostThresholdSqWeightInvs(tree);
+        if (mela_sumsamplewgts!=0.) mela_wgt *= mela_samplewgt / mela_sumsamplewgts;
+        //unsigned int mela_nevts = rewgtBuilder->getSumNonZeroWgtEvents(tree);
+        //unsigned int mela_sumnevts = rewgtBuilder->getSumAllNonZeroWgtEvents(tree);
+        //if (mela_sumnevts!=0) mela_wgt *= static_cast<float>(mela_nevts) / static_cast<float>(mela_sumnevts);
         mela_wgt *= rewgtBuilder->getNormComponent(tree);
         wgt *= mela_wgt;
       }

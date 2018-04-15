@@ -22,7 +22,13 @@ void VHProdIntTrigPhaseACDiscriminant::eval(const std::vector<float>& vars, cons
     nvarsreq
   };
   this->resetVal();
-  if (checkNanInf(vars) && checkNonNegative(vars) && vars.size()==(unsigned int) nvarsreq){
+  if (
+    checkNanInf(vars)
+    &&
+    checkNonNegative(vars, -1, (int) iZHBSMSMInt) && checkNonNegative(vars, (int) iZHConst, (int) iWHBSMSMInt) && checkNonNegative(vars, (int) iWHConst, -1)
+    &&
+    vars.size()==(unsigned int) nvarsreq
+    ){
     float pZHSM = vars[iZHSM]/vars[iZHConst];
     float pWHSM = vars[iWHSM]/vars[iWHConst];
     float pZHBSM = vars[iZHBSM]/vars[iZHConst];

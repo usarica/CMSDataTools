@@ -50,10 +50,10 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDa3.KDvars = getKDVars(kDa3dec);
     KDlist.push_back(KDa3);
 
-    KDspecs KDL1int("CL1decint");
-    KDL1int.KD = constructKDFromType(kCL1decint, "", "");
-    KDL1int.KDvars = getKDVars(kCL1decint);
-    KDlist.push_back(KDL1int);
+    //KDspecs KDL1int("CL1decint");
+    //KDL1int.KD = constructKDFromType(kCL1decint, "", "");
+    //KDL1int.KDvars = getKDVars(kCL1decint);
+    //KDlist.push_back(KDL1int);
     KDspecs KDa2int("Ca2decint");
     KDa2int.KD = constructKDFromType(kCa2decint, "", "");
     KDa2int.KDvars = getKDVars(kCa2decint);
@@ -207,10 +207,10 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDa3.KDvars = getKDVars(kDa3jjVHdec);
     KDlist.push_back(KDa3);
 
-    KDspecs KDL1int("CL1jjVHint");
-    KDL1int.KD = constructKDFromType(kCL1jjVHint, "", "");
-    KDL1int.KDvars = getKDVars(kCL1jjVHint);
-    KDlist.push_back(KDL1int);
+    //KDspecs KDL1int("CL1jjVHint");
+    //KDL1int.KD = constructKDFromType(kCL1jjVHint, "", "");
+    //KDL1int.KDvars = getKDVars(kCL1jjVHint);
+    //KDlist.push_back(KDL1int);
     KDspecs KDa2int("Ca2jjVHint");
     KDa2int.KD = constructKDFromType(kCa2jjVHint, "", "");
     KDa2int.KDvars = getKDVars(kCa2jjVHint);

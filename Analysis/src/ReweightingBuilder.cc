@@ -225,7 +225,7 @@ float ReweightingBuilder::getPostThresholdSqWeightInv(CJLSTTree* theTree) const{
     const float& threshold=weightThresholds.find(theTree)->second.at(bin);
     if (threshold>=0. && fabs(weight)>threshold) weight = pow(threshold, 2)/weight;
   }
-  return pow(weight, -2);
+  return (weight!=0. ? pow(weight, -2) : 0.);
 }
 float ReweightingBuilder::getSumPostThresholdWeights(CJLSTTree* theTree) const{
   int bin=this->findBin(theTree);
@@ -238,9 +238,8 @@ float ReweightingBuilder::getSumPostThresholdSqWeights(CJLSTTree* theTree) const
   else return 0;
 }
 float ReweightingBuilder::getSumPostThresholdSqWeightInvs(CJLSTTree* theTree) const{
-  int bin=this->findBin(theTree);
-  if (bin>=0) return 1./sumPostThrSqWeights.find(theTree)->second.at(bin);
-  else return 0;
+  float res = this->getSumPostThresholdSqWeights(theTree);
+  return (res!=0. ? 1./res : 0.);
 }
 unsigned int ReweightingBuilder::getSumEvents(CJLSTTree* theTree) const{
   int bin=this->findBin(theTree);
@@ -284,7 +283,10 @@ float ReweightingBuilder::getSumAllPostThresholdSqWeightInvs(int bin) const{
   if (bin<0) return 0;
   KahanAccumulator<float> sum;
   auto const& theMap=this->sumPostThrSqWeights;
-  for (auto it=theMap.cbegin(); it!=theMap.cend(); it++) sum += 1./it->second.at(bin);
+  for (auto it=theMap.cbegin(); it!=theMap.cend(); it++){
+    float const& component=it->second.at(bin);
+    if (component!=0.) sum += 1./component;
+  }
   return sum;
 }
 unsigned int ReweightingBuilder::getSumAllEvents(CJLSTTree* theTree) const{

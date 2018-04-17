@@ -129,10 +129,10 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDa3.KDvars = getKDVars(kDa3jjVBFdec);
     KDlist.push_back(KDa3);
 
-    KDspecs KDL1int("CL1jjVBFint");
-    KDL1int.KD = constructKDFromType(kCL1jjVBFint, "", "");
-    KDL1int.KDvars = getKDVars(kCL1jjVBFint);
-    KDlist.push_back(KDL1int);
+    //KDspecs KDL1int("CL1jjVBFint");
+    //KDL1int.KD = constructKDFromType(kCL1jjVBFint, "", "");
+    //KDL1int.KDvars = getKDVars(kCL1jjVBFint);
+    //KDlist.push_back(KDL1int);
     KDspecs KDa2int("Ca2jjVBFint");
     KDa2int.KD = constructKDFromType(kCa2jjVBFint, "", "");
     KDa2int.KDvars = getKDVars(kCa2jjVBFint);

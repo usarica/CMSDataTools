@@ -29,16 +29,17 @@ void VHProdIntTrigPhaseACDiscriminant::eval(const std::vector<float>& vars, cons
     &&
     vars.size()==(unsigned int) nvarsreq
     ){
+    val=0;
     float pZHSM = vars[iZHSM]/vars[iZHConst];
-    float pWHSM = vars[iWHSM]/vars[iWHConst];
     float pZHBSM = vars[iZHBSM]/vars[iZHConst];
-    float pWHBSM = vars[iWHBSM]/vars[iWHConst];
     float pZHBSMSMInt = vars[iZHBSMSMInt]/vars[iZHConst];
+    float pWHSM = vars[iWHSM]/vars[iWHConst];
+    float pWHBSM = vars[iWHBSM]/vars[iWHConst];
     float pWHBSMSMInt = vars[iWHBSMSMInt]/vars[iWHConst];
-    float pVHSM = (pZHSM + pWHSM);
-    float pVHBSM = (pZHBSM + pWHBSM);
-    float pVHBSMSMInt = (pZHBSMSMInt + pWHBSMSMInt);
 
-    val = pVHBSMSMInt / (2.*sqrt(pVHSM*pVHBSM));
+    unsigned int count=0;
+    if (pZHSM!=0. && pZHBSM!=0.){ val += pZHBSMSMInt / (2.*sqrt(pZHSM*pZHBSM)); count++; }
+    if (pWHSM!=0. && pWHBSM!=0.){ val += pWHBSMSMInt / (2.*sqrt(pWHSM*pWHBSM)); count++; }
+    if (count>0) val /= static_cast<float>(count);
   }
 }

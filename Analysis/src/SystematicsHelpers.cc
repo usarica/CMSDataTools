@@ -160,6 +160,10 @@ std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::ge
         res.push_back(tPythiaTuneDn);
         res.push_back(tPythiaTuneUp);
       }
+      if (proc==ProcessHandler::kGG && (strGenerator=="POWHEG" || strGenerator=="")){
+        res.push_back(tMINLODn);
+        res.push_back(tMINLOUp);
+      }
       res.push_back(eJECDn);
       res.push_back(eJECUp);
     }
@@ -296,7 +300,19 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
     }
     res = new YieldSystematic(evaluators, (normbuilder ? SystematicsHelpers::getNormalizedSystematic : SystematicsHelpers::getRawSystematic));
   }
-  // FIXME: PYTHIA SCALE AND TUNE VARIATIONS FOR 2017 MC NEED SPECIAL VARIABLES
+  else if (theDataPeriod=="2017" && (syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp)){
+    computeFcn = ReweightingFunctions::getSimpleWeight;
+    strVars.push_back((syst==tPythiaScaleDn ? "PythiaWeight_isr_muR0p25" : "PythiaWeight_isr_muR4"));
+    strVars.push_back((syst==tPythiaScaleDn ? "PythiaWeight_fsr_muR0p25" : "PythiaWeight_fsr_muR4"));
+    for (CJLSTTree*& tree:trees){ for (TString const& s:strVars) tree->bookBranch<float>(s, 1); for (TString const& s:strVarsNorm) tree->bookBranch<float>(s, 1); }
+    rewgtbuilder = new ReweightingBuilder(strVars, computeFcn); evaluators.push_back(rewgtbuilder);
+    if (!strVarsNorm.empty()){ normbuilder = new ReweightingBuilder(strVarsNorm, computeFcn); evaluators.push_back(normbuilder); }
+    for (ReweightingBuilder*& rb:evaluators){
+      rb->setWeightBinning(binning);
+      for (CJLSTTree*& tree:trees) rb->setupWeightVariables(tree, (normbuilder ? 1 : -1), 0);
+    }
+    res = new YieldSystematic(evaluators, (normbuilder ? SystematicsHelpers::getNormalizedSystematic : SystematicsHelpers::getRawSystematic));
+  }
 
   MELAout << "SystematicsHelpers::constructSystematic: Systematics constructed with:\n"
     << "\t- Vars: " << strVars
@@ -340,6 +356,10 @@ TString SystematicsHelpers::getSystematicsName(SystematicsHelpers::SystematicVar
     return "PythiaTuneDn";
   case tPythiaTuneUp:
     return "PythiaTuneUp";
+  case tMINLODn:
+    return "MINLODn";
+  case tMINLOUp:
+    return "MINLOUp";
   case tQQBkgEWCorrDn:
     return "EWCorrDn";
   case tQQBkgEWCorrUp:
@@ -392,6 +412,10 @@ TString SystematicsHelpers::getSystematicsLabel(SystematicsHelpers::SystematicVa
     return "Pythia tune down";
   case tPythiaTuneUp:
     return "Pythia tune up";
+  case tMINLODn:
+    return "MINLO-HJ down";
+  case tMINLOUp:
+    return "MINLO-HJ up";
   case tQQBkgEWCorrDn:
     return "NLO EW down";
   case tQQBkgEWCorrUp:
@@ -452,6 +476,16 @@ TString SystematicsHelpers::getSystematicsCombineName(
   case tPythiaTuneUp:
     systname="CMS_tune_pythia";
     break;
+  case tMINLODn:
+  case tMINLOUp:
+  {
+    // Not actually QCD scale but rather missing ME components
+    // Also not the BNL prescription http://cms.cern.ch/iCMS/jsp/openfile.jsp?type=NOTE&year=2011&files=NOTE2011_005.pdf
+    // Still use QCDscale_[process][Njets]in to correlate with older datacards
+    if (proc==ProcessHandler::kGG || proc==ProcessHandler::kQQBkg) systname="QCDscale_[process]2in"; // ggH is NLO, so only has 1 jet from the ME
+    else systname="QCDscale_[process]4in"; // VH and VBF already have 3 jets from the ME
+    break;
+  }
   case tQQBkgEWCorrDn:
   case tQQBkgEWCorrUp:
     systname="EWcorr_[process]";
@@ -485,6 +519,8 @@ TString SystematicsHelpers::getSystematicsCombineName(
       syst==tQCDScaleDn || syst==tQCDScaleUp
       ||
       syst==tPDFScaleDn || syst==tPDFScaleUp
+      ||
+      syst==tMINLODn || syst==tMINLOUp
       ) strProcess="ggH";
     else strProcess="Higgs_gg";
     break;
@@ -496,6 +532,8 @@ TString SystematicsHelpers::getSystematicsCombineName(
       syst==tQCDScaleDn || syst==tQCDScaleUp
       ||
       syst==tPDFScaleDn || syst==tPDFScaleUp
+      ||
+      syst==tMINLODn || syst==tMINLOUp
       ) strProcess="qqH";
     else strProcess="Higgs_qqbar";
     break;
@@ -507,6 +545,8 @@ TString SystematicsHelpers::getSystematicsCombineName(
       syst==tQCDScaleDn || syst==tQCDScaleUp
       ||
       syst==tPDFScaleDn || syst==tPDFScaleUp
+      ||
+      syst==tMINLODn || syst==tMINLOUp
       ) strProcess="VH";
     else strProcess="Higgs_qqbar";
     break;
@@ -517,6 +557,8 @@ TString SystematicsHelpers::getSystematicsCombineName(
       syst==tQCDScaleDn || syst==tQCDScaleUp
       ||
       syst==tPDFScaleDn || syst==tPDFScaleUp
+      ||
+      syst==tMINLODn || syst==tMINLOUp
       ||
       syst==tQQBkgEWCorrDn || syst==tQQBkgEWCorrUp
       ) strProcess="VV";

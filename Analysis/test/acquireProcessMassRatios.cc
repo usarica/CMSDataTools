@@ -311,6 +311,8 @@ void acquireMassRatio_ProcessSystToNominal_one(
     syst==tPythiaScaleDn || syst==tPythiaScaleUp
     ||
     syst==tPythiaTuneDn || syst==tPythiaTuneUp
+    ||
+    syst==tMINLODn || syst==tMINLOUp
     ){
     acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(channel, category, hypo, syst, istage, fixedDate, proctype, strGenerator);
     return;
@@ -587,6 +589,7 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
   if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst, strGenerator)) return;
   if (proctype==ProcessHandler::kQQBkg || proctype==ProcessHandler::kZX) return;
   if (strGenerator!="POWHEG") return;
+  bool doInvertRatio = (syst==tMINLODn);
 
   TDirectory* rootdir = gDirectory;
 
@@ -818,7 +821,12 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
     }
     ExtendedHistogram_1D*& hh = hMass.at(1);
     ExtendedHistogram_1D*& hi = hMass.at(0);
-    ExtendedHistogram_1D hRatio = ExtendedHistogram_1D::divideHistograms(*hh, *hi, false, Form("MassRatio"));
+    ExtendedHistogram_1D hRatio = (
+      !doInvertRatio ?
+      ExtendedHistogram_1D::divideHistograms(*hh, *hi, false, Form("MassRatio"))
+      :
+      ExtendedHistogram_1D::divideHistograms(*h1, *hh, false, Form("MassRatio"))
+      );
     foutput->WriteTObject(hRatio.getHistogram());
     foutput->WriteTObject(hRatio.getProfileX());
     for (auto& htmp:hMass) delete htmp;
@@ -907,7 +915,8 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
         conditionalizeHistogram<TH2F>(hDistro[i], 0, nullptr, false, true);
       }
       TH2F* hRatio = new TH2F("RatioWithKD", "", KDbinning.at(0).getNbins(), KDbinning.at(0).getBinning(), KDbinning.at(1).getNbins(), KDbinning.at(1).getBinning());
-      divideHistograms(hDistro[1], hDistro[0], hRatio, false);
+      if (!doInvertRatio) divideHistograms(hDistro[1], hDistro[0], hRatio, false);
+      else divideHistograms(hDistro[0], hDistro[1], hRatio, false);
       savedir->WriteTObject(hRatio); delete hRatio;
       for (unsigned int i=0; i<2; i++) delete hDistro[i];
     }
@@ -924,7 +933,8 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
         conditionalizeHistogram<TH3F>(hDistro[i], 0, nullptr, false, true);
       }
       TH3F* hRatio = new TH3F("RatioWithKD", "", KDbinning.at(0).getNbins(), KDbinning.at(0).getBinning(), KDbinning.at(1).getNbins(), KDbinning.at(1).getBinning(), KDbinning.at(2).getNbins(), KDbinning.at(2).getBinning());
-      divideHistograms(hDistro[1], hDistro[0], hRatio, false);
+      if (!doInvertRatio) divideHistograms(hDistro[1], hDistro[0], hRatio, false);
+      else divideHistograms(hDistro[0], hDistro[1], hRatio, false);
       savedir->WriteTObject(hRatio); delete hRatio;
       for (unsigned int i=0; i<2; i++) delete hDistro[i];
     }

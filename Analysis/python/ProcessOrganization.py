@@ -69,6 +69,8 @@ def checkValidRun(syst, cat, ch, proc, generator=""):
       testval=False
    if generator == "MCFM" and ("tMINLO" in syst or "tPythia" in syst):
       testval=False
+   if "tMINLO" in syst and proc != "GG":
+      testval=False
    if proc == "QQBkg" and ("tMINLO" in syst or "tPythia" in syst):
       testval=False
    if proc == "ZX" and not(syst=="sNominal" or "ZX" in syst):

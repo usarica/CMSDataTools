@@ -258,8 +258,6 @@ class StageXBatchManager:
                      # Do not submit unnecessary jobs
                      if cat == "Inclusive" and ("eJEC" in syst or "tMINLO" in syst or "tPythia" in syst):
                         continue
-                     if self.generator == "MCFM" and ("tMINLO" in syst or "tPythia" in syst):
-                        continue
                      if self.opt.stage == 1 and cat == "Untagged" and not(self.opt.process == "ZH" or self.opt.process == "WH"):
                         print "{} category distributions in process {} can be obtained from the distributions of inclusive and other categories.".format(cat, self.opt.process)
                         continue
@@ -270,6 +268,9 @@ class StageXBatchManager:
                      if self.opt.process != "ZX" and "ZX" in syst:
                         continue
                      if self.opt.process != "QQBkg" and "QQBkg" in syst:
+                        continue
+                     if "tMINLO" in syst or "tPythia" in syst:
+                        print "{} systematic distributions in process {} are obtained in mass ratios step.".format(syst, self.opt.process)
                         continue
 
                      strscrcmd = argstr.format(channel=ch,category=cat,achypothesis=hypo,systematic=syst,frmethod=frm)

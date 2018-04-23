@@ -158,6 +158,8 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
 
   if (strsample=="VBF_Sig_POWHEG"){
     if (!(
+      syst==SystematicsHelpers::tMINLODn || syst==SystematicsHelpers::tMINLOUp
+      ||
       syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
       ||
       syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
@@ -203,7 +205,11 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
       samples.push_back("VBFH3000");
     }
     else{
-      if (theDataPeriod=="2017"){ MELAerr << "SampleHelpers::constructSamplesList: Systematic not inplemented yet!" << endl; assert(0); }
+      if (theDataPeriod=="2017"){
+        if (syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("VBFH125ext"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneDn){ samples.push_back("VBFH125_tunedown"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneUp){ samples.push_back("VBFH125_tuneup"); }
+      }
       else{
         if (syst==SystematicsHelpers::tPythiaScaleDn){ samples.push_back("VBFH125_scaledown"); }
         else if (syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("VBFH125_scaleup"); }
@@ -220,6 +226,8 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
   }
   else if (strsample=="WminusH_Sig_POWHEG"){
     if (!(
+      syst==SystematicsHelpers::tMINLODn || syst==SystematicsHelpers::tMINLOUp
+      ||
       syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
       ||
       syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
@@ -265,7 +273,11 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
       samples.push_back("WminusH3000");
     }
     else{
-      if (theDataPeriod=="2017"){ MELAerr << "SampleHelpers::constructSamplesList: Systematic not inplemented yet!" << endl; assert(0); }
+      if (theDataPeriod=="2017"){
+        if (syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("WminusH125ext"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneDn){ samples.push_back("WminusH125_tunedown"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneUp){ samples.push_back("WminusH125_tuneup"); }
+      }
       else{
         if (syst==SystematicsHelpers::tPythiaScaleDn){ samples.push_back("WminusH125_scaledown"); }
         else if (syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("WminusH125_scaleup"); }
@@ -276,6 +288,8 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
   }
   else if (strsample=="WplusH_Sig_POWHEG"){
     if (!(
+      syst==SystematicsHelpers::tMINLODn || syst==SystematicsHelpers::tMINLOUp
+      ||
       syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
       ||
       syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
@@ -321,7 +335,11 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
       samples.push_back("WplusH3000");
     }
     else{
-      if (theDataPeriod=="2017"){ MELAerr << "SampleHelpers::constructSamplesList: Systematic not inplemented yet!" << endl; assert(0); }
+      if (theDataPeriod=="2017"){
+        if (syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("WplusH125ext"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneDn){ samples.push_back("WplusH125_tunedown"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneUp){ samples.push_back("WplusH125_tuneup"); }
+      }
       else{
         if (syst==SystematicsHelpers::tPythiaScaleDn){ samples.push_back("WplusH125_scaledown"); }
         else if (syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("WplusH125_scaleup"); }
@@ -333,6 +351,8 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
 
   else if (strsample=="ZH_Sig_POWHEG"){
     if (!(
+      syst==SystematicsHelpers::tMINLODn || syst==SystematicsHelpers::tMINLOUp
+      ||
       syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
       ||
       syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
@@ -378,7 +398,11 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
       samples.push_back("ZH3000");
     }
     else{
-      if (theDataPeriod=="2017"){ MELAerr << "SampleHelpers::constructSamplesList: Systematic not inplemented yet!" << endl; assert(0); }
+      if (theDataPeriod=="2017"){
+        if (syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("ZH125ext"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneDn){ samples.push_back("ZH125_tunedown"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneUp){ samples.push_back("ZH125_tuneup"); }
+      }
       else{
         if (syst==SystematicsHelpers::tPythiaScaleDn){ samples.push_back("ZH125_scaledown"); }
         else if (syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("ZH125_scaleup"); }
@@ -410,6 +434,8 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
 
   else if (strsample=="gg_Sig_POWHEG"){
     if (!(
+      syst==SystematicsHelpers::tMINLODn || syst==SystematicsHelpers::tMINLOUp
+      ||
       syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
       ||
       syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
@@ -455,12 +481,18 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
       samples.push_back("ggH3000");
     }
     else{
-      if (theDataPeriod=="2017"){ MELAerr << "SampleHelpers::constructSamplesList: Systematic not inplemented yet!" << endl; assert(0); }
+      if (theDataPeriod=="2017"){
+        if (syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("ggH125ext"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneDn){ samples.push_back("ggH125_tunedown"); }
+        else if (syst==SystematicsHelpers::tPythiaTuneUp){ samples.push_back("ggH125_tuneup"); }
+        else if (syst==SystematicsHelpers::tMINLODn || syst==SystematicsHelpers::tMINLOUp){ samples.push_back("ggH125_minloHJJ"); samples.push_back("ggH300_minloHJJ"); }
+      }
       else{
         if (syst==SystematicsHelpers::tPythiaScaleDn){ samples.push_back("ggH125_scaledown"); samples.push_back("ggH300_scaledown"); }
         else if (syst==SystematicsHelpers::tPythiaScaleUp){ samples.push_back("ggH125_scaleup"); samples.push_back("ggH300_scaleup"); }
         else if (syst==SystematicsHelpers::tPythiaTuneDn){ samples.push_back("ggH125_tunedown"); samples.push_back("ggH300_tunedown"); }
         else if (syst==SystematicsHelpers::tPythiaTuneUp){ samples.push_back("ggH125_tuneup"); samples.push_back("ggH300_tuneup"); }
+        else if (syst==SystematicsHelpers::tMINLODn || syst==SystematicsHelpers::tMINLOUp){ samples.push_back("ggH125_minloHJJ"); samples.push_back("ggH300_minloHJJ"); }
       }
     }
   }
@@ -1124,4 +1156,3 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
 
   return samples;
 }
-

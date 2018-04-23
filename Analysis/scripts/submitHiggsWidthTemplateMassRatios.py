@@ -263,6 +263,9 @@ class MassRatioStageXBatchManager:
                      continue
                   if self.generator == "MCFM" and ("tMINLO" in syst or "tPythia" in syst):
                      continue
+                  if "tMINLO" in syst and self.opt.process != "GG":
+                     print "{} systematic is not defined for process {}.".format(syst, self.opt.process)
+                     continue
                   if self.opt.stage == 1 and cat == "Untagged" and (not(self.opt.process == "ZH" or self.opt.process == "WH") or "tPythia" in syst or "tMINLO" in syst):
                      print "{} category distributions in process {} can be obtained from the distributions of inclusive and other categories.".format(cat, self.opt.process)
                      continue

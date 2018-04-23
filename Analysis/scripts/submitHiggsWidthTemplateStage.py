@@ -152,6 +152,7 @@ class StageXBatchManager:
          "tPDFReplicaDn", "tPDFReplicaUp",
          "tPythiaScaleDn", "tPythiaScaleUp",
          "tPythiaTuneDn", "tPythiaTuneUp",
+         "tMINLODn", "tMINLOUp",
          "tQQBkgEWCorrDn", "tQQBkgEWCorrUp",
          "eJECDn", "eJECUp",
          "eZXStatsDn", "eZXStatsUp"

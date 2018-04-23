@@ -25,6 +25,7 @@ public:
   const CategorizationHelpers::MassRegion& getProcessMassRegion() const;
   const TString& getProcessName() const;
 
+  virtual float getProcessScale() const;
   virtual void imposeTplPhysicality(std::vector<float>& vals) const;
 
   virtual std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo, bool includeSM) const = 0;
@@ -90,6 +91,7 @@ public:
   static GGProcessHandler::TemplateType castIntToTemplateType(int type, bool useN=false);
   static bool isInterferenceContribution(GGProcessHandler::TemplateType const type);
 
+  float getProcessScale() const;
   void imposeTplPhysicality(std::vector<float>& vals) const;
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
   template<typename T> void recombineHistogramsToTemplatesWithPhase(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;

@@ -1,4 +1,5 @@
 #include "DiscriminantClasses.h"
+#include "Samples.h"
 
 
 namespace DiscriminantClasses{
@@ -452,7 +453,7 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
   case kDbkgjjEWQCD:
     res.push_back("p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal");
     res.push_back("p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal");
-    res.push_back("p_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"); // FIXME
+    res.push_back((CJLSTversion>=180416 ? "p_HadWH_S_SIG_ghw1_1_MCFM_JECNominal" : "p_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"));
     res.push_back("p_JJVBF_BKG_MCFM_JECNominal");
     res.push_back("p_HadZH_BKG_MCFM_JECNominal");
     res.push_back("p_HadWH_BKG_MCFM_JECNominal");
@@ -463,7 +464,7 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     res.push_back("p_HadWH_mavjj_true_JECNominal");
     res.push_back("pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal");
     res.push_back("pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal");
-    res.push_back("pConst_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"); // FIXME
+    res.push_back((CJLSTversion>=180416 ? "pConst_HadWH_S_SIG_ghw1_1_MCFM_JECNominal" : "pConst_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"));
     res.push_back("pConst_JJVBF_BKG_MCFM_JECNominal");
     res.push_back("pConst_HadZH_BKG_MCFM_JECNominal");
     res.push_back("pConst_HadWH_BKG_MCFM_JECNominal");
@@ -473,7 +474,7 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
   case kDbkgm4ljjEWQCD:
     res.push_back("p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal");
     res.push_back("p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal");
-    res.push_back("p_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"); // FIXME
+    res.push_back((CJLSTversion>=180416 ? "p_HadWH_S_SIG_ghw1_1_MCFM_JECNominal" : "p_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"));
     res.push_back("p_JJVBF_BKG_MCFM_JECNominal");
     res.push_back("p_HadZH_BKG_MCFM_JECNominal");
     res.push_back("p_HadWH_BKG_MCFM_JECNominal");
@@ -484,7 +485,7 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     res.push_back("p_HadWH_mavjj_true_JECNominal");
     res.push_back("pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal");
     res.push_back("pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal");
-    res.push_back("pConst_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"); // FIXME
+    res.push_back((CJLSTversion>=180416 ? "pConst_HadWH_S_SIG_ghw1_1_MCFM_JECNominal" : "pConst_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"));
     res.push_back("pConst_JJVBF_BKG_MCFM_JECNominal");
     res.push_back("pConst_HadZH_BKG_MCFM_JECNominal");
     res.push_back("pConst_HadWH_BKG_MCFM_JECNominal");
@@ -496,7 +497,7 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
   case kDintjjEWQCD:
     res.push_back("p_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal");
     res.push_back("p_HadZH_S_SIG_ghz1_1_MCFM_JECNominal");
-    res.push_back("p_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"); // FIXME
+    res.push_back((CJLSTversion>=180416 ? "p_HadWH_S_SIG_ghw1_1_MCFM_JECNominal" : "p_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"));
     res.push_back("p_JJVBF_BKG_MCFM_JECNominal");
     res.push_back("p_HadZH_BKG_MCFM_JECNominal");
     res.push_back("p_HadWH_BKG_MCFM_JECNominal");
@@ -507,14 +508,14 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
     res.push_back("p_HadWH_mavjj_true_JECNominal");
     res.push_back("pConst_JJVBF_S_SIG_ghv1_1_MCFM_JECNominal");
     res.push_back("pConst_HadZH_S_SIG_ghz1_1_MCFM_JECNominal");
-    res.push_back("pConst_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"); // FIXME
+    res.push_back((CJLSTversion>=180416 ? "pConst_HadWH_S_SIG_ghw1_1_MCFM_JECNominal" : "pConst_HadWH_S_SIG_ghv1_1_MCFM_JECNominal"));
     res.push_back("pConst_JJVBF_BKG_MCFM_JECNominal");
     res.push_back("pConst_HadZH_BKG_MCFM_JECNominal");
     res.push_back("pConst_HadWH_BKG_MCFM_JECNominal");
     res.push_back("pConst_JJQCD_BKG_MCFM_JECNominal");
     res.push_back("p_JJVBF_S_BSI_ghv1_1_MCFM_JECNominal");
     res.push_back("p_HadZH_S_BSI_ghz1_1_MCFM_JECNominal");
-    res.push_back("p_HadWH_S_BSI_ghv1_1_MCFM_JECNominal"); // FIXME
+    res.push_back((CJLSTversion>=180416 ? "p_HadWH_S_BSI_ghw1_1_MCFM_JECNominal" : "p_HadWH_S_BSI_ghv1_1_MCFM_JECNominal"));
     break;
 
   case kCjjVBFint:

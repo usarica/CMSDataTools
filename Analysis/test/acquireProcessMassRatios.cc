@@ -825,7 +825,7 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
       !doInvertRatio ?
       ExtendedHistogram_1D::divideHistograms(*hh, *hi, false, Form("MassRatio"))
       :
-      ExtendedHistogram_1D::divideHistograms(*h1, *hh, false, Form("MassRatio"))
+      ExtendedHistogram_1D::divideHistograms(*hi, *hh, false, Form("MassRatio"))
       );
     foutput->WriteTObject(hRatio.getHistogram());
     foutput->WriteTObject(hRatio.getProfileX());

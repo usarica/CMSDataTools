@@ -76,6 +76,7 @@ void ProcessHandler::assignProcessName(){
 const TString& ProcessHandler::getProcessName() const{ return procname; }
 const ProcessHandler::ProcessType& ProcessHandler::getProcessType() const{ return proctype; }
 const CategorizationHelpers::MassRegion& ProcessHandler::getProcessMassRegion() const{ return massregion; }
+float ProcessHandler::getProcessScale() const{ return 1; }
 void ProcessHandler::imposeTplPhysicality(std::vector<float>& /*vals*/) const{}
 
 
@@ -363,6 +364,11 @@ bool GGProcessHandler::isInterferenceContribution(GGProcessHandler::TemplateType
   return (type==GGTplInt_Re || type==GGTplSigBSMSMInt_Re || type==GGTplIntBSM_Re);
 }
 
+float GGProcessHandler::getProcessScale() const{
+  if (theDataPeriod=="2016") return 1.098946;
+  else if (theDataPeriod=="2017") return 1.098946;
+  else return 1;
+}
 void GGProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
   vector<TemplateContributionList> pairing;
   if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes) pairing.emplace_back(GGTplInt_Re);

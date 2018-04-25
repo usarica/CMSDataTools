@@ -192,7 +192,12 @@ void makeFinalTemplates_VV_one(const Channel channel, const ACHypothesis hypo, c
 
     // Make 2D slices
     {
-      vector<TString> KDset; KDset.push_back("ZZMass"); { vector<TString> KDset2=getACHypothesisKDNameSet(hypo, cat, massregion); appendVector(KDset, KDset2); }
+      vector<TString> KDset;
+      {
+        vector<TString> KDset2=getACHypothesisKDNameSet(hypo, cat, massregion);
+        if (massregion!=kOnshell || hypo==kSM) KDset.push_back("ZZMass"); // Only off-shell, or on-shell SM use ZZMass
+        appendVector(KDset, KDset2);
+      }
       vector<ExtendedBinning> KDbinning;
       for (auto& KDname:KDset) KDbinning.push_back(getDiscriminantFineBinning(channel, cat, KDname, massregion));
       getControl2DXSlices(rootdir, foutput, outputProcessHandle, hypo, KDbinning, htpls_3D);

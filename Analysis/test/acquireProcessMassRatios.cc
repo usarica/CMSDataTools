@@ -883,7 +883,12 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
 
     bool isCategory=(category==Inclusive);
     float weight=0;
-    vector<TString> KDset; KDset.push_back("ZZMass"); { vector<TString> KDset2=getACHypothesisKDNameSet(hypo, category, (CategorizationHelpers::MassRegion) massregion); appendVector(KDset, KDset2); }
+    vector<TString> KDset;
+    {
+      vector<TString> KDset2=getACHypothesisKDNameSet(hypo, category, (CategorizationHelpers::MassRegion) massregion);
+      if (massregion!=kOnshell || hypo==kSM) KDset.push_back("ZZMass"); // Only off-shell, or on-shell SM use ZZMass
+      appendVector(KDset, KDset2);
+    }
     unordered_map<TString, float> KDvars;
     for (auto& KDname:KDset) KDvars[KDname]=0;
     vector<ExtendedBinning> KDbinning;

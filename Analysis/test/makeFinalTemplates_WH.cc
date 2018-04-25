@@ -533,7 +533,12 @@ void makeFinalTemplates_WH(const Channel channel, const ACHypothesis hypo, const
     bool isCategory=(cat==Inclusive);
     TString catFlagName="";
     if (!isCategory) catFlagName = TString("is_") + strCategory + TString("_") + strACHypo;
-    vector<TString> KDset; KDset.push_back("ZZMass"); { vector<TString> KDset2=getACHypothesisKDNameSet(hypo, cat, massregion); appendVector(KDset, KDset2); }
+    vector<TString> KDset;
+    {
+      vector<TString> KDset2=getACHypothesisKDNameSet(hypo, cat, massregion);
+      if (massregion!=kOnshell || hypo==kSM) KDset.push_back("ZZMass"); // Only off-shell, or on-shell SM use ZZMass
+      appendVector(KDset, KDset2);
+    }
     unordered_map<TString, float> KDvars;
     for (auto& KDname:KDset) KDvars[KDname]=0;
     vector<ExtendedBinning> KDbinning;
@@ -892,14 +897,11 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_2D>(
     }
     for (unsigned int t=0; t<ntpls; t++){
       auto& tpl = hTemplates.at(t);
-      TProfile* prof_x = tpl.getProfileX();
-      TProfile* prof_y = tpl.getProfileY();
       TH_t*& htpl = tpl.getHistogram();
 
       ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
       ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
       if (!ProcessHandleType::isInterferenceContribution(tpltype)){
-        vector<pair<TProfile const*, unsigned int>> condProfs; condProfs.push_back(pair<TProfile const*, unsigned int>(prof_x, 0));
         conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false, USEEFFERRINCOND);
       }
       MELAout << "Integral [ " << tpl.getName() << " ] after post-processing function: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), false, nullptr) << endl;
@@ -937,15 +939,11 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_3D>(
     }
     for (unsigned int t=0; t<ntpls; t++){
       auto& tpl = hTemplates.at(t);
-      TProfile* prof_x = tpl.getProfileX();
-      TProfile* prof_y = tpl.getProfileY();
-      TProfile* prof_z = tpl.getProfileZ();
       TH_t*& htpl = tpl.getHistogram();
 
       ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
       ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
       if (!ProcessHandleType::isInterferenceContribution(tpltype)){
-        vector<pair<TProfile const*, unsigned int>> condProfs; condProfs.push_back(pair<TProfile const*, unsigned int>(prof_x, 0));
         conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false, USEEFFERRINCOND);
       }
       MELAout << "Integral [ " << tpl.getName() << " ] after post-processing function: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), false, nullptr) << endl;

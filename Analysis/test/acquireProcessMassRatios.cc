@@ -812,7 +812,14 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
       for (int ev=0; ev<tree->GetEntries(); ev++){
         tree->GetEntry(ev);
         if (!isCategory) continue;
-        if (proctype==ProcessHandler::kZH && i==1 && CJLSTversion<=180224 && theDataPeriod=="2016") weight /= 0.148; // FIXME: Rescale Pythia variation samples for missing filter efficiency; should be part of xsec in the future
+        if (
+          proctype==ProcessHandler::kZH && i==1 && CJLSTversion<=180224 && theDataPeriod=="2016"
+          && (
+            syst==tPythiaScaleDn || syst==tPythiaScaleUp
+            ||
+            syst==tPythiaTuneDn || syst==tPythiaTuneUp
+            )
+          ) weight /= 0.148; // FIXME: Rescale Pythia variation samples for missing filter efficiency; should be part of xsec in the future
         hh->fill(ZZMass, weight);
       }
       MELAout << "Mass integral of " << hh->getName() << ": " << hh->getHistogram()->Integral() << endl;
@@ -889,6 +896,7 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
       if (massregion!=kOnshell || hypo==kSM) KDset.push_back("ZZMass"); // Only off-shell, or on-shell SM use ZZMass
       appendVector(KDset, KDset2);
     }
+    MELAout << "KDs: " << KDset << endl;
     unordered_map<TString, float> KDvars;
     for (auto& KDname:KDset) KDvars[KDname]=0;
     vector<ExtendedBinning> KDbinning;
@@ -917,7 +925,11 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
           tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, weight, isCategory,
           1, 10
         );
-        conditionalizeHistogram<TH2F>(hDistro[i], 0, nullptr, false, true);
+        if (KDset.at(0)=="ZZMass") conditionalizeHistogram<TH2F>(hDistro[i], 0, nullptr, false, true);
+        else{
+          double hist_integral = getHistogramIntegralAndError(hDistro[i], 1, hDistro[i]->GetNbinsX(), 1, hDistro[i]->GetNbinsY(), false, nullptr);
+          hDistro[i]->Scale(1./hist_integral);
+        }
       }
       TH2F* hRatio = new TH2F("RatioWithKD", "", KDbinning.at(0).getNbins(), KDbinning.at(0).getBinning(), KDbinning.at(1).getNbins(), KDbinning.at(1).getBinning());
       if (!doInvertRatio) divideHistograms(hDistro[1], hDistro[0], hRatio, false);
@@ -935,11 +947,17 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
           tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
           1, 10, 10
         );
-        conditionalizeHistogram<TH3F>(hDistro[i], 0, nullptr, false, true);
+        MELAout << "Integral of distribution " << i << ": " << hDistro[i]->Integral() << endl;
+        if (KDset.at(0)=="ZZMass") conditionalizeHistogram<TH3F>(hDistro[i], 0, nullptr, false, true);
+        else{
+          double hist_integral = getHistogramIntegralAndError(hDistro[i], 1, hDistro[i]->GetNbinsX(), 1, hDistro[i]->GetNbinsY(), 1, hDistro[i]->GetNbinsZ(), false, nullptr);
+          hDistro[i]->Scale(1./hist_integral);
+        }
       }
       TH3F* hRatio = new TH3F("RatioWithKD", "", KDbinning.at(0).getNbins(), KDbinning.at(0).getBinning(), KDbinning.at(1).getNbins(), KDbinning.at(1).getBinning(), KDbinning.at(2).getNbins(), KDbinning.at(2).getBinning());
       if (!doInvertRatio) divideHistograms(hDistro[1], hDistro[0], hRatio, false);
       else divideHistograms(hDistro[0], hDistro[1], hRatio, false);
+      MELAout << "Integral of ratio " << hRatio->Integral() << endl;
       savedir->WriteTObject(hRatio); delete hRatio;
       for (unsigned int i=0; i<2; i++) delete hDistro[i];
     }

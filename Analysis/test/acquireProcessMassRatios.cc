@@ -834,6 +834,12 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
       :
       ExtendedHistogram_1D::divideHistograms(*hi, *hh, false, Form("MassRatio"))
       );
+    if ((syst==tMINLODn || syst==tMINLOUp) && theDataPeriod=="2016"){ // Mass ratio is set to 1 in 2016 MC
+      for (int ix=1; ix<=hRatio.getHistogram()->GetNbinsX(); ix++){
+        hRatio.getHistogram()->SetBinContent(ix, 1);
+        hRatio.getHistogram()->SetBinError(ix, 0);
+      }
+    }
     foutput->WriteTObject(hRatio.getHistogram());
     foutput->WriteTObject(hRatio.getProfileX());
     for (auto& htmp:hMass) delete htmp;

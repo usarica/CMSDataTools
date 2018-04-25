@@ -257,6 +257,8 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
     syst==tPythiaScaleDn || syst==tPythiaScaleUp
     ||
     syst==tPythiaTuneDn || syst==tPythiaTuneUp
+    ||
+    syst==tMINLODn || syst==tMINLOUp
     );
 
   const TString strChannel = getChannelName(channel);

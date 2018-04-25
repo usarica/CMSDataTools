@@ -255,6 +255,8 @@ void makeFinalTemplates_VBF(const Channel channel, const ACHypothesis hypo, cons
     syst==tPythiaScaleDn || syst==tPythiaScaleUp
     ||
     syst==tPythiaTuneDn || syst==tPythiaTuneUp
+    ||
+    syst==tMINLODn || syst==tMINLOUp
     );
 
   const TString strChannel = getChannelName(channel);

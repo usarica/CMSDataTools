@@ -45,6 +45,17 @@ TString CategorizationHelpers::getCategoryLabel(CategorizationHelpers::Category 
   }
 }
 
+TString CategorizationHelpers::getCategoryLabelForKDs(CategorizationHelpers::Category category){
+  switch (category){
+  case JJVBFTagged:
+    return "VBF";
+  case HadVHTagged:
+    return "VH";
+  default:
+    return "";
+  }
+}
+
 void CategorizationHelpers::setGlobalCategorizationScheme(CategorizationHelpers::CategorizationScheme scheme){ globalCategorizationScheme=scheme; }
 
 CategorizationHelpers::Category CategorizationHelpers::getCategory(const float& DjjVBF, const float& DjjZH, const float& DjjWH, const bool forceUntagged){

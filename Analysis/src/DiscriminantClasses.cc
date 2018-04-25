@@ -92,6 +92,7 @@ TString DiscriminantClasses::getKDName(DiscriminantClasses::Type type){
 }
 
 TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
+  // Some names use the wildcard [category], which needs to be replaced.
   switch (type){
   case kDbkgkin:
     return "D^{kin}_{bkg}";
@@ -103,47 +104,50 @@ TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
   case kDggbkgkin:
     return "D^{gg}_{bkg}";
   case kDggint:
-    return "D^{gg}_{int}";
   case kCggint:
-    return "cos (#phi^{gg}_{int})";
+    return "D^{gg}_{bsi}";
+  //case kCggint:
+  //  return "cos (#phi^{gg}_{int})";
 
   case kDjVBF:
-    return "D^{VBF}_{j}";
+    return "D^{VBF}_{1jet}";
   case kDjjVBF:
-    return "D^{VBF}_{jj}";
+    return "D^{VBF}_{2jet}";
   case kDjjZH:
-    return "D^{ZH}_{jj}";
+    return "D^{ZH}_{2jet}";
   case kDjjWH:
-    return "D^{WH}_{jj}";
+    return "D^{WH}_{2jet}";
   case kDjjVBFL1:
-    return "D^{VBF, #Lambda1}_{jj}";
+    return "D^{VBF, #Lambda1}_{2jet}";
   case kDjjZHL1:
-    return "D^{ZH, #Lambda1}_{jj}";
+    return "D^{ZH, #Lambda1}_{2jet}";
   case kDjjWHL1:
-    return "D^{WH, #Lambda1}_{jj}";
+    return "D^{WH, #Lambda1}_{2jet}";
   case kDjjVBFa2:
-    return "D^{VBF, a2}_{jj}";
+    return "D^{VBF, a2}_{2jet}";
   case kDjjZHa2:
-    return "D^{ZH, a2}_{jj}";
+    return "D^{ZH, a2}_{2jet}";
   case kDjjWHa2:
-    return "D^{WH, a2}_{jj}";
+    return "D^{WH, a2}_{2jet}";
   case kDjjVBFa3:
-    return "D^{VBF, a3}_{jj}";
+    return "D^{VBF, a3}_{2jet}";
   case kDjjZHa3:
-    return "D^{ZH, a3}_{jj}";
+    return "D^{ZH, a3}_{2jet}";
   case kDjjWHa3:
-    return "D^{WH, a3}_{jj}";
+    return "D^{WH, a3}_{2jet}";
 
   case kDbkgjjEWQCD:
-    return "D^{jj+dec}_{bkg}";
+    return "D^{[category]+dec}_{bkg}";
   case kDbkgm4ljjEWQCD:
-    return "D^{jj+dec+m4l}_{bkg}";
+    return "D^{[category]+dec+m4l}_{bkg}";
   case kDintjjEWQCD:
-    return "D^{jj+dec}_{int}";
   case kCjjVBFint:
-    return "cos (#phi^{VBF}_{int})";
   case kCjjVHint:
-    return "cos (#phi^{VH}_{int})";
+    return "D^{[category]+dec}_{bsi}";
+  //case kCjjVBFint:
+  //  return "cos (#phi^{VBF}_{int})";
+  //case kCjjVHint:
+  //  return "cos (#phi^{VH}_{int})";
 
   case kDL1dec:
     return "D^{dec}_{#Lambda1}";
@@ -153,60 +157,69 @@ TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
     return "D^{dec}_{0-}";
 
   case kDL1decint:
+  case kCL1decint:
     return "D^{dec}_{#Lambda1, int}";
   case kDa2decint:
+  case kCa2decint:
     return "D^{dec}_{int}";
   case kDa3decint:
+  case kCa3decint:
     return "D^{dec}_{CP}";
 
-  case kCL1decint:
-    return "cos (#phi^{dec}_{#Lambda1, int})";
-  case kCa2decint:
-    return "cos (#phi^{dec}_{int})";
-  case kCa3decint:
-    return "cos (#phi^{dec}_{CP})";
+  //case kCL1decint:
+  //  return "cos (#phi^{dec}_{#Lambda1, int})";
+  //case kCa2decint:
+  //  return "cos (#phi^{dec}_{int})";
+  //case kCa3decint:
+  //  return "cos (#phi^{dec}_{CP})";
 
   case kDL1jjVBFdec:
-    return "D^{jjVBF+dec}_{#Lambda1}";
+    return "D^{VBF+dec}_{#Lambda1}";
   case kDa2jjVBFdec:
-    return "D^{jjVBF+dec}_{0h+}";
+    return "D^{VBF+dec}_{0h+}";
   case kDa3jjVBFdec:
-    return "D^{jjVBF+dec}_{0-}";
+    return "D^{VBF+dec}_{0-}";
 
   case kDL1jjVBFint:
-    return "D^{jjVBF}_{#Lambda1, int}";
-  case kDa2jjVBFint:
-    return "D^{jjVBF}_{int}";
-  case kDa3jjVBFint:
-    return "D^{jjVBF}_{CP}";
-
   case kCL1jjVBFint:
-    return "cos (#phi^{jjVBF}_{#Lambda1, int})";
+    return "D^{VBF}_{#Lambda1, int}";
+  case kDa2jjVBFint:
   case kCa2jjVBFint:
-    return "cos (#phi^{jjVBF}_{int})";
+    return "D^{VBF}_{int}";
+  case kDa3jjVBFint:
   case kCa3jjVBFint:
-    return "cos (#phi^{jjVBF}_{CP})";
+    return "D^{VBF}_{CP}";
+
+  //case kCL1jjVBFint:
+  //  return "cos (#phi^{VBF}_{#Lambda1, int})";
+  //case kCa2jjVBFint:
+  //  return "cos (#phi^{VBF}_{int})";
+  //case kCa3jjVBFint:
+  //  return "cos (#phi^{VBF}_{CP})";
 
   case kDL1jjVHdec:
-    return "D^{jjVH+dec}_{#Lambda1}";
+    return "D^{VH+dec}_{#Lambda1}";
   case kDa2jjVHdec:
-    return "D^{jjVH+dec}_{0h+}";
+    return "D^{VH+dec}_{0h+}";
   case kDa3jjVHdec:
-    return "D^{jjVH+dec}_{0-}";
+    return "D^{VH+dec}_{0-}";
 
   case kDL1jjVHint:
-    return "D^{jjVH}_{#Lambda1, int}";
-  case kDa2jjVHint:
-    return "D^{jjVH}_{int}";
-  case kDa3jjVHint:
-    return "D^{jjVH}_{CP}";
-
   case kCL1jjVHint:
-    return "cos (#phi^{jjVH}_{#Lambda1, int})";
+    return "D^{VH}_{#Lambda1, int}";
+  case kDa2jjVHint:
   case kCa2jjVHint:
-    return "cos (#phi^{jjVH}_{int})";
+    return "D^{VH}_{int}";
+  case kDa3jjVHint:
   case kCa3jjVHint:
-    return "cos (#phi^{jjVH}_{CP})";
+    return "D^{VH}_{CP}";
+
+  //case kCL1jjVHint:
+  //  return "cos (#phi^{VH}_{#Lambda1, int})";
+  //case kCa2jjVHint:
+  //  return "cos (#phi^{VH}_{int})";
+  //case kCa3jjVHint:
+  //  return "cos (#phi^{VH}_{CP})";
 
   default:
     return "";

@@ -866,8 +866,14 @@ template<> void getTemplatesPerCategory<2>(
     ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
     if (!ProcessHandleType::isInterferenceContribution(tpltype)){
       TH1F const* hMass=hMass_FromNominalInclusive.at(t).getHistogram();
-      assert(hMass->GetNbinsX()==htpl->GetNbinsX());
-      multiplyHistograms(htpl, hMass, 0, htpl, USEEFFERRINCOND);
+      if (KDbinning.at(0).getLabel()=="ZZMass"){
+        assert(hMass->GetNbinsX()==htpl->GetNbinsX());
+        multiplyHistograms(htpl, hMass, 0, htpl, USEEFFERRINCOND);
+      }
+      else{
+        double hMass_integral = getHistogramIntegralAndError(hMass, 1, hMass->GetNbinsX(), false, nullptr);
+        htpl->Scale(hMass_integral);
+      }
     }
     double integralerror=0;
     double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), false, &integralerror);
@@ -893,7 +899,7 @@ template<> void getTemplatesPerCategory<2>(
       if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
       else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
 
-      doTemplatePostprocessing(htpl, true);
+      doTemplatePostprocessing(htpl, category, true);
       htpl->Scale(thePerProcessHandle->getProcessScale());
       double integralerror=0;
       double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), true, &integralerror);
@@ -1039,8 +1045,14 @@ template<> void getTemplatesPerCategory<3>(
     ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
     if (!ProcessHandleType::isInterferenceContribution(tpltype)){
       TH1F const* hMass=hMass_FromNominalInclusive.at(t).getHistogram();
-      assert(hMass->GetNbinsX()==htpl->GetNbinsX());
-      multiplyHistograms(htpl, hMass, 0, htpl, USEEFFERRINCOND);
+      if (KDbinning.at(0).getLabel()=="ZZMass"){
+        assert(hMass->GetNbinsX()==htpl->GetNbinsX());
+        multiplyHistograms(htpl, hMass, 0, htpl, USEEFFERRINCOND);
+      }
+      else{
+        double hMass_integral = getHistogramIntegralAndError(hMass, 1, hMass->GetNbinsX(), false, nullptr);
+        htpl->Scale(hMass_integral);
+      }
     }
     double integralerror=0;
     double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), false, &integralerror);
@@ -1067,7 +1079,7 @@ template<> void getTemplatesPerCategory<3>(
       if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
       else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
 
-      doTemplatePostprocessing(htpl, true);
+      doTemplatePostprocessing(htpl, category, true);
       htpl->Scale(thePerProcessHandle->getProcessScale());
       double integralerror=0;
       double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), true, &integralerror);
@@ -1123,7 +1135,11 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_2D>(
       ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
       ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
       if (!ProcessHandleType::isInterferenceContribution(tpltype)){
-        conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false, USEEFFERRINCOND);
+        if (KDbinning.at(0).getLabel()=="ZZMass") conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false, USEEFFERRINCOND);
+        else{
+          double hist_integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), false, nullptr);
+          htpl->Scale(1./hist_integral);
+        }
       }
       MELAout << "Integral [ " << tpl.getName() << " ] after post-processing function: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), false, nullptr) << endl;
       MELAout << "Checking integrity of [ " << htpl->GetName() << " ]" << endl;
@@ -1165,7 +1181,11 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_3D>(
       ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
       ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
       if (!ProcessHandleType::isInterferenceContribution(tpltype)){
-        conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false, USEEFFERRINCOND);
+        if (KDbinning.at(0).getLabel()=="ZZMass") conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false, USEEFFERRINCOND);
+        else{
+          double hist_integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), false, nullptr);
+          htpl->Scale(1./hist_integral);
+        }
       }
       MELAout << "Integral [ " << tpl.getName() << " ] after post-processing function: " << getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), false, nullptr) << endl;
       MELAout << "Checking integrity of [ " << htpl->GetName() << " ]" << endl;

@@ -31,6 +31,7 @@ namespace CategorizationHelpers{
 
   TString getCategoryName(CategorizationHelpers::Category category);
   TString getCategoryLabel(CategorizationHelpers::Category category);
+  TString getCategoryLabelForKDs(CategorizationHelpers::Category category);
 
   CategorizationHelpers::Category getCategory(const float& DjjVBF, const float& DjjZH, const float& DjjWH, const bool forceUntagged);
 

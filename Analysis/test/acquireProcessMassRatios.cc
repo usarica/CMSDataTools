@@ -701,7 +701,6 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
       }
     }
 
-
     for (int const& mh:mHList){
       for (unsigned int i=0; i<2; i++){
         for (auto& v:mh_samplelist_map[i][mh]) strSamples[i].push_back(v);

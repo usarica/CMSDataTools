@@ -668,7 +668,6 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
     std::vector<ReweightingBuilder*> extraEvaluators;
     SystematicsClass* systhandle = nullptr;
 
-    CJLSTSet* theSampleSet[2]={ nullptr };
     vector<TString> strSamples[2];
     vector<TString> idvector; idvector.push_back(identifier);
     getSamplesList(theSqrts, idvector, strSamples[0], sNominal);
@@ -710,11 +709,11 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
     for (unsigned int i=0; i<2; i++){
       MELAout << "Looping over tree set " << i << endl;
 
-      theSampleSet[i]=new CJLSTSet(strSamples[i]);
+      CJLSTSet* theSampleSet=new CJLSTSet(strSamples[i]);
       // Book common variables
-      theSampleSet[i]->bookXS(); // "xsec"
-      theSampleSet[i]->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
-      for (auto& tree:theSampleSet[i]->getCJLSTTreeList()){
+      theSampleSet->bookXS(); // "xsec"
+      theSampleSet->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
+      for (auto& tree:theSampleSet->getCJLSTTreeList()){
         // Book common variables needed for analysis
         tree->bookBranch<float>("GenHMass", 0);
         tree->bookBranch<float>("ZZMass", -1);
@@ -724,12 +723,12 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
         for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
         tree->silenceUnused(); // Will no longer book another branch
       }
-      theSampleSet[i]->setPermanentWeights(CJLSTSet::NormScheme_OneOverNgen, false, true); // One/Ngen is a better choice when we have a sparse set of samples
+      theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_OneOverNgen, false, true); // One/Ngen is a better choice when we have a sparse set of samples
 
-      if (i==1) systhandle = constructSystematic(category, channel, proctype, syst, theSampleSet[i]->getCJLSTTreeList(), extraEvaluators, strGenerator);
+      if (i==1) systhandle = constructSystematic(category, channel, proctype, syst, theSampleSet->getCJLSTTreeList(), extraEvaluators, strGenerator);
 
       // Build the analyzer and loop over the events
-      TemplatesEventAnalyzer theAnalyzer(theSampleSet[i], channel, category);
+      TemplatesEventAnalyzer theAnalyzer(theSampleSet, channel, category);
       theAnalyzer.setExternalProductTree(theOutputTree[i]);
       // Book common variables needed for analysis
       theAnalyzer.addConsumed<float>("PUWeight");
@@ -750,6 +749,7 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
       MELAout << "Looped over tree set " << i << endl;
     }
 
+    delete theSampleSet;
     delete systhandle;
     for (auto& rb:extraEvaluators) delete rb;
 

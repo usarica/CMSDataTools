@@ -70,6 +70,8 @@ namespace HelperFunctions{
 
   // TGraph functions
   template<typename T> TGraph* makeGraphFromPair(std::vector<std::pair<T, T>> points, TString name);
+  template<typename T> TGraphErrors* makeGraphSymErrFromPair(std::vector<std::pair<T, T>> points, std::vector<std::pair<T, T>> errors, TString name);
+  template<typename T> TGraphAsymmErrors* makeGraphAsymErrFromPair(std::vector<std::pair<T, T>> points, std::vector<std::pair<T, T>> errorDns, std::vector<std::pair<T, T>> errorUps, TString name);
 
   template<typename T> void addPointsBetween(T*& tgOriginal, double xmin, double xmax, unsigned int nadd);
   template<> void addPointsBetween(TGraph*& tgOriginal, double xmin, double xmax, unsigned int nadd);
@@ -583,6 +585,40 @@ template<typename T> TGraph* HelperFunctions::makeGraphFromPair(std::vector<std:
   for (unsigned int ix=0; ix<2; ix++) delete[] xy[ix];
   return tg;
 }
+template<typename T> TGraphErrors* HelperFunctions::makeGraphSymErrFromPair(std::vector<std::pair<T, T>> points, std::vector<std::pair<T, T>> errors, TString name){
+  if (points.empty() || errors.size()!=points.size()) return nullptr;
+  unsigned int nbins = points.size();
+  double* xy[4];
+  for (unsigned int ix=0; ix<4; ix++) xy[ix] = new double[nbins];
+  for (unsigned int bin=0; bin<nbins; bin++){
+    xy[0][bin] = points[bin].first;
+    xy[1][bin] = points[bin].second;
+    xy[2][bin] = errors[bin].first;
+    xy[3][bin] = errors[bin].second;
+  }
+  TGraphErrors* tg = new TGraphErrors(nbins, xy[0], xy[1], xy[2], xy[3]);
+  tg->SetName(name);
+  for (unsigned int ix=0; ix<4; ix++) delete[] xy[ix];
+  return tg;
+}
+template<typename T> TGraphAsymmErrors* HelperFunctions::makeGraphAsymErrFromPair(std::vector<std::pair<T, T>> points, std::vector<std::pair<T, T>> errorDns, std::vector<std::pair<T, T>> errorUps, TString name){
+  if (points.empty() || errorDns.size()!=points.size() || errorUps.size()!=points.size()) return nullptr;
+  unsigned int nbins = points.size();
+  double* xy[6];
+  for (unsigned int ix=0; ix<6; ix++) xy[ix] = new double[nbins];
+  for (unsigned int bin=0; bin<nbins; bin++){
+    xy[0][bin] = points[bin].first;
+    xy[1][bin] = points[bin].second;
+    xy[2][bin] = errorDns[bin].first;
+    xy[3][bin] = errorUps[bin].first;
+    xy[4][bin] = errorDns[bin].second;
+    xy[5][bin] = errorUps[bin].second;
+  }
+  TGraphAsymmErrors* tg = new TGraphAsymmErrors(nbins, xy[0], xy[1], xy[2], xy[3], xy[4], xy[5]);
+  tg->SetName(name);
+  for (unsigned int ix=0; ix<6; ix++) delete[] xy[ix];
+  return tg;
+}
 
 // Spline functions
 template<int N> TF1* HelperFunctions::getFcn_a0plusa1overXN(TSpline3* sp, double xmin, double xmax, bool useLowBound){
@@ -741,7 +777,11 @@ template double HelperFunctions::getHistogramIntegralAndError<TH3F>(TH3F const* 
 template double HelperFunctions::getHistogramIntegralAndError<TH3D>(TH3D const* histo, int ix, int jx, int iy, int jy, int iz, int jz, bool useWidth, double* error);
 
 template TGraph* HelperFunctions::makeGraphFromPair<float>(std::vector<std::pair<float, float>> points, TString name);
+template TGraphErrors* HelperFunctions::makeGraphSymErrFromPair<float>(std::vector<std::pair<float, float>> points, std::vector<std::pair<float, float>> errors, TString name);
+template TGraphAsymmErrors* HelperFunctions::makeGraphAsymErrFromPair<float>(std::vector<std::pair<float, float>> points, std::vector<std::pair<float, float>> errorDns, std::vector<std::pair<float, float>> errorUps, TString name);
 template TGraph* HelperFunctions::makeGraphFromPair<double>(std::vector<std::pair<double, double>> points, TString name);
+template TGraphErrors* HelperFunctions::makeGraphSymErrFromPair<double>(std::vector<std::pair<double, double>> points, std::vector<std::pair<double, double>> errors, TString name);
+template TGraphAsymmErrors* HelperFunctions::makeGraphAsymErrFromPair<double>(std::vector<std::pair<double, double>> points, std::vector<std::pair<double, double>> errorDns, std::vector<std::pair<double, double>> errorUps, TString name);
 
 template TF1* HelperFunctions::getFcn_a0plusa1overXN<-1>(TSpline3* sp, double xmin, double xmax, bool useLowBound);
 template TF1* HelperFunctions::getFcn_a0plusa1overXN<-2>(TSpline3* sp, double xmin, double xmax, bool useLowBound);

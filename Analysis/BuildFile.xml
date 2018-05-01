@@ -7,6 +7,7 @@
 <use name="roofit"/>
 <use name="roofitcore"/>
 <use name="ZZMatrixElement/MELA"/>
+<use name="HiggsAnalysis/CombinedLimit"/>
 
 <export>
    <lib name="1"/>

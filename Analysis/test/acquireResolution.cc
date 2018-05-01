@@ -34,6 +34,8 @@
 #include "TChain.h"
 #include "TIterator.h"
 #include "Math/Minimizer.h"
+#include "HiggsAnalysis/CombinedLimit/interface/AsymPow.h"
+#include "HiggsAnalysis/CombinedLimit/interface/AsymQuad.h"
 #include "HiggsAnalysis/CombinedLimit/interface/HZZ2L2QRooPdfs.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooPiecewisePolynomial.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooRealFlooredSumPdf.h"
@@ -101,6 +103,9 @@ void acquireResolution(const Channel channel, const Category category, const TSt
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
   const TString strACHypo = getACHypothesisName(kSM);
+  const TString strSqrts = Form("%i", theSqrts);
+  const TString strYear = theDataPeriod;
+  const TString strSqrtsYear = strSqrts + "TeV_" + strYear;
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -271,7 +276,7 @@ void acquireResolution(const Channel channel, const Category category, const TSt
   RooRealVar var_mdiff("var_mdiff", "m^{reco}_{4l}-m^{true}_{4l} (GeV)", 0, -2000, 2000);
   RooRealVar var_weight("var_weight", "Event weight", 1, -10, 10); var_weight.removeMin(); var_weight.removeMax();
   RooArgSet treevars; treevars.add(var_mdiff); treevars.add(var_weight);
-  RooArgSet incltreevars; incltreevars.add(var_mtrue); incltreevars.add(var_mreco); treevars.add(var_weight);
+  RooArgSet incltreevars; incltreevars.add(var_mtrue); incltreevars.add(var_mreco); incltreevars.add(var_weight);
   RooArgSet conditionals; conditionals.add(var_mtrue);
 
   TString prefix = "CMS_zz4l_";
@@ -554,53 +559,62 @@ void acquireResolution(const Channel channel, const Category category, const TSt
 
 
   // Inclusive pdf
-  TString newprefix = "CMS_"+OUTPUT_NAME_CORE+"_";
+  TString newprefix = "CMS_"+OUTPUT_NAME_CORE+"_"+strSqrtsYear+"_";
 
+  RooConstVar scale_uncval_center(newprefix + "final_CB_CMS_scale_emcenter", "", 0);
   RooRealVar scale_uncvar_e("CMS_scale_e", "CMS_scale_e", 0, -7, 7);
-  RooConstVar scale_uncval_e(newprefix + "final_CB_mean_unc_e", "", 0.002);
+  RooConstVar scale_uncval_e_up(newprefix + "final_CB_CMS_scale_eUp", "", 0.002);
+  RooConstVar scale_uncval_e_dn(newprefix + "final_CB_CMS_scale_eDown", "", -0.002);
   RooRealVar scale_uncvar_mu("CMS_scale_m", "CMS_scale_m", 0, -7, 7);
-  RooConstVar scale_uncval_mu(newprefix + "final_CB_mean_unc_m", "", 0.001);
-  TString strscalemeanFormula; RooArgList scalemeanarglist;
-  scalemeanarglist.add(CB_piecewisepoly_list.at(0));
+  RooConstVar scale_uncval_mu_up(newprefix + "final_CB_CMS_scale_mUp", "", 0.001);
+  RooConstVar scale_uncval_mu_dn(newprefix + "final_CB_CMS_scale_mDown", "", -0.001);
+  RooArgList scalemeanthetaarglist; RooArgList scalemeanfcnarglist;
+  scalemeanfcnarglist.add(scale_uncval_center);
   if (channel==k2e2mu){
-    strscalemeanFormula="@0*(1.+@1*@2+@3*@4)";
-    scalemeanarglist.add(scale_uncvar_e);
-    scalemeanarglist.add(scale_uncval_e);
-    scalemeanarglist.add(scale_uncvar_mu);
-    scalemeanarglist.add(scale_uncval_mu);
+    scalemeanthetaarglist.add(scale_uncvar_e);
+    scalemeanfcnarglist.add(scale_uncval_e_up);
+    scalemeanfcnarglist.add(scale_uncval_e_dn);
+    scalemeanthetaarglist.add(scale_uncvar_mu);
+    scalemeanfcnarglist.add(scale_uncval_mu_up);
+    scalemeanfcnarglist.add(scale_uncval_mu_dn);
   }
   else if (channel==k4mu){
-    strscalemeanFormula="@0*(1.+@1*@2)";
-    scalemeanarglist.add(scale_uncvar_mu);
-    scalemeanarglist.add(scale_uncval_mu);
+    scalemeanthetaarglist.add(scale_uncvar_mu);
+    scalemeanfcnarglist.add(scale_uncval_mu_up);
+    scalemeanfcnarglist.add(scale_uncval_mu_dn);
   }
   else if (channel==k4e){
-    strscalemeanFormula="@0*(1.+@1*@2)";
-    scalemeanarglist.add(scale_uncvar_e);
-    scalemeanarglist.add(scale_uncval_e);
+    scalemeanthetaarglist.add(scale_uncvar_e);
+    scalemeanfcnarglist.add(scale_uncval_e_up);
+    scalemeanfcnarglist.add(scale_uncval_e_dn);
   }
+  AsymQuad scale_uncval(newprefix + "final_CB_CMS_scale_em_AsymQuad", "", scalemeanfcnarglist, scalemeanthetaarglist, 1., 2);
+  TString strscalemeanFormula; RooArgList scalemeanarglist;
+  scalemeanarglist.add(CB_piecewisepoly_list.at(0));
+  scalemeanarglist.add(scale_uncval);
+  strscalemeanFormula="@0*(1.+@1)";
 
   RooRealVar res_uncvar_e("CMS_res_e", "CMS_res_e", 0, -7, 7);
-  RooConstVar res_uncval_e(newprefix + "final_CB_width_unc_e", "", 0.2);
+  RooConstVar res_uncval_e_up(newprefix + "final_CB_CMS_res_eUp", "", 1.2);
+  RooConstVar res_uncval_e_dn(newprefix + "final_CB_CMS_res_eDown", "", 1./1.2);
+  AsymPow res_uncval_e(newprefix + "final_CB_CMS_res_e_AsymPow", "", res_uncval_e_dn, res_uncval_e_up, res_uncvar_e);
   RooRealVar res_uncvar_mu("CMS_res_m", "CMS_res_m", 0, -7, 7);
-  RooConstVar res_uncval_mu(newprefix + "final_CB_width_unc_m", "", 0.2);
+  RooConstVar res_uncval_mu_up(newprefix + "final_CB_CMS_res_mUp", "", 1.2);
+  RooConstVar res_uncval_mu_dn(newprefix + "final_CB_CMS_res_mDown", "", 1./1.2);
+  AsymPow res_uncval_mu(newprefix + "final_CB_CMS_res_m_AsymPow", "", res_uncval_mu_dn, res_uncval_mu_up, res_uncvar_mu);
   TString strreswidthFormula; RooArgList reswidtharglist;
   reswidtharglist.add(CB_piecewisepoly_list.at(1));
   if (channel==k2e2mu){
-    strreswidthFormula="max(@0*(1.+@1*@2+@3*@4), 0.1)";
-    reswidtharglist.add(res_uncvar_e);
+    strreswidthFormula="@0*@1*@2";
     reswidtharglist.add(res_uncval_e);
-    reswidtharglist.add(res_uncvar_mu);
     reswidtharglist.add(res_uncval_mu);
   }
   else if (channel==k4mu){
-    strreswidthFormula="max(@0*(1.+@1*@2), 0.1)";
-    reswidtharglist.add(res_uncvar_mu);
+    strreswidthFormula="@0*@1";
     reswidtharglist.add(res_uncval_mu);
   }
   else if (channel==k4e){
-    strreswidthFormula="max(@0*(1.+@1*@2), 0.1)";
-    reswidtharglist.add(res_uncvar_e);
+    strreswidthFormula="@0*@1";
     reswidtharglist.add(res_uncval_e);
   }
 

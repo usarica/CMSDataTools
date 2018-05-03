@@ -11,6 +11,7 @@ import pprint
 import subprocess
 from datetime import date
 from optparse import OptionParser
+from HiggsWidth_PostICHEP.Analysis.ProcessOrganization import *
 
 
 class StageXBatchManager:
@@ -139,25 +140,11 @@ class StageXBatchManager:
 
 
    def submitJobs(self):
-      channels = [ "NChannels", "k2e2mu", "k4e", "k4mu" ]
-      categories = [ "Inclusive", "HadVHTagged", "JJVBFTagged", "Untagged" ]
-      hypos = [ "nACHypotheses", "kSM", "kL1", "kA2", "kA3" ]
-      systematics = [
-         "sNominal",
-         "eLepSFEleDn", "eLepSFEleUp",
-         "eLepSFMuDn", "eLepSFMuUp",
-         "tPDFScaleDn", "tPDFScaleUp",
-         "tQCDScaleDn", "tQCDScaleUp",
-         "tAsMZDn", "tAsMZUp",
-         "tPDFReplicaDn", "tPDFReplicaUp",
-         "tPythiaScaleDn", "tPythiaScaleUp",
-         "tPythiaTuneDn", "tPythiaTuneUp",
-         "tMINLODn", "tMINLOUp",
-         "tQQBkgEWCorrDn", "tQQBkgEWCorrUp",
-         "eJECDn", "eJECUp",
-         "eZXStatsDn", "eZXStatsUp"
-         ]
-      frmethods = [ "ZXFakeRateHandler::NFakeRateMethods", "ZXFakeRateHandler::mSS" ]
+      channels = getChannelList()
+      categories = getCategoryList()
+      hypos = getACHypothesisList()
+      systematics = getSystematicsList()
+      frmethods = getFRMethodList()
 
       fcnargs=self.getFcnArguments(self.scriptname, self.fcnname)
       argstr=""
@@ -257,18 +244,9 @@ class StageXBatchManager:
                               continue
 
                      # Do not submit unnecessary jobs
-                     if cat == "Inclusive" and ("eJEC" in syst or "tMINLO" in syst or "tPythia" in syst):
-                        continue
+                     if not checkValidRun(syst, cat, ch, self.opt.process): continue
                      if self.opt.stage == 1 and cat == "Untagged" and not(self.opt.process == "ZH" or self.opt.process == "WH"):
                         print "{} category distributions in process {} can be obtained from the distributions of inclusive and other categories.".format(cat, self.opt.process)
-                        continue
-                     if self.opt.process == "QQBkg" and ("tMINLO" in syst or "tPythia" in syst):
-                        continue
-                     if self.opt.process == "ZX" and not(syst=="sNominal" or "ZX" in syst):
-                        continue
-                     if self.opt.process != "ZX" and "ZX" in syst:
-                        continue
-                     if self.opt.process != "QQBkg" and "QQBkg" in syst:
                         continue
                      if "tMINLO" in syst or "tPythia" in syst:
                         print "{} systematic distributions in process {} are obtained in mass ratios step.".format(syst, self.opt.process)

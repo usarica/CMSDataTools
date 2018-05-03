@@ -90,7 +90,7 @@ ExtendedBinning getIntermediateBinning(TH1F const* hwgt, TH1F* const hunwgt){
 }
 
 
-void acquireResolution(const Channel channel, const Category category, const TString fixedDate, ProcessHandler::ProcessType proctype, const TString strGenerator){
+void acquireResolution_one(const Channel channel, const Category category, const TString fixedDate, ProcessHandler::ProcessType proctype, const TString strGenerator){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
   ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
@@ -591,8 +591,9 @@ void acquireResolution(const Channel channel, const Category category, const TSt
   AsymQuad scale_uncval(newprefix + "final_CB_CMS_scale_em_AsymQuad", "", scalemeanfcnarglist, scalemeanthetaarglist, 1., 2);
   TString strscalemeanFormula; RooArgList scalemeanarglist;
   scalemeanarglist.add(CB_piecewisepoly_list.at(0));
+  scalemeanarglist.add(var_mtrue);
   scalemeanarglist.add(scale_uncval);
-  strscalemeanFormula="@0*(1.+@1)";
+  strscalemeanFormula="(@0+@1)*(1.+@2)-@1"; // Until a new procedure is found, keep var_mtrue as part of the scale unc. definition
 
   RooRealVar res_uncvar_e("CMS_res_e", "CMS_res_e", 0, -7, 7);
   RooConstVar res_uncval_e_up(newprefix + "final_CB_CMS_res_eUp", "", 1.2);

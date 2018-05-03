@@ -38,6 +38,11 @@ def getCategoryList():
    return categories
 
 
+def getFRMethodList():
+   frmethods = [ "ZXFakeRateHandler::NFakeRateMethods", "ZXFakeRateHandler::mSS" ]
+   return frmethods
+
+
 def getSystematicsList():
    systematics = [
       "sNominal",

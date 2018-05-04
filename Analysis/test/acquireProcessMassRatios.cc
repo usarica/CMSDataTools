@@ -747,9 +747,10 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
       theAnalyzer.loop(true, false, true);
 
       MELAout << "Looped over tree set " << i << endl;
+
+      delete theSampleSet;
     }
 
-    delete theSampleSet;
     delete systhandle;
     for (auto& rb:extraEvaluators) delete rb;
 

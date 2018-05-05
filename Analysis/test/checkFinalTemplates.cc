@@ -40,7 +40,7 @@ bool getFile(
   );
 
   if (gSystem->AccessPathName(cinput)){
-    MELAerr << "getFilesAndTrees::File " << cinput << " is not found! Run " << strStage << " functions first." << endl;
+    MELAout << "getFilesAndTrees::File " << cinput << " is not found! Run " << strStage << " functions first." << endl;
     return false;
   }
   if (cinput!=""){
@@ -52,12 +52,12 @@ bool getFile(
         finputList.push_back(finput);
       }
       else if (finput->IsOpen()){
-        MELAerr << "getFilesAndTrees::File " << cinput << " with timestamp " << timestamp << " is zombie! Re-run " << strStage << " functions first." << endl;
+        MELAout << "getFilesAndTrees::File " << cinput << " with timestamp " << timestamp << " is zombie! Re-run " << strStage << " functions first." << endl;
         finput->Close();
         return false;
       }
       else{
-        MELAerr << "getFilesAndTrees::File " << cinput << " with timestamp " << timestamp << " could not be opened! Re-run " << strStage << " functions first." << endl;
+        MELAout << "getFilesAndTrees::File " << cinput << " with timestamp " << timestamp << " could not be opened! Re-run " << strStage << " functions first." << endl;
         return false;
       }
     }
@@ -101,8 +101,8 @@ void checkFinalTemplates_one(const Channel channel, const Category category, con
           finput->GetObject(tplname, htmp_2D);
           finput->GetObject(tplname, htmp_3D);
           double integral=0, integralerror=0;
-          if (!htmp_2D && !htmp_3D) MELAerr << "Template " << tplname << " could not be found! BAD FILE...";
-          else if (htmp_2D && htmp_3D) MELAerr << "Template " << tplname << " is both 2 and 3D!? BAD FILE...";
+          if (!htmp_2D && !htmp_3D) MELAout << "Template " << tplname << " could not be found! BAD FILE...";
+          else if (htmp_2D && htmp_3D) MELAout << "Template " << tplname << " is both 2 and 3D!? BAD FILE...";
           else if (htmp_2D){
             MELAout << "2D template " << tplname << " is GOOD. ";
             integral = getHistogramIntegralAndError(htmp_2D, 1, htmp_2D->GetNbinsX(), 1, htmp_2D->GetNbinsY(), true, &integralerror);

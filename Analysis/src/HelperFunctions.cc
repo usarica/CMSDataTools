@@ -1401,9 +1401,12 @@ template<> void HelperFunctions::wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool resc
 template<> void HelperFunctions::wipeOverUnderFlows<TH2F>(TH2F* hwipe, bool rescale){
   double integral = hwipe->Integral(0, hwipe->GetNbinsX()+1, 0, hwipe->GetNbinsY()+1);
   for (int binx=0; binx<=hwipe->GetNbinsX()+1; binx++){
-    if (binx>=1 && binx<=hwipe->GetNbinsX()) continue;
     for (int biny=0; biny<=hwipe->GetNbinsY()+1; biny++){
-      if (biny>=1 && biny<=hwipe->GetNbinsY()) continue;
+      if (
+        (binx>=1 && binx<=hwipe->GetNbinsX())
+        &&
+        (biny>=1 && biny<=hwipe->GetNbinsY())
+        ) continue;
       hwipe->SetBinContent(binx, biny, 0);
       hwipe->SetBinError(binx, biny, 0);
     }
@@ -1415,11 +1418,15 @@ template<> void HelperFunctions::wipeOverUnderFlows<TH2F>(TH2F* hwipe, bool resc
 template<> void HelperFunctions::wipeOverUnderFlows<TH3F>(TH3F* hwipe, bool rescale){
   double integral = hwipe->Integral(0, hwipe->GetNbinsX()+1, 0, hwipe->GetNbinsY()+1, 0, hwipe->GetNbinsZ()+1);
   for (int binx=0; binx<=hwipe->GetNbinsX()+1; binx++){
-    if (binx>=1 && binx<=hwipe->GetNbinsX()) continue;
     for (int biny=0; biny<=hwipe->GetNbinsY()+1; biny++){
-      if (biny>=1 && biny<=hwipe->GetNbinsY()) continue;
       for (int binz=0; binz<=hwipe->GetNbinsZ()+1; binz++){
-        if (binz>=1 && binz<=hwipe->GetNbinsZ()) continue;
+        if (
+          (binx>=1 && binx<=hwipe->GetNbinsX())
+          &&
+          (biny>=1 && biny<=hwipe->GetNbinsY())
+          &&
+          (binz>=1 && binz<=hwipe->GetNbinsZ())
+          ) continue;
         hwipe->SetBinContent(binx, biny, binz, 0);
         hwipe->SetBinError(binx, biny, binz, 0);
       }

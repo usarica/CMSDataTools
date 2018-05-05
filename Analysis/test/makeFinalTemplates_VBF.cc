@@ -752,17 +752,26 @@ template<> void getTemplatesPerCategory<2>(
       double integralerror=0;
       double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), true, &integralerror);
       MELAout << "Integral [ " << htpl->GetName() << " ] before writing: " << integral << " +- " << integralerror << endl;
+      MELAout << "Final integrity check on [ " << htpl->GetName() << " ]" << endl;
+      if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
+      else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
+      foutput->WriteTObject(htpl);
+
       // SM on-shell analysis uses conditional templates
       if (
         hypo==kSM && thePerProcessHandle->getProcessMassRegion()==kOnshell
         &&
         !ProcessHandleType::isInterferenceContribution(tpltype)
-        ) conditionalizeHistogram<TH_t>(htpl, 0, nullptr, true, USEEFFERRINCOND);
+        ){
+        htpl->SetName(Form("%s_condDim%i", htpl->GetName(), 0));
 
-      MELAout << "Final integrity check on [ " << htpl->GetName() << " ]" << endl;
-      if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
-      else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
-      foutput->WriteTObject(htpl);
+        conditionalizeHistogram<TH_t>(htpl, 0, nullptr, true, USEEFFERRINCOND);
+
+        MELAout << "Final integrity check on [ " << htpl->GetName() << " ]" << endl;
+        if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
+        else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
+        foutput->WriteTObject(htpl);
+      }
     }
     rootdir->cd();
   }
@@ -865,17 +874,26 @@ template<> void getTemplatesPerCategory<3>(
       double integralerror=0;
       double integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), true, &integralerror);
       MELAout << "Integral [ " << htpl->GetName() << " ] before writing: " << integral << " +- " << integralerror << endl;
+      MELAout << "Final integrity check on [ " << htpl->GetName() << " ]" << endl;
+      if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
+      else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
+      foutput->WriteTObject(htpl);
+
       // SM on-shell analysis uses conditional templates
       if (
         hypo==kSM && thePerProcessHandle->getProcessMassRegion()==kOnshell
         &&
         !ProcessHandleType::isInterferenceContribution(tpltype)
-        ) conditionalizeHistogram<TH_t>(htpl, 0, nullptr, true, USEEFFERRINCOND);
+        ){
+        htpl->SetName(Form("%s_condDim%i", htpl->GetName(), 0));
 
-      MELAout << "Final integrity check on [ " << htpl->GetName() << " ]" << endl;
-      if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
-      else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
-      foutput->WriteTObject(htpl);
+        conditionalizeHistogram<TH_t>(htpl, 0, nullptr, true, USEEFFERRINCOND);
+
+        MELAout << "Final integrity check on [ " << htpl->GetName() << " ]" << endl;
+        if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
+        else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
+        foutput->WriteTObject(htpl);
+      }
     }
     rootdir->cd();
     getControl2DXSlices(rootdir, foutput, thePerProcessHandle, hypo, KDbinning, hTemplates);

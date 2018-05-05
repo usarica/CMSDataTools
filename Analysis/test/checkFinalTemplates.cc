@@ -74,6 +74,8 @@ void checkFinalTemplates_one(const Channel channel, const Category category, con
 
   TDirectory* rootdir=gDirectory;
   for (auto& proctype:proctypes){
+    if (hypo==kSM && massregion==kOnshell && proctype==ProcessHandler::kVV) continue;
+
     vector<SystematicsHelpers::SystematicVariationTypes> allowedSysts = getProcessSystematicVariations(category, channel, proctype, "");
     for (auto& syst:allowedSysts){
       rootdir->cd();

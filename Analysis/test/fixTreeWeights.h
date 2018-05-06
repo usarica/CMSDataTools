@@ -127,8 +127,17 @@ TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackv
   MELAout << "Begin fixTreeWeights(" << treename << ")" << endl;
   MELAout
     << "fixTreeWeights(" << treename << "): "
-    << "Requested binning in " << binning.getNbins() << " bins: [ " << binning.getBinningVector() << " ]"
+    << "Requested binning in " << binning.getLabel() << " with " << binning.getNbins() << " bins: [ " << binning.getBinningVector() << " ]"
     << endl;
+
+  const bool allowOverUnderflows=(!binning.getLabel().Contains("m4l"));
+  if (!allowOverUnderflows){
+    MELAout
+      << "fixTreeWeights(" << treename << "): "
+      << "Will not allow under or overflow events."
+      << endl;
+    trimEdges=2;
+  }
 
   const int nEntries = tree->GetEntries();
   TTree* newtree = tree->CloneTree(0);

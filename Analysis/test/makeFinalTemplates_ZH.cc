@@ -587,7 +587,7 @@ void makeFinalTemplates_ZH(const Channel channel, const ACHypothesis hypo, const
           if (!branchExists(tree, catFlagName)) isCategory=true;
         }
 
-        float& vartrack=KDvars.find("ZZMass")->second;
+        float& vartrack=KDvars.find(KDset.at(0))->second;
         TTree* newtree = fixTreeWeights(tree, KDbinning.at(0), vartrack, weight, 1);
         bookBranch(newtree, "weight", &weight);
         for (auto& KDname:KDset) bookBranch(newtree, KDname, &(KDvars.find(KDname)->second));

@@ -118,19 +118,19 @@ void makeFinalTemplates_VV_one(const Channel channel, const ACHypothesis hypo, c
     const TString strCategory = getCategoryName(cat);
     const TString strSystematicsOutput = getSystematicsCombineName(cat, channel, outputProcessHandle->getProcessType(), syst);
 
+    bool doProceed=true;
     vector<TFile*> finputList;
     for (unsigned int ip=0; ip<ninputproctypes; ip++){
       auto& inputproctype=inputproctypes.at(ip);
       ProcessHandleType const* inputProcessHandle=(ProcessHandleType const*) getProcessHandlerPerMassRegion(inputproctype, massregion);
-      if (
-        !getFile(
-          channel, cat, hypo, syst,
-          istage, fixedDate,
-          inputProcessHandle,
-          finputList
-        )
-        ) continue;
+      doProceed &= getFile(
+        channel, cat, hypo, syst,
+        istage, fixedDate,
+        inputProcessHandle,
+        finputList
+      );
     }
+    if (!doProceed){ for (TFile*& f:finputList){ if (f->IsOpen()) f->Close(); } continue; }
 
     TString coutput = Form(
       "%s/HtoZZ%s_%s_FinalTemplates_%s_%s%s",

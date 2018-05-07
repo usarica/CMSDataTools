@@ -504,7 +504,7 @@ TString SystematicsHelpers::getSystematicsCombineName(
     break;
   case eZXStatsDn:
   case eZXStatsUp:
-    systname="CMS_zz[channel]_[process]_[category]";
+    systname="CMS_fake_[channel]";
     break;
   default:
     MELAerr << "SystematicsHelpers::getSystematicsCombineName: Combine name for systematic " << getSystematicsName(syst) << " is not found! Aborting..." << endl;

@@ -5,6 +5,7 @@
 #include <map>
 #include "RooArgSet.h"
 #include "RooArgList.h"
+#include "RooBinning.h"
 #include "RooGaussian.h"
 #include "RooProdPdf.h"
 #include "RooExponential.h"
@@ -120,9 +121,9 @@ void acquireResolution_one(const Channel channel, const Category category, const
     strChannel.Data(), strCategory.Data(),
     thePerProcessHandle->getProcessName().Data()
   );
-  TString OUTPUT_NAME=OUTPUT_NAME_CORE + "_" + strGenerator;
+  TString OUTPUT_NAME=OUTPUT_NAME_CORE;
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
-  TString canvasnamecore = coutput_common + "c_" + OUTPUT_NAME;
+  TString canvasnamecore = coutput_common + "c_" + OUTPUT_NAME + "_" + strGenerator;
   TString coutput = coutput_common + OUTPUT_NAME + ".root";
   TString coutput_log = coutput_common + OUTPUT_LOG_NAME + ".log";
   MELAout.open(coutput_log.Data());
@@ -726,3 +727,332 @@ void acquireResolution_one(const Channel channel, const Category category, const
   MELAout.close();
 }
 
+void acquireH125OnshellMassShape_one(const Channel channel, const Category category, const TString fixedDate, ProcessHandler::ProcessType proctype, const TString strGenerator){
+  if (channel==NChannels) return;
+  if (!CheckSetTemplatesCategoryScheme(category)) return;
+  ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
+  if (!thePerProcessHandle) return;
+  if (proctype==ProcessHandler::kZX || proctype==ProcessHandler::kQQBkg) return;
+  if (strGenerator!="POWHEG") return;
+
+  TDirectory* curdir = gDirectory;
+
+  const TString strChannel = getChannelName(channel);
+  const TString strCategory = getCategoryName(category);
+  const TString strACHypo = getACHypothesisName(kSM);
+  const TString strSqrts = Form("%i", theSqrts);
+  const TString strYear = theDataPeriod;
+  const TString strSqrtsYear = strSqrts + "TeV_" + strYear;
+
+  // Setup the output directories
+  TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
+  TString strdate = todaysdate();
+  if (fixedDate!="") strdate=fixedDate;
+  cout << "Today's date: " << strdate << endl;
+  TString coutput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Resolution/";
+  gSystem->Exec("mkdir -p " + coutput_common);
+
+  TString OUTPUT_NAME_CORE = Form(
+    "HtoZZ%s_%s_FinalMassShape_%s",
+    strChannel.Data(), strCategory.Data(),
+    thePerProcessHandle->getProcessName().Data()
+  );
+  TString OUTPUT_NAME=OUTPUT_NAME_CORE;
+  TString OUTPUT_LOG_NAME = OUTPUT_NAME;
+  TString canvasnamecore = coutput_common + "c_" + OUTPUT_NAME + "_" + strGenerator;
+  TString coutput = coutput_common + OUTPUT_NAME + ".root";
+  TString coutput_log = coutput_common + OUTPUT_LOG_NAME + ".log";
+  MELAout.open(coutput_log.Data());
+  MELAout << "Opened log file " << coutput_log << endl;
+  TFile* foutput = TFile::Open(coutput, "recreate");
+  MELAout << "Opened file " << coutput << endl;
+  MELAout << "===============================" << endl;
+  MELAout << "CoM Energy: " << theSqrts << " TeV" << endl;
+  MELAout << "Decay Channel: " << strChannel << endl;
+  MELAout << "===============================" << endl;
+  MELAout << endl;
+
+  // Need to loop over each sample from scratch, so begin setting up samples
+  vector<int> mHListGlobal; // For ZZMass binning
+  BaseTree* theOutputTree = new BaseTree("OutputTree");
+
+  // Loop over the samples from scratch
+  vector<TString> strSampleIdentifiers;
+  if (proctype==ProcessHandler::kGG) strSampleIdentifiers.push_back("gg_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kVBF) strSampleIdentifiers.push_back("VBF_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kZH) strSampleIdentifiers.push_back("ZH_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kWH) strSampleIdentifiers.push_back("WH_Sig_POWHEG");
+  else assert(0);
+
+  // Ignore any Kfactors
+  // ...
+
+  // Kfactor variable names
+  //vector<TString> strKfactorVars;
+
+  // Register only the categorization the discriminants
+  vector<KDspecs> KDlist;
+  getCategorizationDiscriminants(sNominal, KDlist);
+
+  for (TString const& identifier:strSampleIdentifiers){
+    // For the non-nominal tree
+    std::vector<ReweightingBuilder*> extraEvaluators;
+    SystematicsClass* systhandle = nullptr;
+
+    vector<TString> strSamples;
+    vector<TString> idvector; idvector.push_back(identifier);
+    getSamplesList(theSqrts, idvector, strSamples, sNominal);
+    unordered_map<int, std::vector<TString>> mh_samplelist_map;
+    for (TString& strSample:strSamples){
+      int MHVal = SampleHelpers::findPoleMass(strSample);
+      if (MHVal!=125) continue;
+      TString cinput = CJLSTTree::constructCJLSTSamplePath(strSample);
+      if (!gSystem->AccessPathName(cinput)){
+        auto it=mh_samplelist_map.find(MHVal);
+        if (it!=mh_samplelist_map.end()) it->second.push_back(strSample);
+        else{
+          vector<TString> vtmp; vtmp.push_back(strSample);
+          mh_samplelist_map[MHVal]=vtmp;
+        }
+      }
+    }
+    strSamples.clear();
+    for (auto it=mh_samplelist_map.begin(); it!=mh_samplelist_map.end(); it++) addByLowest(mHListGlobal, it->first, true);
+    for (int const& mh:mHListGlobal){
+      for (auto& v:mh_samplelist_map[mh]) strSamples.push_back(v);
+    }
+
+    CJLSTSet* theSampleSet=new CJLSTSet(strSamples);
+    // Book common variables
+    theSampleSet->bookXS(); // "xsec"
+    theSampleSet->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
+    for (auto& tree:theSampleSet->getCJLSTTreeList()){
+      // Book common variables needed for analysis
+      tree->bookBranch<float>("GenHMass", 0);
+      tree->bookBranch<float>("ZZMass", -1);
+      tree->bookBranch<short>("Z1Flav", 0);
+      tree->bookBranch<short>("Z2Flav", 0);
+      // Common variables for reweighting
+      //for (auto& s:strKfactorVars) tree->bookBranch<float>(s, 1);
+      // Variables for KDs
+      for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
+      tree->silenceUnused(); // Will no longer book another branch
+    }
+    theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_XsecOverNgen_RelRenormToSumNgen, true, true); // We don't care about total xsec, but we care abou realative normalization in W- vs W+ H
+
+    //systhandle = constructSystematic(category, channel, proctype, syst, theSampleSet->getCJLSTTreeList(), extraEvaluators, strGenerator);
+
+    // Build the analyzer and loop over the events
+    TemplatesEventAnalyzer theAnalyzer(theSampleSet, channel, category);
+    theAnalyzer.setExternalProductTree(theOutputTree);
+    // Book common variables needed for analysis
+    theAnalyzer.addConsumed<float>("PUWeight");
+    theAnalyzer.addConsumed<float>("genHEPMCweight");
+    theAnalyzer.addConsumed<float>("dataMCWeight");
+    theAnalyzer.addConsumed<float>("trigEffWeight");
+    theAnalyzer.addConsumed<float>("GenHMass");
+    theAnalyzer.addConsumed<float>("ZZMass");
+    theAnalyzer.addConsumed<short>("Z1Flav");
+    theAnalyzer.addConsumed<short>("Z2Flav");
+    // Add discriminant builders
+    for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
+    // Add systematics handle
+    //theAnalyzer.addSystematic(strSystematics, systhandle);
+    // Loop
+    theAnalyzer.loop(true, false, true);
+
+    delete systhandle;
+    for (auto& rb:extraEvaluators) delete rb;
+    delete theSampleSet;
+
+    MELAout << "End Loop over tree sets" << endl;
+  }
+  for (auto& KD:KDlist) delete KD.KD;
+
+  // The output tree now has all the information needed
+  MELAout << "There are " << theOutputTree->getNEvents() << " products" << endl;
+
+  // Setup the binning
+  ExtendedBinning binning_mass=getDiscriminantFineBinning(channel, category, "ZZMass", kOnshell);
+
+  RooRealVar var_mreco("ZZMass", "m^{reco}_{4l} (GeV)", 125, binning_mass.getMin(), binning_mass.getMax());
+  { // Set binning of ZZMass
+    RooBinning var_mreco_binning(binning_mass.getNbins(), binning_mass.getBinning());
+    var_mreco.setBinning(var_mreco_binning);
+  }
+  RooConstVar var_mtrue("MH", "MH", 125);
+  RooRealVar var_weight("weight", "Event weight", 1, -10, 10); var_weight.removeMin(); var_weight.removeMax();
+
+  // Setup inclusive data
+  RooArgSet treevars; treevars.add(var_mreco); treevars.add(var_weight);
+  RooDataSet data("data", "data", treevars, var_weight.GetName());
+  {
+    TTree* tree = theOutputTree->getSelectedTree();
+    float mreco, wgt;
+    bool isCategory=(category==Inclusive);
+    tree->SetBranchAddress("ZZMass", &mreco);
+    tree->SetBranchAddress("weight", &wgt);
+    if (!isCategory){
+      TString catFlagName = TString("is_") + strCategory + TString("_") + strACHypo;
+      tree->SetBranchAddress(catFlagName, &isCategory);
+    }
+    // Add maually because of the category flag
+    for (int ev=0; ev<tree->GetEntries(); ev++){
+      tree->GetEntry(ev);
+      if (!isCategory) continue;
+      if (mreco<var_mreco.getMin() || mreco>var_mreco.getMax()) continue;
+      var_mreco.setVal(mreco);
+      var_weight.setVal(wgt);
+      data.add(treevars);
+    }
+    var_mreco.setVal(125);
+    var_weight.setVal(1);
+  }
+  delete theOutputTree;
+
+  TString prefix = "CMS_"+OUTPUT_NAME_CORE+"_"+strSqrtsYear+"_";
+  vector<RooRealVar> CB_parameter_list; CB_parameter_list.reserve(6);
+  CB_parameter_list.emplace_back(prefix + "CB_mean", "", 0, -3, 3);
+  CB_parameter_list.emplace_back(prefix + "CB_width", "", 1, 0.3, 15);
+  CB_parameter_list.emplace_back(prefix + "CB_alpha1", "", 2, 0, 4);
+  CB_parameter_list.emplace_back(prefix + "CB_alpha2", "", 3, 0, 10);
+  CB_parameter_list.emplace_back(prefix + "CB_n1", "", 1, 0, 10);
+  CB_parameter_list.emplace_back(prefix + "CB_n2", "", 1.5, 0, 40);
+  vector<double> CB_parameter_init; CB_parameter_init.reserve(6);
+  for (auto& par:CB_parameter_list) CB_parameter_init.push_back(par.getVal());
+
+  RooConstVar scale_uncval_center(prefix + "final_CB_CMS_scale_emcenter", "", 0);
+  RooRealVar scale_uncvar_e("CMS_scale_e", "CMS_scale_e", 0, -7, 7);
+  RooConstVar scale_uncval_e_up(prefix + "final_CB_CMS_scale_eUp", "", 0.002);
+  RooConstVar scale_uncval_e_dn(prefix + "final_CB_CMS_scale_eDown", "", -0.002);
+  RooRealVar scale_uncvar_mu("CMS_scale_m", "CMS_scale_m", 0, -7, 7);
+  RooConstVar scale_uncval_mu_up(prefix + "final_CB_CMS_scale_mUp", "", 0.001);
+  RooConstVar scale_uncval_mu_dn(prefix + "final_CB_CMS_scale_mDown", "", -0.001);
+  RooArgList scalemeanthetaarglist; RooArgList scalemeanfcnarglist;
+  scalemeanfcnarglist.add(scale_uncval_center);
+  if (channel==k2e2mu){
+    scalemeanthetaarglist.add(scale_uncvar_e);
+    scalemeanfcnarglist.add(scale_uncval_e_up);
+    scalemeanfcnarglist.add(scale_uncval_e_dn);
+    scalemeanthetaarglist.add(scale_uncvar_mu);
+    scalemeanfcnarglist.add(scale_uncval_mu_up);
+    scalemeanfcnarglist.add(scale_uncval_mu_dn);
+  }
+  else if (channel==k4mu){
+    scalemeanthetaarglist.add(scale_uncvar_mu);
+    scalemeanfcnarglist.add(scale_uncval_mu_up);
+    scalemeanfcnarglist.add(scale_uncval_mu_dn);
+  }
+  else if (channel==k4e){
+    scalemeanthetaarglist.add(scale_uncvar_e);
+    scalemeanfcnarglist.add(scale_uncval_e_up);
+    scalemeanfcnarglist.add(scale_uncval_e_dn);
+  }
+  AsymQuad scale_uncval(prefix + "final_CB_CMS_scale_em_AsymQuad", "", scalemeanfcnarglist, scalemeanthetaarglist, 1., 2);
+  TString strscalemeanFormula; RooArgList scalemeanarglist;
+  scalemeanarglist.add(CB_parameter_list.at(0));
+  scalemeanarglist.add(var_mtrue);
+  scalemeanarglist.add(scale_uncval);
+  strscalemeanFormula="(@0+@1)*(1.+@2)-@1"; // Until a new procedure is found, keep var_mtrue as part of the scale unc. definition
+
+  RooRealVar res_uncvar_e("CMS_res_e", "CMS_res_e", 0, -7, 7);
+  RooConstVar res_uncval_e_up(prefix + "final_CB_CMS_res_eUp", "", 1.2);
+  RooConstVar res_uncval_e_dn(prefix + "final_CB_CMS_res_eDown", "", 1./1.2);
+  AsymPow res_uncval_e(prefix + "final_CB_CMS_res_e_AsymPow", "", res_uncval_e_dn, res_uncval_e_up, res_uncvar_e);
+  RooRealVar res_uncvar_mu("CMS_res_m", "CMS_res_m", 0, -7, 7);
+  RooConstVar res_uncval_mu_up(prefix + "final_CB_CMS_res_mUp", "", 1.2);
+  RooConstVar res_uncval_mu_dn(prefix + "final_CB_CMS_res_mDown", "", 1./1.2);
+  AsymPow res_uncval_mu(prefix + "final_CB_CMS_res_m_AsymPow", "", res_uncval_mu_dn, res_uncval_mu_up, res_uncvar_mu);
+  TString strreswidthFormula; RooArgList reswidtharglist;
+  reswidtharglist.add(CB_parameter_list.at(1));
+  if (channel==k2e2mu){
+    strreswidthFormula="@0*@1*@2";
+    reswidtharglist.add(res_uncval_e);
+    reswidtharglist.add(res_uncval_mu);
+  }
+  else if (channel==k4mu){
+    strreswidthFormula="@0*@1";
+    reswidtharglist.add(res_uncval_mu);
+  }
+  else if (channel==k4e){
+    strreswidthFormula="@0*@1";
+    reswidtharglist.add(res_uncval_e);
+  }
+
+  RooFormulaVar incl_CB_mean(prefix + "final_CB_mean", strscalemeanFormula, scalemeanarglist);
+  RooFormulaVar incl_CB_width(prefix + "final_CB_width", strreswidthFormula, reswidtharglist);
+  RooFormulaVar incl_CB_alpha1(prefix + "final_CB_alpha1", "max(@0,0.1)", RooArgList(CB_parameter_list.at(2)));
+  RooFormulaVar incl_CB_alpha2(prefix + "final_CB_alpha2", "max(@0,0.1)", RooArgList(CB_parameter_list.at(3)));
+  RooFormulaVar incl_CB_n1(prefix + "final_CB_n1", "max(@0,0.1)", RooArgList(CB_parameter_list.at(4)));
+  RooFormulaVar incl_CB_n2(prefix + "final_CB_n2", "max(@0,0.1)", RooArgList(CB_parameter_list.at(5)));
+  RooDoubleCB incl_pdf(
+    prefix + "final_CB", prefix + "final_CB",
+    var_mreco, var_mtrue,
+    incl_CB_mean, incl_CB_width,
+    incl_CB_alpha1, incl_CB_n1,
+    incl_CB_alpha2, incl_CB_n2
+  );
+
+  // Fit all parameters simultaneously
+  res_uncvar_e.setConstant(true);
+  res_uncvar_mu.setConstant(true);
+  scale_uncvar_e.setConstant(true);
+  scale_uncvar_mu.setConstant(true);
+  unsigned int nfits=5;
+  for (unsigned int ifit=0; ifit<nfits; ifit++){
+    RooLinkedList cmdList;
+    RooCmdArg saveArg = RooFit::Save(true); cmdList.Add((TObject*) &saveArg);
+    //RooCmdArg condObsArg = RooFit::ConditionalObservables(conditionals); cmdList.Add((TObject*) &condObsArg);
+    RooCmdArg sumw2Arg = RooFit::SumW2Error(true); cmdList.Add((TObject*) &sumw2Arg);
+    RooCmdArg hesseArg = RooFit::Hesse(true); cmdList.Add((TObject*) &hesseArg);
+    RooCmdArg minimizerStrategyArg = RooFit::Strategy(2); cmdList.Add((TObject*) &minimizerStrategyArg);
+    // Misc. options
+    RooCmdArg timerArg = RooFit::Timer(true); cmdList.Add((TObject*) &timerArg);
+    RooCmdArg printlevelArg = RooFit::PrintLevel(-1); cmdList.Add((TObject*) &printlevelArg);
+    //RooCmdArg printerrorsArg = RooFit::PrintEvalErrors(-1); cmdList.Add((TObject*) &printerrorsArg);
+
+    RooFitResult* fitResult=incl_pdf.fitTo(data, cmdList);
+    if (fitResult){
+      int fitStatus = fitResult->status();
+      cout << "Fit status is " << fitStatus << endl;
+      cout << "Fit properties:" << endl;
+      fitResult->Print("v");
+    }
+    delete fitResult;
+  }
+  res_uncvar_e.setConstant(false);
+  res_uncvar_mu.setConstant(false);
+  scale_uncvar_e.setConstant(false);
+  scale_uncvar_mu.setConstant(false);
+
+  {
+    RooPlot incl_plot(var_mreco, var_mreco.getMin(), var_mreco.getMax(), 80);
+    data.plotOn(&incl_plot, LineColor(kBlack), MarkerColor(kBlack), MarkerStyle(30), LineWidth(2));
+    incl_pdf.plotOn(&incl_plot, LineColor(kRed), LineWidth(2));
+
+    TCanvas can(Form("ZZMass_%.0f_%.0f", var_mreco.getMin(), var_mreco.getMax()), "");
+    incl_plot.Draw();
+    can.SaveAs(Form("%s_%s.pdf", canvasnamecore.Data(), can.GetName()));
+    can.SaveAs(Form("%s_%s.png", canvasnamecore.Data(), can.GetName()));
+    can.Close();
+  }
+
+  // Set all variables constant
+  for (auto& var:CB_parameter_list) var.setConstant(true);
+  var_mtrue.SetName("MH");
+  var_mreco.SetName("mass");
+  incl_pdf.SetName("ResolutionModel");
+  var_mtrue.SetTitle("MH");
+  var_mreco.SetTitle("mass");
+  incl_pdf.SetTitle("ResolutionModel");
+
+  RooWorkspace w("w", "");
+  w.import(incl_pdf, RecycleConflictNodes());
+  //w.import(var_mreco, RenameVariable(var_mreco.GetName(), "newmass"));
+  //RooAbsArg* pdfnew=w.factory("EDIT::ResolutionModelCopy(ResolutionModel, mass=newmass)");
+  //w.import(*pdfnew, RecycleConflictNodes());
+  foutput->WriteTObject(&w);
+  w.pdf(incl_pdf.GetName())->Print("v");
+  foutput->Close();
+  MELAout.close();
+}

@@ -30,6 +30,7 @@ class ResolutionHarvesterBatchManager:
 
       self.parser.add_option("--dry", dest="dryRun", action="store_true", default=False, help="Do not submit jobs, just set up the files")
       self.parser.add_option("--interactive", dest="interactive", action="store_true", default=False, help="Do not submit jobs; run them interactively")
+      self.parser.add_option("--H125only", action="store_true", default=False, help="Parameterize H125 shape only")
       self.parser.add_option("--norecompile", action="store_true", default=False, help="Do not remove executable and shared objects")
 
       (self.opt,self.args) = self.parser.parse_args()
@@ -48,7 +49,11 @@ class ResolutionHarvesterBatchManager:
       self.generator = self.opt.generator
 
       strscript="acquireResolution.cc"
-      self.fcnname="acquireResolution_one"
+      self.fcnname=""
+      if self.opt.H125only:
+         self.fcnname="acquireH125OnshellMassShape_one"
+      else:
+         self.fcnname="acquireResolution_one"
       if not self.fcnname:
          sys.exit("The function name could not be generated. Exiting...")
 

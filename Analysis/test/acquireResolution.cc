@@ -897,27 +897,33 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
       tree->SetBranchAddress(catFlagName, &isCategory);
     }
     // Add maually because of the category flag
+    float sumwgts=0;
+    unsigned int ndata=0;
     for (int ev=0; ev<tree->GetEntries(); ev++){
       tree->GetEntry(ev);
       if (!isCategory) continue;
       if (mreco<var_mreco.getMin() || mreco>var_mreco.getMax()) continue;
       var_mreco.setVal(mreco);
       var_weight.setVal(wgt);
+      sumwgts += wgt;
+      ndata++;
       data.add(treevars);
     }
     var_mreco.setVal(125);
     var_weight.setVal(1);
+    data.Print("v");
+    MELAout << "Average weight: " << sumwgts / float(ndata) << endl;
   }
   delete theOutputTree;
 
   TString prefix = "CMS_"+OUTPUT_NAME_CORE+"_"+strSqrtsYear+"_";
   vector<RooRealVar> CB_parameter_list; CB_parameter_list.reserve(6);
-  CB_parameter_list.emplace_back(prefix + "CB_mean", "", 0, -3, 3);
+  CB_parameter_list.emplace_back(prefix + "CB_mean", "", -0.1, -3, 3);
   CB_parameter_list.emplace_back(prefix + "CB_width", "", 1, 0.3, 15);
-  CB_parameter_list.emplace_back(prefix + "CB_alpha1", "", 2, 0, 4);
-  CB_parameter_list.emplace_back(prefix + "CB_alpha2", "", 3, 0, 10);
+  CB_parameter_list.emplace_back(prefix + "CB_alpha1", "", 1, 0, 10);
+  CB_parameter_list.emplace_back(prefix + "CB_alpha2", "", 1, 0, 10);
   CB_parameter_list.emplace_back(prefix + "CB_n1", "", 1, 0, 10);
-  CB_parameter_list.emplace_back(prefix + "CB_n2", "", 1.5, 0, 40);
+  CB_parameter_list.emplace_back(prefix + "CB_n2", "", 1, 0, 40);
   vector<double> CB_parameter_init; CB_parameter_init.reserve(6);
   for (auto& par:CB_parameter_list) CB_parameter_init.push_back(par.getVal());
 
@@ -981,10 +987,10 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
 
   RooFormulaVar incl_CB_mean(prefix + "final_CB_mean", strscalemeanFormula, scalemeanarglist);
   RooFormulaVar incl_CB_width(prefix + "final_CB_width", strreswidthFormula, reswidtharglist);
-  RooFormulaVar incl_CB_alpha1(prefix + "final_CB_alpha1", "max(@0,0.1)", RooArgList(CB_parameter_list.at(2)));
-  RooFormulaVar incl_CB_alpha2(prefix + "final_CB_alpha2", "max(@0,0.1)", RooArgList(CB_parameter_list.at(3)));
-  RooFormulaVar incl_CB_n1(prefix + "final_CB_n1", "max(@0,0.1)", RooArgList(CB_parameter_list.at(4)));
-  RooFormulaVar incl_CB_n2(prefix + "final_CB_n2", "max(@0,0.1)", RooArgList(CB_parameter_list.at(5)));
+  RooFormulaVar incl_CB_alpha1(prefix + "final_CB_alpha1", "max(@0,0.001)", RooArgList(CB_parameter_list.at(2)));
+  RooFormulaVar incl_CB_alpha2(prefix + "final_CB_alpha2", "max(@0,0.001)", RooArgList(CB_parameter_list.at(3)));
+  RooFormulaVar incl_CB_n1(prefix + "final_CB_n1", "max(@0,0.001)", RooArgList(CB_parameter_list.at(4)));
+  RooFormulaVar incl_CB_n2(prefix + "final_CB_n2", "max(@0,0.001)", RooArgList(CB_parameter_list.at(5)));
   RooDoubleCB incl_pdf(
     prefix + "final_CB", prefix + "final_CB",
     var_mreco, var_mtrue,

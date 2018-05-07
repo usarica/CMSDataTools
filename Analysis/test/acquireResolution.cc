@@ -926,6 +926,7 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   CB_parameter_list.emplace_back(prefix + "CB_n2", "", 1, 0, 40);
   vector<double> CB_parameter_init; CB_parameter_init.reserve(6);
   for (auto& par:CB_parameter_list) CB_parameter_init.push_back(par.getVal());
+  vector<unsigned int> prelimfitOrder{1, 0, 3, 5, 2, 4};
 
   RooConstVar scale_uncval_center(prefix + "final_CB_CMS_scale_emcenter", "", 0);
   RooRealVar scale_uncvar_e("CMS_scale_e", "CMS_scale_e", 0, -7, 7);
@@ -999,11 +1000,37 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     incl_CB_alpha2, incl_CB_n2
   );
 
-  // Fit all parameters simultaneously
+  // Fit all parameters
   res_uncvar_e.setConstant(true);
   res_uncvar_mu.setConstant(true);
   scale_uncvar_e.setConstant(true);
   scale_uncvar_mu.setConstant(true);
+  // First do a preliminary fit to get approximate values
+  for (auto& var:CB_parameter_list) var.setConstant(true);
+  for (unsigned int const& ivar:prelimfitOrder){
+    CB_parameter_list.at(ivar).setConstant(false);
+
+    RooLinkedList cmdList;
+    RooCmdArg saveArg = RooFit::Save(true); cmdList.Add((TObject*) &saveArg);
+    //RooCmdArg condObsArg = RooFit::ConditionalObservables(conditionals); cmdList.Add((TObject*) &condObsArg);
+    RooCmdArg sumw2Arg = RooFit::SumW2Error(true); cmdList.Add((TObject*) &sumw2Arg);
+    RooCmdArg hesseArg = RooFit::Hesse(false); cmdList.Add((TObject*) &hesseArg);
+    RooCmdArg minimizerStrategyArg = RooFit::Strategy(0); cmdList.Add((TObject*) &minimizerStrategyArg);
+    // Misc. options
+    RooCmdArg timerArg = RooFit::Timer(true); cmdList.Add((TObject*) &timerArg);
+    RooCmdArg printlevelArg = RooFit::PrintLevel(-1); cmdList.Add((TObject*) &printlevelArg);
+    //RooCmdArg printerrorsArg = RooFit::PrintEvalErrors(-1); cmdList.Add((TObject*) &printerrorsArg);
+
+    RooFitResult* fitResult=incl_pdf.fitTo(data, cmdList);
+    if (fitResult){
+      int fitStatus = fitResult->status();
+      cout << "Fit status is " << fitStatus << endl;
+      cout << "Fit properties:" << endl;
+      fitResult->Print("v");
+    }
+    delete fitResult;
+  }
+  // Fit all parameters nfits more times
   unsigned int nfits=5;
   for (unsigned int ifit=0; ifit<nfits; ifit++){
     RooLinkedList cmdList;

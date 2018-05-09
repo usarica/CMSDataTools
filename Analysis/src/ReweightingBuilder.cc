@@ -241,6 +241,11 @@ float ReweightingBuilder::getSumPostThresholdSqWeightInvs(CJLSTTree* theTree) co
   float res = this->getSumPostThresholdSqWeights(theTree);
   return (res!=0. ? 1./res : 0.);
 }
+float ReweightingBuilder::getSumPostThresholdNeffs(CJLSTTree* theTree) const{
+  float res = this->getSumPostThresholdSqWeightInvs(theTree);
+  res *= pow(this->getSumPostThresholdWeights(theTree), 2);
+  return res;
+}
 unsigned int ReweightingBuilder::getSumEvents(CJLSTTree* theTree) const{
   int bin=this->findBin(theTree);
   if (bin>=0) return sumEvents.find(theTree)->second.at(bin);
@@ -286,6 +291,24 @@ float ReweightingBuilder::getSumAllPostThresholdSqWeightInvs(int bin) const{
   for (auto it=theMap.cbegin(); it!=theMap.cend(); it++){
     float const& component=it->second.at(bin);
     if (component!=0.) sum += 1./component;
+  }
+  return sum;
+}
+float ReweightingBuilder::getSumAllPostThresholdNeffs(CJLSTTree* theTree) const{
+  int bin=this->findBin(theTree);
+  return this->getSumAllPostThresholdNeffs(bin);
+}
+float ReweightingBuilder::getSumAllPostThresholdNeffs(int bin) const{
+  if (bin<0) return 0;
+  KahanAccumulator<float> sum;
+  auto const& theMap=this->sumPostThrWeights;
+  auto const& theMapSq=this->sumPostThrSqWeights;
+  auto itSq=theMapSq.cbegin();
+  for (auto it=theMap.cbegin(); it!=theMap.cend(); it++){
+    float const& component=it->second.at(bin);
+    float const& component_sq=itSq->second.at(bin);
+    if (component_sq!=0.) sum += pow(component, 2)/component_sq;
+    itSq++;
   }
   return sum;
 }
@@ -350,7 +373,8 @@ float ReweightingBuilder::getNormComponent(int bin) const{
       unsigned int nSample = 1;
       if (divideByNSample) nSample = tree->getNGenNoPU();
       float scalefactor = static_cast<float>(nSample)/static_cast<float>(nSumNonZeroWgt);
-      denominator_pertree = 1./(sumsqwgts*pow(scalefactor, 2));
+      float sampleRawWeight = (ReweightingBuilder::useNeffInNormComponent ? pow(sumwgts, 2)/sumsqwgts : 1./sumsqwgts);
+      denominator_pertree = sampleRawWeight/pow(scalefactor, 2);
       numerator_pertree = sumwgts*scalefactor*denominator_pertree;
     }
     /*
@@ -392,7 +416,7 @@ float ReweightingBuilder::getNorm() const{
   const int ns = (!noBoundaries ? binning.getNbins() : 1);
 
   KahanAccumulator<float> sum;
-  unsigned int sumN=1;
+  unsigned int sumN=0;
   for (int bin=0; bin<ns; bin++){
     sum += this->getNormComponent(bin);
     if (divideByNSample) sumN += this->getSumAllNonZeroWgtEvents(bin);

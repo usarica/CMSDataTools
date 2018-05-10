@@ -729,6 +729,7 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
 
       // Build the analyzer and loop over the events
       TemplatesEventAnalyzer theAnalyzer(theSampleSet, channel, category);
+      theAnalyzer.setVerbosity(true);
       theAnalyzer.setExternalProductTree(theOutputTree[i]);
       // Book common variables needed for analysis
       theAnalyzer.addConsumed<float>("PUWeight");
@@ -925,6 +926,7 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
       TH2F* hDistro[2];
       for (unsigned int i=0; i<2; i++){
         TTree* tree = theOutputTree[i]->getSelectedTree();
+        isCategory=true;
         hDistro[i] = getSmoothHistogram(
           (i==0 ? strSystematics_Nominal.Data() : strSystematics.Data()), "",
           KDbinning.at(0), KDbinning.at(1),
@@ -947,6 +949,7 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
       TH3F* hDistro[2];
       for (unsigned int i=0; i<2; i++){
         TTree* tree = theOutputTree[i]->getSelectedTree();
+        isCategory=true;
         hDistro[i] = getSmoothHistogram(
           (i==0 ? strSystematics_Nominal.Data() : strSystematics.Data()), "",
           KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),

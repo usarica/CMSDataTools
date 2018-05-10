@@ -8,12 +8,13 @@
 using namespace std;
 
 
-BaseTreeLooper::BaseTreeLooper() : sampleIdOpt(BaseTreeLooper::kNoStorage), maxNEvents(-1) { setExternalProductList(); setExternalProductTree(); }
-BaseTreeLooper::BaseTreeLooper(CJLSTTree* inTree) : sampleIdOpt(BaseTreeLooper::kNoStorage), maxNEvents(-1) { this->addTree(inTree); setExternalProductList(); setExternalProductTree(); }
+BaseTreeLooper::BaseTreeLooper() : sampleIdOpt(BaseTreeLooper::kNoStorage), maxNEvents(-1), verbose(false) { setExternalProductList(); setExternalProductTree(); }
+BaseTreeLooper::BaseTreeLooper(CJLSTTree* inTree) : sampleIdOpt(BaseTreeLooper::kNoStorage), maxNEvents(-1), verbose(false) { this->addTree(inTree); setExternalProductList(); setExternalProductTree(); }
 BaseTreeLooper::BaseTreeLooper(std::vector<CJLSTTree*> const& inTreeList) :
   sampleIdOpt(BaseTreeLooper::kNoStorage),
   treeList(inTreeList),
-  maxNEvents(-1)
+  maxNEvents(-1),
+  verbose(false)
 {
   setExternalProductList();
   setExternalProductTree();
@@ -21,12 +22,15 @@ BaseTreeLooper::BaseTreeLooper(std::vector<CJLSTTree*> const& inTreeList) :
 BaseTreeLooper::BaseTreeLooper(CJLSTSet const* inTreeSet) :
   sampleIdOpt(BaseTreeLooper::kNoStorage),
   treeList(inTreeSet->getCJLSTTreeList()),
-  maxNEvents(-1)
+  maxNEvents(-1),
+  verbose(false)
 {
   setExternalProductList();
   setExternalProductTree();
 }
 BaseTreeLooper::~BaseTreeLooper(){}
+
+void BaseTreeLooper::setVerbosity(bool flag){ verbose = flag; }
 
 void BaseTreeLooper::addTree(CJLSTTree* tree){ this->treeList.push_back(tree); }
 
@@ -110,6 +114,14 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
   unsigned int ev_rec=0;
   const bool storeSampleIdByMH = (sampleIdOpt==kStoreByMH);
   const bool storeSampleIdByHashVal = (sampleIdOpt==kStoreByHashVal);
+  vector<unsigned int> loopRecSelList, loopTotalSelList, loopRecFailList, loopTotalFailList;
+  vector<unsigned int>::iterator it_loopRecSelList, it_loopTotalSelList, it_loopRecFailList, it_loopTotalFailList;
+  if (verbose && !treeList.empty()){
+    loopRecSelList.assign(treeList.size(), 0); it_loopRecSelList=loopRecSelList.begin();
+    loopTotalSelList.assign(treeList.size(), 0); it_loopTotalSelList=loopTotalSelList.begin();
+    loopRecFailList.assign(treeList.size(), 0); it_loopRecFailList=loopRecFailList.begin();
+    loopTotalFailList.assign(treeList.size(), 0); it_loopTotalFailList=loopTotalFailList.begin();
+  }
   for (CJLSTTree*& tree:treeList){
     // Skip the tree if it cannot be linked
     if (!(this->linkConsumes(tree))) continue;
@@ -142,11 +154,13 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
                 product.setNamedVal("EventNumber", ev_acc);
               }
               this->addProduct(product, &ev_rec);
+              if (verbose) (*it_loopRecSelList)++;
             }
           }
         }
         HelperFunctions::progressbar(ev, nevents);
         ev++; ev_acc++;
+        if (verbose) (*it_loopTotalSelList)++;
       }
     }
     // Loop over failed events
@@ -165,19 +179,36 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
                 product.setNamedVal("EventNumber", ev_acc);
               }
               this->addProduct(product, &ev_rec);
+              if (verbose) (*it_loopRecFailList)++;
             }
           }
         }
         HelperFunctions::progressbar(ev, nevents);
         ev++; ev_acc++;
+        if (verbose) (*it_loopTotalFailList)++;
       }
     }
 
     // Record products to external tree
     this->recordProductsToTree();
 
+    if (verbose){
+      it_loopRecSelList++;
+      it_loopRecFailList++;
+      it_loopTotalSelList++;
+      it_loopTotalFailList++;
+    }
   } // End loop over the trees
   MELAout << "BaseTreeLooper::loop: Total number of products: " << ev_rec << " / " << ev_acc << endl;
+  if (verbose){
+    for (unsigned int it=0; it<treeList.size(); it++){
+      MELAout << "\t- BaseTreeLooper::loop: Total number of selected | failed products in tree " << it << ": "
+        << loopRecSelList.at(it) << " / " << loopTotalSelList.at(it)
+        << " | "
+        << loopRecFailList.at(it) << " / " << loopTotalFailList.at(it)
+        << endl;
+    }
+  }
 }
 
 std::vector<SimpleEntry> const& BaseTreeLooper::getProducts() const{ return *productListRef; }

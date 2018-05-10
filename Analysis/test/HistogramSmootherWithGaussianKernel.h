@@ -177,7 +177,6 @@ TH1F* getSmoothHistogram(
   return res;
 }
 
-
 TH2F* getSmoothHistogram(
   TString const hname, TString const htitle, ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning,
   TTree* tree, float& xvar, float& yvar, float& weight, bool& flag,
@@ -279,7 +278,6 @@ TH2F* getSmoothHistogram(
   return res;
 }
 
-
 TH3F* getSmoothHistogram(
   TString const hname, TString const htitle, ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning, ExtendedBinning const& finalZBinning,
   TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, bool& flag,
@@ -298,10 +296,14 @@ TH3F* getSmoothHistogram(
   // Construct fine histogram to determine intermediate binning
   MELAout << "getSmoothHistogram: Filling the reference ExtendedProfileHistogram" << endl;
   ExtendedProfileHistogram reference(bX, bY, bZ, false);
+  float sumRefWeights = 0;
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
     progressbar(ev, tree->GetEntries());
-    if (flag) reference.fill(xvar, yvar, zvar, fabs(weight));
+    if (flag){
+      reference.fill(xvar, yvar, zvar, fabs(weight));
+      sumRefWeights += fabs(weight);
+    }
   }
 
   ExtendedProfileHistogram extres(bX, bY, bZ, false); // For the res histogram
@@ -314,6 +316,7 @@ TH3F* getSmoothHistogram(
   SimpleGaussian gausZ(0, 1, SimpleGaussian::kHasLowHighRange, bZ.getMin(), bZ.getMax());
 
   MELAout << "getSmoothHistogram: Filling the actual histogram with the help of reference" << endl;
+  float sumHistWeights = 0;
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
     progressbar(ev, tree->GetEntries());
@@ -388,6 +391,7 @@ TH3F* getSmoothHistogram(
                   double w=fprod*weight;
                   *(it_k) += w;
                   *(itsq_k) += pow(w, 2);
+                  sumHistWeights += w;
                 }
                 k++; it_k++; itsq_k++;
               }
@@ -400,6 +404,8 @@ TH3F* getSmoothHistogram(
     } // End scope of i and iterators
 
   } // End loop over tree
+
+  MELAout << "Sum of reference weights: " << sumRefWeights << "; sum of histogram weights: " << sumHistWeights << endl;
 
   TH3F* res = new TH3F(
     hname, htitle,

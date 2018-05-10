@@ -25,6 +25,9 @@ protected:
   // Max. events to process
   int maxNEvents;
 
+  // Verbosity flag
+  bool verbose;
+
   // Consumes
   std::unordered_map<TString, short*> valshorts;
   std::unordered_map<TString, unsigned int*> valuints;
@@ -74,6 +77,9 @@ public:
 
   // Destructors
   virtual ~BaseTreeLooper();
+
+  // Set verbosity
+  void setVerbosity(bool flag);
 
   // Add the necessary objects
   template<typename T> void addConsumed(TString name);

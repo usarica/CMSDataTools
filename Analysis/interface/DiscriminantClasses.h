@@ -124,7 +124,7 @@ namespace DiscriminantClasses{
   bool isCPSensitive(const Type type);
   bool isCPSensitive(const TString name);
 
-};
+}
 
 
 #endif

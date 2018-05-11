@@ -1,32 +1,4 @@
-#ifndef HISTOGRAMSMOOTHERWITHGAUSSIANKERNEL_H
-#define HISTOGRAMSMOOTHERWITHGAUSSIANKERNEL_H
-
-#include <iostream>
-#include <string>
-#include <vector>
-#include <algorithm>
-#include <utility>
-#include "TFile.h"
-#include "TString.h"
-#include "TSpline.h"
-#include "TGraph.h"
-#include "TGraphErrors.h"
-#include "TGraphAsymmErrors.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TH3F.h"
-#include "HelperFunctions.h"
-#include "FunctionHelpers.h"
-#include "SampleHelpers.h"
-#include "DiscriminantClasses.h"
-#include "CategorizationHelpers.h"
-#include "ExtendedHistogram_1D.h"
-#include "ExtendedHistogram_2D.h"
-#include "ExtendedHistogram_3D.h"
-#include "ExtendedProfileHistogram.h"
-#include "TemplateHelpers.h"
-#include "MELAStreamHelpers.hh"
-#include "Mela.h"
+#include "HistogramSmootherWithGaussianKernel.h"
 
 
 #ifndef GAUSSIANWIDTHPRECISION
@@ -43,48 +15,24 @@ using namespace TemplateHelpers;
 using namespace MELAStreamHelpers;
 
 
-class TreeHistogramAssociation_1D{
-public:
-  TString const hname;
-  TString const htitle;
-
-  TTree* const tree;
-  float& xvar;
-  float& weight;
-  bool& flag;
-
-  TreeHistogramAssociation_1D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& weight_, bool& flag_);
-};
-TreeHistogramAssociation_1D::TreeHistogramAssociation_1D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& weight_, bool& flag_) :
+HistogramSmootherWithGaussianKernel::TreeHistogramAssociation_1D::TreeHistogramAssociation_1D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& weight_, bool& flag_) :
   hname(hname_), htitle(htitle_),
   tree(tree_), xvar(xvar_),
   weight(weight_), flag(flag_)
 {
   assert(tree);
 }
-class TreeHistogramAssociation_2D : public TreeHistogramAssociation_1D{
-public:
-  float& yvar;
-
-  TreeHistogramAssociation_2D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& yvar_, float& weight_, bool& flag_);
-};
-TreeHistogramAssociation_2D::TreeHistogramAssociation_2D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& yvar_, float& weight_, bool& flag_) :
+HistogramSmootherWithGaussianKernel::TreeHistogramAssociation_2D::TreeHistogramAssociation_2D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& yvar_, float& weight_, bool& flag_) :
   TreeHistogramAssociation_1D(hname_, htitle_, tree_, xvar_, weight_, flag_),
   yvar(yvar_)
 {}
-class TreeHistogramAssociation_3D : public TreeHistogramAssociation_2D{
-public:
-  float& zvar;
-
-  TreeHistogramAssociation_3D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& yvar_, float& zvar_, float& weight_, bool& flag_);
-};
-TreeHistogramAssociation_3D::TreeHistogramAssociation_3D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& yvar_, float& zvar_, float& weight_, bool& flag_) :
+HistogramSmootherWithGaussianKernel::TreeHistogramAssociation_3D::TreeHistogramAssociation_3D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& yvar_, float& zvar_, float& weight_, bool& flag_) :
   TreeHistogramAssociation_2D(hname_, htitle_, tree_, xvar_, yvar_, weight_, flag_),
   zvar(zvar_)
 {}
 
 
-ExtendedBinning getIntermediateBinning(ExtendedBinning const& binning){
+ExtendedBinning HistogramSmootherWithGaussianKernel::getIntermediateBinning(ExtendedBinning const& binning){
   ExtendedBinning res(binning);
   TString namelower=res.getLabel(); namelower.ToLower();
   if ((!namelower.Contains("mass") && !namelower.Contains("pt")) || binning.getNbins()<4) return res;
@@ -99,24 +47,26 @@ ExtendedBinning getIntermediateBinning(ExtendedBinning const& binning){
 }
 
 
-TH1F* getSmoothHistogram(
+TH1F* HistogramSmootherWithGaussianKernel::getSmoothHistogram(
   TString const hname, TString const htitle, ExtendedBinning const& finalXBinning,
-  TTree* tree, float& xvar, float& weight, bool& flag,
-  double sigmaXmult=1,
-  TH1F** hRawPtr=nullptr
+  TTree* tree, float& xvar, float& weight, bool& selflag,
+  double sigmaXmult,
+  TH1F** hRawPtr
 ){
   assert(tree && finalXBinning.isValid());
 
   ExtendedBinning bX=getIntermediateBinning(finalXBinning);
   bool sameXbins=(bX.getNbins()==finalXBinning.getNbins());
+  double const xmin=bX.getMin(); double const xmax=bX.getMax();
 
   // Construct fine histogram to determine intermediate binning
   MELAout << "getSmoothHistogram: Filling the reference ExtendedProfileHistogram" << endl;
   ExtendedProfileHistogram reference(bX, false);
+  selflag=true;
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
     progressbar(ev, tree->GetEntries());
-    if (flag) reference.fill(xvar, fabs(weight));
+    if (selflag) reference.fill(xvar, fabs(weight));
   }
   TH1F* res = new TH1F(
     hname, htitle,
@@ -133,15 +83,16 @@ TH1F* getSmoothHistogram(
     (*hRawPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
   }
 
-  SimpleGaussian gausX(0, 1, SimpleGaussian::kHasLowHighRange, bX.getMin(), bX.getMax());
+  SimpleGaussian gausX(0, 1, SimpleGaussian::kHasLowHighRange, xmin, xmax);
 
   MELAout << "getSmoothHistogram: Filling the actual histogram with the help of reference" << endl;
+  selflag=true;
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
     progressbar(ev, tree->GetEntries());
 
-    if (!flag) continue;
-    if (xvar<bX.getMin() || xvar>=bX.getMax()) continue;
+    if (!selflag) continue;
+    if ((double) xvar<xmin || (double) xvar>=xmax) continue;
     if (hRawPtr) (*hRawPtr)->Fill(xvar, weight);
 
     int ix=bX.getBin(xvar);
@@ -169,7 +120,7 @@ TH1F* getSmoothHistogram(
         double bincontent = res->GetBinContent(ii);
         double binerror = res->GetBinError(ii);
         res->SetBinContent(ii, bincontent+w);
-        res->SetBinError(ii, sqrt(pow(bincontent, 2)+pow(w, 2)));
+        res->SetBinError(ii, sqrt(pow(binerror, 2)+pow(w, 2)));
       }
     }
 
@@ -177,11 +128,11 @@ TH1F* getSmoothHistogram(
   return res;
 }
 
-TH2F* getSmoothHistogram(
+TH2F* HistogramSmootherWithGaussianKernel::getSmoothHistogram(
   TString const hname, TString const htitle, ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning,
-  TTree* tree, float& xvar, float& yvar, float& weight, bool& flag,
-  double sigmaXmult=1, double sigmaYmult=1,
-  TH2F** hRawPtr=nullptr
+  TTree* tree, float& xvar, float& yvar, float& weight, bool& selflag,
+  double sigmaXmult, double sigmaYmult,
+  TH2F** hRawPtr
 ){
   assert(tree && finalXBinning.isValid() && finalYBinning.isValid());
 
@@ -189,14 +140,17 @@ TH2F* getSmoothHistogram(
   ExtendedBinning bY=getIntermediateBinning(finalYBinning);
   bool sameXbins=(bX.getNbins()==finalXBinning.getNbins());
   bool sameYbins=(bY.getNbins()==finalYBinning.getNbins());
+  double const xmin=bX.getMin(); double const xmax=bX.getMax();
+  double const ymin=bY.getMin(); double const ymax=bY.getMax();
 
   // Construct fine histogram to determine intermediate binning
   MELAout << "getSmoothHistogram: Filling the reference ExtendedProfileHistogram" << endl;
   ExtendedProfileHistogram reference(bX, bY, false);
+  selflag=true;
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
     progressbar(ev, tree->GetEntries());
-    if (flag) reference.fill(xvar, yvar, fabs(weight));
+    if (selflag) reference.fill(xvar, yvar, fabs(weight));
   }
   TH2F* res = new TH2F(
     hname, htitle,
@@ -217,17 +171,18 @@ TH2F* getSmoothHistogram(
     (*hRawPtr)->GetYaxis()->SetTitle(finalYBinning.getLabel());
   }
 
-  SimpleGaussian gausX(0, 1, SimpleGaussian::kHasLowHighRange, bX.getMin(), bX.getMax());
-  SimpleGaussian gausY(0, 1, SimpleGaussian::kHasLowHighRange, bY.getMin(), bY.getMax());
+  SimpleGaussian gausX(0, 1, SimpleGaussian::kHasLowHighRange, xmin, xmax);
+  SimpleGaussian gausY(0, 1, SimpleGaussian::kHasLowHighRange, ymin, ymax);
 
   MELAout << "getSmoothHistogram: Filling the actual histogram with the help of reference" << endl;
+  selflag=true;
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
     progressbar(ev, tree->GetEntries());
 
-    if (!flag) continue;
-    if (xvar<bX.getMin() || xvar>=bX.getMax()) continue;
-    if (yvar<bY.getMin() || yvar>=bY.getMax()) continue;
+    if (!selflag) continue;
+    if ((double) xvar<xmin || (double) xvar>=xmax) continue;
+    if ((double) yvar<ymin || (double) yvar>=ymax) continue;
     if (hRawPtr) (*hRawPtr)->Fill(xvar, yvar, weight);
 
     int ix=bX.getBin(xvar);
@@ -269,7 +224,7 @@ TH2F* getSmoothHistogram(
           double bincontent = res->GetBinContent(ii, jj);
           double binerror = res->GetBinError(ii, jj);
           res->SetBinContent(ii, jj, bincontent+w);
-          res->SetBinError(ii, jj, sqrt(pow(bincontent, 2)+pow(w, 2)));
+          res->SetBinError(ii, jj, sqrt(pow(binerror, 2)+pow(w, 2)));
         }
       }
     }
@@ -278,11 +233,11 @@ TH2F* getSmoothHistogram(
   return res;
 }
 
-TH3F* getSmoothHistogram(
+TH3F* HistogramSmootherWithGaussianKernel::getSmoothHistogram(
   TString const hname, TString const htitle, ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning, ExtendedBinning const& finalZBinning,
-  TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, bool& flag,
-  double sigmaXmult=1, double sigmaYmult=1, double sigmaZmult=1,
-  TH3F** hRawPtr=nullptr
+  TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, bool& selflag,
+  double sigmaXmult, double sigmaYmult, double sigmaZmult,
+  TH3F** hRawPtr
 ){
   assert(tree && finalXBinning.isValid() && finalYBinning.isValid() && finalZBinning.isValid());
 
@@ -292,17 +247,21 @@ TH3F* getSmoothHistogram(
   bool sameXbins=(bX.getNbins()==finalXBinning.getNbins());
   bool sameYbins=(bY.getNbins()==finalYBinning.getNbins());
   bool sameZbins=(bZ.getNbins()==finalZBinning.getNbins());
+  double const xmin=bX.getMin(); double const xmax=bX.getMax();
+  double const ymin=bY.getMin(); double const ymax=bY.getMax();
+  double const zmin=bZ.getMin(); double const zmax=bZ.getMax();
 
   // Construct fine histogram to determine intermediate binning
   MELAout << "getSmoothHistogram: Filling the reference ExtendedProfileHistogram" << endl;
   ExtendedProfileHistogram reference(bX, bY, bZ, false);
-  float sumRefWeights = 0;
+  //float sumRefWeights = 0;
+  selflag=true;
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
     progressbar(ev, tree->GetEntries());
-    if (flag){
+    if (selflag){
       reference.fill(xvar, yvar, zvar, fabs(weight));
-      sumRefWeights += fabs(weight);
+      //sumRefWeights += fabs(weight);
     }
   }
 
@@ -311,20 +270,21 @@ TH3F* getSmoothHistogram(
   std::vector<std::vector<std::vector<double>>>& extres_sumWsq=extres.getSumWsqContainer();
   ExtendedProfileHistogram extresraw(bX, bY, bZ, false); // For the resraw histogram, if exists
 
-  SimpleGaussian gausX(0, 1, SimpleGaussian::kHasLowHighRange, bX.getMin(), bX.getMax());
-  SimpleGaussian gausY(0, 1, SimpleGaussian::kHasLowHighRange, bY.getMin(), bY.getMax());
-  SimpleGaussian gausZ(0, 1, SimpleGaussian::kHasLowHighRange, bZ.getMin(), bZ.getMax());
+  SimpleGaussian gausX(0, 1, SimpleGaussian::kHasLowHighRange, xmin, xmax);
+  SimpleGaussian gausY(0, 1, SimpleGaussian::kHasLowHighRange, ymin, ymax);
+  SimpleGaussian gausZ(0, 1, SimpleGaussian::kHasLowHighRange, zmin, zmax);
 
   MELAout << "getSmoothHistogram: Filling the actual histogram with the help of reference" << endl;
-  float sumHistWeights = 0;
+  //float sumHistWeights = 0;
+  selflag=true;
   for (int ev=0; ev<tree->GetEntries(); ev++){
     tree->GetEntry(ev);
     progressbar(ev, tree->GetEntries());
 
-    if (!flag) continue;
-    if (xvar<bX.getMin() || xvar>=bX.getMax()) continue;
-    if (yvar<bY.getMin() || yvar>=bY.getMax()) continue;
-    if (zvar<bZ.getMin() || zvar>=bZ.getMax()) continue;
+    if (!selflag) continue;
+    if ((double) xvar<xmin || (double) xvar>=xmax) continue;
+    if ((double) yvar<ymin || (double) yvar>=ymax) continue;
+    if ((double) zvar<zmin || (double) zvar>=zmax) continue;
     if (hRawPtr) extresraw.fill(xvar, yvar, zvar, weight);
 
     int ix=bX.getBin(xvar);
@@ -358,8 +318,8 @@ TH3F* getSmoothHistogram(
 
     { // 3D is slower than 1D and 2D, so fill manually
       unsigned int i=ibegin;
-      auto it_i = extres_sumW.begin()+ibegin;
-      auto itsq_i = extres_sumWsq.begin()+ibegin;
+      std::vector<std::vector<std::vector<double>>>::iterator it_i = extres_sumW.begin()+ibegin;
+      std::vector<std::vector<std::vector<double>>>::iterator itsq_i = extres_sumWsq.begin()+ibegin;
       while (i<iend){
         double fX = gausX.integralNorm(bX.getBinLowEdge(i), bX.getBinHighEdge(i));
         bool doProceedX=true;
@@ -368,8 +328,8 @@ TH3F* getSmoothHistogram(
 
         if (doProceedX){
           unsigned int j=jbegin;
-          auto it_j = it_i->begin()+jbegin;
-          auto itsq_j = itsq_i->begin()+jbegin;
+          std::vector<std::vector<double>>::iterator it_j = it_i->begin()+jbegin;
+          std::vector<std::vector<double>>::iterator itsq_j = itsq_i->begin()+jbegin;
           while (j<jend){
             double fY = gausY.integralNorm(bY.getBinLowEdge(j), bY.getBinHighEdge(j));
             bool doProceedY=true;
@@ -378,8 +338,8 @@ TH3F* getSmoothHistogram(
 
             if (doProceedY){
               unsigned int k=kbegin;
-              auto it_k = it_j->begin()+kbegin;
-              auto itsq_k = itsq_j->begin()+kbegin;
+              std::vector<double>::iterator it_k = it_j->begin()+kbegin;
+              std::vector<double>::iterator itsq_k = itsq_j->begin()+kbegin;
               while (k<kend){
                 double fZ = gausZ.integralNorm(bZ.getBinLowEdge(k), bZ.getBinHighEdge(k));
                 bool doProceedZ=true;
@@ -391,7 +351,7 @@ TH3F* getSmoothHistogram(
                   double w=fprod*weight;
                   *(it_k) += w;
                   *(itsq_k) += pow(w, 2);
-                  sumHistWeights += w;
+                  //sumHistWeights += w;
                 }
                 k++; it_k++; itsq_k++;
               }
@@ -405,7 +365,7 @@ TH3F* getSmoothHistogram(
 
   } // End loop over tree
 
-  MELAout << "Sum of reference weights: " << sumRefWeights << "; sum of histogram weights: " << sumHistWeights << endl;
+  //MELAout << "Sum of reference weights: " << sumRefWeights << "; sum of histogram weights: " << sumHistWeights << endl;
 
   TH3F* res = new TH3F(
     hname, htitle,
@@ -451,5 +411,3 @@ TH3F* getSmoothHistogram(
   return res;
 }
 
-
-#endif

@@ -43,7 +43,7 @@ void ExtendedHistogram_1D::setNameTitle(const TString name_, const TString title
   if (histo){ histo->SetName(name); histo->SetTitle(title); }
   if (prof_x){ prof_x->SetName(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data())); prof_x->SetTitle(title); }
 }
-void ExtendedHistogram_1D::setBinning(const ExtendedBinning& binning, const int xyz, const TString label){
+void ExtendedHistogram_1D::setBinning(const ExtendedBinning& binning, const int /*xyz*/, const TString label){
   xbinning = binning;
   if (label!="") xbinning.setLabel(label);
 }

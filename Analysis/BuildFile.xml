@@ -1,6 +1,6 @@
 <flags ADD_SUBDIR="1" />
 
-<flags CPPFLAGS="-I$(CMSSW_BASE)/src/HiggsWidth_PostICHEP/Analysis/interface/ -I$(CMSSW_BASE)/src/ZZMatrixElement/MELA/interface/" />
+<flags CPPFLAGS="-Wall -Wextra -Wpedantic -I$(CMSSW_BASE)/src/HiggsWidth_PostICHEP/Analysis/interface/ -I$(CMSSW_BASE)/src/ZZMatrixElement/MELA/interface/" />
 
 <use name="root"/>
 <use name="rootmath"/>

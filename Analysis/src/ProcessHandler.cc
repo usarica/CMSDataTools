@@ -677,7 +677,7 @@ template<> void GGProcessHandler::recombineHistogramsToTemplatesWithPhase<TH3F*>
     }
   }
 }
-template<> void GGProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void GGProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
   if (vals.empty()) return;
   typedef TH1F htype_t;
   int const nx = vals.at(0)->GetNbinsX();
@@ -709,7 +709,7 @@ template<> void GGProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
     }
   }
 }
-template<> void GGProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void GGProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
   if (vals.empty()) return;
   typedef TH2F htype_t;
   int const nx = vals.at(0)->GetNbinsX();
@@ -744,7 +744,7 @@ template<> void GGProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
     }
   }
 }
-template<> void GGProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void GGProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
   if (vals.empty()) return;
   typedef TH3F htype_t;
   int const nx = vals.at(0)->GetNbinsX();
@@ -782,7 +782,7 @@ template<> void GGProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
     }
   }
 }
-template<> void GGProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void GGProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
   if (vals.empty()) return;
   typedef TH1F htype_t;
   int const nx = vals.at(0)->GetNbinsX();
@@ -815,7 +815,7 @@ template<> void GGProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<
     }
   }
 }
-template<> void GGProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void GGProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
   if (vals.empty()) return;
   typedef TH2F htype_t;
   int const nx = vals.at(0)->GetNbinsX();
@@ -851,7 +851,7 @@ template<> void GGProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<
     }
   }
 }
-template<> void GGProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void GGProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
   if (vals.empty()) return;
   typedef TH3F htype_t;
   int const nx = vals.at(0)->GetNbinsX();
@@ -1655,7 +1655,7 @@ template<> void VVProcessHandler::recombineHistogramsToTemplatesWithPhase<TH3F*>
     }
   }
 }
-template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
   if (vals.empty()) return;
   typedef TH1F htype_t;
   int const nx = vals.at(0)->GetNbinsX();
@@ -1690,7 +1690,7 @@ template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
     }
   }
 }
-template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
   if (vals.empty()) return;
   typedef TH2F htype_t;
   int const nx = vals.at(0)->GetNbinsX();
@@ -1728,7 +1728,7 @@ template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
     }
   }
 }
-template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
   if (vals.empty()) return;
   typedef TH3F htype_t;
   int const nx = vals.at(0)->GetNbinsX();
@@ -1769,7 +1769,7 @@ template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
     }
   }
 }
-template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
   if (vals.empty()) return;
   typedef TH1F htype_t;
   int const nx = vals.at(0)->GetNbinsX();
@@ -1805,7 +1805,7 @@ template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<
     }
   }
 }
-template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
   if (vals.empty()) return;
   typedef TH2F htype_t;
   int const nx = vals.at(0)->GetNbinsX();
@@ -1844,7 +1844,7 @@ template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<
     }
   }
 }
-template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
+template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
   if (vals.empty()) return;
   typedef TH3F htype_t;
   int const nx = vals.at(0)->GetNbinsX();

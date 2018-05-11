@@ -1,0 +1,84 @@
+#ifndef HISTOGRAMSMOOTHERWITHGAUSSIANKERNEL_H
+#define HISTOGRAMSMOOTHERWITHGAUSSIANKERNEL_H
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <utility>
+#include "TFile.h"
+#include "TString.h"
+#include "TSpline.h"
+#include "TGraph.h"
+#include "TGraphErrors.h"
+#include "TGraphAsymmErrors.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TH3F.h"
+#include "HelperFunctions.h"
+#include "FunctionHelpers.h"
+#include "SampleHelpers.h"
+#include "DiscriminantClasses.h"
+#include "CategorizationHelpers.h"
+#include "ExtendedHistogram_1D.h"
+#include "ExtendedHistogram_2D.h"
+#include "ExtendedHistogram_3D.h"
+#include "ExtendedProfileHistogram.h"
+#include "TemplateHelpers.h"
+#include "MELAStreamHelpers.hh"
+#include "Mela.h"
+
+
+namespace HistogramSmootherWithGaussianKernel{
+  class TreeHistogramAssociation_1D{
+  public:
+    TString const hname;
+    TString const htitle;
+
+    TTree* const tree;
+    float& xvar;
+    float& weight;
+    bool& flag;
+
+    TreeHistogramAssociation_1D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& weight_, bool& flag_);
+  };
+  class TreeHistogramAssociation_2D : public TreeHistogramAssociation_1D{
+  public:
+    float& yvar;
+
+    TreeHistogramAssociation_2D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& yvar_, float& weight_, bool& flag_);
+  };
+  class TreeHistogramAssociation_3D : public TreeHistogramAssociation_2D{
+  public:
+    float& zvar;
+
+    TreeHistogramAssociation_3D(TString const hname_, TString const htitle_, TTree* tree_, float& xvar_, float& yvar_, float& zvar_, float& weight_, bool& flag_);
+  };
+
+
+  ExtendedBinning getIntermediateBinning(ExtendedBinning const& binning);
+
+  TH1F* getSmoothHistogram(
+    TString const hname, TString const htitle, ExtendedBinning const& finalXBinning,
+    TTree* tree, float& xvar, float& weight, bool& selflag,
+    double sigmaXmult=1,
+    TH1F** hRawPtr=nullptr
+  );
+
+  TH2F* getSmoothHistogram(
+    TString const hname, TString const htitle, ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning,
+    TTree* tree, float& xvar, float& yvar, float& weight, bool& selflag,
+    double sigmaXmult=1, double sigmaYmult=1,
+    TH2F** hRawPtr=nullptr
+  );
+
+  TH3F* getSmoothHistogram(
+    TString const hname, TString const htitle, ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning, ExtendedBinning const& finalZBinning,
+    TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, bool& selflag,
+    double sigmaXmult=1, double sigmaYmult=1, double sigmaZmult=1,
+    TH3F** hRawPtr=nullptr
+  );
+
+}
+
+#endif

@@ -93,7 +93,7 @@ CategorizationHelpers::Category CategorizationHelpers::getCategory(const float& 
 std::vector<CategorizationHelpers::Category> CategorizationHelpers::getAllowedCategories(CategorizationHelpers::CategorizationScheme scheme){
   std::vector<CategorizationHelpers::Category> res;
   res.push_back(Inclusive);
-  switch (globalCategorizationScheme){
+  switch (scheme){
   case UntaggedOrJJVBFOrHadVH:
   case UntaggedOrJJVBFOrHadVH_Arbitrated:
     res.push_back(HadVHTagged);

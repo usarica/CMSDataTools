@@ -4,8 +4,6 @@
 #include "common_includes.h"
 #include "CheckSetTemplatesCategoryScheme.h"
 #include "fixTreeWeights.h"
-#include "acquireProcessMassRatios.cc"
-#include "HistogramSmootherWithGaussianKernel.h"
 
 
 // Constants to affect the template code
@@ -13,6 +11,8 @@
 #define outputdir_def
 const TString user_output_dir = "output/";
 #endif
+
+#include "acquireProcessMassRatios.cc"
 
 #ifndef CHISQCUT
 #define CHISQCUT 3.841

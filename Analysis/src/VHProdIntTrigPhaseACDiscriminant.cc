@@ -9,7 +9,7 @@ using namespace HelperFunctions;
 
 VHProdIntTrigPhaseACDiscriminant::VHProdIntTrigPhaseACDiscriminant() : Discriminant("", "", "", "", 1){}
 
-void VHProdIntTrigPhaseACDiscriminant::eval(const std::vector<float>& vars, const float& valReco){
+void VHProdIntTrigPhaseACDiscriminant::eval(const std::vector<float>& vars, const float& /*valReco*/){
   enum{
     iZHSM=0,
     iZHBSM,

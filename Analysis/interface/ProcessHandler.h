@@ -383,12 +383,12 @@ template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::
 template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals) const;
 template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals) const;
 
-template<typename T> void QQBkgProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const{
+template<typename T> void QQBkgProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/, unsigned int const iaxis) const{
   if (vals.empty()) return;
   for (T& hh:vals) HelperFunctions::conditionalizeHistogram(hh, iaxis);
 }
-template void QQBkgProcessHandler::conditionalizeTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
-template void QQBkgProcessHandler::conditionalizeTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+template void QQBkgProcessHandler::conditionalizeTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/, unsigned int const iaxis) const;
+template void QQBkgProcessHandler::conditionalizeTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/, unsigned int const iaxis) const;
 
 class ZXProcessHandler : public ProcessHandler{
 public:
@@ -425,12 +425,12 @@ template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vec
 template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals) const;
 template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals) const;
 
-template<typename T> void ZXProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const{
+template<typename T> void ZXProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/, unsigned int const iaxis) const{
   if (vals.empty()) return;
   for (T& hh:vals) HelperFunctions::conditionalizeHistogram(hh, iaxis);
 }
-template void ZXProcessHandler::conditionalizeTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
-template void ZXProcessHandler::conditionalizeTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+template void ZXProcessHandler::conditionalizeTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/, unsigned int const iaxis) const;
+template void ZXProcessHandler::conditionalizeTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/, unsigned int const iaxis) const;
 
 
 #endif

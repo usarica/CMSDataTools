@@ -34,6 +34,8 @@
 #include "TString.h"
 #include "TChain.h"
 #include "TIterator.h"
+#include "TPaveText.h"
+#include "TText.h"
 #include "Math/Minimizer.h"
 #include "HiggsAnalysis/CombinedLimit/interface/AsymPow.h"
 #include "HiggsAnalysis/CombinedLimit/interface/AsymQuad.h"
@@ -281,15 +283,16 @@ void acquireResolution_one(const Channel channel, const Category category, const
   RooArgSet conditionals; conditionals.add(var_mtrue);
 
   TString prefix = "CMS_zz4l_";
-  vector<RooRealVar*> CB_parameter_list; CB_parameter_list.reserve(6);
-  RooRealVar CB_mean(prefix + "CB_mean", "", 0, -3, 3); CB_parameter_list.push_back(&CB_mean);
-  RooRealVar CB_width(prefix + "CB_width", "", 1, 0.3, 15); CB_parameter_list.push_back(&CB_width);
-  RooRealVar CB_alpha1(prefix + "CB_alpha1", "", 2, 0, 4); CB_parameter_list.push_back(&CB_alpha1);
-  RooRealVar CB_alpha2(prefix + "CB_alpha2", "", 3, 0, 10); CB_parameter_list.push_back(&CB_alpha2);
-  RooRealVar CB_n1(prefix + "CB_n1", "", 1, 0, 10); CB_parameter_list.push_back(&CB_n1);
-  RooRealVar CB_n2(prefix + "CB_n2", "", 1.5, 0, 40); CB_parameter_list.push_back(&CB_n2);
+  vector<RooRealVar> CB_parameter_list; CB_parameter_list.reserve(6);
+  CB_parameter_list.emplace_back(prefix + "CB_mean", "", -0.1, -3, 3);
+  CB_parameter_list.emplace_back(prefix + "CB_width", "", 1, 0.3, 15);
+  CB_parameter_list.emplace_back(prefix + "CB_alpha1", "", 1, 0, 10);
+  CB_parameter_list.emplace_back(prefix + "CB_alpha2", "", 1, 0, 10);
+  CB_parameter_list.emplace_back(prefix + "CB_n1", "", 1, 0, 10);
+  CB_parameter_list.emplace_back(prefix + "CB_n2", "", 1, 0, 40);
   vector<double> CB_parameter_init; CB_parameter_init.reserve(6);
-  for (auto*& par:CB_parameter_list) CB_parameter_init.push_back(par->getVal());
+  for (auto& par:CB_parameter_list) CB_parameter_init.push_back(par.getVal());
+  vector<unsigned int> prelimfitOrder{ 1, 0, 3, 5, 2, 4 };
   vector<vector<RooRealVar>> CB_piecewisepolypars_list; CB_piecewisepolypars_list.assign(6, vector<RooRealVar>());
   vector<RooArgList> CB_piecewisepolypars_args; CB_piecewisepolypars_args.assign(6, RooArgList());
   vector<RooPiecewisePolynomial> CB_piecewisepoly_list; CB_piecewisepoly_list.reserve(6);
@@ -297,9 +300,9 @@ void acquireResolution_one(const Channel channel, const Category category, const
   RooDoubleCB pdf(
     "pdf", "",
     var_mdiff,
-    CB_mean, CB_width,
-    CB_alpha1, CB_n1,
-    CB_alpha2, CB_n2
+    CB_parameter_list.at(0), CB_parameter_list.at(1),
+    CB_parameter_list.at(2), CB_parameter_list.at(4),
+    CB_parameter_list.at(3), CB_parameter_list.at(5)
   );
 
   TTree* tree = theOutputTree->getSelectedTree();
@@ -368,9 +371,34 @@ void acquireResolution_one(const Channel channel, const Category category, const
 
     // Prepare the dataset
     RooDataSet data("data", "data", &newtree, treevars, nullptr, var_weight.GetName());
-    CB_mean.setRange(-var_mtrue.getVal()/50., var_mtrue.getVal()/50.);
-    CB_width.setMax(var_mtrue.getVal()/10.);
-    for (unsigned int ipar=0; ipar<CB_parameter_list.size(); ipar++) CB_parameter_list.at(ipar)->setVal(CB_parameter_init.at(ipar));
+    CB_parameter_list.at(0).setRange(-var_mtrue.getVal()/50., var_mtrue.getVal()/50.);
+    CB_parameter_list.at(1).setMax(var_mtrue.getVal()/10.);
+    for (unsigned int ipar=0; ipar<CB_parameter_list.size(); ipar++) CB_parameter_list.at(ipar).setVal(CB_parameter_init.at(ipar));
+    // First do a preliminary fit to get approximate values
+    for (auto& var:CB_parameter_list) var.setConstant(true);
+    for (unsigned int const& ivar:prelimfitOrder){
+      CB_parameter_list.at(ivar).setConstant(false);
+
+      RooLinkedList cmdList;
+      RooCmdArg saveArg = RooFit::Save(true); cmdList.Add((TObject*) &saveArg);
+      //RooCmdArg condObsArg = RooFit::ConditionalObservables(conditionals); cmdList.Add((TObject*) &condObsArg);
+      RooCmdArg sumw2Arg = RooFit::SumW2Error(true); cmdList.Add((TObject*) &sumw2Arg);
+      RooCmdArg hesseArg = RooFit::Hesse(false); cmdList.Add((TObject*) &hesseArg);
+      RooCmdArg minimizerStrategyArg = RooFit::Strategy(0); cmdList.Add((TObject*) &minimizerStrategyArg);
+      // Misc. options
+      RooCmdArg timerArg = RooFit::Timer(true); cmdList.Add((TObject*) &timerArg);
+      RooCmdArg printlevelArg = RooFit::PrintLevel(-1); cmdList.Add((TObject*) &printlevelArg);
+      //RooCmdArg printerrorsArg = RooFit::PrintEvalErrors(-1); cmdList.Add((TObject*) &printerrorsArg);
+
+      RooFitResult* fitResult=pdf.fitTo(data, cmdList);
+      if (fitResult){
+        int fitStatus = fitResult->status();
+        cout << "Fit status is " << fitStatus << endl;
+        cout << "Fit properties:" << endl;
+        fitResult->Print("v");
+      }
+      delete fitResult;
+    }
     const unsigned int nit=3;
     bool fitSuccessful=false;
     for (unsigned int it=0; it<nit; it++){
@@ -414,7 +442,7 @@ void acquireResolution_one(const Channel channel, const Category category, const
     //  double parerrorhi=par->getAsymErrorHi(); if (parerrorhi==0.) fitSuccessful=false;
     //}
     for (unsigned int ipar=0; ipar<CB_parameter_list.size(); ipar++){
-      RooRealVar* par = CB_parameter_list.at(ipar);
+      RooRealVar* par = &(CB_parameter_list.at(ipar));
       CB_parameter_val_list.at(ipar).emplace_back(var_mtrue.getVal(), par->getVal());
       bool hitThr=false;
       double parerrorlo=par->getAsymErrorLo(); if (parerrorlo==0.) parerrorlo=par->getError(); if (parerrorlo==0. || !fitSuccessful){ parerrorlo=par->getVal()-par->getMin(); hitThr=true; }
@@ -451,7 +479,7 @@ void acquireResolution_one(const Channel channel, const Category category, const
 
   vector<TGraphAsymmErrors*> grlist; grlist.reserve(CB_parameter_list.size());
   for (unsigned int ipar=0; ipar<CB_parameter_list.size(); ipar++){
-    RooRealVar* par = CB_parameter_list.at(ipar);
+    RooRealVar* par = &(CB_parameter_list.at(ipar));
 
     // Construct the TGraph first
     TGraphAsymmErrors* gr = makeGraphAsymErrFromPair(
@@ -743,6 +771,8 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   const TString strSqrts = Form("%i", theSqrts);
   const TString strYear = theDataPeriod;
   const TString strSqrtsYear = strSqrts + "TeV_" + strYear;
+  const TString strChannelLabel = getChannelLabel(channel);
+  const TString strCategoryLabel = getCategoryLabel(category);
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -759,7 +789,7 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   );
   TString OUTPUT_NAME=OUTPUT_NAME_CORE;
   TString OUTPUT_LOG_NAME = OUTPUT_NAME;
-  TString canvasnamecore = coutput_common + "c_" + OUTPUT_NAME + "_" + strGenerator;
+  TString canvasnamecore = coutput_common + "c_" + OUTPUT_NAME + "_" + strGenerator + "_" + strSqrtsYear;
   TString coutput = coutput_common + OUTPUT_NAME + ".root";
   TString coutput_log = coutput_common + OUTPUT_LOG_NAME + ".log";
   MELAout.open(coutput_log.Data());
@@ -1060,11 +1090,105 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
 
   {
     RooPlot incl_plot(var_mreco, var_mreco.getMin(), var_mreco.getMax(), 80);
-    data.plotOn(&incl_plot, LineColor(kBlack), MarkerColor(kBlack), MarkerStyle(30), LineWidth(2));
-    incl_pdf.plotOn(&incl_plot, LineColor(kRed), LineWidth(2));
+    data.plotOn(&incl_plot, LineColor(kBlack), MarkerColor(kBlack), MarkerStyle(30), LineWidth(2), Name("Data"));
+    for (unsigned int isyst=0; isyst<3; isyst++){
+      if (channel==k4e || channel==k2e2mu) res_uncvar_e.setVal(-1.+3.5*double(isyst)-1.5*double(isyst*isyst));
+      if (channel==k4mu || channel==k2e2mu) res_uncvar_mu.setVal(-1.+3.5*double(isyst)-1.5*double(isyst*isyst));
+      incl_pdf.plotOn(&incl_plot, LineColor(kBlue), LineWidth(2), LineStyle(int(2.+10.5*double(isyst)-5.5*double(isyst*isyst))), Name(Form("MassShapePdf_Res%i", isyst)));
+    }
+    for (unsigned int isyst=0; isyst<3; isyst++){
+      if (channel==k4e || channel==k2e2mu) scale_uncvar_e.setVal(-1.+3.5*double(isyst)-1.5*double(isyst*isyst));
+      if (channel==k4mu || channel==k2e2mu) scale_uncvar_mu.setVal(-1.+3.5*double(isyst)-1.5*double(isyst*isyst));
+      incl_pdf.plotOn(&incl_plot, LineColor(kGreen+2), LineWidth(2), LineStyle(int(2.+10.5*double(isyst)-5.5*double(isyst*isyst))), Name(Form("MassShapePdf_Scale%i", isyst)));
+    }
+    incl_pdf.plotOn(&incl_plot, LineColor(kRed), LineWidth(2), Name("MassShapePdf"));
 
-    TCanvas can(Form("ZZMass_%.0f_%.0f", var_mreco.getMin(), var_mreco.getMax()), "");
+    incl_plot.SetTitle("");
+    incl_plot.SetXTitle("m_{4l} (GeV)");
+    incl_plot.SetYTitle("Simulated events");
+    incl_plot.SetNdivisions(505, "X");
+    incl_plot.SetLabelFont(42, "X");
+    incl_plot.SetLabelOffset(0.007, "X");
+    incl_plot.SetLabelSize(0.04, "X");
+    incl_plot.SetTitleSize(0.06, "X");
+    incl_plot.SetTitleOffset(0.9, "X");
+    incl_plot.SetTitleFont(42, "X");
+    incl_plot.SetNdivisions(505, "Y");
+    incl_plot.SetLabelFont(42, "Y");
+    incl_plot.SetLabelOffset(0.007, "Y");
+    incl_plot.SetLabelSize(0.04, "Y");
+    incl_plot.SetTitleSize(0.06, "Y");
+    incl_plot.SetTitleOffset(1.2, "Y");
+    incl_plot.SetTitleFont(42, "Y");
+
+    TCanvas can(Form("ZZMass_%.0f_%.0f", var_mreco.getMin(), var_mreco.getMax()), "", 8, 30, 800, 800);
+
+    gStyle->SetOptStat(0);
+    can.SetFillColor(0);
+    can.SetBorderMode(0);
+    can.SetBorderSize(2);
+    can.SetTickx(1);
+    can.SetTicky(1);
+    can.SetLeftMargin(0.17);
+    can.SetRightMargin(0.05);
+    can.SetTopMargin(0.07);
+    can.SetBottomMargin(0.13);
+    can.SetFrameFillStyle(0);
+    can.SetFrameBorderMode(0);
+    can.SetFrameFillStyle(0);
+    can.SetFrameBorderMode(0);
+
+    TLegend legend(0.20, 0.90-0.15, 0.50, 0.90);
+    legend.SetBorderSize(0);
+    legend.SetTextFont(42);
+    legend.SetTextSize(0.03);
+    legend.SetLineColor(1);
+    legend.SetLineStyle(1);
+    legend.SetLineWidth(1);
+    legend.SetFillColor(0);
+    legend.SetFillStyle(0);
+
+    TPaveText pavetext(0.15, 0.93, 0.85, 1, "brNDC");
+    pavetext.SetBorderSize(0);
+    pavetext.SetFillStyle(0);
+    pavetext.SetTextAlign(12);
+    pavetext.SetTextFont(42);
+    pavetext.SetTextSize(0.045);
+    TText* text = pavetext.AddText(0.025, 0.45, "#font[61]{CMS}");
+    text->SetTextSize(0.044);
+    text = pavetext.AddText(0.165, 0.42, "#font[52]{Simulation}");
+    text->SetTextSize(0.0315);
+    TString cErgTev = Form("#font[42]{%i TeV (%s)}", theSqrts, theDataPeriod.Data());
+    text = pavetext.AddText(0.9, 0.45, cErgTev);
+    text->SetTextSize(0.0315);
+
+    TPaveText pavetext2(0.62, 0.85, 0.85, 0.90, "brNDC");
+    pavetext2.SetBorderSize(0);
+    pavetext2.SetFillStyle(0);
+    pavetext2.SetTextAlign(12);
+    pavetext2.SetTextFont(42);
+    pavetext2.SetTextSize(0.045);
+    TString strProcessLabel;
+    if (proctype==ProcessHandler::kGG) strProcessLabel=Form("#font[42]{%s %s#rightarrow%s}", strCategoryLabel.Data(), "gg#rightarrowH", strChannelLabel.Data());
+    else if (proctype==ProcessHandler::kZH) strProcessLabel=Form("#font[42]{%s %s#rightarrow%s}", strCategoryLabel.Data(), "Z H", strChannelLabel.Data());
+    else if (proctype==ProcessHandler::kWH) strProcessLabel=Form("#font[42]{%s %s#rightarrow%s}", strCategoryLabel.Data(), "W H", strChannelLabel.Data());
+    else if (proctype==ProcessHandler::kVBF) strProcessLabel=Form("#font[42]{%s %s#rightarrow%s}", strCategoryLabel.Data(), "VBF H", strChannelLabel.Data());
+    text = pavetext2.AddText(0.025, 0.45, strProcessLabel);
+    text->SetTextSize(0.0315);
+
+    TString strDataTitle="Simulation";
+    TString strPdfTitle="Fit";
     incl_plot.Draw();
+    legend.AddEntry("Data", strDataTitle, "lp");
+    legend.AddEntry("MassShapePdf", strPdfTitle, "l");
+    legend.AddEntry("MassShapePdf_Scale2", strPdfTitle+" (scale up/down)", "l");
+    legend.AddEntry("MassShapePdf_Res2", strPdfTitle+" (resolution up/down)", "l");
+    legend.Draw("same");
+    pavetext.Draw();
+    pavetext2.Draw();
+    can.RedrawAxis();
+    can.Modified();
+    can.Update();
     can.SaveAs(Form("%s_%s.pdf", canvasnamecore.Data(), can.GetName()));
     can.SaveAs(Form("%s_%s.png", canvasnamecore.Data(), can.GetName()));
     can.Close();
@@ -1074,10 +1198,10 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   for (auto& var:CB_parameter_list) var.setConstant(true);
   var_mtrue.SetName("MH");
   var_mreco.SetName("mass");
-  incl_pdf.SetName("ResolutionModel");
+  incl_pdf.SetName("MassShapeModel");
   var_mtrue.SetTitle("MH");
   var_mreco.SetTitle("mass");
-  incl_pdf.SetTitle("ResolutionModel");
+  incl_pdf.SetTitle("MassShapeModel");
 
   RooWorkspace w("w", "");
   w.import(incl_pdf, RecycleConflictNodes());

@@ -468,7 +468,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         TString hname = outputProcessHandle->getOutputTreeName(ProcessHandleType::castIntToHypothesisType(it));
         hname = hname + "_" + strCategory + "_" + strSystematics + "_" + KDset.at(0);
         MELAout << "Setting up mass histogram " << hname << endl;
-        hMass_FromNominalInclusive[cat].emplace_back(hname, hname, KDbinning.at(0));
+        hMass_FromNominalInclusive[cat].emplace_back(hname, hname, getDiscriminantFineBinning(channel, cat, KDset.back(), massregion));
       }
 
       tree->SetBranchStatus("*", 0);
@@ -836,6 +836,20 @@ template<> void getTemplatesPerCategory<2>(
       MELAout << "Satisfies compatibility criteria, combining conditional templates..." << endl;
       for (unsigned int t=0; t<ntpls; t++) ExtHist_t::averageHistograms(hTemplates_POWHEG.at(t), hTemplates_MCFM.at(t));
       hTemplates = &hTemplates_POWHEG;
+      for (unsigned int t=0; t<ntpls; t++){
+        auto& tpl = hTemplates->at(t);
+        TH_t*& htpl = tpl.getHistogram();
+
+        ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
+        ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
+        if (!ProcessHandleType::isInterferenceContribution(tpltype)){
+          if (KDbinning.at(0).getLabel()=="ZZMass") conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false, USEEFFERRINCOND);
+          else{
+            double hist_integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), false, nullptr);
+            htpl->Scale(1./hist_integral);
+          }
+        }
+      }
     }
     else{
       MELAout << "Does not satisfy compatibility criteria, ";
@@ -1025,6 +1039,20 @@ template<> void getTemplatesPerCategory<3>(
       MELAout << "Satisfies compatibility criteria, combining conditional templates..." << endl;
       for (unsigned int t=0; t<ntpls; t++) ExtHist_t::averageHistograms(hTemplates_POWHEG.at(t), hTemplates_MCFM.at(t));
       hTemplates = &hTemplates_POWHEG;
+      for (unsigned int t=0; t<ntpls; t++){
+        auto& tpl = hTemplates->at(t);
+        TH_t*& htpl = tpl.getHistogram();
+
+        ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
+        ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
+        if (!ProcessHandleType::isInterferenceContribution(tpltype)){
+          if (KDbinning.at(0).getLabel()=="ZZMass") conditionalizeHistogram<TH_t>(htpl, 0, nullptr, false, USEEFFERRINCOND);
+          else{
+            double hist_integral = getHistogramIntegralAndError(htpl, 1, htpl->GetNbinsX(), 1, htpl->GetNbinsY(), 1, htpl->GetNbinsZ(), false, nullptr);
+            htpl->Scale(1./hist_integral);
+          }
+        }
+      }
     }
     else{
       MELAout << "Does not satisfy compatibility criteria, ";

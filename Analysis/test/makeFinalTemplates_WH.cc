@@ -444,7 +444,7 @@ void makeFinalTemplates_WH(const Channel channel, const ACHypothesis hypo, const
         TString hname = outputProcessHandle->getOutputTreeName(ProcessHandleType::castIntToHypothesisType(it));
         hname = hname + "_" + strCategory + "_" + strSystematics + "_" + KDset.at(0);
         MELAout << "Setting up mass histogram " << hname << endl;
-        hMass_FromNominalInclusive[cat].emplace_back(hname, hname, KDbinning.at(0));
+        hMass_FromNominalInclusive[cat].emplace_back(hname, hname, getDiscriminantFineBinning(channel, cat, KDset.back(), massregion));
       }
 
       tree->SetBranchStatus("*", 0);

@@ -422,7 +422,7 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
         TString hname = outputProcessHandle->getOutputTreeName();
         hname = hname + "_" + strCategory + "_" + strSystematics + "_" + KDset.at(0);
         MELAout << "Setting up mass histogram " << hname << endl;
-        hMass_FromNominalInclusive[cat].emplace_back(hname, hname, KDbinning.at(0));
+        hMass_FromNominalInclusive[cat].emplace_back(hname, hname, getDiscriminantFineBinning(channel, cat, KDset.back(), massregion));
       }
 
       tree->SetBranchStatus("*", 0);
@@ -725,14 +725,15 @@ template<> void getTemplatesPerCategory<2>(
 
       // SM on-shell analysis uses conditional templates
       if (hypo==kSM && thePerProcessHandle->getProcessMassRegion()==kOnshell){
-        htpl->SetName(Form("%s_condDim%i", htpl->GetName(), 0));
+        TH_t hcond(*htpl);
+        hcond.SetName(Form("%s_condDim%i", htpl->GetName(), 0));
 
-        conditionalizeHistogram<TH_t>(htpl, 0, nullptr, true, USEEFFERRINCOND);
+        conditionalizeHistogram<TH_t>(&hcond, 0, nullptr, true, USEEFFERRINCOND);
 
         MELAout << "Final integrity check on [ " << htpl->GetName() << " ]" << endl;
-        if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
-        else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
-        foutput->WriteTObject(htpl);
+        if (checkHistogramIntegrity(&hcond)) MELAout << "Integrity of [ " << hcond.GetName() << " ] is GOOD." << endl;
+        else MELAout << "WARNING: Integrity of [ " << hcond.GetName() << " ] is BAD." << endl;
+        foutput->WriteTObject(&hcond);
       }
     }
     rootdir->cd();
@@ -841,14 +842,15 @@ template<> void getTemplatesPerCategory<3>(
 
       // SM on-shell analysis uses conditional templates
       if (hypo==kSM && thePerProcessHandle->getProcessMassRegion()==kOnshell){
-        htpl->SetName(Form("%s_condDim%i", htpl->GetName(), 0));
+        TH_t hcond(*htpl);
+        hcond.SetName(Form("%s_condDim%i", htpl->GetName(), 0));
 
-        conditionalizeHistogram<TH_t>(htpl, 0, nullptr, true, USEEFFERRINCOND);
+        conditionalizeHistogram<TH_t>(&hcond, 0, nullptr, true, USEEFFERRINCOND);
 
         MELAout << "Final integrity check on [ " << htpl->GetName() << " ]" << endl;
-        if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
-        else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
-        foutput->WriteTObject(htpl);
+        if (checkHistogramIntegrity(&hcond)) MELAout << "Integrity of [ " << hcond.GetName() << " ] is GOOD." << endl;
+        else MELAout << "WARNING: Integrity of [ " << hcond.GetName() << " ] is BAD." << endl;
+        foutput->WriteTObject(&hcond);
       }
     }
     rootdir->cd();

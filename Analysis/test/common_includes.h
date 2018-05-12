@@ -5,6 +5,7 @@
 #include <ctime>
 #include <fstream>
 #include <iomanip>
+#include <cassert>
 #include <cmath>
 #include <string>
 #include <vector>

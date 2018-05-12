@@ -416,7 +416,7 @@ void makeFinalTemplates_QQBkg(const Channel channel, const ACHypothesis hypo, co
         TString hname = outputProcessHandle->getOutputTreeName();
         hname = hname + "_" + strCategory + "_" + strSystematics + "_" + KDset.at(0);
         MELAout << "Setting up mass histogram " << hname << endl;
-        hMass_FromNominalInclusive[cat].emplace_back(hname, hname, KDbinning.at(0));
+        hMass_FromNominalInclusive[cat].emplace_back(hname, hname, getDiscriminantFineBinning(channel, cat, KDset.back(), massregion));
       }
 
       tree->SetBranchStatus("*", 0);

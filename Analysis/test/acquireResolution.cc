@@ -1172,10 +1172,11 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     pavetext2.SetTextFont(42);
     pavetext2.SetTextSize(0.045);
     TString strProcessLabel;
-    if (proctype==ProcessHandler::kGG) strProcessLabel=Form("#font[42]{%s %s#rightarrow%s}", strCategoryLabel.Data(), "gg#rightarrowH", strChannelLabel.Data());
-    else if (proctype==ProcessHandler::kZH) strProcessLabel=Form("#font[42]{%s %s#rightarrow%s}", strCategoryLabel.Data(), "Z H", strChannelLabel.Data());
-    else if (proctype==ProcessHandler::kWH) strProcessLabel=Form("#font[42]{%s %s#rightarrow%s}", strCategoryLabel.Data(), "W H", strChannelLabel.Data());
-    else if (proctype==ProcessHandler::kVBF) strProcessLabel=Form("#font[42]{%s %s#rightarrow%s}", strCategoryLabel.Data(), "VBF H", strChannelLabel.Data());
+    if (proctype==ProcessHandler::kGG) strProcessLabel=Form("#font[42]{%s, %s#rightarrow%s}", strCategoryLabel.Data(), "gg#rightarrowH", strChannelLabel.Data());
+    else if (proctype==ProcessHandler::kZH) strProcessLabel=Form("#font[42]{%s, %s#rightarrow%s}", strCategoryLabel.Data(), "Z H", strChannelLabel.Data());
+    else if (proctype==ProcessHandler::kWH) strProcessLabel=Form("#font[42]{%s, %s#rightarrow%s}", strCategoryLabel.Data(), "W H", strChannelLabel.Data());
+    else if (proctype==ProcessHandler::kVBF) strProcessLabel=Form("#font[42]{%s, %s#rightarrow%s}", strCategoryLabel.Data(), "VBF H", strChannelLabel.Data());
+    else if (proctype==ProcessHandler::kQQBkg) strProcessLabel=Form("#font[42]{%s, %s#rightarrow%s}", strCategoryLabel.Data(), "q#bar{q}", strChannelLabel.Data());
     text = pavetext2.AddText(0.025, 0.45, strProcessLabel);
     text->SetTextSize(0.0315);
 

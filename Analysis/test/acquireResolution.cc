@@ -96,7 +96,7 @@ ExtendedBinning getIntermediateBinning(TH1F const* hwgt, TH1F* const hunwgt){
 void acquireResolution_one(const Channel channel, const Category category, const TString fixedDate, ProcessHandler::ProcessType proctype, const TString strGenerator){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
+  ProcessHandler const* thePerProcessHandle=getOnshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;
   if (proctype==ProcessHandler::kZX) return;
   if (strGenerator!="POWHEG") return;
@@ -758,9 +758,9 @@ void acquireResolution_one(const Channel channel, const Category category, const
 void acquireH125OnshellMassShape_one(const Channel channel, const Category category, const TString fixedDate, ProcessHandler::ProcessType proctype, const TString strGenerator){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
-  ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
+  ProcessHandler const* thePerProcessHandle=getOnshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;
-  if (proctype==ProcessHandler::kZX || proctype==ProcessHandler::kQQBkg) return;
+  if (proctype==ProcessHandler::kZX) return;
   if (strGenerator!="POWHEG") return;
 
   TDirectory* curdir = gDirectory;
@@ -812,6 +812,7 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   else if (proctype==ProcessHandler::kVBF) strSampleIdentifiers.push_back("VBF_Sig_POWHEG");
   else if (proctype==ProcessHandler::kZH) strSampleIdentifiers.push_back("ZH_Sig_POWHEG");
   else if (proctype==ProcessHandler::kWH) strSampleIdentifiers.push_back("WH_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kQQBkg) strSampleIdentifiers.push_back("qq_Bkg_Combined");
   else assert(0);
 
   // Ignore any Kfactors
@@ -835,7 +836,7 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     unordered_map<int, std::vector<TString>> mh_samplelist_map;
     for (TString& strSample:strSamples){
       int MHVal = SampleHelpers::findPoleMass(strSample);
-      if (MHVal!=125) continue;
+      if (MHVal!=125 && proctype!=ProcessHandler::kQQBkg) continue;
       TString cinput = CJLSTTree::constructCJLSTSamplePath(strSample);
       if (!gSystem->AccessPathName(cinput)){
         auto it=mh_samplelist_map.find(MHVal);
@@ -910,7 +911,7 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     RooBinning var_mreco_binning(binning_mass.getNbins(), binning_mass.getBinning());
     var_mreco.setBinning(var_mreco_binning);
   }
-  RooConstVar var_mtrue("MH", "MH", 125);
+  RooRealVar var_mtrue("MH", "MH", 125, 0, theSqrts*1000.);
   RooRealVar var_weight("weight", "Event weight", 1, -10, 10); var_weight.removeMin(); var_weight.removeMax();
 
   // Setup inclusive data
@@ -918,8 +919,9 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   RooDataSet data("data", "data", treevars, var_weight.GetName());
   {
     TTree* tree = theOutputTree->getSelectedTree();
-    float mreco, wgt;
+    float mtrue, mreco, wgt;
     bool isCategory=(category==Inclusive);
+    if (proctype==ProcessHandler::kQQBkg) tree->SetBranchAddress("GenHMass", &mtrue);
     tree->SetBranchAddress("ZZMass", &mreco);
     tree->SetBranchAddress("weight", &wgt);
     if (!isCategory){
@@ -932,6 +934,7 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     for (int ev=0; ev<tree->GetEntries(); ev++){
       tree->GetEntry(ev);
       if (!isCategory) continue;
+      if (proctype==ProcessHandler::kQQBkg) mreco = mreco-mtrue+125;
       if (mreco<var_mreco.getMin() || mreco>var_mreco.getMax()) continue;
       var_mreco.setVal(mreco);
       var_weight.setVal(wgt);
@@ -993,12 +996,12 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   strscalemeanFormula="(@0+@1)*(1.+@2)-@1"; // Until a new procedure is found, keep var_mtrue as part of the scale unc. definition
 
   RooRealVar res_uncvar_e("CMS_res_e", "CMS_res_e", 0, -7, 7);
-  RooConstVar res_uncval_e_up(prefix + "final_CB_CMS_res_eUp", "", 1.2);
-  RooConstVar res_uncval_e_dn(prefix + "final_CB_CMS_res_eDown", "", 1./1.2);
+  RooConstVar res_uncval_e_up(prefix + "final_CB_CMS_res_eUp", "", (channel==k2e2mu ? sqrt(1.2) : 1.2));
+  RooConstVar res_uncval_e_dn(prefix + "final_CB_CMS_res_eDown", "", 1./(channel==k2e2mu ? sqrt(1.2) : 1.2));
   AsymPow res_uncval_e(prefix + "final_CB_CMS_res_e_AsymPow", "", res_uncval_e_dn, res_uncval_e_up, res_uncvar_e);
   RooRealVar res_uncvar_mu("CMS_res_m", "CMS_res_m", 0, -7, 7);
-  RooConstVar res_uncval_mu_up(prefix + "final_CB_CMS_res_mUp", "", 1.2);
-  RooConstVar res_uncval_mu_dn(prefix + "final_CB_CMS_res_mDown", "", 1./1.2);
+  RooConstVar res_uncval_mu_up(prefix + "final_CB_CMS_res_mUp", "", (channel==k2e2mu ? sqrt(1.2) : 1.2));
+  RooConstVar res_uncval_mu_dn(prefix + "final_CB_CMS_res_mDown", "", 1./(channel==k2e2mu ? sqrt(1.2) : 1.2));
   AsymPow res_uncval_mu(prefix + "final_CB_CMS_res_m_AsymPow", "", res_uncval_mu_dn, res_uncval_mu_up, res_uncvar_mu);
   TString strreswidthFormula; RooArgList reswidtharglist;
   reswidtharglist.add(CB_parameter_list.at(1));
@@ -1194,22 +1197,97 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     can.Close();
   }
 
+  RooWorkspace w("w", "");
+
   // Set all variables constant
   for (auto& var:CB_parameter_list) var.setConstant(true);
-  var_mtrue.SetName("MH");
-  var_mreco.SetName("mass");
-  incl_pdf.SetName("MassShapeModel");
-  var_mtrue.SetTitle("MH");
-  var_mreco.SetTitle("mass");
-  incl_pdf.SetTitle("MassShapeModel");
+  var_mtrue.setConstant(false);
+  var_mtrue.SetName("MH"); var_mtrue.SetTitle("MH");
+  var_mreco.SetName("mass"); var_mreco.SetTitle("mass");
 
-  RooWorkspace w("w", "");
+  incl_pdf.SetName("MassShapeModel"); incl_pdf.SetTitle("MassShapeModel");
+  if (proctype!=ProcessHandler::kQQBkg) w.import(incl_pdf, RecycleConflictNodes());
+  incl_pdf.SetName("ResolutionModel"); incl_pdf.SetTitle("ResolutionModel"); // Here the resolution model is the same as mass shape model
   w.import(incl_pdf, RecycleConflictNodes());
   //w.import(var_mreco, RenameVariable(var_mreco.GetName(), "newmass"));
   //RooAbsArg* pdfnew=w.factory("EDIT::ResolutionModelCopy(ResolutionModel, mass=newmass)");
   //w.import(*pdfnew, RecycleConflictNodes());
   foutput->WriteTObject(&w);
   w.pdf(incl_pdf.GetName())->Print("v");
+  foutput->Close();
+  MELAout.close();
+}
+
+void collectOnshellMassShapes_one(const Channel channel, const Category category, const TString fixedDate){
+  if (channel==NChannels) return;
+  if (!CheckSetTemplatesCategoryScheme(category)) return;
+
+  TDirectory* curdir = gDirectory;
+
+  const TString strChannel = getChannelName(channel);
+  const TString strCategory = getCategoryName(category);
+  const TString strACHypo = getACHypothesisName(kSM);
+  const TString strSqrts = Form("%i", theSqrts);
+  const TString strYear = theDataPeriod;
+  const TString strSqrtsYear = strSqrts + "TeV_" + strYear;
+  //const TString strChannelLabel = getChannelLabel(channel);
+  //const TString strCategoryLabel = getCategoryLabel(category);
+
+  // Setup the output directories
+  TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
+  TString strdate = todaysdate();
+  if (fixedDate!="") strdate=fixedDate;
+  cout << "Today's date: " << strdate << endl;
+  TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Resolution/";
+  TString coutput_common = cinput_common;
+  gSystem->Exec("mkdir -p " + coutput_common);
+
+  TString OUTPUT_NAME_CORE = Form(
+    "HtoZZ%s_%s_FinalMassShape_%s",
+    strChannel.Data(), strCategory.Data(),
+    "AllProcesses"
+  );
+  TString OUTPUT_NAME=OUTPUT_NAME_CORE;
+  TString OUTPUT_LOG_NAME = OUTPUT_NAME;
+  TString coutput = coutput_common + OUTPUT_NAME + ".root";
+  TString coutput_log = coutput_common + OUTPUT_LOG_NAME + ".log";
+  MELAout.open(coutput_log.Data());
+  MELAout << "Opened log file " << coutput_log << endl;
+  TFile* foutput = TFile::Open(coutput, "recreate");
+  MELAout << "Opened file " << coutput << endl;
+  MELAout << "===============================" << endl;
+  MELAout << "CoM Energy: " << theSqrts << " TeV" << endl;
+  MELAout << "Decay Channel: " << strChannel << endl;
+  MELAout << "===============================" << endl;
+  MELAout << endl;
+
+  vector<ProcessHandler::ProcessType> proctypeList{ ProcessHandler::kGG, ProcessHandler::kVBF, ProcessHandler::kZH, ProcessHandler::kWH };
+  foutput->cd();
+  RooWorkspace w_out("w", "");
+  for (auto& proctype:proctypeList){
+    ProcessHandler const* thePerProcessHandle=getOnshellProcessHandler(proctype);
+
+    TString INPUT_NAME_CORE = Form(
+      "HtoZZ%s_%s_FinalMassShape_%s",
+      strChannel.Data(), strCategory.Data(),
+      thePerProcessHandle->getProcessName().Data()
+    );
+    TString INPUT_NAME=INPUT_NAME_CORE;
+    TString cinput = cinput_common + INPUT_NAME + ".root";
+    TFile* finput = TFile::Open(cinput, "read");
+
+    finput->cd();
+    RooWorkspace* w_in = (RooWorkspace*) finput->Get("w");
+    RooAbsPdf* pdf = w_in->pdf("MassShapeModel");
+    foutput->cd();
+    pdf->SetName(thePerProcessHandle->getProcessName() + "_Sig_MassShape");
+    pdf->SetTitle(pdf->GetName());
+    w_out.import(*pdf, RecycleConflictNodes());
+
+    finput->Close();
+  }
+  foutput->cd();
+  foutput->WriteTObject(&w_out);
   foutput->Close();
   MELAout.close();
 }

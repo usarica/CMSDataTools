@@ -16,7 +16,7 @@ const TString user_output_dir = "output/";
 using HistogramSmootherWithGaussianKernel::getSmoothHistogram;
 
 
-ExtendedBinning getMassBinning(TTree* tree, bool separateZ4l=false);
+ExtendedBinning getMassBinning(TTree* tree, float& ZZMass, bool& flag, bool separateZ4l=false);
 void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
   const Channel channel, const Category category, const ACHypothesis hypo, const SystematicVariationTypes syst,
   const unsigned int istage, const TString fixedDate,
@@ -227,21 +227,26 @@ void acquireMassRatio_ProcessNominalToNominalInclusive_one(
         nEntriesMin=tree->GetEntries();
       }
     }
-    ExtendedBinning binning=getMassBinning(treeChosen, proctype==ProcessHandler::kQQBkg);
 
-    vector<ExtendedHistogram_1D*> hMass; hMass.assign(InputTypeSize, nullptr);
+    bool isCategory=(treeChosen==treeGroup.at(0));
+    float ZZMass, weight;
     for (unsigned int it=0; it<InputTypeSize; it++){
-      ExtendedHistogram_1D*& hh = hMass.at(it);
       TTree*& tree = treeGroup.at(it);
-      hh = new ExtendedHistogram_1D(Form("MassDistribution_%s_%i", tree->GetName(), it), "", binning);
-      bool isCategory=(it==0);
-      float ZZMass, weight;
       tree->SetBranchAddress("ZZMass", &ZZMass);
       tree->SetBranchAddress("weight", &weight);
       if (!isCategory){
         TString catFlagName = TString("is_") + strCategory + TString("_") + getACHypothesisName(hypo);
         tree->SetBranchAddress(catFlagName, &isCategory);
       }
+    }
+    ExtendedBinning binning=getMassBinning(treeChosen, ZZMass, isCategory, proctype==ProcessHandler::kQQBkg);
+
+    vector<ExtendedHistogram_1D*> hMass; hMass.assign(InputTypeSize, nullptr);
+    for (unsigned int it=0; it<InputTypeSize; it++){
+      ExtendedHistogram_1D*& hh = hMass.at(it);
+      TTree*& tree = treeGroup.at(it);
+      hh = new ExtendedHistogram_1D(Form("MassDistribution_%s_%i", tree->GetName(), it), "", binning);
+      isCategory=(it==0);
       for (int ev=0; ev<tree->GetEntries(); ev++){
         tree->GetEntry(ev);
         if (!isCategory) continue;
@@ -508,26 +513,32 @@ void acquireMassRatio_ProcessSystToNominal_one(
         nEntriesMin=tree->GetEntries();
       }
     }
-    ExtendedBinning binning=getMassBinning(treeChosen, proctype==ProcessHandler::kQQBkg);
 
-    vector<ExtendedHistogram_1D*> hMass; hMass.assign(InputTypeSize, nullptr);
+    bool isCategory=(category==Inclusive);
+    float ZZMass, weight;
     for (unsigned int it=0; it<InputTypeSize; it++){
-      ExtendedHistogram_1D*& hh = hMass.at(it);
       TTree*& tree = treeGroup.at(it);
-      hh = new ExtendedHistogram_1D(Form("MassDistribution_%s_%i", tree->GetName(), it), "", binning);
-      bool isCategory=(category==Inclusive);
-      float ZZMass, weight;
       tree->SetBranchAddress("ZZMass", &ZZMass);
       tree->SetBranchAddress("weight", &weight);
       if (!isCategory){
         TString catFlagName = TString("is_") + strCategory + TString("_") + getACHypothesisName(hypo);
         tree->SetBranchAddress(catFlagName, &isCategory);
       }
+    }
+    ExtendedBinning binning=getMassBinning(treeChosen, ZZMass, isCategory, proctype==ProcessHandler::kQQBkg);
+
+    vector<ExtendedHistogram_1D*> hMass; hMass.assign(InputTypeSize, nullptr);
+    for (unsigned int it=0; it<InputTypeSize; it++){
+      ExtendedHistogram_1D*& hh = hMass.at(it);
+      TTree*& tree = treeGroup.at(it);
+      hh = new ExtendedHistogram_1D(Form("MassDistribution_%s_%i", tree->GetName(), it), "", binning);
+      isCategory=(category==Inclusive);
       for (int ev=0; ev<tree->GetEntries(); ev++){
         tree->GetEntry(ev);
         if (!isCategory) continue;
         hh->fill(ZZMass, weight);
       }
+      for (int bin=1; bin<=hh->getHistogram()->GetNbinsX(); bin++) MELAout << "Bin " << bin << ": " << hh->getHistogram()->GetBinContent(bin) << endl;
     }
     vector<ExtendedHistogram_1D> hRatio;
     for (unsigned int it=1; it<InputTypeSize; it++){
@@ -997,12 +1008,10 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
 }
 
 
-ExtendedBinning getMassBinning(TTree* tree, bool separateZ4l){
+ExtendedBinning getMassBinning(TTree* tree, float& ZZMass, bool& flag, bool separateZ4l){
   ExtendedBinning binning("ZZMass");
   if (!tree) return binning;
 
-  float ZZMass;
-  tree->SetBranchAddress("ZZMass", &ZZMass);
   const int nEntries = tree->GetEntries();
   const int nEntriesWithCut = tree->GetEntries("ZZMass>=220");
 
@@ -1021,6 +1030,7 @@ ExtendedBinning getMassBinning(TTree* tree, bool separateZ4l){
   TH1D* hmass = new TH1D("hmass", "", nbinsraw, massLow, massHigh);
   for (int ev=0; ev<nEntries; ev++){
     tree->GetEntry(ev);
+    if (!flag) continue;
     if (ZZMass>=220.) hmass->Fill(ZZMass);
   }
 
@@ -1038,17 +1048,23 @@ ExtendedBinning getMassBinning(TTree* tree, bool separateZ4l){
   }
   delete hmass;
   std::reverse(counts.begin(), counts.end());
+  MELAout << counts << endl;
+  MELAout << binning.getBinningVector() << endl;
   // These lines guarantee count>countThreshold in every bin
   if (counts.at(0)<countThreshold && counts.size()>1){
     counts.at(1) += counts.at(0);
     counts.erase(counts.begin());
     binning.removeBinLowEdge(1);
   }
+  MELAout << counts << endl;
+  MELAout << binning.getBinningVector() << endl;
   if (counts.back()<countThreshold && counts.size()>1){
     counts.at(counts.size()-2) += counts.at(counts.size()-1);
     counts.erase(counts.begin()+counts.size()-1);
     binning.removeBinLowEdge(binning.getNbins()-1);
   }
+  MELAout << counts << endl;
+  MELAout << binning.getBinningVector() << endl;
   // Merge every two bins except the last one
   {
     unsigned int nbins_old=binning.getNbins();
@@ -1057,6 +1073,8 @@ ExtendedBinning getMassBinning(TTree* tree, bool separateZ4l){
       binning.removeBinLowEdge(nbins_old-bin-1);
     }
   }
+  MELAout << counts << endl;
+  MELAout << binning.getBinningVector() << endl;
   // Finally, add the low mass boundaries
   binning.addBinBoundary(70.);
   if (separateZ4l) binning.addBinBoundary(105.);

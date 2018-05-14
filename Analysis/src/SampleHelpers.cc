@@ -385,7 +385,7 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
       samples.push_back("ZH400");
       samples.push_back("ZH450");
       samples.push_back("ZH500");
-      samples.push_back("ZH550");
+      if (!(theDataPeriod=="2017" && CJLSTversion<=180416)) samples.push_back("ZH550");
       samples.push_back("ZH600");
       samples.push_back("ZH700");
       samples.push_back("ZH750");

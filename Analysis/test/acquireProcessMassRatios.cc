@@ -1047,7 +1047,7 @@ ExtendedBinning getMassBinning(TTree* tree, bool separateZ4l){
   if (counts.back()<countThreshold && counts.size()>1){
     counts.at(counts.size()-2) += counts.at(counts.size()-1);
     counts.erase(counts.begin()+counts.size()-1);
-    binning.removeBinLowEdge(binning..getNbins()-1);
+    binning.removeBinLowEdge(binning.getNbins()-1);
   }
   // Merge every two bins except the last one
   {

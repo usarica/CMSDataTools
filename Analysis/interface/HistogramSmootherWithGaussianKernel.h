@@ -35,7 +35,7 @@ namespace HistogramSmootherWithGaussianKernel{
     TString const hname;
     TString const htitle;
 
-    TTree* const tree;
+    TTree* tree;
     float& xvar;
     float& weight;
     bool& flag;
@@ -58,6 +58,20 @@ namespace HistogramSmootherWithGaussianKernel{
 
   ExtendedBinning getIntermediateBinning(ExtendedBinning const& binning);
 
+  void getPreSmoothingReference(
+    TTree*& tree, float& xvar, float& weight, bool& selflag,
+    ExtendedProfileHistogram& reference
+  );
+  void getPreSmoothingReference(
+    TTree*& tree, float& xvar, float& yvar, float& weight, bool& selflag,
+    ExtendedProfileHistogram& reference
+  );
+  void getPreSmoothingReference(
+    TTree*& tree, float& xvar, float& yvar, float& zvar, float& weight, bool& selflag,
+    ExtendedProfileHistogram& reference
+  );
+  void getMinimumNeffReference(std::vector<ExtendedProfileHistogram>& referenceList, ExtendedProfileHistogram& reference);
+
   TH1F* getSmoothHistogram(
     TString const hname, TString const htitle, ExtendedBinning const& finalXBinning,
     TTree* tree, float& xvar, float& weight, bool& selflag,
@@ -78,6 +92,14 @@ namespace HistogramSmootherWithGaussianKernel{
     double sigmaXmult=1, double sigmaYmult=1, double sigmaZmult=1,
     TH3F** hRawPtr=nullptr
   );
+
+  std::vector<TH3F*> getSimultaneousSmoothHistograms(
+    ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning, ExtendedBinning const& finalZBinning,
+    std::vector<TreeHistogramAssociation_3D>& treeList,
+    double sigmaXmult=1, double sigmaYmult=1, double sigmaZmult=1,
+    std::vector<TH3F*>* hRawPtr=nullptr
+  );
+
 
 }
 

@@ -1340,15 +1340,111 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
     pairing.emplace_back(VVTplIntBSM_ai1_1_Re);
     pairing.emplace_back(VVTplIntBSM_ai1_2_Re);
   }
+
+  // Make sure all pure components are non-negative, and corresponding interferences are scaled down to 0 if they are
   for (TemplateContributionList const& pair:pairing){
+    float& tplVal=vals.at(pair.type);
+    float thr = tplVal;
+    for (auto const& componentPair:pair.TypePowerPair){
+      if (vals.at(componentPair.first)<0.){
+        vals.at(componentPair.first)=0;
+        thr*=0;
+      }
+    }
+    if (fabs(tplVal)>thr) tplVal = thr;
+  }
+
+  float scale_a1=1;
+  float scale_ai=1;
+  for (TemplateContributionList const& pair:pairing){
+    if (!(pair.type==VVTplInt_Re || pair.type==VVTplIntBSM_ai1_2_Re)) continue;
     float& tplVal=vals.at(pair.type);
     float thr = pair.coefficient;
     for (auto const& componentPair:pair.TypePowerPair){
       if (vals.at(componentPair.first)<0.) vals.at(componentPair.first)=0;
       thr *= pow(vals.at(componentPair.first), componentPair.second);
     }
-    if (fabs(tplVal)>thr) tplVal *= thr*0.99/fabs(tplVal);
+    if (fabs(tplVal)>thr){
+      float scale = thr*0.99/fabs(tplVal);
+      tplVal *= scale;
+      if (pair.type==VVTplInt_Re) scale_a1=sqrt(scale); // sqrt because interference scales as a1**2
+      else if (pair.type==VVTplIntBSM_ai1_2_Re) scale_ai=sqrt(scale); // sqrt because interference scales as a1**2
+    }
   }
+
+  // If there are more than one interference terms, make sure that they all satisfy positive-definite sums
+  if (vals.size()==nVVTplTypes){
+    vals.at(VVTplSigBSMSMInt_ai1_1_Re) *= pow(scale_a1, 3) * pow(scale_ai, 1);
+    vals.at(VVTplSigBSMSMInt_ai1_2_PosDef) *= pow(scale_a1, 2) * pow(scale_ai, 2);
+    vals.at(VVTplSigBSMSMInt_ai1_3_Re) *= pow(scale_a1, 1) * pow(scale_ai, 3);
+    vals.at(VVTplIntBSM_ai1_1_Re) *= scale_a1 * scale_ai;
+
+    { // Check signal-only sum
+      float fai_mostNeg=-2;
+      float val_fai_mostNeg=0;
+      float sum_pure=0;
+      for (float fai=-1; fai<=1; fai+=0.001){
+        float sum=0;
+        sum += pow((1-fabs(fai)), 2) * vals.at(VVTplSig);
+        sum += TMath::Sign(1, fai)*sqrt(fabs(fai))*pow(sqrt(1-fabs(fai)), 3) * vals.at(VVTplSigBSMSMInt_ai1_1_Re);
+        sum += fabs(fai)*(1-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_2_PosDef);
+        sum += TMath::Sign(1, fai)*pow(sqrt(fabs(fai)), 3)*sqrt(1-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_3_Re);
+        sum += pow(fai, 2) * vals.at(VVTplSigBSM);
+        if (sum<val_fai_mostNeg){
+          val_fai_mostNeg=sum;
+          fai_mostNeg=fai;
+          sum_pure = pow((1-fabs(fai)), 2) * vals.at(VVTplSig) + pow(fai, 2) * vals.at(VVTplSigBSM);
+        }
+      }
+      if (fai_mostNeg>=-1){
+        float excess_mostNeg = val_fai_mostNeg - sum_pure;
+        float thr_neg = -sum_pure;
+        float neg_scale = fabs(thr_neg*0.99/excess_mostNeg);
+        vals.at(VVTplSigBSMSMInt_ai1_1_Re) *= neg_scale;
+        vals.at(VVTplSigBSMSMInt_ai1_2_PosDef) *= neg_scale;
+        vals.at(VVTplSigBSMSMInt_ai1_3_Re) *= neg_scale;
+      }
+    }
+
+    // No need to check Sig SM - Bkg or Sig BSM - Bkg sums; they are already handled
+    { // Check sum of all components
+      float fai_mostNeg=-2;
+      float val_fai_mostNeg=0;
+      float sum_pure=0;
+      for (float fai=-1; fai<=1; fai+=0.001){
+        float sum=0;
+        sum += vals.at(VVTplBkg);
+
+        sum += pow((1-fabs(fai)), 2) * vals.at(VVTplSig);
+        sum += TMath::Sign(1, fai)*sqrt(fabs(fai))*pow(sqrt(1-fabs(fai)), 3) * vals.at(VVTplSigBSMSMInt_ai1_1_Re);
+        sum += fabs(fai)*(1-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_2_PosDef);
+        sum += TMath::Sign(1, fai)*pow(sqrt(fabs(fai)), 3)*sqrt(1-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_3_Re);
+        sum += pow(fai, 2) * vals.at(VVTplSigBSM);
+
+        sum += (1-fabs(fai)) * vals.at(VVTplInt_Re);
+        sum += TMath::Sign(1, fai)*sqrt(fabs(fai)*(1-fabs(fai))) * vals.at(VVTplIntBSM_ai1_1_Re);
+        sum += fabs(fai) * vals.at(VVTplIntBSM_ai1_2_Re);
+
+        if (sum<val_fai_mostNeg){
+          val_fai_mostNeg=sum;
+          fai_mostNeg=fai;
+          sum_pure = vals.at(VVTplBkg) + pow((1-fabs(fai)), 2) * vals.at(VVTplSig) + pow(fai, 2) * vals.at(VVTplSigBSM);
+        }
+      }
+      if (fai_mostNeg>=-1){
+        float excess_mostNeg = val_fai_mostNeg - sum_pure;
+        float thr_neg = -sum_pure;
+        float neg_scale = fabs(thr_neg*0.99/excess_mostNeg);
+        vals.at(VVTplSigBSMSMInt_ai1_1_Re) *= neg_scale;
+        vals.at(VVTplSigBSMSMInt_ai1_2_PosDef) *= neg_scale;
+        vals.at(VVTplSigBSMSMInt_ai1_3_Re) *= neg_scale;
+        vals.at(VVTplInt_Re) *= neg_scale;
+        vals.at(VVTplIntBSM_ai1_1_Re) *= neg_scale;
+        vals.at(VVTplIntBSM_ai1_2_Re) *= neg_scale;
+      }
+    }
+  }
+
 }
 template<> void VVProcessHandler::recombineHistogramsToTemplates<std::pair<float, float>>(std::vector<std::pair<float, float>>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   if (vals.empty()) return;

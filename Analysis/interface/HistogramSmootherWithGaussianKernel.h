@@ -93,6 +93,18 @@ namespace HistogramSmootherWithGaussianKernel{
     TH3F** hRawPtr=nullptr
   );
 
+  std::vector<TH1F*> getSimultaneousSmoothHistograms(
+    ExtendedBinning const& finalXBinning,
+    std::vector<TreeHistogramAssociation_1D>& treeList,
+    double sigmaXmult=1,
+    std::vector<TH1F*>* hRawPtr=nullptr
+  );
+  std::vector<TH2F*> getSimultaneousSmoothHistograms(
+    ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning,
+    std::vector<TreeHistogramAssociation_2D>& treeList,
+    double sigmaXmult=1, double sigmaYmult=1,
+    std::vector<TH2F*>* hRawPtr=nullptr
+  );
   std::vector<TH3F*> getSimultaneousSmoothHistograms(
     ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning, ExtendedBinning const& finalZBinning,
     std::vector<TreeHistogramAssociation_3D>& treeList,

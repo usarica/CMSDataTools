@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include "StdExtensions.h"
+#include "TUtilHelpers.hh"
 
 
 namespace HelperFunctions{

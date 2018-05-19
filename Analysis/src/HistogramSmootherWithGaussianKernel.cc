@@ -99,7 +99,9 @@ void HistogramSmootherWithGaussianKernel::getPreSmoothingReference(
   selflag=true;
 }
 
+
 void HistogramSmootherWithGaussianKernel::getMinimumNeffReference(std::vector<ExtendedProfileHistogram>& referenceList, ExtendedProfileHistogram& reference){
+  MELAout << "getMinimumNeffReference: Finding the common reference histogram from " << referenceList.size() << " reference samples" << endl;
   std::vector<std::vector<std::vector<double>>>& sumW=reference.getSumWContainer();
   std::vector<std::vector<std::vector<double>>>& sumWsq=reference.getSumWsqContainer();
   for (unsigned int ix=0; ix<sumW.size(); ix++){
@@ -110,11 +112,10 @@ void HistogramSmootherWithGaussianKernel::getMinimumNeffReference(std::vector<Ex
         for (unsigned int iref=0; iref<referenceList.size(); iref++){
           double const& sW=referenceList.at(iref).getSumWContainer().at(ix).at(iy).at(iz);
           double const& sWsq=referenceList.at(iref).getSumWsqContainer().at(ix).at(iy).at(iz);
-          double Neff = pow(sW, 2)/sWsq;
-          if (Neff>0.){
-            if (minNeff==0.){ minNeff=Neff; whichRef=iref; }
-            else if (minNeff>Neff){ minNeff=Neff; whichRef=iref;
-            }
+          if (sWsq>0.){
+            double Neff = pow(sW, 2)/sWsq;
+            if (minNeff==0. && Neff>0.){ minNeff=Neff; whichRef=iref; }
+            else if (minNeff>Neff && Neff>0.){ minNeff=Neff; whichRef=iref; }
           }
         }
         if (whichRef>=0){
@@ -306,6 +307,7 @@ TH2F* HistogramSmootherWithGaussianKernel::getSmoothHistogram(
     }
 
   } // End loop over tree
+  cout << "getSmoothHistogram: " << res->GetName() << " integral: " << res->Integral() << endl;
   return res;
 }
 
@@ -481,7 +483,322 @@ TH3F* HistogramSmootherWithGaussianKernel::getSmoothHistogram(
 }
 
 
+std::vector<TH1F*> HistogramSmootherWithGaussianKernel::getSimultaneousSmoothHistograms(
+  ExtendedBinning const& finalXBinning,
+  std::vector<TreeHistogramAssociation_1D>& treeList,
+  double sigmaXmult,
+  std::vector<TH1F*>* hRawPtr
+){
+  assert(!treeList.empty() && finalXBinning.isValid());
 
+  ExtendedBinning bX=getIntermediateBinning(finalXBinning);
+  bool sameXbins=(bX.getNbins()==finalXBinning.getNbins());
+  double const xmin=bX.getMin(); double const xmax=bX.getMax();
+
+  // Construct fine histogram to determine intermediate binning
+  ExtendedProfileHistogram reference(bX, false);
+  {
+    vector<ExtendedProfileHistogram> referenceList; referenceList.reserve(treeList.size());
+    for (auto& treeHandle:treeList){
+      referenceList.emplace_back(bX, false);
+      getPreSmoothingReference(
+        treeHandle.tree, treeHandle.xvar, treeHandle.weight, treeHandle.flag,
+        referenceList.back()
+      );
+    }
+    getMinimumNeffReference(referenceList, reference);
+  }
+
+  SimpleGaussian gausX(0, 1, SimpleGaussian::kHasLowHighRange, xmin, xmax);
+
+  MELAout << "getSimultaneousSmoothHistogram: Filling the actual histograms with the help of common reference" << endl;
+
+  std::vector<TH1F*> resList;
+  for (auto& treeHandle:treeList){
+    TTree*& tree = treeHandle.tree;
+    float& xvar = treeHandle.xvar;
+    float& weight = treeHandle.weight;
+    bool& selflag = treeHandle.flag;
+    TString const& hname = treeHandle.hname;
+    TString const& htitle = treeHandle.htitle;
+
+    ExtendedProfileHistogram extres(bX, false); // For the res histogram
+    std::vector<std::vector<std::vector<double>>>& extres_sumW=extres.getSumWContainer();
+    std::vector<std::vector<std::vector<double>>>& extres_sumWsq=extres.getSumWsqContainer();
+    ExtendedProfileHistogram extresraw(bX, false); // For the resraw histogram, if exists
+
+    //float sumHistWeights = 0;
+    selflag=true;
+    for (int ev=0; ev<tree->GetEntries(); ev++){
+      tree->GetEntry(ev);
+      progressbar(ev, tree->GetEntries());
+
+      if (!selflag) continue;
+      if ((double) xvar<xmin || (double) xvar>=xmax) continue;
+      if (hRawPtr) extresraw.fill(xvar, weight);
+
+      int ix=bX.getBin(xvar);
+      double Neff=pow(reference.getBinSumW(ix), 2)/reference.getBinSumWsq(ix);
+      double widthGlobalScale = 1./sqrt(Neff);
+
+      double sX = bX.getBinWidth(ix)*widthGlobalScale*sigmaXmult;
+      if (std::min(fabs(xvar-bX.getBinLowEdge(ix)), fabs(xvar-bX.getBinHighEdge(ix)))>=sX*GAUSSIANWIDTHPRECISION) sX=0.;
+      unsigned int ibegin, iend;
+      if (sX!=0. || ix<0){ ibegin=0; iend=bX.getNbins(); }
+      else{ ibegin=ix; iend=ix+1; }
+      gausX.setMean(xvar); gausX.setSigma(sX);
+
+      unsigned int jbegin=0, jend=1;
+      unsigned int kbegin=0, kend=1;
+
+      assert(checkVarNanInf(sX));
+
+      { // 3D is slower than 1D and 2D, so fill manually
+        unsigned int i=ibegin;
+        std::vector<std::vector<std::vector<double>>>::iterator it_i = extres_sumW.begin()+ibegin;
+        std::vector<std::vector<std::vector<double>>>::iterator itsq_i = extres_sumWsq.begin()+ibegin;
+        while (i<iend){
+          double fX = gausX.integralNorm(bX.getBinLowEdge(i), bX.getBinHighEdge(i));
+          bool doProceedX=true;
+          if (fX>1. || fX<0.){ MELAerr << "fX=" << fX << endl; doProceedX=false; }
+          doProceedX &= (fX!=0.);
+
+          if (doProceedX){
+            unsigned int j=jbegin;
+            std::vector<std::vector<double>>::iterator it_j = it_i->begin()+jbegin;
+            std::vector<std::vector<double>>::iterator itsq_j = itsq_i->begin()+jbegin;
+            while (j<jend){
+              constexpr double fY = 1;
+              constexpr bool doProceedY=true;
+              if (doProceedY){
+                unsigned int k=kbegin;
+                std::vector<double>::iterator it_k = it_j->begin()+kbegin;
+                std::vector<double>::iterator itsq_k = itsq_j->begin()+kbegin;
+                while (k<kend){
+                  constexpr double fZ = 1;
+                  constexpr bool doProceedZ=true;
+                  if (doProceedZ){
+                    double fprod=fX*fY*fZ;
+                    double w=fprod*weight;
+                    *(it_k) += w;
+                    *(itsq_k) += pow(w, 2);
+                    //sumHistWeights += w;
+                  }
+                  k++; it_k++; itsq_k++;
+                }
+              }
+              j++; it_j++; itsq_j++;
+            }
+          }
+          i++; it_i++; itsq_i++;
+        }
+      } // End scope of i and iterators
+
+    } // End loop over tree
+
+    //MELAout << "Sum of reference weights: " << sumRefWeights << "; sum of histogram weights: " << sumHistWeights << endl;
+
+    TH1F* res = new TH1F(
+      hname, htitle,
+      finalXBinning.getNbins(), finalXBinning.getBinning()
+    );
+    res->Sumw2();
+    res->GetXaxis()->SetTitle(finalXBinning.getLabel());
+    TH1F* hRaw=nullptr;
+    if (hRawPtr){
+      hRaw = new TH1F(
+        hname+"_raw", htitle,
+        finalXBinning.getNbins(), finalXBinning.getBinning()
+      );
+      hRaw->Sumw2();
+      hRaw->GetXaxis()->SetTitle(finalXBinning.getLabel());
+    }
+    for (unsigned int i=0; i<bX.getNbins(); i++){
+      unsigned int ii=i;
+      if (sameXbins) ii++;
+      res->SetBinContent(ii, extres.getBinSumW(i));
+      res->SetBinError(ii, sqrt(extres.getBinSumWsq(i)));
+      if (hRaw){
+        hRaw->SetBinContent(ii, extresraw.getBinSumW(i));
+        hRaw->SetBinError(ii, sqrt(extresraw.getBinSumWsq(i)));
+      }
+    }
+    resList.push_back(res);
+    if (hRawPtr) hRawPtr->push_back(hRaw);
+  }
+
+  return resList;
+}
+std::vector<TH2F*> HistogramSmootherWithGaussianKernel::getSimultaneousSmoothHistograms(
+  ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning,
+  std::vector<TreeHistogramAssociation_2D>& treeList,
+  double sigmaXmult, double sigmaYmult,
+  std::vector<TH2F*>* hRawPtr
+){
+  assert(!treeList.empty() && finalXBinning.isValid() && finalYBinning.isValid());
+
+  ExtendedBinning bX=getIntermediateBinning(finalXBinning);
+  ExtendedBinning bY=getIntermediateBinning(finalYBinning);
+  bool sameXbins=(bX.getNbins()==finalXBinning.getNbins());
+  bool sameYbins=(bY.getNbins()==finalYBinning.getNbins());
+  double const xmin=bX.getMin(); double const xmax=bX.getMax();
+  double const ymin=bY.getMin(); double const ymax=bY.getMax();
+
+  // Construct fine histogram to determine intermediate binning
+  ExtendedProfileHistogram reference(bX, bY, false);
+  {
+    vector<ExtendedProfileHistogram> referenceList; referenceList.reserve(treeList.size());
+    for (auto& treeHandle:treeList){
+      referenceList.emplace_back(bX, bY, false);
+      getPreSmoothingReference(
+        treeHandle.tree, treeHandle.xvar, treeHandle.yvar, treeHandle.weight, treeHandle.flag,
+        referenceList.back()
+      );
+    }
+    getMinimumNeffReference(referenceList, reference);
+  }
+
+  SimpleGaussian gausX(0, 1, SimpleGaussian::kHasLowHighRange, xmin, xmax);
+  SimpleGaussian gausY(0, 1, SimpleGaussian::kHasLowHighRange, ymin, ymax);
+
+  MELAout << "getSimultaneousSmoothHistogram: Filling the actual histograms with the help of common reference" << endl;
+
+  std::vector<TH2F*> resList;
+  for (auto& treeHandle:treeList){
+    TTree*& tree = treeHandle.tree;
+    float& xvar = treeHandle.xvar;
+    float& yvar = treeHandle.yvar;
+    float& weight = treeHandle.weight;
+    bool& selflag = treeHandle.flag;
+    TString const& hname = treeHandle.hname;
+    TString const& htitle = treeHandle.htitle;
+
+    ExtendedProfileHistogram extres(bX, bY, false); // For the res histogram
+    std::vector<std::vector<std::vector<double>>>& extres_sumW=extres.getSumWContainer();
+    std::vector<std::vector<std::vector<double>>>& extres_sumWsq=extres.getSumWsqContainer();
+    ExtendedProfileHistogram extresraw(bX, bY, false); // For the resraw histogram, if exists
+
+    //float sumHistWeights = 0;
+    selflag=true;
+    for (int ev=0; ev<tree->GetEntries(); ev++){
+      tree->GetEntry(ev);
+      progressbar(ev, tree->GetEntries());
+
+      if (!selflag) continue;
+      if ((double) xvar<xmin || (double) xvar>=xmax) continue;
+      if ((double) yvar<ymin || (double) yvar>=ymax) continue;
+      if (hRawPtr) extresraw.fill(xvar, yvar, weight);
+
+      int ix=bX.getBin(xvar);
+      int iy=bY.getBin(yvar);
+      double Neff=pow(reference.getBinSumW(ix, iy), 2)/reference.getBinSumWsq(ix, iy);
+      double widthGlobalScale = 1./sqrt(Neff);
+
+      double sX = bX.getBinWidth(ix)*widthGlobalScale*sigmaXmult;
+      if (std::min(fabs(xvar-bX.getBinLowEdge(ix)), fabs(xvar-bX.getBinHighEdge(ix)))>=sX*GAUSSIANWIDTHPRECISION) sX=0.;
+      unsigned int ibegin, iend;
+      if (sX!=0. || ix<0){ ibegin=0; iend=bX.getNbins(); }
+      else{ ibegin=ix; iend=ix+1; }
+      gausX.setMean(xvar); gausX.setSigma(sX);
+
+      double sY = bY.getBinWidth(iy)*widthGlobalScale*sigmaYmult;
+      if (std::min(fabs(yvar-bY.getBinLowEdge(iy)), fabs(yvar-bY.getBinHighEdge(iy)))>=sY*GAUSSIANWIDTHPRECISION) sY=0.;
+      unsigned int jbegin, jend;
+      if (sY!=0. || iy<0){ jbegin=0; jend=bY.getNbins(); }
+      else{ jbegin=iy; jend=iy+1; }
+      gausY.setMean(yvar); gausY.setSigma(sY);
+
+      unsigned int kbegin=0, kend=1;
+
+      assert(checkVarNanInf(sX) && checkVarNanInf(sY));
+
+      { // 3D is slower than 1D and 2D, so fill manually
+        unsigned int i=ibegin;
+        std::vector<std::vector<std::vector<double>>>::iterator it_i = extres_sumW.begin()+ibegin;
+        std::vector<std::vector<std::vector<double>>>::iterator itsq_i = extres_sumWsq.begin()+ibegin;
+        while (i<iend){
+          double fX = gausX.integralNorm(bX.getBinLowEdge(i), bX.getBinHighEdge(i));
+          bool doProceedX=true;
+          if (fX>1. || fX<0.){ MELAerr << "fX=" << fX << endl; doProceedX=false; }
+          doProceedX &= (fX!=0.);
+
+          if (doProceedX){
+            unsigned int j=jbegin;
+            std::vector<std::vector<double>>::iterator it_j = it_i->begin()+jbegin;
+            std::vector<std::vector<double>>::iterator itsq_j = itsq_i->begin()+jbegin;
+            while (j<jend){
+              double fY = gausY.integralNorm(bY.getBinLowEdge(j), bY.getBinHighEdge(j));
+              bool doProceedY=true;
+              if (fY>1. || fY<0.){ MELAerr << "fY=" << fY << endl; doProceedY=false; }
+              doProceedY &= (fY!=0.);
+
+              if (doProceedY){
+                unsigned int k=kbegin;
+                std::vector<double>::iterator it_k = it_j->begin()+kbegin;
+                std::vector<double>::iterator itsq_k = itsq_j->begin()+kbegin;
+                while (k<kend){
+                  constexpr double fZ = 1;
+                  constexpr bool doProceedZ=true;
+                  if (doProceedZ){
+                    double fprod=fX*fY*fZ;
+                    double w=fprod*weight;
+                    *(it_k) += w;
+                    *(itsq_k) += pow(w, 2);
+                    //sumHistWeights += w;
+                  }
+                  k++; it_k++; itsq_k++;
+                }
+              }
+              j++; it_j++; itsq_j++;
+            }
+          }
+          i++; it_i++; itsq_i++;
+        }
+      } // End scope of i and iterators
+
+    } // End loop over tree
+
+    //MELAout << "Sum of reference weights: " << sumRefWeights << "; sum of histogram weights: " << sumHistWeights << endl;
+
+    TH2F* res = new TH2F(
+      hname, htitle,
+      finalXBinning.getNbins(), finalXBinning.getBinning(),
+      finalYBinning.getNbins(), finalYBinning.getBinning()
+    );
+    res->Sumw2();
+    res->GetXaxis()->SetTitle(finalXBinning.getLabel());
+    res->GetYaxis()->SetTitle(finalYBinning.getLabel());
+    TH2F* hRaw=nullptr;
+    if (hRawPtr){
+      hRaw = new TH2F(
+        hname+"_raw", htitle,
+        finalXBinning.getNbins(), finalXBinning.getBinning(),
+        finalYBinning.getNbins(), finalYBinning.getBinning()
+      );
+      hRaw->Sumw2();
+      hRaw->GetXaxis()->SetTitle(finalXBinning.getLabel());
+      hRaw->GetYaxis()->SetTitle(finalYBinning.getLabel());
+    }
+    for (unsigned int i=0; i<bX.getNbins(); i++){
+      unsigned int ii=i;
+      if (sameXbins) ii++;
+      for (unsigned int j=0; j<bY.getNbins(); j++){
+        unsigned int jj=j;
+        if (sameYbins) jj++;
+        res->SetBinContent(ii, jj, extres.getBinSumW(i, j));
+        res->SetBinError(ii, jj, sqrt(extres.getBinSumWsq(i, j)));
+        if (hRaw){
+          hRaw->SetBinContent(ii, jj, extresraw.getBinSumW(i, j));
+          hRaw->SetBinError(ii, jj, sqrt(extresraw.getBinSumWsq(i, j)));
+        }
+      }
+    }
+    resList.push_back(res);
+    if (hRawPtr) hRawPtr->push_back(hRaw);
+  }
+
+  return resList;
+}
 std::vector<TH3F*> HistogramSmootherWithGaussianKernel::getSimultaneousSmoothHistograms(
   ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning, ExtendedBinning const& finalZBinning,
   std::vector<TreeHistogramAssociation_3D>& treeList,
@@ -518,7 +835,7 @@ std::vector<TH3F*> HistogramSmootherWithGaussianKernel::getSimultaneousSmoothHis
   SimpleGaussian gausY(0, 1, SimpleGaussian::kHasLowHighRange, ymin, ymax);
   SimpleGaussian gausZ(0, 1, SimpleGaussian::kHasLowHighRange, zmin, zmax);
 
-  MELAout << "getSmoothHistogram: Filling the actual histograms with the help of common reference" << endl;
+  MELAout << "getSimultaneousSmoothHistogram: Filling the actual histograms with the help of common reference" << endl;
 
   std::vector<TH3F*> resList;
   for (auto& treeHandle:treeList){

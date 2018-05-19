@@ -120,7 +120,7 @@ TTree* fixTreeWeights(TTree* tree){
 // trimEdges==0 keeps underflow and overflow bins with no range restriction
 // trimEdges==1 keeps underflow and overflow bins but restricts their range
 // trimEdges==2 discards underflow and overflow bins
-TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackvar, float& weight, int trimEdges, TH1* hShapeRewgt=nullptr){
+TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackvar, float& weight, int trimEdges){
   if (!tree) return nullptr;
 
   const TString treename=tree->GetName();
@@ -150,7 +150,6 @@ TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackv
   else if (nEntries>50000) nMarginalMaxMult=500;
   else nMarginalMaxMult=100;
   const float nMarginalMaxFrac = 1./static_cast<float>(nMarginalMaxMult);
-  const unsigned int countThreshold=nMarginalMaxMult*nMarginalMax;
 
   int nbins=binning.getNbins()+2;
   vector<unsigned int> counts; counts.assign(nbins, 0);
@@ -256,6 +255,332 @@ TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackv
   }
   return newtree;
 }
+
+// Assumes trackvar and weight are booked
+// trimEdges==0 keeps underflow and overflow bins with no range restriction
+// trimEdges==1 keeps underflow and overflow bins but restricts their range
+// trimEdges==2 discards underflow and overflow bins
+void wipeLargeWeights(std::vector<TTree*>& treeList, const ExtendedBinning& binning, float& trackvar, float& weight, int trimEdges){
+  std::vector<TTree*> res;
+  if (treeList.empty()) return;
+  unsigned int ntrees=treeList.size();
+  res.reserve(ntrees);
+
+  //const TString treename=tree->GetName();
+  MELAout << "Begin wipeLargeWeights over " << ntrees << " trees." << endl;
+  MELAout
+    << "wipeLargeWeights: "
+    << "Requested binning in " << binning.getLabel() << " with " << binning.getNbins() << " bins: [ " << binning.getBinningVector() << " ]"
+    << endl;
+
+  const bool allowOverUnderflows=(!binning.getLabel().Contains("m4l"));
+  if (!allowOverUnderflows){
+    MELAout
+      << "wipeLargeWeights: "
+      << "Will not allow under or overflow events."
+      << endl;
+    trimEdges=2;
+  }
+
+  // Store counts and sum of weights
+  int const nbins=binning.getNbins()+2;
+  vector<float> sumWList(treeList.size(), 0);
+  vector<vector<unsigned int>> countsList;
+  countsList.assign(treeList.size(), vector<unsigned int>(nbins, 0));
+
+  // Determine if events can be wiped out simultaneously
+  bool canWipeSimultaneous=true;
+  for (unsigned int it=0; it<treeList.size(); it++){
+    TTree* const& tree=treeList.at(it);
+    vector<unsigned int>& counts=countsList.at(it);
+    float& sumW=sumWList.at(it);
+
+    // Initial loop over the tree to count the events in each bin
+    const int nEntries = tree->GetEntries();
+    for (int ev=0; ev<nEntries; ev++){
+      tree->GetEntry(ev);
+      int bin = 1+binning.getBin(trackvar);
+      bool doPass=false;
+      switch (trimEdges){
+      case 1:
+      {
+        double thrlow=2.*binning.getBinLowEdge(0)-binning.getBinLowEdge(1);
+        double thrhigh=2.*binning.getBinLowEdge(nbins-2)-binning.getBinLowEdge(nbins-3);
+        doPass=(trackvar<thrlow || trackvar>thrhigh);
+        break;
+      }
+      case 2:
+        doPass=(bin==0 || bin==nbins-1);
+        break;
+      }
+      if (doPass) continue;
+      counts.at(bin)=counts.at(bin)+1;
+      sumW+=weight;
+    }
+    MELAout
+      << "wipeLargeWeights(" << tree->GetName() << "): "
+      << "Counts: " << counts
+      << endl;
+    if (nEntries!=treeList.front()->GetEntries()) MELAout
+      << "wipeLargeWeights(" << tree->GetName() << "): "
+      << "Number of events do not match the front of the list."
+      << endl;
+    for (int bin=0; bin<nbins; bin++){
+      canWipeSimultaneous &= (nEntries==treeList.front()->GetEntries() && counts.at(bin)==countsList.front().at(bin));
+      if (counts.at(bin)!=countsList.front().at(bin)) MELAout
+        << "wipeLargeWeights(" << tree->GetName() << "): "
+        << "Number of counts in bin " << bin << " does not match: " << counts.at(bin) << " != " << countsList.front().at(bin)
+        << endl;
+    }
+  }
+  if (canWipeSimultaneous){
+    MELAout
+      << "wipeLargeWeights: "
+      << "Trees satisfy simultaneous event removal."
+      << endl;
+
+    vector<int> vetoedEvents;
+    for (unsigned int it=0; it<treeList.size(); it++){
+      TTree* const& tree=treeList.at(it);
+      vector<unsigned int>& counts=countsList.at(it);
+      const int nEntries = tree->GetEntries();
+
+      unsigned int nMarginalMax;
+      if (nEntries>100000) nMarginalMax=100;
+      else nMarginalMax=50;
+      unsigned int nMarginalMaxMult;
+      if (nEntries>100000) nMarginalMaxMult=1000;
+      else if (nEntries>50000) nMarginalMaxMult=500;
+      else nMarginalMaxMult=100;
+      const float nMarginalMaxFrac = 1./static_cast<float>(nMarginalMaxMult);
+
+      // Collect the count*nMarginalMaxFrac events with highest weights
+      MELAout
+        << "wipeLargeWeights(" << tree->GetName() << "): "
+        << "Collecting the count*" << nMarginalMaxFrac << " events with highest weights in " << nbins << " bins"
+        << endl;
+      vector<vector<float>> wgtcollList;
+      wgtcollList.assign(counts.size(), vector<float>());
+      for (int ev=0; ev<nEntries; ev++){
+        tree->GetEntry(ev);
+        int bin = 1+binning.getBin(trackvar);
+        // Trim the tree
+        bool doPass=false;
+        switch (trimEdges){
+        case 1:
+        {
+          double thrlow=2.*binning.getBinLowEdge(0)-binning.getBinLowEdge(1);
+          double thrhigh=2.*binning.getBinLowEdge(nbins-2)-binning.getBinLowEdge(nbins-3);
+          doPass=(trackvar<thrlow || trackvar>thrhigh);
+          break;
+        }
+        case 2:
+          doPass=(bin==0 || bin==nbins-1);
+          break;
+        }
+        if (doPass) continue;
+        vector<float>& wgtcoll=wgtcollList.at(bin);
+        const unsigned int maxPrunedSize = std::ceil(float(counts.at(bin))*nMarginalMaxFrac);
+        if (wgtcoll.size()<maxPrunedSize) addByHighest(wgtcoll, fabs(weight), false);
+        else if (wgtcoll.back()<fabs(weight)){
+          addByHighest(wgtcoll, fabs(weight), false);
+          wgtcoll.pop_back();
+        }
+      }
+      MELAout
+        << "wipeLargeWeights(" << tree->GetName() << "): "
+        << "Determining the weight thresholds"
+        << endl;
+      vector<float> wgtThresholds; wgtThresholds.reserve(wgtcollList.size());
+      for (auto const& wgtcoll:wgtcollList){
+        unsigned int ns=wgtcoll.size();
+        float threshold=0;
+        if (ns>=3){
+          threshold=0.5*(wgtcoll.at(ns-1)+wgtcoll.at(ns-2));
+          if (threshold*5.>wgtcoll.front()) threshold=wgtcoll.front();
+          else MELAout
+            << "wipeLargeWeights(" << tree->GetName() << "): "
+            << "Threshold " << threshold << " is different from max. weight " << wgtcoll.front()
+            << endl;
+        }
+        else if (ns>0) threshold=wgtcoll.front();
+        wgtThresholds.push_back(threshold);
+      }
+
+      // Determine the vetoed events list
+      for (int ev=0; ev<nEntries; ev++){
+        tree->GetEntry(ev);
+        int bin = 1+binning.getBin(trackvar);
+        // Trim the tree
+        bool doPass=false;
+        switch (trimEdges){
+        case 1:
+        {
+          double thrlow=2.*binning.getBinLowEdge(0)-binning.getBinLowEdge(1);
+          double thrhigh=2.*binning.getBinLowEdge(nbins-2)-binning.getBinLowEdge(nbins-3);
+          doPass=(trackvar<thrlow || trackvar>thrhigh);
+          break;
+        }
+        case 2:
+          doPass=(bin==0 || bin==nbins-1);
+          break;
+        }
+        if (doPass) continue;
+        if (fabs(weight)>wgtThresholds.at(bin)) addByLowest(vetoedEvents, ev, true);
+      }
+    }
+    MELAout
+      << "wipeLargeWeights: "
+      << "All of these events will be vetoed: " << vetoedEvents
+      << endl;
+    for (unsigned int it=0; it<treeList.size(); it++){
+      TTree* const& tree=treeList.at(it);
+      vector<unsigned int>& counts=countsList.at(it);
+      const int nEntries = tree->GetEntries();
+
+      TTree* newtree = tree->CloneTree(0);
+      float const& sumWold=sumWList.at(it);
+      float sumWnew=0;
+      for (int ev=0; ev<nEntries; ev++){
+        tree->GetEntry(ev);
+        int bin = 1+binning.getBin(trackvar);
+        // Trim the tree
+        bool doPass=false;
+        switch (trimEdges){
+        case 1:
+        {
+          double thrlow=2.*binning.getBinLowEdge(0)-binning.getBinLowEdge(1);
+          double thrhigh=2.*binning.getBinLowEdge(nbins-2)-binning.getBinLowEdge(nbins-3);
+          doPass=(trackvar<thrlow || trackvar>thrhigh);
+          break;
+        }
+        case 2:
+          doPass=(bin==0 || bin==nbins-1);
+          break;
+        }
+        if (doPass) continue;
+        if (TUtilHelpers::checkElementExists(ev, vetoedEvents)) continue;
+        newtree->Fill();
+        sumWnew += weight;
+      }
+      MELAout
+        << "wipeLargeWeights: "
+        << "Tree " << newtree->GetName() << " sum of weights changed from " << sumWold << " to " << sumWnew
+        << endl;
+      res.push_back(newtree);
+    }
+  }
+  else{
+    MELAout
+      << "wipeLargeWeights: "
+      << "Trees do not satisfy simultaneous event removal."
+      << endl;
+
+    for (unsigned int it=0; it<treeList.size(); it++){
+      TTree* const& tree=treeList.at(it);
+      vector<unsigned int>& counts=countsList.at(it);
+      float const& sumWold=sumWList.at(it);
+
+      const int nEntries = tree->GetEntries();
+      TTree* newtree = tree->CloneTree(0);
+      float sumWnew=0;
+
+      unsigned int nMarginalMax;
+      if (nEntries>100000) nMarginalMax=100;
+      else nMarginalMax=50;
+      unsigned int nMarginalMaxMult;
+      if (nEntries>100000) nMarginalMaxMult=1000;
+      else if (nEntries>50000) nMarginalMaxMult=500;
+      else nMarginalMaxMult=100;
+      const float nMarginalMaxFrac = 1./static_cast<float>(nMarginalMaxMult);
+
+      // Collect the count*nMarginalMaxFrac events with highest weights
+      MELAout
+        << "wipeLargeWeights(" << tree->GetName() << "): "
+        << "Collecting the count*" << nMarginalMaxFrac << " events with highest weights in " << nbins << " bins"
+        << endl;
+      vector<vector<float>> wgtcollList;
+      wgtcollList.assign(counts.size(), vector<float>());
+      for (int ev=0; ev<nEntries; ev++){
+        tree->GetEntry(ev);
+        int bin = 1+binning.getBin(trackvar);
+        // Trim the tree
+        bool doPass=false;
+        switch (trimEdges){
+        case 1:
+        {
+          double thrlow=2.*binning.getBinLowEdge(0)-binning.getBinLowEdge(1);
+          double thrhigh=2.*binning.getBinLowEdge(nbins-2)-binning.getBinLowEdge(nbins-3);
+          doPass=(trackvar<thrlow || trackvar>thrhigh);
+          break;
+        }
+        case 2:
+          doPass=(bin==0 || bin==nbins-1);
+          break;
+        }
+        if (doPass) continue;
+        vector<float>& wgtcoll=wgtcollList.at(bin);
+        const unsigned int maxPrunedSize = std::ceil(float(counts.at(bin))*nMarginalMaxFrac);
+        if (wgtcoll.size()<maxPrunedSize) addByHighest(wgtcoll, fabs(weight), false);
+        else if (wgtcoll.back()<fabs(weight)){
+          addByHighest(wgtcoll, fabs(weight), false);
+          wgtcoll.pop_back();
+        }
+      }
+      MELAout
+        << "wipeLargeWeights(" << tree->GetName() << "): "
+        << "Determining the weight thresholds"
+        << endl;
+      vector<float> wgtThresholds; wgtThresholds.reserve(wgtcollList.size());
+      for (auto const& wgtcoll:wgtcollList){
+        unsigned int ns=wgtcoll.size();
+        float threshold=0;
+        if (ns>=3){
+          threshold=0.5*(wgtcoll.at(ns-1)+wgtcoll.at(ns-2));
+          if (threshold*5.>wgtcoll.front()) threshold=wgtcoll.front();
+          else MELAout
+            << "wipeLargeWeights(" << tree->GetName() << "): "
+            << "Threshold " << threshold << " is different from max. weight " << wgtcoll.front()
+            << endl;
+        }
+        else if (ns>0) threshold=wgtcoll.front();
+        wgtThresholds.push_back(threshold);
+      }
+
+      // Determine the vetoed events list
+      for (int ev=0; ev<nEntries; ev++){
+        tree->GetEntry(ev);
+        int bin = 1+binning.getBin(trackvar);
+        // Trim the tree
+        bool doPass=false;
+        switch (trimEdges){
+        case 1:
+        {
+          double thrlow=2.*binning.getBinLowEdge(0)-binning.getBinLowEdge(1);
+          double thrhigh=2.*binning.getBinLowEdge(nbins-2)-binning.getBinLowEdge(nbins-3);
+          doPass=(trackvar<thrlow || trackvar>thrhigh);
+          break;
+        }
+        case 2:
+          doPass=(bin==0 || bin==nbins-1);
+          break;
+        }
+        if (doPass) continue;
+        if (fabs(weight)>wgtThresholds.at(bin)) continue;
+        newtree->Fill();
+        sumWnew += weight;
+      }
+      MELAout
+        << "wipeLargeWeights: "
+        << "Tree " << newtree->GetName() << " sum of weights changed from " << sumWold << " to " << sumWnew
+        << endl;
+      res.push_back(newtree);
+    }
+  }
+
+  swap(res, treeList);
+}
+
 
 // Fix tree weights with the histogram given
 TTree* fixTreeWeights(

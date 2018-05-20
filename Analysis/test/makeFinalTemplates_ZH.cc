@@ -3,6 +3,7 @@
 
 #include "common_includes.h"
 #include "CheckSetTemplatesCategoryScheme.h"
+#include "HistogramSmootherWithGaussianKernel.h"
 #include "fixTreeWeights.h"
 
 
@@ -25,6 +26,8 @@ const TString user_output_dir = "output/";
 #endif
 
 typedef VVProcessHandler ProcessHandleType;
+
+using namespace HistogramSmootherWithGaussianKernel;
 
 
 struct MassRatioObject{
@@ -89,7 +92,7 @@ struct MassRatioObject{
 
 template <unsigned char N> void getTemplatesPerCategory(
   TDirectory* rootdir, TFile* foutput,
-  ProcessHandleType const*& thePerProcessHandle, Category const& category, ACHypothesis const& hypo,
+  ProcessHandleType const*& thePerProcessHandle, Category const& category, ACHypothesis const& hypo, CategorizationHelpers::MassRegion const& massregion,
   std::vector<ProcessHandleType::HypothesisType> const& tplset,
   std::vector<TTree*>& fixedTrees,
   std::vector<TString> const& KDset,
@@ -99,7 +102,7 @@ template <unsigned char N> void getTemplatesPerCategory(
 );
 template<> void getTemplatesPerCategory<2>(
   TDirectory* rootdir, TFile* foutput,
-  ProcessHandleType const*& thePerProcessHandle, Category const& category, ACHypothesis const& hypo,
+  ProcessHandleType const*& thePerProcessHandle, Category const& category, ACHypothesis const& hypo, CategorizationHelpers::MassRegion const& massregion,
   std::vector<ProcessHandleType::HypothesisType> const& tplset,
   std::vector<TTree*>& fixedTrees,
   std::vector<TString> const& KDset,
@@ -109,7 +112,7 @@ template<> void getTemplatesPerCategory<2>(
   );
 template<> void getTemplatesPerCategory<3>(
   TDirectory* rootdir, TFile* foutput,
-  ProcessHandleType const*& thePerProcessHandle, Category const& category, ACHypothesis const& hypo,
+  ProcessHandleType const*& thePerProcessHandle, Category const& category, ACHypothesis const& hypo, CategorizationHelpers::MassRegion const& massregion,
   std::vector<ProcessHandleType::HypothesisType> const& tplset,
   std::vector<TTree*>& fixedTrees,
   std::vector<TString> const& KDset,
@@ -623,7 +626,7 @@ void makeFinalTemplates_ZH(const Channel channel, const ACHypothesis hypo, const
 
     MELAout << "\t- Attempting templates..." << endl;
     if (nKDs==2) getTemplatesPerCategory<2>(
-      rootdir, foutput[cat], outputProcessHandle, cat, hypo,
+      rootdir, foutput[cat], outputProcessHandle, cat, hypo, massregion,
       tplset,
       fixedTrees,
       KDset, KDbinning,
@@ -631,7 +634,7 @@ void makeFinalTemplates_ZH(const Channel channel, const ACHypothesis hypo, const
       KDvars, weight, isCategory
       );
     else if (nKDs==3) getTemplatesPerCategory<3>(
-      rootdir, foutput[cat], outputProcessHandle, cat, hypo,
+      rootdir, foutput[cat], outputProcessHandle, cat, hypo, massregion,
       tplset,
       fixedTrees,
       KDset, KDbinning,
@@ -657,7 +660,7 @@ void makeFinalTemplates_ZH(const Channel channel, const ACHypothesis hypo, const
 
 template<> void getTemplatesPerCategory<2>(
   TDirectory* rootdir, TFile* foutput,
-  ProcessHandleType const*& thePerProcessHandle, Category const& category, ACHypothesis const& hypo,
+  ProcessHandleType const*& thePerProcessHandle, Category const& category, ACHypothesis const& hypo, CategorizationHelpers::MassRegion const& massregion,
   std::vector<ProcessHandleType::HypothesisType> const& tplset,
   std::vector<TTree*>& fixedTrees,
   std::vector<TString> const& KDset,
@@ -678,21 +681,51 @@ template<> void getTemplatesPerCategory<2>(
   vector<ExtHist_t> hTemplates;
   hTemplates.reserve(ntpls);
   for (unsigned int t=0; t<ntpls; t++){
+    ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
+    ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
+    TString templatename = thePerProcessHandle->getTemplateName(tpltype);
+    TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
+    hTemplates.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1));
+  }
+  std::vector<TreeHistogramAssociation_2D> treeList;
+  for (unsigned int t=0; t<ntpls; t++){
     TTree*& tree=fixedTrees.at(t);
     ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
     ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-    TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "";
+    TString templatename = thePerProcessHandle->getTemplateName(tpltype);
     TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
-
-    hTemplates.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1));
-    TH_t* hSmooth=getSmoothHistogram(
-      templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1),
-      tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, weight, isCategory,
-      2, 2
-    );
-    *(hTemplates.back().getHistogram()) = *hSmooth;
-    delete hSmooth;
-    hTemplates.back().getHistogram()->SetNameTitle(templatename, templatetitle);
+    if (massregion==kOnshell && treetype==ProcessHandleType::VVBkg){
+      TH_t* hSmooth=getSmoothHistogram(
+        templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1),
+        tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, weight, isCategory,
+        2, 2
+      );
+      *(hTemplates.at(t).getHistogram()) = *hSmooth;
+      delete hSmooth;
+      hTemplates.at(t).getHistogram()->SetNameTitle(templatename, templatetitle);
+    }
+    else treeList.emplace_back(templatename+"_Smooth", "", tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, weight, isCategory);
+  }
+  vector<TH_t*> hSmoothList = getSimultaneousSmoothHistograms(
+    KDbinning.at(0), KDbinning.at(1), treeList,
+    2, 2
+  );
+  {
+    unsigned int ih=0;
+    for (unsigned int t=0; t<ntpls; t++){
+      ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
+      ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
+      TString templatename = thePerProcessHandle->getTemplateName(tpltype);
+      TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
+      if (massregion==kOnshell && treetype==ProcessHandleType::VVBkg) continue;
+      else{
+        TH_t*& hSmooth=hSmoothList.at(ih);
+        *(hTemplates.at(t).getHistogram()) = *hSmooth;
+        delete hSmooth;
+        hTemplates.at(t).getHistogram()->SetNameTitle(templatename, templatetitle);
+        ih++;
+      }
+    }
   }
   // Do post-processing
   PostProcessTemplatesWithPhase(
@@ -778,7 +811,7 @@ template<> void getTemplatesPerCategory<2>(
 }
 template<> void getTemplatesPerCategory<3>(
   TDirectory* rootdir, TFile* foutput,
-  ProcessHandleType const*& thePerProcessHandle, Category const& category, ACHypothesis const& hypo,
+  ProcessHandleType const*& thePerProcessHandle, Category const& category, ACHypothesis const& hypo, CategorizationHelpers::MassRegion const& massregion,
   std::vector<ProcessHandleType::HypothesisType> const& tplset,
   std::vector<TTree*>& fixedTrees,
   std::vector<TString> const& KDset,
@@ -799,21 +832,51 @@ template<> void getTemplatesPerCategory<3>(
   vector<ExtHist_t> hTemplates;
   hTemplates.reserve(ntpls);
   for (unsigned int t=0; t<ntpls; t++){
+    ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
+    ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
+    TString templatename = thePerProcessHandle->getTemplateName(tpltype);
+    TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
+    hTemplates.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2));
+  }
+  std::vector<TreeHistogramAssociation_3D> treeList;
+  for (unsigned int t=0; t<ntpls; t++){
     TTree*& tree=fixedTrees.at(t);
     ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
     ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-    TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "";
+    TString templatename = thePerProcessHandle->getTemplateName(tpltype);
     TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
-
-    hTemplates.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2));
-    TH_t* hSmooth=getSmoothHistogram(
-      templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
-      tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
-      2, 2, 2
-    );
-    *(hTemplates.back().getHistogram()) = *hSmooth;
-    delete hSmooth;
-    hTemplates.back().getHistogram()->SetNameTitle(templatename, templatetitle);
+    if (massregion==kOnshell && treetype==ProcessHandleType::VVBkg){
+      TH_t* hSmooth=getSmoothHistogram(
+        templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
+        tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
+        2, 2, 2
+      );
+      *(hTemplates.at(t).getHistogram()) = *hSmooth;
+      delete hSmooth;
+      hTemplates.at(t).getHistogram()->SetNameTitle(templatename, templatetitle);
+    }
+    else treeList.emplace_back(templatename+"_Smooth", "", tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory);
+  }
+  vector<TH_t*> hSmoothList = getSimultaneousSmoothHistograms(
+    KDbinning.at(0), KDbinning.at(1), KDbinning.at(2), treeList,
+    2, 2, 2
+  );
+  {
+    unsigned int ih=0;
+    for (unsigned int t=0; t<ntpls; t++){
+      ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
+      ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
+      TString templatename = thePerProcessHandle->getTemplateName(tpltype);
+      TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
+      if (massregion==kOnshell && treetype==ProcessHandleType::VVBkg) continue;
+      else{
+        TH_t*& hSmooth=hSmoothList.at(ih);
+        *(hTemplates.at(t).getHistogram()) = *hSmooth;
+        delete hSmooth;
+        hTemplates.at(t).getHistogram()->SetNameTitle(templatename, templatetitle);
+        ih++;
+      }
+    }
   }
   // Do post-processing
   PostProcessTemplatesWithPhase(

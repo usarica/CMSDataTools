@@ -65,6 +65,20 @@ namespace TemplateHelpers{
   const VVProcessHandler OffshellWHProcessHandle(CategorizationHelpers::kOffshell, ProcessHandler::kWH);
 
 
+  /*******/
+  /* ttH */
+  /*******/
+  const TTProcessHandler OnshellTTProcessHandle(CategorizationHelpers::kOnshell);
+  const TTProcessHandler OffshellTTProcessHandle(CategorizationHelpers::kOffshell);
+
+
+  /*******/
+  /* bbH */
+  /*******/
+  const BBProcessHandler OnshellBBProcessHandle(CategorizationHelpers::kOnshell);
+  const BBProcessHandler OffshellBBProcessHandle(CategorizationHelpers::kOffshell);
+
+
   /*****************/
   /* QQ background */
   /*****************/

@@ -154,7 +154,7 @@ std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::ge
     }
 
     if (category!=CategorizationHelpers::Inclusive){
-      if ((proc==ProcessHandler::kGG || proc==ProcessHandler::kVV || proc==ProcessHandler::kVBF || proc==ProcessHandler::kZH || proc==ProcessHandler::kWH) && (strGenerator=="POWHEG" || strGenerator=="")){
+      if ((proc==ProcessHandler::kGG || proc==ProcessHandler::kVV || proc==ProcessHandler::kVBF || proc==ProcessHandler::kZH || proc==ProcessHandler::kWH || proc==ProcessHandler::kTT/* || proc==ProcessHandler::kBB*/) && (strGenerator=="POWHEG" || strGenerator=="")){
         res.push_back(tPythiaScaleDn);
         res.push_back(tPythiaScaleUp);
         res.push_back(tPythiaTuneDn);

@@ -430,6 +430,10 @@ ProcessHandler const* TemplateHelpers::getOnshellProcessHandler(ProcessHandler::
     return &TemplateHelpers::OnshellZHProcessHandle;
   case ProcessHandler::kWH:
     return &TemplateHelpers::OnshellWHProcessHandle;
+  case ProcessHandler::kTT:
+    return &TemplateHelpers::OnshellTTProcessHandle;
+  case ProcessHandler::kBB:
+    return &TemplateHelpers::OnshellBBProcessHandle;
   case ProcessHandler::kQQBkg:
     return &TemplateHelpers::OnshellQQBkgProcessHandle;
   case ProcessHandler::kZX:
@@ -450,6 +454,10 @@ ProcessHandler const* TemplateHelpers::getOffshellProcessHandler(ProcessHandler:
     return &TemplateHelpers::OffshellZHProcessHandle;
   case ProcessHandler::kWH:
     return &TemplateHelpers::OffshellWHProcessHandle;
+  case ProcessHandler::kTT:
+    return &TemplateHelpers::OffshellTTProcessHandle;
+  case ProcessHandler::kBB:
+    return &TemplateHelpers::OffshellBBProcessHandle;
   case ProcessHandler::kQQBkg:
     return &TemplateHelpers::OffshellQQBkgProcessHandle;
   case ProcessHandler::kZX:

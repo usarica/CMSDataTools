@@ -14,6 +14,8 @@ public:
     kVBF,
     kZH,
     kWH,
+    kTT,
+    kBB,
     kQQBkg,
     kZX,
     nProcessTypes
@@ -345,6 +347,262 @@ template<typename T> void VVProcessHandler::conditionalizeTemplates(std::vector<
 }
 template void VVProcessHandler::conditionalizeTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
 template void VVProcessHandler::conditionalizeTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+
+
+class TTProcessHandler : public ProcessHandler{
+public:
+  enum HypothesisType{
+    TTSig=0, // fai=0
+    nTTSMTypes=1,
+
+    TTSigBSM=1, // fai=1 sig.
+    TTSigBSMSMInt=2, // fai=0.5 sig.
+    nTTTypes=3
+  };
+  enum TemplateType{
+    TTTplSig=0, // fai=0
+    nTTTplSMTypes=1, // fai=0 int.
+
+    TTTplSigBSM=1, // fai=1 sig.
+    TTTplSigBSMSMInt_Re=2, // fai=0.5 sig.
+    nTTTplTypes=3
+  };
+
+  struct TemplateContributionList{
+    TTProcessHandler::TemplateType type;
+    float coefficient;
+    std::vector<std::pair<TTProcessHandler::TemplateType, float>> TypePowerPair;
+    TemplateContributionList(TTProcessHandler::TemplateType type_);
+  };
+
+  TTProcessHandler(CategorizationHelpers::MassRegion massregion_);
+
+  TString getOutputTreeName(TTProcessHandler::HypothesisType type) const;
+  TString getTemplateName(TTProcessHandler::TemplateType type) const;
+  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo, bool includeSM) const;
+  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo, bool includeSM) const;
+  std::vector<TTProcessHandler::HypothesisType> getHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const;
+  std::vector<TTProcessHandler::TemplateType> getTemplateTypesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const;
+  TString getMELAHypothesisWeight(TTProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const;
+  TString getProcessLabel(TTProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const;
+  TString getProcessLabel(TTProcessHandler::TemplateType type, ACHypothesisHelpers::ACHypothesis hypo) const;
+
+  static int castHypothesisTypeToInt(TTProcessHandler::HypothesisType type);
+  static int castTemplateTypeToInt(TTProcessHandler::TemplateType type);
+  static TTProcessHandler::HypothesisType castIntToHypothesisType(int type, bool useN=false);
+  static TTProcessHandler::TemplateType castIntToTemplateType(int type, bool useN=false);
+  static bool isInterferenceContribution(TTProcessHandler::TemplateType const type);
+
+  float getProcessScale() const;
+  void imposeTplPhysicality(std::vector<float>& vals) const;
+  template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+  template<typename T> void recombineHistogramsToTemplatesWithPhase(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+  template<typename T> void recombineTemplatesWithPhaseToRegularTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+  template<typename T> void recombineRegularTemplatesToTemplatesWithPhase(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+
+  template<typename T> void getHypothesisHistogramFromTemplates(T& res, std::vector<T> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg=1, float scaleSig=1, float scaleBSM=1) const;
+
+  template<typename T> void conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+
+};
+template<> void TTProcessHandler::recombineHistogramsToTemplates<std::pair<float, float>>(std::vector<std::pair<float, float>>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void TTProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void TTProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void TTProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void TTProcessHandler::recombineHistogramsToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void TTProcessHandler::recombineHistogramsToTemplatesWithPhase<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void TTProcessHandler::recombineHistogramsToTemplatesWithPhase<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void TTProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void TTProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void TTProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void TTProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void TTProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void TTProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+
+template<typename T> void TTProcessHandler::getHypothesisHistogramFromTemplates(T& res, std::vector<T> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const{
+  if (!res) return;
+  if (vals.empty()) return;
+  vector<float> coeffs;
+  if (hypo==ACHypothesisHelpers::kSM){
+    assert(vals.size()==nTTSMTypes);
+    coeffs.reserve(vals.size());
+    coeffs.push_back(scaleBkg);
+    coeffs.push_back(scaleSig);
+    coeffs.push_back(sqrt(scaleBkg*scaleSig));
+  }
+  else{
+    assert(vals.size()==nTTTypes);
+    coeffs.push_back(scaleBkg);
+    coeffs.push_back(scaleSig);
+    coeffs.push_back(sqrt(scaleBkg*scaleSig));
+    coeffs.push_back(scaleBSM);
+    coeffs.push_back(sqrt(scaleSig*scaleBSM));
+    coeffs.push_back(sqrt(scaleBkg*scaleBSM));
+  }
+  assert(coeffs.size()==vals.size());
+  res->Reset("ICES");
+  for (unsigned int i=0; i<coeffs.size(); i++) res->Add(vals.at(i), coeffs.at(i));
+}
+template void TTProcessHandler::getHypothesisHistogramFromTemplates<TH1F*>(TH1F*& res, std::vector<TH1F*> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const;
+template void TTProcessHandler::getHypothesisHistogramFromTemplates<TH2F*>(TH2F*& res, std::vector<TH2F*> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const;
+template void TTProcessHandler::getHypothesisHistogramFromTemplates<TH3F*>(TH3F*& res, std::vector<TH3F*> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const;
+
+template<typename T> void TTProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const{
+  if (vals.empty()) return;
+
+  if (hypo==ACHypothesisHelpers::kSM) assert(vals.size()==nTTSMTypes);
+  else assert(vals.size()==nTTTypes);
+
+  vector<vector<unsigned int>> divideByTpl;
+  divideByTpl.assign(vals.size(), vector<unsigned int>());
+  for (unsigned int t=0; t<vals.size(); t++){
+    if ((int) t==TTProcessHandler::castTemplateTypeToInt(TTTplSigBSMSMInt_Re)){
+      divideByTpl.at(t).push_back(TTProcessHandler::castTemplateTypeToInt(TTTplSig));
+      divideByTpl.at(t).push_back(TTProcessHandler::castTemplateTypeToInt(TTTplSigBSM));
+    }
+    else divideByTpl.at(t).push_back(t);
+  }
+  for (unsigned int t=0; t<vals.size(); t++){
+    if (divideByTpl.at(t).size()==1) continue;
+    vector<std::pair<T, float>> ctpls; ctpls.reserve(divideByTpl.at(t).size());
+    for (unsigned int& ht:divideByTpl.at(t)) ctpls.push_back(std::pair<T, float>(vals.at(ht), 0.5));
+    HelperFunctions::conditionalizeHistogram(vals.at(t), iaxis, &ctpls);
+  }
+  for (unsigned int t=0; t<vals.size(); t++){
+    if (divideByTpl.at(t).size()!=1) continue;
+    HelperFunctions::conditionalizeHistogram(vals.at(t), iaxis);
+  }
+}
+template void TTProcessHandler::conditionalizeTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+template void TTProcessHandler::conditionalizeTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+
+
+class BBProcessHandler : public ProcessHandler{
+public:
+  enum HypothesisType{
+    BBSig=0, // fai=0
+    nBBSMTypes=1,
+
+    BBSigBSM=1, // fai=1 sig.
+    BBSigBSMSMInt=2, // fai=0.5 sig.
+    nBBTypes=3
+  };
+  enum TemplateType{
+    BBTplSig=0, // fai=0
+    nBBTplSMTypes=1, // fai=0 int.
+
+    BBTplSigBSM=1, // fai=1 sig.
+    BBTplSigBSMSMInt_Re=2, // fai=0.5 sig.
+    nBBTplTypes=3
+  };
+
+  struct TemplateContributionList{
+    BBProcessHandler::TemplateType type;
+    float coefficient;
+    std::vector<std::pair<BBProcessHandler::TemplateType, float>> TypePowerPair;
+    TemplateContributionList(BBProcessHandler::TemplateType type_);
+  };
+
+  BBProcessHandler(CategorizationHelpers::MassRegion massregion_);
+
+  TString getOutputTreeName(BBProcessHandler::HypothesisType type) const;
+  TString getTemplateName(BBProcessHandler::TemplateType type) const;
+  std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo, bool includeSM) const;
+  std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo, bool includeSM) const;
+  std::vector<BBProcessHandler::HypothesisType> getHypothesesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const;
+  std::vector<BBProcessHandler::TemplateType> getTemplateTypesForACHypothesis(ACHypothesisHelpers::ACHypothesis hypo) const;
+  TString getMELAHypothesisWeight(BBProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const;
+  TString getProcessLabel(BBProcessHandler::HypothesisType type, ACHypothesisHelpers::ACHypothesis hypo) const;
+  TString getProcessLabel(BBProcessHandler::TemplateType type, ACHypothesisHelpers::ACHypothesis hypo) const;
+
+  static int castHypothesisTypeToInt(BBProcessHandler::HypothesisType type);
+  static int castTemplateTypeToInt(BBProcessHandler::TemplateType type);
+  static BBProcessHandler::HypothesisType castIntToHypothesisType(int type, bool useN=false);
+  static BBProcessHandler::TemplateType castIntToTemplateType(int type, bool useN=false);
+  static bool isInterferenceContribution(BBProcessHandler::TemplateType const type);
+
+  float getProcessScale() const;
+  void imposeTplPhysicality(std::vector<float>& vals) const;
+  template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+  template<typename T> void recombineHistogramsToTemplatesWithPhase(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+  template<typename T> void recombineTemplatesWithPhaseToRegularTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+  template<typename T> void recombineRegularTemplatesToTemplatesWithPhase(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+
+  template<typename T> void getHypothesisHistogramFromTemplates(T& res, std::vector<T> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg=1, float scaleSig=1, float scaleBSM=1) const;
+
+  template<typename T> void conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+
+};
+template<> void BBProcessHandler::recombineHistogramsToTemplates<std::pair<float, float>>(std::vector<std::pair<float, float>>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void BBProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void BBProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void BBProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void BBProcessHandler::recombineHistogramsToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void BBProcessHandler::recombineHistogramsToTemplatesWithPhase<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void BBProcessHandler::recombineHistogramsToTemplatesWithPhase<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void BBProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void BBProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void BBProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void BBProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void BBProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void BBProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+
+template<typename T> void BBProcessHandler::getHypothesisHistogramFromTemplates(T& res, std::vector<T> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const{
+  if (!res) return;
+  if (vals.empty()) return;
+  vector<float> coeffs;
+  if (hypo==ACHypothesisHelpers::kSM){
+    assert(vals.size()==nBBSMTypes);
+    coeffs.reserve(vals.size());
+    coeffs.push_back(scaleBkg);
+    coeffs.push_back(scaleSig);
+    coeffs.push_back(sqrt(scaleBkg*scaleSig));
+  }
+  else{
+    assert(vals.size()==nBBTypes);
+    coeffs.push_back(scaleBkg);
+    coeffs.push_back(scaleSig);
+    coeffs.push_back(sqrt(scaleBkg*scaleSig));
+    coeffs.push_back(scaleBSM);
+    coeffs.push_back(sqrt(scaleSig*scaleBSM));
+    coeffs.push_back(sqrt(scaleBkg*scaleBSM));
+  }
+  assert(coeffs.size()==vals.size());
+  res->Reset("ICES");
+  for (unsigned int i=0; i<coeffs.size(); i++) res->Add(vals.at(i), coeffs.at(i));
+}
+template void BBProcessHandler::getHypothesisHistogramFromTemplates<TH1F*>(TH1F*& res, std::vector<TH1F*> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const;
+template void BBProcessHandler::getHypothesisHistogramFromTemplates<TH2F*>(TH2F*& res, std::vector<TH2F*> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const;
+template void BBProcessHandler::getHypothesisHistogramFromTemplates<TH3F*>(TH3F*& res, std::vector<TH3F*> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const;
+
+template<typename T> void BBProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const{
+  if (vals.empty()) return;
+
+  if (hypo==ACHypothesisHelpers::kSM) assert(vals.size()==nBBSMTypes);
+  else assert(vals.size()==nBBTypes);
+
+  vector<vector<unsigned int>> divideByTpl;
+  divideByTpl.assign(vals.size(), vector<unsigned int>());
+  for (unsigned int t=0; t<vals.size(); t++){
+    if ((int) t==BBProcessHandler::castTemplateTypeToInt(BBTplSigBSMSMInt_Re)){
+      divideByTpl.at(t).push_back(BBProcessHandler::castTemplateTypeToInt(BBTplSig));
+      divideByTpl.at(t).push_back(BBProcessHandler::castTemplateTypeToInt(BBTplSigBSM));
+    }
+    else divideByTpl.at(t).push_back(t);
+  }
+  for (unsigned int t=0; t<vals.size(); t++){
+    if (divideByTpl.at(t).size()==1) continue;
+    vector<std::pair<T, float>> ctpls; ctpls.reserve(divideByTpl.at(t).size());
+    for (unsigned int& ht:divideByTpl.at(t)) ctpls.push_back(std::pair<T, float>(vals.at(ht), 0.5));
+    HelperFunctions::conditionalizeHistogram(vals.at(t), iaxis, &ctpls);
+  }
+  for (unsigned int t=0; t<vals.size(); t++){
+    if (divideByTpl.at(t).size()!=1) continue;
+    HelperFunctions::conditionalizeHistogram(vals.at(t), iaxis);
+  }
+}
+template void BBProcessHandler::conditionalizeTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
+template void BBProcessHandler::conditionalizeTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
 
 
 class QQBkgProcessHandler : public ProcessHandler{

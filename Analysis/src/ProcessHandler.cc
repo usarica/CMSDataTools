@@ -2035,24 +2035,45 @@ int QQBkgProcessHandler::castTemplateTypeToInt(QQBkgProcessHandler::TemplateType
 QQBkgProcessHandler::HypothesisType QQBkgProcessHandler::castIntToHypothesisType(int type){ return (HypothesisType) type; }
 QQBkgProcessHandler::TemplateType QQBkgProcessHandler::castIntToTemplateType(int type){ return (TemplateType) type; }
 
-template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals) const{
+template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   typedef TH1F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nQQBkgTypes)) return;
   for (T*& hh:vals){
+    std::vector<unsigned int> symAxes;
+    if (hypo==ACHypothesisHelpers::kA3){
+      if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) symAxes.push_back(0);
+    }
+    for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
+
     hh->SetTitle(getProcessLabel());
   }
 }
-template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals) const{
+template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   typedef TH2F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nQQBkgTypes)) return;
   for (T*& hh:vals){
+    std::vector<unsigned int> symAxes;
+    if (hypo==ACHypothesisHelpers::kA3){
+      if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) symAxes.push_back(0);
+      if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) symAxes.push_back(1);
+    }
+    for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
+
     hh->SetTitle(getProcessLabel());
   }
 }
-template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals) const{
+template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   typedef TH3F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nQQBkgTypes)) return;
   for (T*& hh:vals){
+    std::vector<unsigned int> symAxes;
+    if (hypo==ACHypothesisHelpers::kA3){
+      if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) symAxes.push_back(0);
+      if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) symAxes.push_back(1);
+      if (DiscriminantClasses::isCPSensitive(hh->GetZaxis()->GetTitle())) symAxes.push_back(2);
+    }
+    for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
+
     hh->SetTitle(getProcessLabel());
   }
 }
@@ -2101,24 +2122,45 @@ int ZXProcessHandler::castTemplateTypeToInt(ZXProcessHandler::TemplateType type)
 ZXProcessHandler::HypothesisType ZXProcessHandler::castIntToHypothesisType(int type){ return (HypothesisType) type; }
 ZXProcessHandler::TemplateType ZXProcessHandler::castIntToTemplateType(int type){ return (TemplateType) type; }
 
-template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals) const{
+template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   typedef TH1F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nZXTypes)) return;
   for (T*& hh:vals){
+    std::vector<unsigned int> symAxes;
+    if (hypo==ACHypothesisHelpers::kA3){
+      if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) symAxes.push_back(0);
+    }
+    for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
+
     hh->SetTitle(getProcessLabel());
   }
 }
-template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals) const{
+template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   typedef TH2F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nZXTypes)) return;
   for (T*& hh:vals){
+    std::vector<unsigned int> symAxes;
+    if (hypo==ACHypothesisHelpers::kA3){
+      if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) symAxes.push_back(0);
+      if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) symAxes.push_back(1);
+    }
+    for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
+
     hh->SetTitle(getProcessLabel());
   }
 }
-template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals) const{
+template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const{
   typedef TH3F T;
   if ((int) vals.size()!=castHypothesisTypeToInt(nZXTypes)) return;
   for (T*& hh:vals){
+    std::vector<unsigned int> symAxes;
+    if (hypo==ACHypothesisHelpers::kA3){
+      if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) symAxes.push_back(0);
+      if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) symAxes.push_back(1);
+      if (DiscriminantClasses::isCPSensitive(hh->GetZaxis()->GetTitle())) symAxes.push_back(2);
+    }
+    for (unsigned int const& ia:symAxes) HelperFunctions::symmetrizeHistogram(hh, ia);
+
     hh->SetTitle(getProcessLabel());
   }
 }

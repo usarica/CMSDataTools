@@ -145,7 +145,7 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_3D>(
 
 void getControl2DXSlices(
   TDirectory* rootdir, TFile* foutput,
-  ProcessHandleType const*& thePerProcessHandle,
+  ProcessHandleType const*& thePerProcessHandle, ACHypothesis const& hypo,
   std::vector<ExtendedBinning> const& KDbinning,
   std::vector<ExtendedHistogram_3D> const& hTemplates
 );
@@ -854,7 +854,7 @@ template<> void getTemplatesPerCategory<3>(
       }
     }
     rootdir->cd();
-    getControl2DXSlices(rootdir, foutput, thePerProcessHandle, KDbinning, hTemplates);
+    getControl2DXSlices(rootdir, foutput, thePerProcessHandle, hypo, KDbinning, hTemplates);
   }
 }
 
@@ -883,7 +883,7 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_2D>(
         if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
         else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
       }
-      thePerProcessHandle->recombineHistogramsToTemplates(hTemplateObjects);
+      thePerProcessHandle->recombineHistogramsToTemplates(hTemplateObjects, hypo);
     }
     for (unsigned int t=0; t<ntpls; t++){
       auto& tpl = hTemplates.at(t);
@@ -929,7 +929,7 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_3D>(
         if (checkHistogramIntegrity(htpl)) MELAout << "Integrity of [ " << htpl->GetName() << " ] is GOOD." << endl;
         else MELAout << "WARNING: Integrity of [ " << htpl->GetName() << " ] is BAD." << endl;
       }
-      thePerProcessHandle->recombineHistogramsToTemplates(hTemplateObjects);
+      thePerProcessHandle->recombineHistogramsToTemplates(hTemplateObjects, hypo);
     }
     for (unsigned int t=0; t<ntpls; t++){
       auto& tpl = hTemplates.at(t);
@@ -954,7 +954,7 @@ template <> void PostProcessTemplatesWithPhase<ExtendedHistogram_3D>(
 
 void getControl2DXSlices(
   TDirectory* rootdir, TFile* foutput,
-  ProcessHandleType const*& thePerProcessHandle,
+  ProcessHandleType const*& thePerProcessHandle, ACHypothesis const& hypo,
   std::vector<ExtendedBinning> const& KDbinning,
   std::vector<ExtendedHistogram_3D> const& hTemplates
 ){
@@ -966,7 +966,7 @@ void getControl2DXSlices(
     multiplyBinWidth(htmp);
     hList.push_back(htmp);
   }
-  thePerProcessHandle->recombineHistogramsToTemplates(hList);
+  thePerProcessHandle->recombineHistogramsToTemplates(hList, hypo);
   for(unsigned int t=0;t<hTemplates.size();t++){
     auto*& htpl=hList.at(t);
     TString tplname=hTemplates.at(t).getName();

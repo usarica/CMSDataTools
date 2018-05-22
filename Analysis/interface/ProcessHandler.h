@@ -374,14 +374,14 @@ public:
   static QQBkgProcessHandler::HypothesisType castIntToHypothesisType(int type);
   static QQBkgProcessHandler::TemplateType castIntToTemplateType(int type);
 
-  template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals) const;
+  template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 
   template<typename T> void conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
 
 };
-template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals) const;
-template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals) const;
-template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals) const;
+template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void QQBkgProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 
 template<typename T> void QQBkgProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/, unsigned int const iaxis) const{
   if (vals.empty()) return;
@@ -416,14 +416,14 @@ public:
   static ZXProcessHandler::HypothesisType castIntToHypothesisType(int type);
   static ZXProcessHandler::TemplateType castIntToTemplateType(int type);
 
-  template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals) const;
+  template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 
   template<typename T> void conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo, unsigned int const iaxis) const;
 
 };
-template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals) const;
-template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals) const;
-template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals) const;
+template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
+template<> void ZXProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
 
 template<typename T> void ZXProcessHandler::conditionalizeTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/, unsigned int const iaxis) const{
   if (vals.empty()) return;

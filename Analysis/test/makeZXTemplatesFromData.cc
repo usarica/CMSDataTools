@@ -302,15 +302,15 @@ void makeZXTemplatesFromData_checkstage(
   }
 
   MELAout << "Extracting the 1D distributions of various components" << endl;
-  theProcess.recombineHistogramsToTemplates(htpl_1D);
+  theProcess.recombineHistogramsToTemplates(htpl_1D, hypo);
   MELAout << "Extracting the 2/3D templates" << endl;
-  if (nKDs==1) theProcess.recombineHistogramsToTemplates(finalTemplates_2D);
-  else theProcess.recombineHistogramsToTemplates(finalTemplates_3D);
+  if (nKDs==1) theProcess.recombineHistogramsToTemplates(finalTemplates_2D, hypo);
+  else theProcess.recombineHistogramsToTemplates(finalTemplates_3D, hypo);
   MELAout << "Extracting the 2D distributions of various components" << endl;
   for (unsigned int iKD=0; iKD<nKDs; iKD++){
     vector<TH2F*> htmp;
     for (unsigned int t=0; t<ntpls; t++) htmp.push_back(htpl_2D[t].at(iKD));
-    theProcess.recombineHistogramsToTemplates(htmp);
+    theProcess.recombineHistogramsToTemplates(htmp, hypo);
   }
   MELAout << "Extracted all components" << endl;
   for (unsigned int t=0; t<ntpls; t++){

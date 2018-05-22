@@ -293,6 +293,7 @@ void TemplateHelpers::getCategorizationDiscriminants(const SystematicsHelpers::S
   SystematicsHelpers::adjustDiscriminantJECVariables(syst, KDlist);
 }
 ExtendedBinning TemplateHelpers::getDiscriminantFineBinning(const SampleHelpers::Channel /*channel*/, const CategorizationHelpers::Category category, TString const strKD, CategorizationHelpers::MassRegion const massregion){
+  MELAout << "TemplateHelpers::getDiscriminantFineBinning: Inquiring binning for variable " << strKD << endl;
   ExtendedBinning res(strKD);
   if (strKD=="ZZMass"){
     switch (massregion){
@@ -331,7 +332,7 @@ ExtendedBinning TemplateHelpers::getDiscriminantFineBinning(const SampleHelpers:
         for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(vlow + double(i)/double(nbins)*(vhigh-vlow));
       }
       else if (category==CategorizationHelpers::JJVBFTagged || category==CategorizationHelpers::HadVHTagged){
-        unsigned int const nbins = 20;
+        unsigned int const nbins = 7;
         for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(vlow + double(i)/double(nbins)*(vhigh-vlow));
       }
       break;

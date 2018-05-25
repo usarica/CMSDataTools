@@ -145,6 +145,8 @@ void acquireResolution_one(const Channel channel, const Category category, const
   // Loop over the samples from scratch
   vector<TString> strSampleIdentifiers;
   if (proctype==ProcessHandler::kGG) strSampleIdentifiers.push_back("gg_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kTT) strSampleIdentifiers.push_back("tt_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kBB) strSampleIdentifiers.push_back("bb_Sig_POWHEG");
   else if (proctype==ProcessHandler::kVBF) strSampleIdentifiers.push_back("VBF_Sig_POWHEG");
   else if (proctype==ProcessHandler::kZH) strSampleIdentifiers.push_back("ZH_Sig_POWHEG");
   else if (proctype==ProcessHandler::kWH) strSampleIdentifiers.push_back("WH_Sig_POWHEG");
@@ -809,6 +811,8 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   // Loop over the samples from scratch
   vector<TString> strSampleIdentifiers;
   if (proctype==ProcessHandler::kGG) strSampleIdentifiers.push_back("gg_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kTT) strSampleIdentifiers.push_back("tt_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kBB) strSampleIdentifiers.push_back("bb_Sig_POWHEG");
   else if (proctype==ProcessHandler::kVBF) strSampleIdentifiers.push_back("VBF_Sig_POWHEG");
   else if (proctype==ProcessHandler::kZH) strSampleIdentifiers.push_back("ZH_Sig_POWHEG");
   else if (proctype==ProcessHandler::kWH) strSampleIdentifiers.push_back("WH_Sig_POWHEG");
@@ -1173,6 +1177,8 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     pavetext2.SetTextSize(0.045);
     TString strProcessLabel;
     if (proctype==ProcessHandler::kGG) strProcessLabel=Form("#font[42]{%s, %s#rightarrow%s}", strCategoryLabel.Data(), "gg#rightarrowH", strChannelLabel.Data());
+    else if (proctype==ProcessHandler::kTT) strProcessLabel=Form("#font[42]{%s, %s#rightarrow%s}", strCategoryLabel.Data(), "t#bar{t} H", strChannelLabel.Data());
+    else if (proctype==ProcessHandler::kBB) strProcessLabel=Form("#font[42]{%s, %s#rightarrow%s}", strCategoryLabel.Data(), "b#bar{b} H", strChannelLabel.Data());
     else if (proctype==ProcessHandler::kZH) strProcessLabel=Form("#font[42]{%s, %s#rightarrow%s}", strCategoryLabel.Data(), "Z H", strChannelLabel.Data());
     else if (proctype==ProcessHandler::kWH) strProcessLabel=Form("#font[42]{%s, %s#rightarrow%s}", strCategoryLabel.Data(), "W H", strChannelLabel.Data());
     else if (proctype==ProcessHandler::kVBF) strProcessLabel=Form("#font[42]{%s, %s#rightarrow%s}", strCategoryLabel.Data(), "VBF H", strChannelLabel.Data());
@@ -1262,7 +1268,7 @@ void collectOnshellMassShapes_one(const Channel channel, const Category category
   MELAout << "===============================" << endl;
   MELAout << endl;
 
-  vector<ProcessHandler::ProcessType> proctypeList{ ProcessHandler::kGG, ProcessHandler::kVBF, ProcessHandler::kZH, ProcessHandler::kWH };
+  vector<ProcessHandler::ProcessType> proctypeList{ ProcessHandler::kGG, ProcessHandler::kVBF, ProcessHandler::kZH, ProcessHandler::kWH, ProcessHandler::kTT, ProcessHandler::kBB };
   foutput->cd();
   RooWorkspace w_out("w", "");
   for (auto& proctype:proctypeList){

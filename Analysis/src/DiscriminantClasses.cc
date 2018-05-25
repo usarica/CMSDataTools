@@ -102,10 +102,10 @@ TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
     return "D_{bkg}";
 
   case kDggbkgkin:
-    return "D^{gg}_{bkg}";
+    return "D^{gg, kin}_{bkg}";
   case kDggint:
   case kCggint:
-    return "D^{gg}_{bsi}";
+    return "D^{gg, dec}_{bsi}";
   //case kCggint:
   //  return "cos (#phi^{gg}_{int})";
 
@@ -139,7 +139,7 @@ TString DiscriminantClasses::getKDLabel(DiscriminantClasses::Type type){
   case kDbkgjjEWQCD:
     return "D^{[category]+dec}_{bkg}";
   case kDbkgm4ljjEWQCD:
-    return "D^{[category]+dec+m4l}_{bkg}";
+    return "D^{[category]+dec}_{bkg,m4l}";
   case kDintjjEWQCD:
   case kCjjVBFint:
   case kCjjVHint:

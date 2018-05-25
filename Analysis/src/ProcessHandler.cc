@@ -2099,7 +2099,7 @@ TString TTProcessHandler::getMELAHypothesisWeight(TTProcessHandler::HypothesisTy
       strWeight = "p_Gen_Dec_SIG_ghz2_1_JHUGen";
       break;
     case ACHypothesisHelpers::kA3:
-      strWeight = "p_Gen_Dec_SIG_ghz4_1_JHUGe";
+      strWeight = "p_Gen_Dec_SIG_ghz4_1_JHUGen";
       break;
     default:
       break;

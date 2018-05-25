@@ -17,6 +17,8 @@ def processDictionary():
       "VBF" : "ProcessHandler::kVBF",
       "ZH" : "ProcessHandler::kZH",
       "WH" : "ProcessHandler::kWH",
+      "TT" : "ProcessHandler::kTT",
+      "BB" : "ProcessHandler::kBB",
       "QQBkg" : "ProcessHandler::kQQBkg",
       "ZX" : "ProcessHandler::kZX"
    }
@@ -76,6 +78,8 @@ def checkValidRun(syst, cat, ch, proc, generator=""):
    if generator == "MCFM" and ("tMINLO" in syst or "tPythia" in syst):
       testval=False
    if "tMINLO" in syst and proc != "GG":
+      testval=False
+   if proc == "BB" and ("tMINLO" in syst or "tPythia" in syst):
       testval=False
    if proc == "QQBkg" and ("tMINLO" in syst or "tPythia" in syst):
       testval=False

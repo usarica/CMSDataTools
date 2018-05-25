@@ -660,6 +660,8 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
   // Loop over the samples from scratch
   vector<TString> strSampleIdentifiers;
   if (proctype==ProcessHandler::kGG) strSampleIdentifiers.push_back("gg_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kTT) strSampleIdentifiers.push_back("tt_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kBB) strSampleIdentifiers.push_back("bb_Sig_POWHEG");
   else if (proctype==ProcessHandler::kVBF) strSampleIdentifiers.push_back("VBF_Sig_POWHEG");
   else if (proctype==ProcessHandler::kZH) strSampleIdentifiers.push_back("ZH_Sig_POWHEG");
   else if (proctype==ProcessHandler::kWH){
@@ -794,6 +796,22 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
       for (GGProcessHandler::HypothesisType& v:tplset_tmp) tplset.push_back(v);
     }
     for (auto& t:tplset) treenamelist.push_back(((GGProcessHandler*) thePerProcessHandle)->getOutputTreeName(t));
+  }
+  else if (proctype==ProcessHandler::kTT){
+    vector<TTProcessHandler::HypothesisType> tplset = ((TTProcessHandler*) thePerProcessHandle)->getHypothesesForACHypothesis(kSM);
+    if (hypo!=kSM){
+      vector<TTProcessHandler::HypothesisType> tplset_tmp = ((TTProcessHandler*) thePerProcessHandle)->getHypothesesForACHypothesis(hypo);
+      for (TTProcessHandler::HypothesisType& v:tplset_tmp) tplset.push_back(v);
+    }
+    for (auto& t:tplset) treenamelist.push_back(((TTProcessHandler*) thePerProcessHandle)->getOutputTreeName(t));
+  }
+  else if (proctype==ProcessHandler::kBB){
+    vector<BBProcessHandler::HypothesisType> tplset = ((BBProcessHandler*) thePerProcessHandle)->getHypothesesForACHypothesis(kSM);
+    if (hypo!=kSM){
+      vector<BBProcessHandler::HypothesisType> tplset_tmp = ((BBProcessHandler*) thePerProcessHandle)->getHypothesesForACHypothesis(hypo);
+      for (BBProcessHandler::HypothesisType& v:tplset_tmp) tplset.push_back(v);
+    }
+    for (auto& t:tplset) treenamelist.push_back(((BBProcessHandler*) thePerProcessHandle)->getOutputTreeName(t));
   }
   else if (proctype==ProcessHandler::kVBF || proctype==ProcessHandler::kZH || proctype==ProcessHandler::kWH){
     vector<VVProcessHandler::HypothesisType> tplset = ((VVProcessHandler*) thePerProcessHandle)->getHypothesesForACHypothesis(kSM);

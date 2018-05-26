@@ -78,12 +78,12 @@ bool Discriminant::addAdditionalC(const TString filename, const TString splinena
         }
       }
       else if (theFile->IsOpen()){
-        MELAerr << "Discriminant::addAdditionalC: File " << splinename << " is zombie!" << endl;
+        MELAerr << "Discriminant::addAdditionalC: File " << filename << " is zombie!" << endl;
         theFile->Close();
         theFile=nullptr;
       }
     }
-    else MELAerr << "Discriminant::addAdditionalC: File " << splinename << " could not be opened!" << endl;
+    else MELAerr << "Discriminant::addAdditionalC: File " << filename << " could not be opened!" << endl;
   }
   return success;
 }
@@ -108,12 +108,12 @@ bool Discriminant::addAdditionalG(const TString filename, const TString splinena
         }
       }
       else if (theFile->IsOpen()){
-        MELAerr << "Discriminant::addAdditionalG: File " << splinename << " is zombie!" << endl;
+        MELAerr << "Discriminant::addAdditionalG: File " << filename << " is zombie!" << endl;
         theFile->Close();
         theFile=nullptr;
       }
     }
-    else MELAerr << "Discriminant::addAdditionalG: File " << splinename << " could not be opened!" << endl;
+    else MELAerr << "Discriminant::addAdditionalG: File " << filename << " could not be opened!" << endl;
   }
   return success;
 }

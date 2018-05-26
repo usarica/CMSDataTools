@@ -50,7 +50,7 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDa3.KDvars = getKDVars(kDa3dec);
     KDlist.push_back(KDa3);
     KDspecs KDL1ZGs("DL1ZGsdec");
-    KDL1ZGs.KD = constructKDFromType(kDL1ZGsdec, "", "", "../data/gConstant_HZZ2e2mu_L1Zgs.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_L1Zgs", 1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1ZGs));
+    KDL1ZGs.KD = constructKDFromType(kDL1ZGsdec, "", "", "../data/gConstant_HZZ2e2mu_L1Zgs.root", "sp_tgfinal_HZZ2e2mu_SM_photoncut_over_tgfinal_HZZ2e2mu_L1Zgs", 1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1ZGs));
     KDL1ZGs.KDvars = getKDVars(kDL1ZGsdec);
     KDlist.push_back(KDL1ZGs);
 
@@ -138,8 +138,8 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDlist.push_back(KDa3);
     KDspecs KDL1ZGs("DL1ZGsjjVBFdec");
     KDL1ZGs.KD = constructKDFromType(kDL1ZGsjjVBFdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1ZGs), 2));
-    KDL1ZGs.KD->addAdditionalG("../data/gConstant_VBF_L1Zgs.root", "sp_tgfinal_VBF_SM_over_tgfinal_VBF_L1Zgs");
-    KDL1ZGs.KD->addAdditionalG("../data/gConstant_HZZ2e2mu_L1Zgs.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_L1Zgs");
+    KDL1ZGs.KD->addAdditionalG("../data/gConstant_VBF_L1Zgs.root", "sp_tgfinal_VBF_SM_photoncut_over_tgfinal_VBF_L1Zgs");
+    KDL1ZGs.KD->addAdditionalG("../data/gConstant_HZZ2e2mu_L1Zgs.root", "sp_tgfinal_HZZ2e2mu_SM_photoncut_over_tgfinal_HZZ2e2mu_L1Zgs");
     KDL1ZGs.KDvars = getKDVars(kDL1ZGsjjVBFdec);
     KDlist.push_back(KDL1ZGs);
 
@@ -226,8 +226,8 @@ void TemplateHelpers::getLikelihoodDiscriminants(const SampleHelpers::Channel ch
     KDlist.push_back(KDa3);
     KDspecs KDL1ZGs("DL1ZGsjjVHdec");
     KDL1ZGs.KD = constructKDFromType(kDL1ZGsjjVHdec, "", "", "", "", pow(1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1ZGs), 2));
-    KDL1ZGs.KD->addAdditionalG("../data/gConstant_VH_L1ZGs.root", "sp_tgfinal_ZH_SM_plus_tgfinal_WH_SM_over_tgfinal_ZH_L1ZG_plus_tgfinal_WH_L1ZGs");
-    KDL1ZGs.KD->addAdditionalG("../data/gConstant_HZZ2e2mu_L1ZGs.root", "sp_tgfinal_HZZ2e2mu_SM_over_tgfinal_HZZ2e2mu_L1ZGs");
+    KDL1ZGs.KD->addAdditionalG("../data/gConstant_VH_L1Zgs.root", "sp_tgfinal_ZH_SM_photoncut_plus_tgfinal_WH_SM_over_tgfinal_ZH_L1Zgs");
+    KDL1ZGs.KD->addAdditionalG("../data/gConstant_HZZ2e2mu_L1Zgs.root", "sp_tgfinal_HZZ2e2mu_SM_photoncut_over_tgfinal_HZZ2e2mu_L1Zgs");
     KDL1ZGs.KDvars = getKDVars(kDL1ZGsjjVHdec);
     KDlist.push_back(KDL1ZGs);
 
@@ -316,12 +316,12 @@ void TemplateHelpers::getCategorizationDiscriminants(const SystematicsHelpers::S
   KDlist.push_back(KDjjWHa3);
 
   KDspecs KDjjVBFL1ZGs("DjjVBFL1ZGs");
-  KDjjVBFL1ZGs.KD = constructKDFromType(kDjjVBFL1ZGs, "../data/SmoothKDConstant_m4l_DjjVBF_13TeV.root", "sp_gr_varReco_Constant_Smooth", "../data/gConstant_VBF_L1Zgs.root", "sp_tgfinal_VBF_SM_over_tgfinal_VBF_L1Zgs", 1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1ZGs));
+  KDjjVBFL1ZGs.KD = constructKDFromType(kDjjVBFL1ZGs, "../data/SmoothKDConstant_m4l_DjjVBF_13TeV.root", "sp_gr_varReco_Constant_Smooth", "../data/gConstant_VBF_L1Zgs.root", "sp_tgfinal_VBF_SM_photoncut_over_tgfinal_VBF_L1Zgs", 1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1ZGs));
   KDjjVBFL1ZGs.KD->setInvertG(true);
   KDjjVBFL1ZGs.KDvars = getKDVars(kDjjVBFL1ZGs);
   KDlist.push_back(KDjjVBFL1ZGs);
   KDspecs KDjjZHL1ZGs("DjjZHL1ZGs");
-  KDjjZHL1ZGs.KD = constructKDFromType(kDjjZHL1ZGs, "../data/SmoothKDConstant_m4l_DjjZH_13TeV.root", "sp_gr_varReco_Constant_Smooth", "../data/gConstant_ZH_L1Zgs.root", "sp_tgfinal_ZH_SM_over_tgfinal_ZH_L1Zgs", 1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1ZGs));
+  KDjjZHL1ZGs.KD = constructKDFromType(kDjjZHL1ZGs, "../data/SmoothKDConstant_m4l_DjjZH_13TeV.root", "sp_gr_varReco_Constant_Smooth", "../data/gConstant_ZH_L1Zgs.root", "sp_tgfinal_ZH_SM_photoncut_over_tgfinal_ZH_L1Zgs", 1./ACHypothesisHelpers::getACHypothesisMEHZZGVal(ACHypothesisHelpers::kL1ZGs));
   KDjjZHL1ZGs.KD->setInvertG(true);
   KDjjZHL1ZGs.KDvars = getKDVars(kDjjZHL1ZGs);
   KDlist.push_back(KDjjZHL1ZGs);

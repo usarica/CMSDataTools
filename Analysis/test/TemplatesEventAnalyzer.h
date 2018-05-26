@@ -201,6 +201,7 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
       }
       //product.setNamedVal(it->first, KD);
     }
+    DjjWH[kL1ZGs] = DjjWH[kSM];
     if (!validProducts) return validProducts;
 
     // Category check

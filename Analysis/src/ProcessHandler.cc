@@ -233,6 +233,9 @@ TString GGProcessHandler::getMELAHypothesisWeight(GGProcessHandler::HypothesisTy
     case ACHypothesisHelpers::kA3:
       strWeight = "p_Gen_GG_SIG_kappaTopBot_1_ghz4_1_MCFM";
       break;
+    case ACHypothesisHelpers::kL1ZGs:
+      strWeight = "p_Gen_GG_SIG_kappaTopBot_1_ghza1prime2_1E4_MCFM";
+      break;
     default:
       break;
     };
@@ -248,6 +251,9 @@ TString GGProcessHandler::getMELAHypothesisWeight(GGProcessHandler::HypothesisTy
     case ACHypothesisHelpers::kA3:
       strWeight = "p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_ghz4_1_MCFM";
       break;
+    case ACHypothesisHelpers::kL1ZGs:
+      strWeight = "p_Gen_GG_SIG_kappaTopBot_1_ghz1_1_ghza1prime2_1E4_MCFM";
+      break;
     default:
       break;
     };
@@ -262,6 +268,9 @@ TString GGProcessHandler::getMELAHypothesisWeight(GGProcessHandler::HypothesisTy
       break;
     case ACHypothesisHelpers::kA3:
       strWeight = "p_Gen_GG_BSI_kappaTopBot_1_ghz4_1_MCFM";
+      break;
+    case ACHypothesisHelpers::kL1ZGs:
+      strWeight = "p_Gen_GG_BSI_kappaTopBot_1_ghza1prime2_1E4_MCFM";
       break;
     default:
       break;
@@ -280,6 +289,9 @@ TString GGProcessHandler::getProcessLabel(GGProcessHandler::HypothesisType type,
     break;
   case ACHypothesisHelpers::kA3:
     acname="f_{a3}";
+    break;
+  case ACHypothesisHelpers::kL1ZGs:
+    acname="f_{#Lambda1}^{Z#gamma}";
     break;
   default:
     break;
@@ -312,6 +324,9 @@ TString GGProcessHandler::getProcessLabel(GGProcessHandler::TemplateType type, A
     break;
   case ACHypothesisHelpers::kA3:
     acname="f_{a3}";
+    break;
+  case ACHypothesisHelpers::kL1ZGs:
+    acname="f_{#Lambda1}^{Z#gamma}";
     break;
   default:
     break;
@@ -1090,6 +1105,9 @@ TString VVProcessHandler::getMELAHypothesisWeight(VVProcessHandler::HypothesisTy
     case ACHypothesisHelpers::kA3:
       strWeight = "p_Gen_JJEW_SIG_ghv4_1_MCFM";
       break;
+    case ACHypothesisHelpers::kL1ZGs:
+      strWeight = "p_Gen_JJEW_SIG_ghza1prime2_1E4_MCFM";
+      break;
     default:
       break;
     };
@@ -1106,6 +1124,9 @@ TString VVProcessHandler::getMELAHypothesisWeight(VVProcessHandler::HypothesisTy
     case ACHypothesisHelpers::kA3:
       strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghv4_0p25_MCFM";
       break;
+    case ACHypothesisHelpers::kL1ZGs:
+      strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghza1prime2_25E2_MCFM";
+      break;
     default:
       break;
     };
@@ -1120,6 +1141,9 @@ TString VVProcessHandler::getMELAHypothesisWeight(VVProcessHandler::HypothesisTy
       break;
     case ACHypothesisHelpers::kA3:
       strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghv4_0p5_MCFM";
+      break;
+    case ACHypothesisHelpers::kL1ZGs:
+      strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghza1prime2_50E2_MCFM";
       break;
     default:
       break;
@@ -1136,6 +1160,9 @@ TString VVProcessHandler::getMELAHypothesisWeight(VVProcessHandler::HypothesisTy
     case ACHypothesisHelpers::kA3:
       strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghv4_0p75_MCFM";
       break;
+    case ACHypothesisHelpers::kL1ZGs:
+      strWeight = "p_Gen_JJEW_SIG_ghv1_1_ghza1prime2_75E2_MCFM";
+      break;
     default:
       break;
     };
@@ -1151,6 +1178,9 @@ TString VVProcessHandler::getMELAHypothesisWeight(VVProcessHandler::HypothesisTy
     case ACHypothesisHelpers::kA3:
       strWeight = "p_Gen_JJEW_BSI_ghv4_1_MCFM";
       break;
+    case ACHypothesisHelpers::kL1ZGs:
+      strWeight = "p_Gen_JJEW_BSI_ghza1prime2_1E4_MCFM";
+      break;
     default:
       break;
     };
@@ -1165,6 +1195,9 @@ TString VVProcessHandler::getMELAHypothesisWeight(VVProcessHandler::HypothesisTy
       break;
     case ACHypothesisHelpers::kA3:
       strWeight = "p_Gen_JJEW_BSI_ghv1_1_ghv4_1_MCFM";
+      break;
+    case ACHypothesisHelpers::kL1ZGs:
+      strWeight = "p_Gen_JJEW_BSI_ghv1_1_ghza1prime2_1E4_MCFM";
       break;
     default:
       break;
@@ -1199,6 +1232,9 @@ TString VVProcessHandler::getProcessLabel(VVProcessHandler::HypothesisType type,
     break;
   case ACHypothesisHelpers::kA3:
     acname="f_{a3}";
+    break;
+  case ACHypothesisHelpers::kL1ZGs:
+    acname="f_{#Lambda1}^{Z#gamma}";
     break;
   default:
     break;
@@ -1256,6 +1292,9 @@ TString VVProcessHandler::getProcessLabel(VVProcessHandler::TemplateType type, A
     break;
   case ACHypothesisHelpers::kA3:
     acname="a_{3}";
+    break;
+  case ACHypothesisHelpers::kL1ZGs:
+    acname="#Lambda_{1}^{Z#gamma}";
     break;
   default:
     break;
@@ -2101,6 +2140,9 @@ TString TTProcessHandler::getMELAHypothesisWeight(TTProcessHandler::HypothesisTy
     case ACHypothesisHelpers::kA3:
       strWeight = "p_Gen_Dec_SIG_ghz4_1_JHUGen";
       break;
+    case ACHypothesisHelpers::kL1ZGs:
+      strWeight = "p_Gen_Dec_SIG_ghza1prime2_1E4_JHUGen";
+      break;
     default:
       break;
     };
@@ -2115,6 +2157,9 @@ TString TTProcessHandler::getMELAHypothesisWeight(TTProcessHandler::HypothesisTy
       break;
     case ACHypothesisHelpers::kA3:
       strWeight = "p_Gen_Dec_SIG_ghz1_1_ghz4_1_JHUGen";
+      break;
+    case ACHypothesisHelpers::kL1ZGs:
+      strWeight = "p_Gen_Dec_SIG_ghz1_1_ghza1prime2_1E4_JHUGen";
       break;
     default:
       break;
@@ -2133,6 +2178,9 @@ TString TTProcessHandler::getProcessLabel(TTProcessHandler::HypothesisType type,
     break;
   case ACHypothesisHelpers::kA3:
     acname="f_{a3}";
+    break;
+  case ACHypothesisHelpers::kL1ZGs:
+    acname="f_{#Lambda1}^{Z#gamma}";
     break;
   default:
     break;
@@ -2159,6 +2207,9 @@ TString TTProcessHandler::getProcessLabel(TTProcessHandler::TemplateType type, A
     break;
   case ACHypothesisHelpers::kA3:
     acname="f_{a3}";
+    break;
+  case ACHypothesisHelpers::kL1ZGs:
+    acname="f_{#Lambda1}^{Z#gamma}";
     break;
   default:
     break;
@@ -2780,6 +2831,9 @@ TString BBProcessHandler::getMELAHypothesisWeight(BBProcessHandler::HypothesisTy
     case ACHypothesisHelpers::kA3:
       strWeight = "p_Gen_Dec_SIG_ghz4_1_JHUGe";
       break;
+    case ACHypothesisHelpers::kL1ZGs:
+      strWeight = "p_Gen_Dec_SIG_ghza1prime2_1E4_JHUGen";
+      break;
     default:
       break;
     };
@@ -2794,6 +2848,9 @@ TString BBProcessHandler::getMELAHypothesisWeight(BBProcessHandler::HypothesisTy
       break;
     case ACHypothesisHelpers::kA3:
       strWeight = "p_Gen_Dec_SIG_ghz1_1_ghz4_1_JHUGen";
+      break;
+    case ACHypothesisHelpers::kL1ZGs:
+      strWeight = "p_Gen_Dec_SIG_ghz1_1_ghza1prime2_1E4_JHUGen";
       break;
     default:
       break;
@@ -2812,6 +2869,9 @@ TString BBProcessHandler::getProcessLabel(BBProcessHandler::HypothesisType type,
     break;
   case ACHypothesisHelpers::kA3:
     acname="f_{a3}";
+    break;
+  case ACHypothesisHelpers::kL1ZGs:
+    acname="f_{#Lambda1}^{Z#gamma}";
     break;
   default:
     break;
@@ -2838,6 +2898,9 @@ TString BBProcessHandler::getProcessLabel(BBProcessHandler::TemplateType type, A
     break;
   case ACHypothesisHelpers::kA3:
     acname="f_{a3}";
+    break;
+  case ACHypothesisHelpers::kL1ZGs:
+    acname="f_{#Lambda1}^{Z#gamma}";
     break;
   default:
     break;

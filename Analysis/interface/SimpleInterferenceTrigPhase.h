@@ -15,5 +15,6 @@ public:
 typedef SimpleInterferenceTrigPhase Cintkin_t;
 typedef SimpleInterferenceTrigPhase Cggint_t;
 typedef SimpleInterferenceTrigPhase CjjVBFint_t;
+typedef SimpleInterferenceTrigPhase CjjVHL1ZGsint_t;
 
 #endif

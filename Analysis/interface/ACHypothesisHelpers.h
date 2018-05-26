@@ -11,6 +11,7 @@ namespace ACHypothesisHelpers{
     kL1,
     kA2,
     kA3,
+    kL1ZGs,
     nACHypotheses
   };
 

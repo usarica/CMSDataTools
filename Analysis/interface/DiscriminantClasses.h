@@ -45,6 +45,10 @@ namespace DiscriminantClasses{
     kDjjZHa3,
     kDjjWHa3,
 
+    kDjjVBFL1ZGs,
+    kDjjZHL1ZGs,
+    kDjjWHL1ZGs,
+
     kDbkgjjEWQCD,
     kDbkgm4ljjEWQCD,
     kDintjjEWQCD,
@@ -60,6 +64,9 @@ namespace DiscriminantClasses{
     kDa3dec,
     kDa3decint,
     kCa3decint,
+    kDL1ZGsdec,
+    kDL1ZGsdecint,
+    kCL1ZGsdecint,
 
     kDL1jjVBFdec,
     kDL1jjVBFint,
@@ -70,6 +77,9 @@ namespace DiscriminantClasses{
     kDa3jjVBFdec,
     kDa3jjVBFint,
     kCa3jjVBFint,
+    kDL1ZGsjjVBFdec,
+    kDL1ZGsjjVBFint,
+    kCL1ZGsjjVBFint,
 
     kDL1jjVHdec,
     kDL1jjVHint,
@@ -80,6 +90,9 @@ namespace DiscriminantClasses{
     kDa3jjVHdec,
     kDa3jjVHint,
     kCa3jjVHint,
+    kDL1ZGsjjVHdec,
+    kDL1ZGsjjVHint,
+    kCL1ZGsjjVHint,
 
     kNTypes
   };

@@ -8,6 +8,10 @@
 const unsigned int theSqrts = 13;
 const TString theDataPeriod = "2016";
 
+// MH and GH reference values
+const float MHRefVal=125;
+const float GHRefVal=4.07e-3;
+
 // CJLST samples directory
 const unsigned int CJLSTversion = 180224;
 const TString CJLSTdate = std::to_string(CJLSTversion);

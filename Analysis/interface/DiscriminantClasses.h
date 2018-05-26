@@ -47,7 +47,6 @@ namespace DiscriminantClasses{
 
     kDjjVBFL1ZGs,
     kDjjZHL1ZGs,
-    kDjjWHL1ZGs,
 
     kDbkgjjEWQCD,
     kDbkgm4ljjEWQCD,

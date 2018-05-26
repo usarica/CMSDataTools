@@ -154,10 +154,8 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
       if (it->first.Contains("DjjVBF")){
         ACHypothesisHelpers::ACHypothesis hypo=kSM;
         for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
-          if (it->first.Contains(ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac))){
-            hypo=(ACHypothesisHelpers::ACHypothesis)iac;
-            break;
-          }
+          TString strComp="DjjVBF"+ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac);
+          if (it->first==strComp){ hypo=(ACHypothesisHelpers::ACHypothesis)iac; break; }
         }
         DjjVBF[hypo]=KD;
         if (recordCategorizationKDs) product.setNamedVal(it->first, KD);
@@ -165,10 +163,8 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
       else if (it->first.Contains("DjjZH")){
         ACHypothesisHelpers::ACHypothesis hypo=kSM;
         for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
-          if (it->first.Contains(ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac))){
-            hypo=(ACHypothesisHelpers::ACHypothesis)iac;
-            break;
-          }
+          TString strComp="DjjZH"+ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac);
+          if (it->first==strComp){ hypo=(ACHypothesisHelpers::ACHypothesis)iac; break; }
         }
         DjjZH[hypo]=KD;
         if (recordCategorizationKDs) product.setNamedVal(it->first, KD);
@@ -176,10 +172,8 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
       else if (it->first.Contains("DjjWH")){
         ACHypothesisHelpers::ACHypothesis hypo=kSM;
         for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
-          if (it->first.Contains(ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac))){
-            hypo=(ACHypothesisHelpers::ACHypothesis)iac;
-            break;
-          }
+          TString strComp="DjjWH"+ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac);
+          if (it->first==strComp){ hypo=(ACHypothesisHelpers::ACHypothesis)iac; break; }
         }
         DjjWH[hypo]=KD;
         if (recordCategorizationKDs) product.setNamedVal(it->first, KD);
@@ -187,10 +181,8 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
       else if (it->first.Contains("DjVBF")){
         ACHypothesisHelpers::ACHypothesis hypo=kSM;
         for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
-          if (it->first.Contains(ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac))){
-            hypo=(ACHypothesisHelpers::ACHypothesis)iac;
-            break;
-          }
+          TString strComp="DjVBF"+ACHypothesisHelpers::getACHypothesisName((ACHypothesisHelpers::ACHypothesis)iac);
+          if (it->first==strComp){ hypo=(ACHypothesisHelpers::ACHypothesis)iac; break; }
         }
         DjVBF[hypo]=KD;
         if (recordCategorizationKDs) product.setNamedVal(it->first, KD);

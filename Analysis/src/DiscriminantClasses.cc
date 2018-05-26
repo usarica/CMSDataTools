@@ -37,7 +37,6 @@ std::unordered_map<TString, DiscriminantClasses::Type> DiscriminantClasses::getK
   res["DjjWHa3"] = kDjjWHa3;
   res["DjjVBFL1ZGs"] = kDjjVBFL1ZGs;
   res["DjjZHL1ZGs"] = kDjjZHL1ZGs;
-  res["DjjWHL1ZGs"] = kDjjWHL1ZGs;
 
   res["DbkgjjEWQCD"] = kDbkgjjEWQCD;
   res["Dbkgm4ljjEWQCD"] = kDbkgm4ljjEWQCD;
@@ -53,7 +52,7 @@ std::unordered_map<TString, DiscriminantClasses::Type> DiscriminantClasses::getK
   res["DL1decint"] = kDL1decint;
   res["Da2decint"] = kDa2decint;
   res["Da3decint"] = kDa3decint;
-  res["DL1ZGsint"] = kDL1ZGsdecint;
+  res["DL1ZGsdecint"] = kDL1ZGsdecint;
 
   res["CL1decint"] = kCL1decint;
   res["Ca2decint"] = kCa2decint;

@@ -224,7 +224,7 @@ float ZXFakeRateHandler::getFakeRateWeight(CJLSTTree* tree) const{
     vector<float>* const& LepEta = *(it_LepEta->second);
     if (LepId && LepPt && LepEta){
       if (LepId->size()>=3) res=1;
-      for (unsigned int ilep=3; ilep<LepId->size(); ilep++) res *= eval(CRFlag, Z1Flav, LepId->at(ilep), LepPt->at(ilep), LepEta->at(ilep));
+      for (unsigned int ilep=2; ilep<LepId->size(); ilep++) res *= eval(CRFlag, Z1Flav, LepId->at(ilep), LepPt->at(ilep), LepEta->at(ilep));
     }
     else{
       MELAerr << "ZXFakeRateHandler::getFakeRateWeight: Something went wrong! Lepton vector references are null." << endl;

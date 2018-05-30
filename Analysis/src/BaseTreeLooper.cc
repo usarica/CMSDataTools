@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <utility>
 #include <iterator>
+#include <cassert>
 #include "BaseTreeLooper.h"
 #include "BaseTreeLooper.hpp"
 
@@ -94,11 +95,17 @@ bool BaseTreeLooper::linkConsumes(CJLSTTree* tree){
     process &= this->linkConsumed<short>(tree);
     process &= this->linkConsumed<unsigned int>(tree);
     process &= this->linkConsumed<int>(tree);
+    process &= this->linkConsumed<unsigned long>(tree);
+    process &= this->linkConsumed<long>(tree);
+    process &= this->linkConsumed<long long>(tree);
     process &= this->linkConsumed<float>(tree);
     process &= this->linkConsumed<double>(tree);
     process &= this->linkConsumed<std::vector<short>>(tree);
     process &= this->linkConsumed<std::vector<unsigned int>>(tree);
     process &= this->linkConsumed<std::vector<int>>(tree);
+    process &= this->linkConsumed<std::vector<unsigned long>>(tree);
+    process &= this->linkConsumed<std::vector<long>>(tree);
+    process &= this->linkConsumed<std::vector<long long>>(tree);
     process &= this->linkConsumed<std::vector<float>>(tree);
     process &= this->linkConsumed<std::vector<double>>(tree);
     // Silence unused branches
@@ -112,6 +119,7 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
   // Loop over the trees
   unsigned int ev_acc=0;
   unsigned int ev_rec=0;
+  const bool storeSampleIdByRunAndEventNumber = (sampleIdOpt==kStoreByRunAndEventNumber);
   const bool storeSampleIdByMH = (sampleIdOpt==kStoreByMH);
   const bool storeSampleIdByHashVal = (sampleIdOpt==kStoreByHashVal);
   vector<unsigned int> loopRecSelList, loopTotalSelList, loopRecFailList, loopTotalFailList;
@@ -121,6 +129,18 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
     loopTotalSelList.assign(treeList.size(), 0); it_loopTotalSelList=loopTotalSelList.begin();
     loopRecFailList.assign(treeList.size(), 0); it_loopRecFailList=loopRecFailList.begin();
     loopTotalFailList.assign(treeList.size(), 0); it_loopTotalFailList=loopTotalFailList.begin();
+  }
+  if (storeSampleIdByRunAndEventNumber){ // Check if RunNumber and EventNumber variables are consumed
+    bool doAbort=false;
+    if (valints.find("RunNumber")==valints.cend()){
+      MELAerr << "BaseTreeLooper::loop: RunNumber is not a consumed variable!" << endl;
+      doAbort=true;
+    }
+    if (vallonglongs.find("EventNumber")==vallonglongs.cend()){
+      MELAerr << "BaseTreeLooper::loop: EventNumber is not a consumed variable!" << endl;
+      doAbort=true;
+    }
+    assert(!doAbort);
   }
   for (CJLSTTree*& tree:treeList){
     // Skip the tree if it cannot be linked
@@ -153,6 +173,10 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
                 product.setNamedVal("SampleId", sampleId);
                 product.setNamedVal("EventNumber", ev_acc);
               }
+              else if (storeSampleIdByRunAndEventNumber){
+                product.setNamedVal("RunNumber", *(valints["RunNumber"]));
+                product.setNamedVal("EventNumber", *(vallonglongs["EventNumber"]));
+              }
               this->addProduct(product, &ev_rec);
               if (verbose) (*it_loopRecSelList)++;
             }
@@ -177,6 +201,10 @@ void BaseTreeLooper::loop(bool loopSelected, bool loopFailed, bool keepProducts)
               if (storeSampleIdByMH || storeSampleIdByHashVal){
                 product.setNamedVal("SampleId", sampleId);
                 product.setNamedVal("EventNumber", ev_acc);
+              }
+              else if (storeSampleIdByRunAndEventNumber){
+                product.setNamedVal("RunNumber", *(valints["RunNumber"]));
+                product.setNamedVal("EventNumber", *(vallonglongs["EventNumber"]));
               }
               this->addProduct(product, &ev_rec);
               if (verbose) (*it_loopRecFailList)++;

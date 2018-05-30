@@ -93,6 +93,8 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
     tree->bookBranch<float>("ZZMass", -1);
     tree->bookBranch<short>("Z1Flav", 0);
     tree->bookBranch<short>("Z2Flav", 0);
+    tree->bookBranch<int>("RunNumber", 0);
+    tree->bookBranch<long long>("EventNumber", 0);
     // Variables for KDs
     for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
     tree->silenceUnused(); // Will no longer book another branch
@@ -120,6 +122,8 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
     theAnalyzer.addConsumed<float>("ZZMass");
     theAnalyzer.addConsumed<short>("Z1Flav");
     theAnalyzer.addConsumed<short>("Z2Flav");
+    theAnalyzer.addConsumed<int>("RunNumber");
+    theAnalyzer.addConsumed<long long>("EventNumber");
     // Add discriminant builders
     for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
     // Add ZX FR handle
@@ -127,6 +131,7 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
     // Add systematics handle
     theAnalyzer.addSystematic(strSystematics, systhandle);
     // Loop
+    theAnalyzer.setSampleIdStorageOption(BaseTreeLooper::kStoreByRunAndEventNumber);
     theAnalyzer.loop(true, false, true);
 
     MELAout << "There are " << theFinalTree->getNEvents() << " products" << endl;

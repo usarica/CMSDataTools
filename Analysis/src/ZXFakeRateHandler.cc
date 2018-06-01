@@ -222,14 +222,41 @@ float ZXFakeRateHandler::getFakeRateWeight(CJLSTTree* tree) const{
     vector<short>* const& LepId = *(it_LepId->second);
     vector<float>* const& LepPt = *(it_LepPt->second);
     vector<float>* const& LepEta = *(it_LepEta->second);
+    short Z2Flav = 1;
     if (LepId && LepPt && LepEta){
       if (LepId->size()>=3) res=1;
-      for (unsigned int ilep=2; ilep<LepId->size(); ilep++) res *= eval(CRFlag, Z1Flav, LepId->at(ilep), LepPt->at(ilep), LepEta->at(ilep));
+      for (unsigned int ilep=2; ilep<LepId->size(); ilep++){
+        short const& lepid = LepId->at(ilep);
+        res *= eval(CRFlag, Z1Flav, lepid, LepPt->at(ilep), LepEta->at(ilep));
+        Z2Flav *= lepid;
+      }
     }
     else{
       MELAerr << "ZXFakeRateHandler::getFakeRateWeight: Something went wrong! Lepton vector references are null." << endl;
       assert(0);
     }
+    short const absZ1Flav=std::abs(Z1Flav);
+    short const absZ2Flav=std::abs(Z2Flav);
+    float scale=1;
+    if (FRMethod==mSS){
+      if (theDataPeriod=="2016"){
+        if (absZ1Flav==121 && absZ2Flav==121) scale=0.97;
+        else if (absZ1Flav==169 && absZ2Flav==121) scale=0.98;
+        else if (absZ1Flav==121 && absZ2Flav==169) scale=1.30;
+        else if (absZ1Flav==169 && absZ2Flav==169) scale=1.22;
+      }
+      else if (theDataPeriod=="2016"){
+        if (absZ1Flav==121 && absZ2Flav==121) scale=1.00866;
+        else if (absZ1Flav==169 && absZ2Flav==121) scale=1.00488;
+        else if (absZ1Flav==121 && absZ2Flav==169) scale=1.00819;
+        else if (absZ1Flav==169 && absZ2Flav==169) scale=1.04009;
+      }
+      else{
+        MELAerr << "ZXFakeRateHandler::getFakeRateWeight: Data period " << theDataPeriod << " has no OS/SS scales implemented!" << endl;
+        assert(0);
+      }
+    }
+    res *= scale;
   }
   return res;
 }

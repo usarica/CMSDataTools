@@ -3,7 +3,7 @@
 
 #include "common_includes.h"
 
-// gg analyzer
+// Analyzer for template production
 class TemplatesEventAnalyzer : public BaseTreeLooper{
 protected:
   Channel channel;

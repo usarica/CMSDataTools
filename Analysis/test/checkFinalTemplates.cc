@@ -1,5 +1,5 @@
-#ifndef CHECKFINALTEMPLATES_VV_H
-#define CHECKFINALTEMPLATES_VV_H
+#ifndef CHECKFINALTEMPLATES_H
+#define CHECKFINALTEMPLATES_H
 
 #include "common_includes.h"
 #include "CheckSetTemplatesCategoryScheme.h"
@@ -40,7 +40,7 @@ bool getFile(
   );
 
   if (gSystem->AccessPathName(cinput)){
-    MELAout << "getFilesAndTrees::File " << cinput << " is not found! Run " << strStage << " functions first." << endl;
+    MELAout << "getFile::File " << cinput << " is not found! Run " << strStage << " functions first." << endl;
     return false;
   }
   if (cinput!=""){
@@ -52,12 +52,12 @@ bool getFile(
         finputList.push_back(finput);
       }
       else if (finput->IsOpen()){
-        MELAout << "getFilesAndTrees::File " << cinput << " with timestamp " << timestamp << " is zombie! Re-run " << strStage << " functions first." << endl;
+        MELAout << "getFile::File " << cinput << " with timestamp " << timestamp << " is zombie! Re-run " << strStage << " functions first." << endl;
         finput->Close();
         return false;
       }
       else{
-        MELAout << "getFilesAndTrees::File " << cinput << " with timestamp " << timestamp << " could not be opened! Re-run " << strStage << " functions first." << endl;
+        MELAout << "getFile::File " << cinput << " with timestamp " << timestamp << " could not be opened! Re-run " << strStage << " functions first." << endl;
         return false;
       }
     }
@@ -69,7 +69,7 @@ void checkFinalTemplates_one(const Channel channel, const Category category, con
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
 
-  vector<ProcessHandler::ProcessType> proctypes = { ProcessHandler::kGG, ProcessHandler::kVBF, ProcessHandler::kZH, ProcessHandler::kWH, ProcessHandler::kVV, ProcessHandler::kQQBkg, ProcessHandler::kZX };
+  vector<ProcessHandler::ProcessType> proctypes = { ProcessHandler::kGG, ProcessHandler::kTT, ProcessHandler::kBB, ProcessHandler::kVBF, ProcessHandler::kZH, ProcessHandler::kWH, ProcessHandler::kVV, ProcessHandler::kQQBkg, ProcessHandler::kZX };
   const unsigned int nproctypes=proctypes.size();
 
   TDirectory* rootdir=gDirectory;
@@ -79,9 +79,6 @@ void checkFinalTemplates_one(const Channel channel, const Category category, con
     vector<SystematicsHelpers::SystematicVariationTypes> allowedSysts = getProcessSystematicVariations(category, channel, proctype, "");
     for (auto& syst:allowedSysts){
       rootdir->cd();
-
-      const TString strSystematics = getSystematicsName(syst);
-      const TString strSystematicsOutput = getSystematicsCombineName(category, channel, proctype, syst);
 
       vector<TFile*> finputList;
       ProcessHandler const* inputProcessHandle=getProcessHandlerPerMassRegion(proctype, massregion);

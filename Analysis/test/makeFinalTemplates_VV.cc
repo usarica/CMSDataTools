@@ -43,7 +43,7 @@ bool getFile(
   );
 
   if (gSystem->AccessPathName(cinput)){
-    MELAerr << "getFilesAndTrees::File " << cinput << " is not found! Run " << strStage << " functions first." << endl;
+    MELAerr << "getFile::File " << cinput << " is not found! Run " << strStage << " functions first." << endl;
     return false;
   }
   if (cinput!=""){
@@ -54,12 +54,12 @@ bool getFile(
         finputList.push_back(finput);
       }
       else if (finput->IsOpen()){
-        MELAerr << "getFilesAndTrees::File " << cinput << " is zombie! Re-run " << strStage << " functions first." << endl;
+        MELAerr << "getFile::File " << cinput << " is zombie! Re-run " << strStage << " functions first." << endl;
         finput->Close();
         return false;
       }
       else{
-        MELAerr << "getFilesAndTrees::File " << cinput << " could not be opened! Re-run " << strStage << " functions first." << endl;
+        MELAerr << "getFile::File " << cinput << " could not be opened! Re-run " << strStage << " functions first." << endl;
         return false;
       }
     }

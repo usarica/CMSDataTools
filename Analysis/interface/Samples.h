@@ -5,15 +5,15 @@
 #include <string>
 
 // LHC sqrts and data period
-const unsigned int theSqrts = 13;
+constexpr unsigned int theSqrts = 13;
 const TString theDataPeriod = "2016";
 
 // MH and GH reference values
-const float MHRefVal=125;
-const float GHRefVal=4.07e-3;
+constexpr float MHRefVal=125;
+constexpr float GHRefVal=4.07e-3;
 
 // CJLST samples directory
-const unsigned int CJLSTversion = 180224;
+constexpr unsigned int CJLSTversion = 180224;
 const TString CJLSTdate = std::to_string(CJLSTversion);
 const TString CJLSTrootdir = HostHelpers::GetCJLSTSamplesDirectory(CJLSTdate);
 const TString CJLSTsamplesdir = CJLSTrootdir + "/" + CJLSTdate;
@@ -26,6 +26,6 @@ const TString COUNTERS_NAME = "ZZTree/Counters";
 const TString COUNTERS_CRZLL_NAME = "CRZLLTree/Counters";
 const TString COUNTERS_CRZL_NAME = "CRZLTree/Counters";
 
-const float xsecScale = 1e3;
+constexpr float xsecScale = 1e3;
 
 #endif

@@ -65,7 +65,7 @@ def getSystematicsList():
 
 
 def getACHypothesisList():
-   hypos = [ "nACHypotheses", "kSM", "kL1", "kA2", "kA3" ]
+   hypos = [ "nACHypotheses", "kSM", "kL1", "kA2", "kA3", "kL1ZGs" ]
    return hypos
 
 

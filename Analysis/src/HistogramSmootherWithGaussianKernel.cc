@@ -36,8 +36,12 @@ ExtendedBinning HistogramSmootherWithGaussianKernel::getIntermediateBinning(Exte
   ExtendedBinning res(binning);
   TString namelower=res.getLabel(); namelower.ToLower();
   if ((!namelower.Contains("mass") && !namelower.Contains("pt")) || binning.getNbins()<4) return res;
-  res.addBinBoundary(binning.getBinLowEdge(0)-binning.getBinWidth(0));
-  res.addBinBoundary(binning.getBinHighEdge(binning.getNbins()-1)+binning.getBinWidth(binning.getNbins()-1));
+  if (
+    !(namelower.Contains("zzmass") && res.getMin()==ZZMass_Infimum)
+    ) res.addBinBoundary(binning.getBinLowEdge(0)-binning.getBinWidth(0));
+  if (
+    !(namelower.Contains("zzmass") && res.getMax()==ZZMass_Supremum)
+    ) res.addBinBoundary(binning.getBinHighEdge(binning.getNbins()-1)+binning.getBinWidth(binning.getNbins()-1));
   MELAout
     << "getIntermediateBinning: Extended binning " << res.getLabel()
     << " [ " << res.getMin() << ", " << res.getMax() << " ]"

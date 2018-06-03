@@ -228,6 +228,69 @@ TF1* HelperFunctions::getFcn_a0plusa1timesatana2timesXminusa3(TSpline3* sp, doub
   return fcn;
 }
 
+/* SPECIFIC COMMENT: Get a TF1 object for the formula ( Pi/2 + atan(a0*(x-a1)) )/Pi */
+TF1* HelperFunctions::getFcn_EfficiencyAtan(TSpline3* sp, double xmin, double xmax, bool useLowBound){
+  constexpr double pi = TMath::Pi();
+  constexpr double pi_over_two = TMath::Pi()/2.;
+  constexpr double two_pi = TMath::Pi()*2.;
+  double x, xp, dx, y, b, c, d;
+  double s, ss;
+  if (useLowBound){
+    x = sp->GetXmin();
+    sp->GetCoeff(0, xp, y, b, c, d); // Hopefully xp=x; we don't care about y.
+  }
+  else{
+    x = sp->GetXmax();
+    sp->GetCoeff(sp->GetNp()-2, xp, y, b, c, d); // We don't care about y.
+  }
+  dx=x-xp;
+  y = sp->Eval(x);
+  s = sp->Derivative(x); // == b + 2.*c*dx + 3.*d*dx*dx
+  ss = 2.*c + 6.*d*dx;
+
+  double a0=0, a1=0;
+  TF1* fcn=nullptr;
+  if (s!=0. && std::abs(ss)>1e-10){
+    double kappa = ss/(two_pi*pow(s, 2));
+    a1 = x + kappa;
+    a0 = tan(pi*y - pi_over_two) / (-kappa);
+    //MELAout << "tan fac: " << tan(pi*y - pi_over_two) << endl;
+    //MELAout << "kappa: " << kappa << endl;
+    //MELAout << "a1, a0: " << a1 << ", " << a0 << endl;
+
+    TString fcnName;
+    if (useLowBound) fcnName = Form("lowFcn_%s", sp->GetName());
+    else fcnName = Form("highFcn_%s", sp->GetName());
+    fcn = new TF1(fcnName, "[0]+[1]*atan([2]*(x-[3]))", xmin, xmax);
+    fcn->SetParameter(0, 0.5);
+    fcn->SetParameter(1, 1./pi);
+    fcn->SetParameter(2, a0);
+    fcn->SetParameter(3, a1);
+
+    //MELAout << "HelperFunctions::getFcn_EfficiencyAtan: Initial input (y, s, ss) = ( " << y << ", " << s << ", " << ss << " )" << endl;
+    //MELAout << "HelperFunctions::getFcn_EfficiencyAtan: Final output (y, s, ss) = ( " << fcn->Eval(x) << ", " << fcn->Derivative(x) << ", " << fcn->Derivative2(x) << " )" << endl;
+  }
+  else if (s!=0.){
+    a0=y/pi_over_two;
+    a1=s/a0;
+    //MELAout << "a1, a0: " << a1 << ", " << a0 << endl;
+
+    TString fcnName;
+    if (useLowBound) fcnName = Form("lowFcn_%s", sp->GetName());
+    else fcnName = Form("highFcn_%s", sp->GetName());
+    fcn = new TF1(fcnName, "[0]+[1]*atan([2]*(x-[3]))", xmin, xmax);
+    fcn->SetParameter(0, y);
+    fcn->SetParameter(1, a0);
+    fcn->SetParameter(2, a1);
+    fcn->SetParameter(3, x);
+  }
+  else{
+    MELAerr << "HelperFunctions::getFcn_EfficiencyAtan: First derivative was 0!" << endl;
+    assert(0);
+  }
+  return fcn;
+}
+
 
 TSpline3* HelperFunctions::convertGraphToSpline3(TGraph* tg, bool faithfulFirst, bool faithfulSecond, double* dfirst, double* dlast){
   unsigned int nbins = tg->GetN();

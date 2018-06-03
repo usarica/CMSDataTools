@@ -26,6 +26,11 @@ const TString COUNTERS_NAME = "ZZTree/Counters";
 const TString COUNTERS_CRZLL_NAME = "CRZLLTree/Counters";
 const TString COUNTERS_CRZL_NAME = "CRZLTree/Counters";
 
+// CJLST xsec*BR units
 constexpr float xsecScale = 1e3;
+
+// ZZMass infimum and supremum
+constexpr float ZZMass_Infimum = 70.; // Analyzer cut
+constexpr float ZZMass_Supremum = theSqrts*1000.;
 
 #endif

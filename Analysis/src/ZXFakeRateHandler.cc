@@ -244,6 +244,12 @@ float ZXFakeRateHandler::getFakeRateWeight(CJLSTTree* tree) const{
         else if (absZ1Flav==169 && absZ2Flav==121) scale=0.98;
         else if (absZ1Flav==121 && absZ2Flav==169) scale=1.30;
         else if (absZ1Flav==169 && absZ2Flav==169) scale=1.22;
+        /*
+        if (absZ1Flav==121 && absZ2Flav==121) scale=1.01249;
+        else if (absZ1Flav==169 && absZ2Flav==121) scale=1.00218;
+        else if (absZ1Flav==121 && absZ2Flav==169) scale=1.0562;
+        else if (absZ1Flav==169 && absZ2Flav==169) scale=0.996512;
+        */
       }
       else if (theDataPeriod=="2017"){
         if (absZ1Flav==121 && absZ2Flav==121) scale=1.00866;

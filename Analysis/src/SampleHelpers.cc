@@ -218,6 +218,23 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
       }
     }
   }
+  else if (strsample=="VBF_Sig_JHUGen"){
+    if (!(
+      syst==SystematicsHelpers::tMINLODn || syst==SystematicsHelpers::tMINLOUp
+      ||
+      syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
+      ||
+      syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
+      )){
+      samples.push_back("VBFH0PM_M125");
+      samples.push_back("VBFH0L1_M125");
+      samples.push_back("VBFH0PH_M125");
+      samples.push_back("VBFH0M_M125");
+      samples.push_back("VBFH0L1f05ph0_M125");
+      samples.push_back("VBFH0PHf05ph0_M125");
+      samples.push_back("VBFH0Mf05ph0_M125");
+    }
+  }
 
   else if (strsample=="WH_Sig_POWHEG"){
     vector<TString> vtmp;
@@ -348,6 +365,23 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
       }
     }
   }
+  else if (strsample=="WH_Sig_JHUGen"){
+    if (!(
+      syst==SystematicsHelpers::tMINLODn || syst==SystematicsHelpers::tMINLOUp
+      ||
+      syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
+      ||
+      syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
+      )){
+      samples.push_back("WH0PM_M125");
+      samples.push_back("WH0L1_M125");
+      samples.push_back("WH0PH_M125");
+      samples.push_back("WH0M_M125");
+      samples.push_back("WH0L1f05ph0_M125");
+      samples.push_back("WH0PHf05ph0_M125");
+      samples.push_back("WH0Mf05ph0_M125");
+    }
+  }
 
   else if (strsample=="ZH_Sig_POWHEG"){
     if (!(
@@ -411,6 +445,23 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
       }
     }
   }
+  else if (strsample=="ZH_Sig_JHUGen"){
+    if (!(
+      syst==SystematicsHelpers::tMINLODn || syst==SystematicsHelpers::tMINLOUp
+      ||
+      syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
+      ||
+      syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
+      )){
+      samples.push_back("ZH0PM_M125");
+      samples.push_back("ZH0L1_M125");
+      samples.push_back("ZH0PH_M125");
+      samples.push_back("ZH0M_M125");
+      samples.push_back("ZH0L1f05ph0_M125");
+      samples.push_back("ZH0PHf05ph0_M125");
+      samples.push_back("ZH0Mf05ph0_M125");
+    }
+  }
 
   else if (strsample=="tt_Sig_POWHEG"){
     if (!(
@@ -433,6 +484,19 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
         else if (syst==SystematicsHelpers::tPythiaTuneDn) samples.push_back("ttH125_tunedown");
         else if (syst==SystematicsHelpers::tPythiaTuneUp) samples.push_back("ttH125_tuneup");
       }
+    }
+  }
+  else if (strsample=="tt_Sig_JHUGen"){
+    if (!(
+      syst==SystematicsHelpers::tMINLODn || syst==SystematicsHelpers::tMINLOUp
+      ||
+      syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
+      ||
+      syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
+      )){
+      samples.push_back("ttH0PM_M125");
+      samples.push_back("ttH0M_M125");
+      samples.push_back("ttH0Mf05ph0_M125");
     }
   }
 
@@ -521,6 +585,23 @@ std::vector<TString> SampleHelpers::constructSamplesList(TString strsample, floa
         else if (syst==SystematicsHelpers::tPythiaTuneUp){ samples.push_back("ggH125_tuneup"); samples.push_back("ggH300_tuneup"); }
         else if (syst==SystematicsHelpers::tMINLODn || syst==SystematicsHelpers::tMINLOUp){ samples.push_back("ggH125_minloHJJ"); samples.push_back("ggH300_minloHJJ"); }
       }
+    }
+  }
+  else if (strsample=="gg_Sig_JHUGen"){
+    if (!(
+      syst==SystematicsHelpers::tMINLODn || syst==SystematicsHelpers::tMINLOUp
+      ||
+      syst==SystematicsHelpers::tPythiaScaleDn || syst==SystematicsHelpers::tPythiaScaleUp
+      ||
+      syst==SystematicsHelpers::tPythiaTuneDn || syst==SystematicsHelpers::tPythiaTuneUp
+      )){
+      samples.push_back("ggH0PM_M125");
+      samples.push_back("ggH0L1_M125");
+      samples.push_back("ggH0PH_M125");
+      samples.push_back("ggH0M_M125");
+      samples.push_back("ggH0L1f05ph0_M125");
+      samples.push_back("ggH0PHf05ph0_M125");
+      samples.push_back("ggH0Mf05ph0_M125");
     }
   }
 

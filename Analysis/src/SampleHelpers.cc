@@ -16,6 +16,9 @@ void SampleHelpers::makeGlobalMELA(int CoM, TVar::VerbosityLevel verbosity){ if 
 float SampleHelpers::findPoleMass(const TString samplename){
   float mass = -1;
   if (samplename=="") return mass;
+  else if (samplename.Contains("_M125")) return 125; // JHUGen samples
+  else if (samplename.Contains("_M125p6")) return 125.6; // JHUGen samples
+  else if (samplename.Contains("_M126")) return 126; // JHUGen samples
   std::string strtmp = samplename.Data();
   std::size_t extpos = strtmp.find(".root");
   if (extpos!=std::string::npos) strtmp.erase(extpos, 5);

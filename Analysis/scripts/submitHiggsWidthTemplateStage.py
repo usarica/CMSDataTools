@@ -245,7 +245,7 @@ class StageXBatchManager:
 
                      # Do not submit unnecessary jobs
                      if not checkValidRun(syst, cat, ch, self.opt.process): continue
-                     if self.opt.stage == 1 and cat == "Untagged" and not(self.opt.process == "ZH" or self.opt.process == "WH"):
+                     if self.opt.stage == 1 and cat == "Untagged" and not(self.opt.process == "ZH" or self.opt.process == "WH" or self.opt.process == "TT"):
                         print "{} category distributions in process {} can be obtained from the distributions of inclusive and other categories.".format(cat, self.opt.process)
                         continue
                      if "tMINLO" in syst or "tPythia" in syst:

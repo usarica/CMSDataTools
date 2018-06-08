@@ -1025,7 +1025,7 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
     for (TString const& KDname:KDset) KDvars[KDname]=0;
     vector<ExtendedBinning> KDbinning;
     for (TString const& KDname:KDset){
-      if (KDname!="ZZMass") KDbinning.push_back(getDiscriminantFineBinning(channel, category, KDname, (CategorizationHelpers::MassRegion) massregion));
+      if (KDname!="ZZMass") KDbinning.push_back(getDiscriminantFineBinning(channel, category, hypo, KDname, (CategorizationHelpers::MassRegion) massregion));
       else KDbinning.push_back(binning_mass);
     }
     unsigned int nKDs = KDset.size();

@@ -331,7 +331,7 @@ void TemplateHelpers::getCategorizationDiscriminants(const SystematicsHelpers::S
 
   SystematicsHelpers::adjustDiscriminantJECVariables(syst, KDlist);
 }
-ExtendedBinning TemplateHelpers::getDiscriminantFineBinning(const SampleHelpers::Channel /*channel*/, const CategorizationHelpers::Category category, TString const strKD, CategorizationHelpers::MassRegion const massregion){
+ExtendedBinning TemplateHelpers::getDiscriminantFineBinning(const SampleHelpers::Channel /*channel*/, const CategorizationHelpers::Category category, ACHypothesisHelpers::ACHypothesis hypo, TString const strKD, CategorizationHelpers::MassRegion const massregion){
   MELAout << "TemplateHelpers::getDiscriminantFineBinning: Inquiring binning for variable " << strKD << endl;
   ExtendedBinning res(strKD);
   if (strKD=="ZZMass"){
@@ -381,19 +381,29 @@ ExtendedBinning TemplateHelpers::getDiscriminantFineBinning(const SampleHelpers:
     }
   }
   else if (strKD.Contains("int")){
-    unsigned int nbins=20+10*(category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged);
+    unsigned int nbins=20;
+    if (
+      (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged)
+      &&
+      (massregion==CategorizationHelpers::kOffshell || hypo==ACHypothesisHelpers::kSM)
+      ) nbins += 10;
     double boundary=1; if (category==CategorizationHelpers::HadVHTagged && strKD.Contains(DiscriminantClasses::getKDName(DiscriminantClasses::kDintjjEWQCD))) boundary=0.4;
     double stepsize=2.*boundary/double(nbins);
     for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(-boundary+double(i)*stepsize);
   }
   else{
-    unsigned int nbins=20+10*(category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged);
+    unsigned int nbins=20;
+    if (
+      (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged)
+      &&
+      (massregion==CategorizationHelpers::kOffshell || hypo==ACHypothesisHelpers::kSM)
+      ) nbins += 10;
     double stepsize=1./double(nbins);
     for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(double(i)*stepsize);
   }
   return res;
 }
-ExtendedBinning TemplateHelpers::getDiscriminantCoarseBinning(const SampleHelpers::Channel /*channel*/, const CategorizationHelpers::Category category, TString const strKD, CategorizationHelpers::MassRegion const massregion){
+ExtendedBinning TemplateHelpers::getDiscriminantCoarseBinning(const SampleHelpers::Channel /*channel*/, const CategorizationHelpers::Category category, ACHypothesisHelpers::ACHypothesis hypo, TString const strKD, CategorizationHelpers::MassRegion const massregion){
   ExtendedBinning res(strKD);
   if (strKD=="ZZMass"){
     switch (massregion){
@@ -444,13 +454,23 @@ ExtendedBinning TemplateHelpers::getDiscriminantCoarseBinning(const SampleHelper
     }
   }
   else if (strKD.Contains("int")){
-    unsigned int nbins=15+5*(category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged);
+    unsigned int nbins=10;
+    if (
+      (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged)
+      &&
+      (massregion==CategorizationHelpers::kOffshell || hypo==ACHypothesisHelpers::kSM)
+      ) nbins += 10;
     double boundary=1; if (category==CategorizationHelpers::HadVHTagged && strKD.Contains(DiscriminantClasses::getKDName(DiscriminantClasses::kDintjjEWQCD))) boundary=0.4;
     double stepsize=2.*boundary/double(nbins);
     for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(-boundary+double(i)*stepsize);
   }
   else{
-    unsigned int nbins=15+5*(category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged);
+    unsigned int nbins=10;
+    if (
+      (category==CategorizationHelpers::Inclusive || category==CategorizationHelpers::Untagged)
+      &&
+      (massregion==CategorizationHelpers::kOffshell || hypo==ACHypothesisHelpers::kSM)
+      ) nbins += 10;
     double stepsize=1./double(nbins);
     for (unsigned int i=0; i<=nbins; i++) res.addBinBoundary(double(i)*stepsize);
   }

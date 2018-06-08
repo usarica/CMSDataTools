@@ -116,7 +116,7 @@ void makeVBFTemplatesFromPOWHEG_one(const Channel channel, const Category catego
   // Binning for MELARewgt
   ExtendedBinning GenHMassBinning("GenHMass");
   for (unsigned int is=0; is<theSampleSet->getCJLSTTreeList().size()-1; is++){
-    if (theSampleSet->getCJLSTTreeList().at(is)->MHVal>0. && theSampleSet->getCJLSTTreeList().at(is+1)->MHVal>0.){
+    if (theSampleSet->getCJLSTTreeList().at(is)->MHVal>0. && theSampleSet->getCJLSTTreeList().at(is+1)->MHVal>0. && theSampleSet->getCJLSTTreeList().at(is)->MHVal!=theSampleSet->getCJLSTTreeList().at(is+1)->MHVal){
       float boundary = (theSampleSet->getCJLSTTreeList().at(is)->MHVal + theSampleSet->getCJLSTTreeList().at(is+1)->MHVal)/2.;
       GenHMassBinning.addBinBoundary(boundary);
     }

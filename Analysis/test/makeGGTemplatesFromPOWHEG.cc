@@ -74,6 +74,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   // Get list of samples
   vector<TString> strSampleIdentifiers;
   strSampleIdentifiers.push_back("gg_Sig_POWHEG");
+  strSampleIdentifiers.push_back("gg_Sig_JHUGen");
   vector<TString> strSamples;
   getSamplesList(theSqrts, strSampleIdentifiers, strSamples, syst);
 
@@ -117,7 +118,7 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   // Binning for MELARewgt
   ExtendedBinning GenHMassBinning("GenHMass");
   for (unsigned int is=0; is<theSampleSet->getCJLSTTreeList().size()-1; is++){
-    if (theSampleSet->getCJLSTTreeList().at(is)->MHVal>0. && theSampleSet->getCJLSTTreeList().at(is+1)->MHVal>0.){
+    if (theSampleSet->getCJLSTTreeList().at(is)->MHVal>0. && theSampleSet->getCJLSTTreeList().at(is+1)->MHVal>0. && theSampleSet->getCJLSTTreeList().at(is)->MHVal!=theSampleSet->getCJLSTTreeList().at(is+1)->MHVal){
       float boundary = (theSampleSet->getCJLSTTreeList().at(is)->MHVal + theSampleSet->getCJLSTTreeList().at(is+1)->MHVal)/2.;
       GenHMassBinning.addBinBoundary(boundary);
     }

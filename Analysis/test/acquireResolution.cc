@@ -908,7 +908,7 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   MELAout << "There are " << theOutputTree->getNEvents() << " products" << endl;
 
   // Setup the binning
-  ExtendedBinning binning_mass=getDiscriminantFineBinning(channel, category, "ZZMass", kOnshell);
+  ExtendedBinning binning_mass=getDiscriminantFineBinning(channel, category, kSM, "ZZMass", kOnshell);
 
   RooRealVar var_mreco("ZZMass", "m^{reco}_{4l} (GeV)", 125, binning_mass.getMin(), binning_mass.getMax());
   { // Set binning of ZZMass

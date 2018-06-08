@@ -199,7 +199,7 @@ void makeFinalTemplates_VV_one(const Channel channel, const ACHypothesis hypo, c
         appendVector(KDset, KDset2);
       }
       vector<ExtendedBinning> KDbinning;
-      for (auto& KDname:KDset) KDbinning.push_back(getDiscriminantFineBinning(channel, cat, KDname, massregion));
+      for (auto& KDname:KDset) KDbinning.push_back(getDiscriminantFineBinning(channel, cat, hypo, KDname, massregion));
       getControl2DXSlices(rootdir, foutput, outputProcessHandle, hypo, KDbinning, htpls_3D);
     }
 

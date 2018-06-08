@@ -388,7 +388,7 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
     unordered_map<TString, float> KDvars;
     for (auto& KDname:KDset) KDvars[KDname]=0;
     vector<ExtendedBinning> KDbinning;
-    for (auto& KDname:KDset) KDbinning.push_back(getDiscriminantFineBinning(channel, Inclusive, KDname, massregion));
+    for (auto& KDname:KDset) KDbinning.push_back(getDiscriminantFineBinning(channel, Inclusive, hypo, KDname, massregion));
 
     vector<TString> cinputList;
     vector<TFile*> finputList;
@@ -422,7 +422,7 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
         TString hname = outputProcessHandle->getOutputTreeName();
         hname = hname + "_" + strCategory + "_" + strSystematics + "_" + KDset.at(0);
         MELAout << "Setting up mass histogram " << hname << endl;
-        hMass_FromNominalInclusive[cat].emplace_back(hname, hname, getDiscriminantFineBinning(channel, cat, KDset.back(), massregion));
+        hMass_FromNominalInclusive[cat].emplace_back(hname, hname, getDiscriminantFineBinning(channel, cat, hypo, KDset.back(), massregion));
       }
 
       tree->SetBranchStatus("*", 0);
@@ -519,7 +519,7 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
     unordered_map<TString, float> KDvars;
     for (auto& KDname:KDset) KDvars[KDname]=0;
     vector<ExtendedBinning> KDbinning;
-    for (auto& KDname:KDset) KDbinning.push_back(getDiscriminantFineBinning(channel, cat, KDname, massregion));
+    for (auto& KDname:KDset) KDbinning.push_back(getDiscriminantFineBinning(channel, cat, hypo, KDname, massregion));
     unsigned int nKDs = KDset.size();
     MELAout << "\t- Number of template dimensions = " << nKDs << endl;
 

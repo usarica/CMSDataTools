@@ -118,7 +118,8 @@ std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet
       case kL1ZGs:
         res.push_back(DiscriminantClasses::kDbkgm4l);
         res.push_back(DiscriminantClasses::kDL1ZGsdec);
-        res.push_back(DiscriminantClasses::kCL1ZGsdecint);
+        res.push_back(DiscriminantClasses::kDa2dec);
+        //res.push_back(DiscriminantClasses::kCL1ZGsdecint);
         break;
       default:
         break;
@@ -147,7 +148,8 @@ std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet
       case kL1ZGs:
         res.push_back(DiscriminantClasses::kDbkgm4ljjEWQCD);
         res.push_back(DiscriminantClasses::kDL1ZGsjjVBFdec);
-        res.push_back(DiscriminantClasses::kCL1ZGsjjVBFint);
+        res.push_back(DiscriminantClasses::kDa2jjVBFdec);
+        //res.push_back(DiscriminantClasses::kCL1ZGsjjVBFint);
         break;
       default:
         break;
@@ -176,7 +178,8 @@ std::vector<DiscriminantClasses::Type> ACHypothesisHelpers::getACHypothesisKDSet
       case kL1ZGs:
         res.push_back(DiscriminantClasses::kDbkgm4ljjEWQCD);
         res.push_back(DiscriminantClasses::kDL1ZGsjjVHdec);
-        res.push_back(DiscriminantClasses::kCL1ZGsjjVHint);
+        res.push_back(DiscriminantClasses::kDa2jjVHdec);
+        //res.push_back(DiscriminantClasses::kCL1ZGsjjVHint);
         break;
       default:
         break;

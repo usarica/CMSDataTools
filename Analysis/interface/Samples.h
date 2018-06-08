@@ -13,7 +13,7 @@ constexpr float MHRefVal=125;
 constexpr float GHRefVal=4.07e-3;
 
 // CJLST samples directory
-constexpr unsigned int CJLSTversion = 180224;
+constexpr unsigned int CJLSTversion = 180530;
 const TString CJLSTdate = std::to_string(CJLSTversion);
 const TString CJLSTrootdir = HostHelpers::GetCJLSTSamplesDirectory(CJLSTdate);
 const TString CJLSTsamplesdir = CJLSTrootdir + "/" + CJLSTdate;

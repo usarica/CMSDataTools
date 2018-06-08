@@ -81,8 +81,12 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
 
   // Register the discriminants
   vector<KDspecs> KDlist;
+  vector<TString> strExtraCatVars_short;
   getLikelihoodDiscriminants(channel, category, syst, KDlist);
-  if (category!=Inclusive) getCategorizationDiscriminants(syst, KDlist);
+  if (category!=Inclusive){
+    getCategorizationDiscriminants(syst, KDlist);
+    getExtraCategorizationVariables<short>(globalCategorizationScheme, syst, strExtraCatVars_short);
+  }
 
   // Get the CJLST set
   CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
@@ -99,6 +103,8 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
     for (auto& s:strKfactorVars) tree->bookBranch<float>(s, 1);
     // Variables for KDs
     for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
+    // Extra categorization variables
+    for (auto& s:strExtraCatVars_short) tree->bookBranch<short>(s, -1);
     tree->silenceUnused(); // Will no longer book another branch
   }
   theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_OneOverNgen, false, true);
@@ -147,6 +153,8 @@ void makeQQBkgTemplatesFromPOWHEG_one(const Channel channel, const Category cate
     theAnalyzer.addConsumed<short>("Z2Flav");
     // Add discriminant builders
     for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
+    // Add extra categorization variables
+    for (auto& s:strExtraCatVars_short) theAnalyzer.addConsumed<short>(s);
     // Add reweighting builders
     theAnalyzer.addReweightingBuilder("RegularRewgt", regularewgtBuilder);
     // Add systematics handle

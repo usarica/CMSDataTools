@@ -124,6 +124,7 @@ std::vector<CategorizationHelpers::Category> CategorizationHelpers::getAllowedCa
   res.push_back(Inclusive);
   switch (scheme){
   case UntaggedOrJJVBFOrHadVH:
+  case UntaggedOrJJVBFOrHadVH_WithMultiplicityAndBTag:
   case UntaggedOrJJVBFOrHadVH_Arbitrated:
     res.push_back(HadVHTagged);
   case UntaggedOrJJVBF:

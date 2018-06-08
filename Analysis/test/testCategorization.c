@@ -26,7 +26,11 @@ void testCategorization(const Category category){
 
   // Register the discriminants
   vector<KDspecs> KDlist;
-  if (category!=Inclusive) getCategorizationDiscriminants(syst, KDlist);
+  vector<TString> strExtraCatVars_short;
+  if (category!=Inclusive){
+    getCategorizationDiscriminants(syst, KDlist);
+    getExtraCategorizationVariables<short>(globalCategorizationScheme, syst, strExtraCatVars_short);
+  }
 
   // Get the CJLST set
   CJLSTSet* theSampleSet = new CJLSTSet(strSamples);
@@ -40,6 +44,8 @@ void testCategorization(const Category category){
     tree->bookBranch<short>("Z2Flav", 0);
     // Variables for KDs
     for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
+    // Extra categorization variables
+    for (auto& s:strExtraCatVars_short) tree->bookBranch<short>(s, -1);
     tree->silenceUnused(); // Will no longer book another branch
   }
 
@@ -58,6 +64,8 @@ void testCategorization(const Category category){
     theAnalyzer.addConsumed<short>("Z2Flav");
     // Add discriminant builders
     for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
+    // Add extra categorization variables
+    for (auto& s:strExtraCatVars_short) theAnalyzer.addConsumed<short>(s);
     theAnalyzer.setRecordCategorizationKDs(true);
     theAnalyzer.setRecordKDVariables(true);
     // Loop

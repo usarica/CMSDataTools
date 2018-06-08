@@ -165,6 +165,7 @@ void acquireResolution_one(const Channel channel, const Category category, const
 
   // Register only the categorization the discriminants
   vector<KDspecs> KDlist;
+  vector<TString> strExtraCatVars_short;
   getCategorizationDiscriminants(sNominal, KDlist);
 
   for (TString const& identifier:strSampleIdentifiers){
@@ -208,6 +209,8 @@ void acquireResolution_one(const Channel channel, const Category category, const
       for (auto& s:strKfactorVars) tree->bookBranch<float>(s, 1);
       // Variables for KDs
       for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
+      // Extra categorization variables
+      for (auto& s:strExtraCatVars_short) tree->bookBranch<short>(s, -1);
       tree->silenceUnused(); // Will no longer book another branch
     }
     theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_XsecOverNgen_RelRenormToSumNgen, true, true); // We don't care about total xsec, but we care abou realative normalization in W- vs W+ H
@@ -241,6 +244,8 @@ void acquireResolution_one(const Channel channel, const Category category, const
     if (regularewgtBuilder) theAnalyzer.addReweightingBuilder("RegularRewgt", regularewgtBuilder);
     // Add discriminant builders
     for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
+    // Add extra categorization variables
+    for (auto& s:strExtraCatVars_short) theAnalyzer.addConsumed<short>(s);
     // Add systematics handle
     //theAnalyzer.addSystematic(strSystematics, systhandle);
     // Loop

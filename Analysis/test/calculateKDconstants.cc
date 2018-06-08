@@ -108,7 +108,11 @@ bool EventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt, SimpleEn
     //if (KDreq<0.) cout << "KDreq invalid -> " << KDreq << endl;
 
     // Category check
-    Category catFound = CategorizationHelpers::getCategory(DjjVBF, DjjZH, DjjWH, false);
+    SimpleEntry catvars;
+    catvars.setNamedVal("DjjVBF", DjjVBF);
+    catvars.setNamedVal("DjjZH", DjjZH);
+    catvars.setNamedVal("DjjWH", DjjWH);
+    Category catFound = CategorizationHelpers::getCategory(catvars, false);
     validProducts &= (category==Inclusive || category==catFound);
 
     // Channel check

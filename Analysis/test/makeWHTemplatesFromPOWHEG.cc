@@ -87,10 +87,12 @@ void makeWHTemplatesFromPOWHEG_one(const Channel channel, const Category categor
 
   // Register the discriminants
   vector<KDspecs> KDlist;
+  vector<TString> strExtraCatVars_short;
   getLikelihoodDiscriminants(channel, category, syst, KDlist);
   if (category!=Inclusive){
     if (category!=Untagged) getLikelihoodDiscriminants(channel, Inclusive, syst, KDlist);
     getCategorizationDiscriminants(syst, KDlist);
+    getExtraCategorizationVariables<short>(globalCategorizationScheme, syst, strExtraCatVars_short);
   }
 
   // Get the CJLST sets
@@ -112,6 +114,8 @@ void makeWHTemplatesFromPOWHEG_one(const Channel channel, const Category categor
       for (TString const& wgtvar:melawgtvars) tree->bookBranch<float>(wgtvar, 0);
       // Variables for KDs
       for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
+      // Extra categorization variables
+      for (auto& s:strExtraCatVars_short) tree->bookBranch<short>(s, -1);
       tree->silenceUnused(); // Will no longer book another branch
     }
     theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_NgenOverNgenWPU, false, true);
@@ -151,11 +155,12 @@ void makeWHTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     for (auto& theSampleSet:theSets){
       // Binning for MELARewgt
       ExtendedBinning GenHMassBinning("GenHMass");
-      for (unsigned int is=0; is<theSampleSet->getCJLSTTreeList().size()-1; is++){
-        if (theSampleSet->getCJLSTTreeList().at(is)->MHVal>0. && theSampleSet->getCJLSTTreeList().at(is+1)->MHVal>0. && theSampleSet->getCJLSTTreeList().at(is)->MHVal!=theSampleSet->getCJLSTTreeList().at(is+1)->MHVal){
-          float boundary = (theSampleSet->getCJLSTTreeList().at(is)->MHVal + theSampleSet->getCJLSTTreeList().at(is+1)->MHVal)/2.;
-          GenHMassBinning.addBinBoundary(boundary);
-        }
+      vector<float> mHList;
+      for (CJLSTTree const* tree:theSampleSet->getCJLSTTreeList()){ if (tree->MHVal>0.) addByLowest(mHList, tree->MHVal, true); }
+      for (unsigned int is=0; is<mHList.size()-1; is++){
+        if (mHList.at(is)==mHList.at(is+1)) continue;
+        float boundary = (mHList.at(is) + mHList.at(is+1))/2.;
+        GenHMassBinning.addBinBoundary(boundary);
       }
       GenHMassBinning.addBinBoundary(0);
       GenHMassBinning.addBinBoundary(theSqrts*1000.);
@@ -183,6 +188,8 @@ void makeWHTemplatesFromPOWHEG_one(const Channel channel, const Category categor
       theAnalyzer.addConsumed<short>("Z2Flav");
       // Add discriminant builders
       for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
+      // Add extra categorization variables
+      for (auto& s:strExtraCatVars_short) theAnalyzer.addConsumed<short>(s);
       // Add reweighting builders
       theAnalyzer.addReweightingBuilder("MELARewgt", melarewgtBuilder);
       // Add systematics handle

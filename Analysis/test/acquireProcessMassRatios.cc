@@ -760,8 +760,12 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
 
   // Register the discriminants
   vector<KDspecs> KDlist;
+  vector<TString> strExtraCatVars_short;
   getLikelihoodDiscriminants(channel, category, syst, KDlist);
-  getCategorizationDiscriminants(syst, KDlist);
+  if (category!=Inclusive){
+    getCategorizationDiscriminants(syst, KDlist);
+    getExtraCategorizationVariables<short>(globalCategorizationScheme, syst, strExtraCatVars_short);
+  }
 
   for (TString const& identifier:strSampleIdentifiers){
     // For the non-nominal tree
@@ -821,6 +825,8 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
         tree->bookBranch<short>("Z2Flav", 0);
         // Variables for KDs
         for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
+        // Extra categorization variables
+        for (auto& s:strExtraCatVars_short) tree->bookBranch<short>(s, -1);
         tree->silenceUnused(); // Will no longer book another branch
       }
       theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_OneOverNgen, false, true); // One/Ngen is a better choice when we have a sparse set of samples
@@ -842,6 +848,8 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
       theAnalyzer.addConsumed<short>("Z2Flav");
       // Add discriminant builders
       for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
+      // Add extra categorization variables
+      for (auto& s:strExtraCatVars_short) theAnalyzer.addConsumed<short>(s);
       // Add systematics handle
       theAnalyzer.addSystematic(strSystematics, systhandle);
       // Loop

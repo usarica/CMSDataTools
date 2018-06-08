@@ -73,10 +73,14 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
   // Get ZX fake rate estimator
   ZXFakeRateHandler* ZXFRHandler = getFakeRateHandler(FRMethod, syst);
 
-  // Get the required discriminants
+  // Register the discriminants
   vector<KDspecs> KDlist;
+  vector<TString> strExtraCatVars_short;
   getLikelihoodDiscriminants(channel, category, syst, KDlist);
-  if (category!=Inclusive) getCategorizationDiscriminants(syst, KDlist);
+  if (category!=Inclusive){
+    getCategorizationDiscriminants(syst, KDlist);
+    getExtraCategorizationVariables<short>(globalCategorizationScheme, syst, strExtraCatVars_short);
+  }
 
   // Get list of samples
   vector<TString> strSamples;
@@ -97,6 +101,8 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
     tree->bookBranch<long long>("EventNumber", 0);
     // Variables for KDs
     for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
+    // Extra categorization variables
+    for (auto& s:strExtraCatVars_short) tree->bookBranch<short>(s, -1);
     tree->silenceUnused(); // Will no longer book another branch
   }
   theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_None, false, false);
@@ -126,6 +132,8 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
     theAnalyzer.addConsumed<long long>("EventNumber");
     // Add discriminant builders
     for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
+    // Add extra categorization variables
+    for (auto& s:strExtraCatVars_short) theAnalyzer.addConsumed<short>(s);
     // Add ZX FR handle
     theAnalyzer.addZXFakeRateHandler(Form("ZXFR%s", FRMethodName.Data()), ZXFRHandler);
     // Add systematics handle

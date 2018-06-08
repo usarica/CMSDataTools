@@ -197,8 +197,16 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
     if (!validProducts) return validProducts;
 
     // Category check
+    SimpleEntry catvars;
     bool fitsAtLeastOneCategory=(category==Inclusive);
     if (!fitsAtLeastOneCategory){
+      if (globalCategorizationScheme==UntaggedOrJJVBFOrHadVH_WithMultiplicityAndBTag){
+        for (unordered_map<TString, short*>::const_iterator it = valshorts.cbegin(); it!=valshorts.cend(); it++){
+          if (it->first.Contains("nCleanedJetsPt30BTagged")) catvars.setNamedVal("nJets_BTagged", *(it->second));
+          else if (it->first.Contains("nCleanedJetsPt30")) catvars.setNamedVal("nJets", *(it->second));
+          else if (it->first.Contains("nExtraLep")) catvars.setNamedVal("nExtraLep", *(it->second));
+        }
+      }
       bool isRequestedCategory[ACHypothesisHelpers::nACHypotheses]={ false };
       for (int iac=0; iac<(int) ACHypothesisHelpers::nACHypotheses; iac++){
         if (iac!=(int) ACHypothesisHelpers::kSM){
@@ -206,7 +214,10 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
           DjjZH[iac]=std::max(DjjZH[iac], DjjZH[kSM]);
           DjjWH[iac]=std::max(DjjWH[iac], DjjWH[kSM]);
         }
-        Category catFound = CategorizationHelpers::getCategory(DjjVBF[iac], DjjZH[iac], DjjWH[iac], false);
+        catvars.setNamedVal("DjjVBF", DjjVBF[iac]);
+        catvars.setNamedVal("DjjZH", DjjZH[iac]);
+        catvars.setNamedVal("DjjWH", DjjWH[iac]);
+        Category catFound = CategorizationHelpers::getCategory(catvars, false);
         isRequestedCategory[iac] = (category==catFound);
         TString catFlagName = TString("is_")
           + CategorizationHelpers::getCategoryName(category)

@@ -95,8 +95,12 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
 
   // Register the discriminants
   vector<KDspecs> KDlist;
+  vector<TString> strExtraCatVars_short;
   getLikelihoodDiscriminants(channel, category, syst, KDlist);
-  if (category!=Inclusive) getCategorizationDiscriminants(syst, KDlist);
+  if (category!=Inclusive){
+    getCategorizationDiscriminants(syst, KDlist);
+    getExtraCategorizationVariables<short>(globalCategorizationScheme, syst, strExtraCatVars_short);
+  }
 
   // Get the CJLST set
   //vector<TString> newlist; newlist.push_back(strSamples.back()); newlist.push_back(strSamples.front());
@@ -120,6 +124,8 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
       for (TString const& wgtvar:melawgtvars) tree->bookBranch<float>(wgtvar, 0);
       // Variables for KDs
       for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
+      // Extra categorization variables
+      for (auto& s:strExtraCatVars_short) tree->bookBranch<short>(s, -1);
       tree->silenceUnused(); // Will no longer book another branch
     }
     theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_NgenOverNgenWPU, false, true);
@@ -215,6 +221,8 @@ void makeGGTemplatesFromMCFM_one(const Channel channel, const Category category,
       theAnalyzer.addConsumed<short>("Z2Flav");
       // Add discriminant builders
       for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
+      // Add extra categorization variables
+      for (auto& s:strExtraCatVars_short) theAnalyzer.addConsumed<short>(s);
       // Add reweighting builders
       theAnalyzer.addReweightingBuilder("MELARewgt", melarewgtBuilder);
       // Add systematics handle

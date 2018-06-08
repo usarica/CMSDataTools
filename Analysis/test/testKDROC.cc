@@ -129,8 +129,12 @@ void testKDROC(
 
   // Register the discriminants
   vector<KDspecs> KDlist;
+  vector<TString> strExtraCatVars_short;
   getLikelihoodDiscriminants(channel, category, syst, KDlist);
-  if (category!=Inclusive) getCategorizationDiscriminants(syst, KDlist);
+  if (category!=Inclusive){
+    getCategorizationDiscriminants(syst, KDlist);
+    getExtraCategorizationVariables<short>(globalCategorizationScheme, syst, strExtraCatVars_short);
+  }
 
   // Open the output file
   TFile* foutput = TFile::Open("tmp.root", "recreate");
@@ -177,6 +181,8 @@ void testKDROC(
         for (TString const& wgtvar:melawgtvars[is]) tree->bookBranch<float>(wgtvar, 0);
         // Variables for KDs
         for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
+        // Extra categorization variables
+        for (auto& s:strExtraCatVars_short) tree->bookBranch<short>(s, -1);
         tree->silenceUnused(); // Will no longer book another branch
       }
       ExtendedBinning GenHMassBinning("GenHMass");
@@ -216,6 +222,8 @@ void testKDROC(
       theAnalyzer.addConsumed<short>("Z2Flav");
       // Add discriminant builders
       for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
+      // Add extra categorization variables
+      for (auto& s:strExtraCatVars_short) theAnalyzer.addConsumed<short>(s);
       // Add reweighting builders
       theAnalyzer.addReweightingBuilder((process[is]->getProcessType()==ProcessHandler::kQQBkg ? "RegularRewgt" : "MELARewgt"), melarewgtBuilder);
       // Loop

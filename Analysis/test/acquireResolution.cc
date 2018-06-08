@@ -167,6 +167,7 @@ void acquireResolution_one(const Channel channel, const Category category, const
   vector<KDspecs> KDlist;
   vector<TString> strExtraCatVars_short;
   getCategorizationDiscriminants(sNominal, KDlist);
+  getExtraCategorizationVariables<short>(globalCategorizationScheme, sNominal, strExtraCatVars_short);
 
   for (TString const& identifier:strSampleIdentifiers){
     // For the non-nominal tree
@@ -832,7 +833,9 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
 
   // Register only the categorization the discriminants
   vector<KDspecs> KDlist;
+  vector<TString> strExtraCatVars_short;
   getCategorizationDiscriminants(sNominal, KDlist);
+  getExtraCategorizationVariables<short>(globalCategorizationScheme, sNominal, strExtraCatVars_short);
 
   for (TString const& identifier:strSampleIdentifiers){
     // For the non-nominal tree
@@ -876,6 +879,8 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
       //for (auto& s:strKfactorVars) tree->bookBranch<float>(s, 1);
       // Variables for KDs
       for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
+      // Extra categorization variables
+      for (auto& s:strExtraCatVars_short) tree->bookBranch<short>(s, -1);
       tree->silenceUnused(); // Will no longer book another branch
     }
     theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_XsecOverNgen_RelRenormToSumNgen, true, true); // We don't care about total xsec, but we care abou realative normalization in W- vs W+ H
@@ -896,6 +901,8 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     theAnalyzer.addConsumed<short>("Z2Flav");
     // Add discriminant builders
     for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
+    // Add extra categorization variables
+    for (auto& s:strExtraCatVars_short) theAnalyzer.addConsumed<short>(s);
     // Add systematics handle
     //theAnalyzer.addSystematic(strSystematics, systhandle);
     // Loop

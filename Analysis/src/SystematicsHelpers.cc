@@ -164,7 +164,11 @@ std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::ge
         res.push_back(tMINLODn);
         res.push_back(tMINLOUp);
       }
-      if ((proc==ProcessHandler::kTT || proc==ProcessHandler::kBB) && (strGenerator=="POWHEG" || strGenerator=="")){
+      if (
+        CategorizationHelpers::globalCategorizationScheme==CategorizationHelpers::UntaggedOrJJVBFOrHadVH_WithMultiplicityAndBTag
+        &&
+        (proc==ProcessHandler::kTT || proc==ProcessHandler::kBB) && (strGenerator=="POWHEG" || strGenerator=="")
+        ){
         res.push_back(eBTagSFDn);
         res.push_back(eBTagSFUp);
       }

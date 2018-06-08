@@ -8,7 +8,7 @@ using namespace CategorizationHelpers;
 
 // Set categorization scheme for templates and check the current category validity
 bool CheckSetTemplatesCategoryScheme(CategorizationHelpers::Category category){
-  CategorizationHelpers::setGlobalCategorizationScheme(UntaggedOrJJVBFOrHadVH);
+  CategorizationHelpers::setGlobalCategorizationScheme(UntaggedOrJJVBFOrHadVH_WithMultiplicityAndBTag);
   return testCategoryAgainstGlobalScheme(category);
 }
 

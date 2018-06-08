@@ -17,6 +17,7 @@ namespace SystematicsHelpers{
     eLepSFEleDn, eLepSFEleUp,
     eLepSFMuDn, eLepSFMuUp,
     eJECDn, eJECUp,
+    eBTagSFDn, eBTagSFUp,
     eZXStatsDn, eZXStatsUp,
     nSystematicVariations
   };

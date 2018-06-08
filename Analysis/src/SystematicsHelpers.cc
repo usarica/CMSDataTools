@@ -164,6 +164,10 @@ std::vector<SystematicsHelpers::SystematicVariationTypes> SystematicsHelpers::ge
         res.push_back(tMINLODn);
         res.push_back(tMINLOUp);
       }
+      if ((proc==ProcessHandler::kTT || proc==ProcessHandler::kBB) && (strGenerator=="POWHEG" || strGenerator=="")){
+        res.push_back(eBTagSFDn);
+        res.push_back(eBTagSFUp);
+      }
       res.push_back(eJECDn);
       res.push_back(eJECUp);
     }
@@ -376,6 +380,10 @@ TString SystematicsHelpers::getSystematicsName(SystematicsHelpers::SystematicVar
     return "JECDn";
   case eJECUp:
     return "JECUp";
+  case eBTagSFDn:
+    return "BTagSFDn";
+  case eBTagSFUp:
+    return "BTagSFUp";
   case eZXStatsDn:
     return "ZJetsStatsDn";
   case eZXStatsUp:
@@ -432,6 +440,10 @@ TString SystematicsHelpers::getSystematicsLabel(SystematicsHelpers::SystematicVa
     return "JEC down";
   case eJECUp:
     return "JEC up";
+  case eBTagSFDn:
+    return "b-tag SF down";
+  case eBTagSFUp:
+    return "b-tag SF up";
   case eZXStatsDn:
     return "Fake rate down";
   case eZXStatsUp:
@@ -501,6 +513,10 @@ TString SystematicsHelpers::getSystematicsCombineName(
   case eJECDn:
   case eJECUp:
     systname="CMS_scale_j_[sqrts]TeV_[year]";
+    break;
+  case eBTagSFDn:
+  case eBTagSFUp:
+    systname="CMS_btag_comb_[sqrts]TeV_[year]";
     break;
   case eZXStatsDn:
   case eZXStatsUp:

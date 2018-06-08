@@ -1,8 +1,11 @@
 #ifndef CATEGORIZATIONHELPERS_H
 #define CATEGORIZATIONHELPERS_H
 
+#include <vector>
 #include "TString.h"
+#include "SimpleEntry.h"
 #include "DiscriminantClasses.h"
+#include "SystematicVariations.h"
 
 
 namespace CategorizationHelpers{
@@ -21,6 +24,7 @@ namespace CategorizationHelpers{
   enum CategorizationScheme{
     UntaggedOrJJVBF,
     UntaggedOrJJVBFOrHadVH,
+    UntaggedOrJJVBFOrHadVH_WithMultiplicityAndBTag,
     UntaggedOrJJVBFOrHadVH_Arbitrated
   };
 
@@ -33,9 +37,12 @@ namespace CategorizationHelpers{
   TString getCategoryLabel(CategorizationHelpers::Category category);
   TString getCategoryLabelForKDs(CategorizationHelpers::Category category);
 
-  CategorizationHelpers::Category getCategory(const float& DjjVBF, const float& DjjZH, const float& DjjWH, const bool forceUntagged);
+  CategorizationHelpers::Category getCategory(SimpleEntry const& sel_vars, const bool forceUntagged);
 
   TString getMassRegionName(CategorizationHelpers::MassRegion massregion);
+
+  template<typename var_t> void getExtraCategorizationVariables(CategorizationHelpers::CategorizationScheme scheme, SystematicsHelpers::SystematicVariationTypes syst, std::vector<TString>& res);
+  template<> void getExtraCategorizationVariables<short>(CategorizationHelpers::CategorizationScheme scheme, SystematicsHelpers::SystematicVariationTypes syst, std::vector<TString>& res);
 
 }
 

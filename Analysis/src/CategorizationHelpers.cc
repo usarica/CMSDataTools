@@ -58,23 +58,51 @@ TString CategorizationHelpers::getCategoryLabelForKDs(CategorizationHelpers::Cat
 
 void CategorizationHelpers::setGlobalCategorizationScheme(CategorizationHelpers::CategorizationScheme scheme){ globalCategorizationScheme=scheme; }
 
-CategorizationHelpers::Category CategorizationHelpers::getCategory(const float& DjjVBF, const float& DjjZH, const float& DjjWH, const bool forceUntagged){
-  if (
-    forceUntagged
-    ||
-    (DjjVBF<0. && DjjZH<0. && DjjWH<0.)
-    ) return Untagged;
-  if (globalCategorizationScheme==UntaggedOrJJVBFOrHadVH){
+CategorizationHelpers::Category CategorizationHelpers::getCategory(SimpleEntry const& sel_vars, const bool forceUntagged){
+  if (forceUntagged) return Untagged;
+
+  if (globalCategorizationScheme==UntaggedOrJJVBFOrHadVH_WithMultiplicityAndBTag){
+    float DjjVBF=-1; sel_vars.getNamedVal("DjjVBF", DjjVBF);
+    float DjjZH=-1; sel_vars.getNamedVal("DjjZH", DjjZH);
+    float DjjWH=-1; sel_vars.getNamedVal("DjjWH", DjjWH);
+    short nExtraLep=0; sel_vars.getNamedVal("nExtraLep", nExtraLep);
+    short nJets=0; sel_vars.getNamedVal("nJets", nJets);
+    short nJets_BTagged=0; sel_vars.getNamedVal("nJets_BTagged", nJets_BTagged);
+    float const DjjVH=std::max(DjjZH, DjjWH);
+    if (
+      DjjVBF>=0.5
+      &&
+      nExtraLep==0
+      &&
+      (((nJets==2 || nJets==3) && nJets_BTagged<=1) || (nJets>=4 && nJets_BTagged==0))
+      ) return JJVBFTagged;
+    else if (
+      DjjVH>=0.5
+      &&
+      nExtraLep==0
+      &&
+      (nJets==2 || nJets==3 || (nJets>=4 && nJets_BTagged==0))
+      ) return HadVHTagged;
+    else return Untagged;
+  }
+  else if (globalCategorizationScheme==UntaggedOrJJVBFOrHadVH){
+    float DjjVBF=-1; sel_vars.getNamedVal("DjjVBF", DjjVBF);
+    float DjjZH=-1; sel_vars.getNamedVal("DjjZH", DjjZH);
+    float DjjWH=-1; sel_vars.getNamedVal("DjjWH", DjjWH);
+    float const DjjVH=std::max(DjjZH, DjjWH);
     if (
       DjjVBF>=0.5
       ) return JJVBFTagged;
     else if (
-      std::max(DjjZH, DjjWH)>=0.5
+      DjjVH>=0.5
       ) return HadVHTagged;
     else return Untagged;
   }
   else if (globalCategorizationScheme==UntaggedOrJJVBFOrHadVH_Arbitrated){
-    float DjjVH=std::max(DjjZH, DjjWH);
+    float DjjVBF=-1; sel_vars.getNamedVal("DjjVBF", DjjVBF);
+    float DjjZH=-1; sel_vars.getNamedVal("DjjZH", DjjZH);
+    float DjjWH=-1; sel_vars.getNamedVal("DjjWH", DjjWH);
+    float const DjjVH=std::max(DjjZH, DjjWH);
     if (
       DjjVBF>=0.5 && DjjVBF>=DjjVH
       ) return JJVBFTagged;
@@ -84,6 +112,7 @@ CategorizationHelpers::Category CategorizationHelpers::getCategory(const float& 
     else return Untagged;
   }
   else/* if (globalCategorizationScheme==UntaggedOrJJVBF)*/{
+    float DjjVBF=-1; sel_vars.getNamedVal("DjjVBF", DjjVBF);
     if (
       DjjVBF>=0.5
       ) return JJVBFTagged;
@@ -124,3 +153,30 @@ TString CategorizationHelpers::getMassRegionName(CategorizationHelpers::MassRegi
   }
 }
 
+template<> void CategorizationHelpers::getExtraCategorizationVariables<short>(CategorizationHelpers::CategorizationScheme scheme, SystematicsHelpers::SystematicVariationTypes syst, std::vector<TString>& res){
+  if (scheme==CategorizationHelpers::UntaggedOrJJVBFOrHadVH_WithMultiplicityAndBTag){
+    res.push_back("nExtraLep");
+    switch (syst){
+    case SystematicsHelpers::eJECDn:
+      res.push_back("nCleanedJetsPt30_jecDn");
+      res.push_back("nCleanedJetsPt30BTagged_bTagSF_jecDn");
+      break;
+    case SystematicsHelpers::eJECUp:
+      res.push_back("nCleanedJetsPt30_jecUp");
+      res.push_back("nCleanedJetsPt30BTagged_bTagSF_jecUp");
+      break;
+    case SystematicsHelpers::eBTagSFDn:
+      res.push_back("nCleanedJetsPt30");
+      res.push_back("nCleanedJetsPt30BTagged_bTagSFDn");
+      break;
+    case SystematicsHelpers::eBTagSFUp:
+      res.push_back("nCleanedJetsPt30");
+      res.push_back("nCleanedJetsPt30BTagged_bTagSFUp");
+      break;
+    default:
+      res.push_back("nCleanedJetsPt30");
+      res.push_back("nCleanedJetsPt30BTagged_bTagSF");
+      break;
+    }
+  }
+}

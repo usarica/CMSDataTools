@@ -52,28 +52,36 @@ void SystematicsHelpers::PerLeptonSystematic::setup(CJLSTTree* theTree){
   std::vector<short*> refId; refId.assign(2, nullptr);
   theTree->getValRef("Z1Flav", refId.at(0));
   theTree->getValRef("Z2Flav", refId.at(1));
-  std::vector<std::vector<float>*> refVar;
+  std::vector<std::vector<float>* const*> refVar;
   for (TString const& s:strVars){
-    vector<float>* v = nullptr;
+    vector<float>* const* v = nullptr;
     theTree->getValRef(s, v);
     if (!v) MELAerr << "PerLeptonSystematic::setup: Could not get the reference for " << s << endl;
     refVar.push_back(v);
   }
-  if (!refVar.empty()) componentRefs[theTree]=std::pair<std::vector<short*>, std::vector<std::vector<float>*>>(refId, refVar);
+  if (!refVar.empty()) componentRefs[theTree]=std::pair<std::vector<short*>, std::vector<std::vector<float>* const*>>(refId, refVar);
 }
 
-std::pair<float, float> SystematicsHelpers::getLeptonSFSystematic(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>*> const& LepVars, unsigned int const idreq){
+std::pair<float, float> SystematicsHelpers::getLeptonSFSystematic(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>* const*> const& LepVars, unsigned int const idreq){
   std::pair<float, float> res(1, 1);
   if ((Z1Flav*Z2Flav)%(short)idreq != 0) return res;
   assert(LepVars.size()==5);
-  float const& lep4pt = LepVars.at(0)->back();
-  for (unsigned int ilep=0; ilep<LepVars.at(0)->size(); ilep++){
+
+  std::vector<float>* const& LepPt = *(LepVars.at(0)); assert(LepPt);
+  std::vector<float>* const& LepRecoSF = *(LepVars.at(1)); assert(LepRecoSF);
+  std::vector<float>* const& LepRecoSF_Unc = *(LepVars.at(2)); assert(LepRecoSF_Unc);
+  std::vector<float>* const& LepSelSF = *(LepVars.at(3)); assert(LepSelSF);
+  std::vector<float>* const& LepSelSF_Unc = *(LepVars.at(4)); assert(LepSelSF_Unc);
+
+  unsigned int const nleps = LepPt->size(); assert(nleps>1);
+  float const& lep4pt = LepPt->back();
+  for (unsigned int ilep=0; ilep<nleps; ilep++){
     short absZflav;
     if (ilep<2) absZflav=std::abs(Z1Flav);
     else absZflav=std::abs(Z2Flav);
     if (absZflav%(short) idreq==0){
-      res.first *= (1.-LepVars.at(2)->at(ilep)/LepVars.at(1)->at(ilep))*(1.-LepVars.at(4)->at(ilep)/LepVars.at(3)->at(ilep));
-      res.second *= (1.+LepVars.at(2)->at(ilep)/LepVars.at(1)->at(ilep))*(1.+LepVars.at(4)->at(ilep)/LepVars.at(3)->at(ilep));
+      res.first *= (1.-LepRecoSF_Unc->at(ilep)/LepRecoSF->at(ilep))*(1.-LepSelSF_Unc->at(ilep)/LepSelSF->at(ilep));
+      res.second *= (1.+LepRecoSF_Unc->at(ilep)/LepRecoSF->at(ilep))*(1.+LepSelSF_Unc->at(ilep)/LepSelSF->at(ilep));
     }
   }
   if (std::abs(Z1Flav)==169 && std::abs(Z2Flav)==169){
@@ -137,9 +145,9 @@ void SystematicsHelpers::PerLeptonScaleResSystematic::setup(CJLSTTree* theTree){
   theTree->getValRef("Z1Flav", refId.at(0));
   theTree->getValRef("Z2Flav", refId.at(1));
   theTree->getValRef("ZZMass", refMass.at(0));
-  std::vector<std::vector<float>*> refVar;
+  std::vector<std::vector<float>* const*> refVar;
   for (TString const& s:strVars){
-    vector<float>* v = nullptr;
+    vector<float>* const* v = nullptr;
     theTree->getValRef(s, v);
     if (!v) MELAerr << "PerLeptonScaleResSystematic::setup: Could not get the reference for " << s << endl;
     refVar.push_back(v);
@@ -147,17 +155,17 @@ void SystematicsHelpers::PerLeptonScaleResSystematic::setup(CJLSTTree* theTree){
   if (!refVar.empty()) componentRefs[theTree]=componentData(refId, refMass, refVar);
 }
 
-std::pair<float, float> SystematicsHelpers::getLeptonScaleResSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, std::vector<std::vector<float>*> const& LepVars, unsigned int const idreq){
+std::pair<float, float> SystematicsHelpers::getLeptonScaleResSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, std::vector<std::vector<float>* const*> const& LepVars, unsigned int const idreq){
   std::pair<float, float> res(ZZMass, ZZMass);
   if ((Z1Flav*Z2Flav)%(short) idreq != 0) return res;
   // LepVars: LepPt, LepEta, LepPhi, LepUnc
   assert(LepVars.size()==4);
-  unsigned int const nleps = LepVars.at(0)->size();
+  std::vector<float>* const& LepPt = *(LepVars.at(0)); assert(LepPt);
+  std::vector<float>* const& LepEta = *(LepVars.at(1)); assert(LepEta);
+  std::vector<float>* const& LepPhi = *(LepVars.at(2)); assert(LepPhi);
+  std::vector<float>* const& LepUnc = *(LepVars.at(3)); assert(LepUnc);
+  unsigned int const nleps = LepPt->size();
   assert(nleps>1);
-  std::vector<float>* const LepPt = LepVars.at(0);
-  std::vector<float>* const LepEta = LepVars.at(1);
-  std::vector<float>* const LepPhi = LepVars.at(2);
-  std::vector<float>* const LepUnc = LepVars.at(3);
   std::vector<std::vector<TLorentzVector>> LepP; LepP.assign(nleps, std::vector<TLorentzVector>()); for (auto& ls:LepP) ls.assign(3, TLorentzVector(0, 0, 0, 0));
   for (unsigned int ilep=0; ilep<nleps; ilep++){
     for (int isyst=0; isyst<3; isyst++){

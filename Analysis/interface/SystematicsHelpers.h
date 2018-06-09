@@ -35,7 +35,7 @@ namespace SystematicsHelpers{
 
   class PerLeptonSystematic : public SystematicsClass{
   public:
-    typedef std::pair<float, float> (*PerLeptonSystematicFunction_t)(short const&, short const&, std::vector<std::vector<float>*> const&, unsigned int const);
+    typedef std::pair<float, float> (*PerLeptonSystematicFunction_t)(short const&, short const&, std::vector<std::vector<float>* const*> const&, unsigned int const);
 
   protected:
     PerLeptonSystematicFunction_t rule;
@@ -44,7 +44,7 @@ namespace SystematicsHelpers{
     bool doUp;
     std::unordered_map<CJLSTTree*,
       std::pair<
-      std::vector<short*>, std::vector<std::vector<float>*>
+      std::vector<short*>, std::vector<std::vector<float>* const*>
       >
     > componentRefs;
   public:
@@ -59,20 +59,20 @@ namespace SystematicsHelpers{
     virtual void setup(CJLSTTree* theTree);
   };
 
-  std::pair<float, float> getLeptonSFSystematic(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>*> const& LepVars, unsigned int const idreq);
+  std::pair<float, float> getLeptonSFSystematic(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>* const*> const& LepVars, unsigned int const idreq);
 
 
   class PerLeptonScaleResSystematic : public SystematicsClass{
   public:
-    typedef std::pair<float, float>(*PerLeptonScaleResSystematicFunction_t)(short const&, short const&, float const&, std::vector<std::vector<float>*> const&, unsigned int const);
+    typedef std::pair<float, float>(*PerLeptonScaleResSystematicFunction_t)(short const&, short const&, float const&, std::vector<std::vector<float>* const*> const&, unsigned int const);
 
   protected:
     struct componentData{
       std::vector<short*> ref_shorts;
       std::vector<float*> ref_floats;
-      std::vector<std::vector<float>*> ref_vfloats;
+      std::vector<std::vector<float>* const*> ref_vfloats;
       componentData(){}
-      componentData(std::vector<short*> const& rs, std::vector<float*> const& rf, std::vector<std::vector<float>*> const& rvf) : ref_shorts(rs), ref_floats(rf), ref_vfloats(rvf){}
+      componentData(std::vector<short*> const& rs, std::vector<float*> const& rf, std::vector<std::vector<float>* const*> const& rvf) : ref_shorts(rs), ref_floats(rf), ref_vfloats(rvf){}
       componentData(componentData const& other) : ref_shorts(other.ref_shorts), ref_floats(other.ref_floats), ref_vfloats(other.ref_vfloats){}
     };
 
@@ -93,7 +93,7 @@ namespace SystematicsHelpers{
     virtual void setup(CJLSTTree* theTree);
   };
 
-  std::pair<float, float> getLeptonScaleResSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, std::vector<std::vector<float>*> const& LepVars, unsigned int const idreq);
+  std::pair<float, float> getLeptonScaleResSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, std::vector<std::vector<float>* const*> const& LepVars, unsigned int const idreq);
 
 
   int convertSystematicVariationTypeToInt(SystematicsHelpers::SystematicVariationTypes type);

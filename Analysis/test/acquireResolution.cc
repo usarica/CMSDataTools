@@ -825,6 +825,11 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   else if (proctype==ProcessHandler::kQQBkg) strSampleIdentifiers.push_back("qq_Bkg_Combined");
   else assert(0);
 
+  std::vector<SystematicsHelpers::SystematicVariationTypes> systVariations;
+  for (int isyst=(int) SystematicsHelpers::eLepScaleEleDn; isyst<=(int) eLepResMuUp; isyst++){
+    if (systematicAllowed(category, channel, proctype, (SystematicVariationTypes) isyst, strGenerator)) systVariations.push_back((SystematicVariationTypes) isyst);
+ }
+
   // Ignore any Kfactors
   // ...
 
@@ -840,7 +845,7 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   for (TString const& identifier:strSampleIdentifiers){
     // For the non-nominal tree
     std::vector<ReweightingBuilder*> extraEvaluators;
-    SystematicsClass* systhandle = nullptr;
+    std::vector<std::pair<TString, SystematicsClass*>> systhandle; systhandle.reserve(systVariations.size());
 
     vector<TString> strSamples;
     vector<TString> idvector; idvector.push_back(identifier);
@@ -885,7 +890,10 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     }
     theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_XsecOverNgen_RelRenormToSumNgen, true, true); // We don't care about total xsec, but we care abou realative normalization in W- vs W+ H
 
-    //systhandle = constructSystematic(category, channel, proctype, syst, theSampleSet->getCJLSTTreeList(), extraEvaluators, strGenerator);
+    for(auto& syst:systVariations) systhandle.emplace_back(
+      getSystematicsName(syst),
+      constructSystematic(category, channel, proctype, syst, theSampleSet->getCJLSTTreeList(), extraEvaluators, strGenerator)
+      );
 
     // Build the analyzer and loop over the events
     TemplatesEventAnalyzer theAnalyzer(theSampleSet, channel, category);
@@ -904,11 +912,11 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     // Add extra categorization variables
     for (auto& s:strExtraCatVars_short) theAnalyzer.addConsumed<short>(s);
     // Add systematics handle
-    //theAnalyzer.addSystematic(strSystematics, systhandle);
+    for (auto& syst:systhandle) theAnalyzer.addSystematic(syst.first, syst.second);
     // Loop
     theAnalyzer.loop(true, false, true);
 
-    delete systhandle;
+    for (auto& syst:systhandle) delete syst.second;
     for (auto& rb:extraEvaluators) delete rb;
     delete theSampleSet;
 

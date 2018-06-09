@@ -210,6 +210,9 @@ class FinalTemplatesStageXBatchManager:
                            continue
 
                   if not checkValidRun(syst, "", ch, self.opt.process): continue
+                  if (anreg=="kOffshell" or hypo=="kSM") and ("LepScale" in syst or "LepRes" in syst):
+                     print "{} systematic distributions in process {} are not handled through templates in hypothesis {} of analysis region {}.".format(syst, self.opt.process, hypo, anreg)
+                     continue
 
                   strscrcmd = argstr.format(channel=ch,achypothesis=hypo,systematic=syst,anaregion=anreg)
                   strscrcmd = strscrcmd.replace(' ','') # The command passed to bash script should not contain whitespace itself

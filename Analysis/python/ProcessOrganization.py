@@ -48,8 +48,6 @@ def getFRMethodList():
 def getSystematicsList():
    systematics = [
       "sNominal",
-      "eLepSFEleDn", "eLepSFEleUp",
-      "eLepSFMuDn", "eLepSFMuUp",
       "tPDFScaleDn", "tPDFScaleUp",
       "tQCDScaleDn", "tQCDScaleUp",
       "tAsMZDn", "tAsMZUp",
@@ -58,6 +56,12 @@ def getSystematicsList():
       "tPythiaTuneDn", "tPythiaTuneUp",
       "tMINLODn", "tMINLOUp",
       "tQQBkgEWCorrDn", "tQQBkgEWCorrUp",
+      "eLepSFEleDn", "eLepSFEleUp",
+      "eLepSFMuDn", "eLepSFMuUp",
+      "eLepScaleEleDn", "eLepScaleEleUp",
+      "eLepScaleMuDn", "eLepScaleMuUp",
+      "eLepResEleDn", "eLepResEleUp",
+      "eLepResMuDn", "eLepResMuUp",
       "eJECDn", "eJECUp",
       "eBTagSFDn", "eBTagSFUp",
       "eZXStatsDn", "eZXStatsUp"
@@ -76,13 +80,15 @@ def checkValidRun(syst, cat, ch, proc, generator=""):
       testval=False
    if not(proc=="TT" or proc=="BB") and "eBTag" in syst:
       testval=False
-   if (ch == "k4e" and "eLepSFMu" in syst) or (ch == "k4mu" and "eLepSFEle" in syst):
+   if (ch == "k4e" and ("eLepSFMu" in syst or "eLepScaleMu" in syst or "eLepResMu" in syst)) or (ch == "k4mu" and ("eLepSFEle" in syst or "eLepScaleEle" in syst or "eLepResEle" in syst)):
       testval=False
-   if generator == "MCFM" and ("tMINLO" in syst or "tPythia" in syst):
+   if generator == "MCFM" and ("tMINLO" in syst or "tPythia" in syst or "LepScale" in syst or "LepRes" in syst):
       testval=False
    if "tMINLO" in syst and proc != "GG":
       testval=False
    if proc == "BB" and ("tMINLO" in syst or "tPythia" in syst):
+      testval=False
+   if (proc == "QQBkg" or proc == "ZX") and ("LepScale" in syst or "LepRes" in syst):
       testval=False
    if proc == "QQBkg" and ("tMINLO" in syst or "tPythia" in syst):
       testval=False

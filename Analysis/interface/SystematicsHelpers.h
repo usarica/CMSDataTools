@@ -34,8 +34,11 @@ namespace SystematicsHelpers{
 
 
   class PerLeptonSystematic : public SystematicsClass{
+  public:
+    typedef std::pair<float, float> (*PerLeptonSystematicFunction_t)(short const&, short const&, std::vector<std::vector<float>*> const&, unsigned int const);
+
   protected:
-    std::pair<float, float> (*rule)(short const&, short const&, std::vector<std::vector<float>*> const&, unsigned int const);
+    PerLeptonSystematicFunction_t rule;
     std::vector<TString> strVars;
     unsigned int const id_requested;
     bool doUp;
@@ -47,7 +50,7 @@ namespace SystematicsHelpers{
   public:
     PerLeptonSystematic(
       const std::vector<TString>& inStrVars,
-      std::pair<float, float>(*infcn)(short const&, short const&, std::vector<std::vector<float>*> const&, unsigned int const),
+      PerLeptonSystematicFunction_t infcn,
       unsigned int const id_requested_,
       bool doUp_
     );
@@ -57,6 +60,40 @@ namespace SystematicsHelpers{
   };
 
   std::pair<float, float> getLeptonSFSystematic(short const& Z1Flav, short const& Z2Flav, std::vector<std::vector<float>*> const& LepVars, unsigned int const idreq);
+
+
+  class PerLeptonScaleResSystematic : public SystematicsClass{
+  public:
+    typedef std::pair<float, float>(*PerLeptonScaleResSystematicFunction_t)(short const&, short const&, float const&, std::vector<std::vector<float>*> const&, unsigned int const);
+
+  protected:
+    struct componentData{
+      std::vector<short*> ref_shorts;
+      std::vector<float*> ref_floats;
+      std::vector<std::vector<float>*> ref_vfloats;
+      componentData(){}
+      componentData(std::vector<short*> const& rs, std::vector<float*> const& rf, std::vector<std::vector<float>*> const& rvf) : ref_shorts(rs), ref_floats(rf), ref_vfloats(rvf){}
+      componentData(componentData const& other) : ref_shorts(other.ref_shorts), ref_floats(other.ref_floats), ref_vfloats(other.ref_vfloats){}
+    };
+
+    PerLeptonScaleResSystematicFunction_t rule;
+    std::vector<TString> strVars;
+    unsigned int const id_requested;
+    bool doUp;
+    std::unordered_map<CJLSTTree*, componentData> componentRefs;
+  public:
+    PerLeptonScaleResSystematic(
+      const std::vector<TString>& inStrVars,
+      PerLeptonScaleResSystematicFunction_t infcn,
+      unsigned int const id_requested_,
+      bool doUp_
+    );
+    virtual ~PerLeptonScaleResSystematic(){}
+    virtual float eval(CJLSTTree* theTree) const;
+    virtual void setup(CJLSTTree* theTree);
+  };
+
+  std::pair<float, float> getLeptonScaleResSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, std::vector<std::vector<float>*> const& LepVars, unsigned int const idreq);
 
 
   int convertSystematicVariationTypeToInt(SystematicsHelpers::SystematicVariationTypes type);

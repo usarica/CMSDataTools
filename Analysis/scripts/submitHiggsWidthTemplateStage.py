@@ -244,12 +244,15 @@ class StageXBatchManager:
                               continue
 
                      # Do not submit unnecessary jobs
-                     if not checkValidRun(syst, cat, ch, self.opt.process): continue
+                     if not checkValidRun(syst, cat, ch, self.opt.process, self.generator): continue
                      if self.opt.stage == 1 and cat == "Untagged" and not(self.opt.process == "ZH" or self.opt.process == "WH" or self.opt.process == "TT"):
                         print "{} category distributions in process {} can be obtained from the distributions of inclusive and other categories.".format(cat, self.opt.process)
                         continue
                      if "tMINLO" in syst or "tPythia" in syst:
                         print "{} systematic distributions in process {} are obtained in mass ratios step.".format(syst, self.opt.process)
+                        continue
+                     if "LepScale" in syst or "LepRes" in syst:
+                        print "{} systematic distributions in process {} are obtained in resolutions step.".format(syst, self.opt.process)
                         continue
 
                      strscrcmd = argstr.format(channel=ch,category=cat,achypothesis=hypo,systematic=syst,frmethod=frm)

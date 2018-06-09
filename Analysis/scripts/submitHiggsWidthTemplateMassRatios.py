@@ -244,6 +244,9 @@ class MassRatioStageXBatchManager:
                   if self.opt.stage == 1 and cat == "Untagged" and (not(self.opt.process == "ZH" or self.opt.process == "WH") or "tPythia" in syst or "tMINLO" in syst):
                      print "{} category distributions in process {} can be obtained from the distributions of inclusive and other categories.".format(cat, self.opt.process)
                      continue
+                  if "LepScale" in syst or "LepRes" in syst:
+                     print "{} systematic distributions in process {} are obtained in resolutions step.".format(syst, self.opt.process)
+                     continue
 
                   strscrcmd = argstr.format(channel=ch,category=cat,achypothesis=hypo,systematic=syst,processtype=self.process)
                   strscrcmd = strscrcmd.replace(' ','') # The command passed to bash script should not contain whitespace itself

@@ -1213,8 +1213,8 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     RooPlot incl_plot(var_mreco, var_mreco.getMin(), var_mreco.getMax(), 80);
     dataList.front().plotOn(&incl_plot, LineColor(kBlack), MarkerColor(kBlack), MarkerStyle(30), LineWidth(2), Name("Data"));
     for (unsigned int isyst=0; isyst<3; isyst++){
-      if (channel==k4e || channel==k2e2mu) res_uncvar_e.setVal(-1.+3.5*double(isyst)-1.5*double(isyst*isyst));
-      if (channel==k4mu || channel==k2e2mu) res_uncvar_mu.setVal(-1.+3.5*double(isyst)-1.5*double(isyst*isyst));
+      if (channel==k4e || channel==k2e2mu) res_uncvar_e.setVal((-1.+3.5*double(isyst)-1.5*double(isyst*isyst)) * (channel==k2e2mu ? 0.5 : 1.));
+      if (channel==k4mu || channel==k2e2mu) res_uncvar_mu.setVal((-1.+3.5*double(isyst)-1.5*double(isyst*isyst)) * (channel==k2e2mu ? 0.5 : 1.));
       incl_pdf.plotOn(&incl_plot, LineColor(kBlue), LineWidth(2), LineStyle(int(2.+10.5*double(isyst)-5.5*double(isyst*isyst))), Name(Form("MassShapePdf_Res%i", isyst)));
     }
     for (unsigned int isyst=0; isyst<3; isyst++){

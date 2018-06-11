@@ -941,14 +941,20 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
 
   // Setup inclusive data
   RooArgSet treevars; treevars.add(var_mreco); treevars.add(var_weight);
-  RooDataSet data("data", "data", treevars, var_weight.GetName());
+  vector<RooDataSet> dataList; dataList.reserve(systVariations.size()+1);
+  dataList.emplace_back("data", "data", treevars, var_weight.GetName());
+  for (auto& syst:systVariations){
+    dataList.emplace_back(Form("data_%s", getSystematicsName(syst).Data()), "data", treevars, var_weight.GetName());
+  }
   {
     TTree* tree = theOutputTree->getSelectedTree();
     float mtrue, mreco, wgt;
+    vector<float> systVar; systVar.assign(systVariations.size(), 0);
     bool isCategory=(category==Inclusive);
     if (proctype==ProcessHandler::kQQBkg) tree->SetBranchAddress("GenHMass", &mtrue);
     tree->SetBranchAddress("ZZMass", &mreco);
     tree->SetBranchAddress("weight", &wgt);
+    for (unsigned int isyst=0; isyst<systVariations.size(); isyst++) tree->SetBranchAddress(getSystematicsName(systVariations.at(isyst)), &(systVar.at(isyst)));
     if (!isCategory){
       TString catFlagName = TString("is_") + strCategory + TString("_") + strACHypo;
       tree->SetBranchAddress(catFlagName, &isCategory);
@@ -965,11 +971,15 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
       var_weight.setVal(wgt);
       sumwgts += wgt;
       ndata++;
-      data.add(treevars);
+      dataList.front().add(treevars);
+      for (unsigned int isyst=0; isyst<systVariations.size(); isyst++){
+        var_mreco.setVal(systVar.at(isyst));
+        dataList.at(isyst+1).add(treevars);
+      }
     }
     var_mreco.setVal(125);
     var_weight.setVal(1);
-    data.Print("v");
+    for (auto& data:dataList) data.Print("v");
     MELAout << "Average weight: " << sumwgts / float(ndata) << endl;
   }
   delete theOutputTree;
@@ -986,13 +996,13 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   for (auto& par:CB_parameter_list) CB_parameter_init.push_back(par.getVal());
   vector<unsigned int> prelimfitOrder{1, 0, 3, 5, 2, 4};
 
-  RooConstVar scale_uncval_center(prefix + "final_CB_CMS_scale_emcenter", "", 0);
   RooRealVar scale_uncvar_e("CMS_scale_e", "CMS_scale_e", 0, -7, 7);
-  RooConstVar scale_uncval_e_up(prefix + "final_CB_CMS_scale_eUp", "", 0.002);
-  RooConstVar scale_uncval_e_dn(prefix + "final_CB_CMS_scale_eDown", "", -0.002);
   RooRealVar scale_uncvar_mu("CMS_scale_m", "CMS_scale_m", 0, -7, 7);
-  RooConstVar scale_uncval_mu_up(prefix + "final_CB_CMS_scale_mUp", "", 0.001);
-  RooConstVar scale_uncval_mu_dn(prefix + "final_CB_CMS_scale_mDown", "", -0.001);
+  RooConstVar scale_uncval_center(prefix + "final_CB_CMS_scale_emcenter", "", 0);
+  RooRealVar scale_uncval_e_up(prefix + "final_CB_CMS_scale_eUp", "", 0, 0., 0.5); scale_uncval_e_up.setConstant(true);
+  RooRealVar scale_uncval_e_dn(prefix + "final_CB_CMS_scale_eDown", "", 0, -0.5, 0.); scale_uncval_e_dn.setConstant(true);
+  RooRealVar scale_uncval_mu_up(prefix + "final_CB_CMS_scale_mUp", "", 0, 0., 0.5); scale_uncval_mu_up.setConstant(true);
+  RooRealVar scale_uncval_mu_dn(prefix + "final_CB_CMS_scale_mDown", "", 0, -0.5, 0.); scale_uncval_mu_dn.setConstant(true);
   RooArgList scalemeanthetaarglist; RooArgList scalemeanfcnarglist;
   scalemeanfcnarglist.add(scale_uncval_center);
   if (channel==k2e2mu){
@@ -1021,12 +1031,12 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   strscalemeanFormula="(@0+@1)*(1.+@2)-@1"; // Until a new procedure is found, keep var_mtrue as part of the scale unc. definition
 
   RooRealVar res_uncvar_e("CMS_res_e", "CMS_res_e", 0, -7, 7);
-  RooConstVar res_uncval_e_up(prefix + "final_CB_CMS_res_eUp", "", (channel==k2e2mu ? sqrt(1.2) : 1.2));
-  RooConstVar res_uncval_e_dn(prefix + "final_CB_CMS_res_eDown", "", 1./(channel==k2e2mu ? sqrt(1.2) : 1.2));
-  AsymPow res_uncval_e(prefix + "final_CB_CMS_res_e_AsymPow", "", res_uncval_e_dn, res_uncval_e_up, res_uncvar_e);
   RooRealVar res_uncvar_mu("CMS_res_m", "CMS_res_m", 0, -7, 7);
-  RooConstVar res_uncval_mu_up(prefix + "final_CB_CMS_res_mUp", "", (channel==k2e2mu ? sqrt(1.2) : 1.2));
-  RooConstVar res_uncval_mu_dn(prefix + "final_CB_CMS_res_mDown", "", 1./(channel==k2e2mu ? sqrt(1.2) : 1.2));
+  RooRealVar res_uncval_e_up(prefix + "final_CB_CMS_res_eUp", "", 1, 1., 5.); res_uncval_e_up.setConstant(true);
+  RooRealVar res_uncval_e_dn(prefix + "final_CB_CMS_res_eDown", "", 1, 0.2, 1.); res_uncval_e_dn.setConstant(true);
+  RooRealVar res_uncval_mu_up(prefix + "final_CB_CMS_res_mUp", "", 1, 1., 5.); res_uncval_mu_up.setConstant(true);
+  RooRealVar res_uncval_mu_dn(prefix + "final_CB_CMS_res_mDown", "", 1, 0.2, 5.); res_uncval_mu_dn.setConstant(true);
+  AsymPow res_uncval_e(prefix + "final_CB_CMS_res_e_AsymPow", "", res_uncval_e_dn, res_uncval_e_up, res_uncvar_e);
   AsymPow res_uncval_mu(prefix + "final_CB_CMS_res_m_AsymPow", "", res_uncval_mu_dn, res_uncval_mu_up, res_uncvar_mu);
   TString strreswidthFormula; RooArgList reswidtharglist;
   reswidtharglist.add(CB_parameter_list.at(1));
@@ -1079,7 +1089,7 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     RooCmdArg printlevelArg = RooFit::PrintLevel(-1); cmdList.Add((TObject*) &printlevelArg);
     //RooCmdArg printerrorsArg = RooFit::PrintEvalErrors(-1); cmdList.Add((TObject*) &printerrorsArg);
 
-    RooFitResult* fitResult=incl_pdf.fitTo(data, cmdList);
+    RooFitResult* fitResult=incl_pdf.fitTo(dataList.front(), cmdList);
     if (fitResult){
       int fitStatus = fitResult->status();
       cout << "Fit status is " << fitStatus << endl;
@@ -1102,7 +1112,7 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     RooCmdArg printlevelArg = RooFit::PrintLevel(-1); cmdList.Add((TObject*) &printlevelArg);
     //RooCmdArg printerrorsArg = RooFit::PrintEvalErrors(-1); cmdList.Add((TObject*) &printerrorsArg);
 
-    RooFitResult* fitResult=incl_pdf.fitTo(data, cmdList);
+    RooFitResult* fitResult=incl_pdf.fitTo(dataList.front(), cmdList);
     if (fitResult){
       int fitStatus = fitResult->status();
       cout << "Fit status is " << fitStatus << endl;
@@ -1111,22 +1121,105 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     }
     delete fitResult;
   }
+  for (unsigned int isyst=0; isyst<systVariations.size(); isyst++){
+    for (auto& var:CB_parameter_list) var.setConstant(true);
+    auto& syst=systVariations.at(isyst);
+    if (syst==eLepResEleDn || syst==eLepResEleUp){
+      res_uncvar_e.setConstant(false);
+      res_uncvar_e.setVal((syst==eLepResEleDn ? -1. : 1.));
+      res_uncvar_e.setConstant(true);
+      if (syst==eLepResEleDn) res_uncval_e_dn.setConstant(false);
+      else res_uncval_e_up.setConstant(false);
+    }
+    else if (syst==eLepResMuDn || syst==eLepResMuUp){
+      res_uncvar_mu.setConstant(false);
+      res_uncvar_mu.setVal((syst==eLepResMuDn ? -1. : 1.));
+      res_uncvar_mu.setConstant(true);
+      if (syst==eLepResMuDn) res_uncval_mu_dn.setConstant(false);
+      else res_uncval_mu_up.setConstant(false);
+    }
+    else if (syst==eLepScaleEleDn || syst==eLepScaleEleUp){
+      scale_uncvar_e.setConstant(false);
+      scale_uncvar_e.setVal((syst==eLepScaleEleDn ? -1. : 1.));
+      scale_uncvar_e.setConstant(true);
+      if (syst==eLepScaleEleDn) scale_uncval_e_dn.setConstant(false);
+      else scale_uncval_e_up.setConstant(false);
+    }
+    else if (syst==eLepScaleMuDn || syst==eLepScaleMuUp){
+      scale_uncvar_mu.setConstant(false);
+      scale_uncvar_mu.setVal((syst==eLepScaleMuDn ? -1. : 1.));
+      scale_uncvar_mu.setConstant(true);
+      if (syst==eLepScaleMuDn) scale_uncval_mu_dn.setConstant(false);
+      else scale_uncval_mu_up.setConstant(false);
+    }
+
+    // Fit the unc. parameter
+    for (unsigned int ifit=0; ifit<20; ifit++){ // The fits are more unstable, so fit many more times
+      RooLinkedList cmdList;
+      RooCmdArg saveArg = RooFit::Save(true); cmdList.Add((TObject*) &saveArg);
+      //RooCmdArg condObsArg = RooFit::ConditionalObservables(conditionals); cmdList.Add((TObject*) &condObsArg);
+      RooCmdArg sumw2Arg = RooFit::SumW2Error(true); cmdList.Add((TObject*) &sumw2Arg);
+      RooCmdArg hesseArg = RooFit::Hesse(true); cmdList.Add((TObject*) &hesseArg);
+      RooCmdArg minimizerStrategyArg = RooFit::Strategy(2); cmdList.Add((TObject*) &minimizerStrategyArg);
+      // Misc. options
+      RooCmdArg timerArg = RooFit::Timer(true); cmdList.Add((TObject*) &timerArg);
+      RooCmdArg printlevelArg = RooFit::PrintLevel(-1); cmdList.Add((TObject*) &printlevelArg);
+      //RooCmdArg printerrorsArg = RooFit::PrintEvalErrors(-1); cmdList.Add((TObject*) &printerrorsArg);
+
+      RooFitResult* fitResult=incl_pdf.fitTo(dataList.at(isyst+1), cmdList);
+      if (fitResult){
+        int fitStatus = fitResult->status();
+        cout << "Fit status is " << fitStatus << endl;
+        cout << "Fit properties:" << endl;
+        fitResult->Print("v");
+      }
+      delete fitResult;
+    }
+
+    scale_uncvar_e.setConstant(false);
+    scale_uncvar_e.setVal(0);
+    scale_uncvar_e.setConstant(true);
+    scale_uncval_e_dn.setConstant(true);
+    scale_uncval_e_up.setConstant(true);
+    scale_uncvar_mu.setConstant(false);
+    scale_uncvar_mu.setVal(0);
+    scale_uncvar_mu.setConstant(true);
+    scale_uncval_mu_dn.setConstant(true);
+    scale_uncval_mu_up.setConstant(true);
+    res_uncvar_e.setConstant(false);
+    res_uncvar_e.setVal(0);
+    res_uncvar_e.setConstant(true);
+    res_uncval_e_dn.setConstant(true);
+    res_uncval_e_up.setConstant(true);
+    res_uncvar_mu.setConstant(false);
+    res_uncvar_mu.setVal(0);
+    res_uncvar_mu.setConstant(true);
+    res_uncval_mu_dn.setConstant(true);
+    res_uncval_mu_up.setConstant(true);
+    for (auto& var:CB_parameter_list) var.setConstant(false);
+  }
   res_uncvar_e.setConstant(false);
   res_uncvar_mu.setConstant(false);
   scale_uncvar_e.setConstant(false);
   scale_uncvar_mu.setConstant(false);
 
+  MELAout << "Final scale / res unc. values:" << endl;
+  MELAout << "\t- Scale e: " << scale_uncval_e_dn.getVal() << " " << scale_uncval_e_up.getVal() << endl;
+  MELAout << "\t- Scale mu: " << scale_uncval_mu_dn.getVal() << " " << scale_uncval_mu_up.getVal() << endl;
+  MELAout << "\t- Res e: " << res_uncval_e_dn.getVal() << " " << res_uncval_e_up.getVal() << endl;
+  MELAout << "\t- Res mu: " << res_uncval_mu_dn.getVal() << " " << res_uncval_mu_up.getVal() << endl;
+
   {
     RooPlot incl_plot(var_mreco, var_mreco.getMin(), var_mreco.getMax(), 80);
-    data.plotOn(&incl_plot, LineColor(kBlack), MarkerColor(kBlack), MarkerStyle(30), LineWidth(2), Name("Data"));
+    dataList.front().plotOn(&incl_plot, LineColor(kBlack), MarkerColor(kBlack), MarkerStyle(30), LineWidth(2), Name("Data"));
     for (unsigned int isyst=0; isyst<3; isyst++){
       if (channel==k4e || channel==k2e2mu) res_uncvar_e.setVal(-1.+3.5*double(isyst)-1.5*double(isyst*isyst));
       if (channel==k4mu || channel==k2e2mu) res_uncvar_mu.setVal(-1.+3.5*double(isyst)-1.5*double(isyst*isyst));
       incl_pdf.plotOn(&incl_plot, LineColor(kBlue), LineWidth(2), LineStyle(int(2.+10.5*double(isyst)-5.5*double(isyst*isyst))), Name(Form("MassShapePdf_Res%i", isyst)));
     }
     for (unsigned int isyst=0; isyst<3; isyst++){
-      if (channel==k4e || channel==k2e2mu) scale_uncvar_e.setVal(-1.+3.5*double(isyst)-1.5*double(isyst*isyst));
-      if (channel==k4mu || channel==k2e2mu) scale_uncvar_mu.setVal(-1.+3.5*double(isyst)-1.5*double(isyst*isyst));
+      if (channel==k4e || channel==k2e2mu) scale_uncvar_e.setVal((-1.+3.5*double(isyst)-1.5*double(isyst*isyst)) * (channel==k2e2mu ? 0.5 : 1.));
+      if (channel==k4mu || channel==k2e2mu) scale_uncvar_mu.setVal((-1.+3.5*double(isyst)-1.5*double(isyst*isyst)) * (channel==k2e2mu ? 0.5 : 1.));
       incl_pdf.plotOn(&incl_plot, LineColor(kGreen+2), LineWidth(2), LineStyle(int(2.+10.5*double(isyst)-5.5*double(isyst*isyst))), Name(Form("MassShapePdf_Scale%i", isyst)));
     }
     incl_pdf.plotOn(&incl_plot, LineColor(kRed), LineWidth(2), Name("MassShapePdf"));

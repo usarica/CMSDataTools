@@ -114,9 +114,12 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
     }
     for (auto syst_it=SystVariations.cbegin(); syst_it!=SystVariations.cend(); syst_it++){
       SystematicsHelpers::SystematicsClass* const& systVar = syst_it->second;
-      MELAout << "Evaluating " << syst_it->first << endl;
       float systWgt = systVar->eval(tree);
-      if (!dynamic_cast<PerLeptonScaleResSystematic* const>(systVar)) wgt *= systWgt;
+      if (
+        !dynamic_cast<PerLeptonScaleSystematic* const>(systVar)
+        &&
+        !dynamic_cast<PerLeptonResSystematic* const>(systVar)
+        ) wgt *= systWgt;
       product.setNamedVal(syst_it->first, systWgt);
     }
     product.setNamedVal("weight", wgt);

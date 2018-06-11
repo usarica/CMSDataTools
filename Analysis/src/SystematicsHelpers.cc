@@ -122,23 +122,23 @@ std::pair<float, float> SystematicsHelpers::getLeptonSFSystematic(short const& Z
 }
 
 
-SystematicsHelpers::PerLeptonScaleResSystematic::PerLeptonScaleResSystematic(
+SystematicsHelpers::PerLeptonScaleSystematic::PerLeptonScaleSystematic(
   const std::vector<TString>& inStrVars,
-  SystematicsHelpers::PerLeptonScaleResSystematic::PerLeptonScaleResSystematicFunction_t infcn,
+  SystematicsHelpers::PerLeptonScaleSystematic::PerLeptonScaleSystematicFunction_t infcn,
   unsigned int const id_requested_,
   bool doUp_
 ) : rule(infcn), strVars(inStrVars), id_requested(id_requested_), doUp(doUp_)
 {}
-float SystematicsHelpers::PerLeptonScaleResSystematic::eval(CJLSTTree* theTree) const{
+float SystematicsHelpers::PerLeptonScaleSystematic::eval(CJLSTTree* theTree) const{
   auto it = componentRefs.find(theTree);
   if (it==componentRefs.cend()){
-    MELAerr << "PerLeptonScaleResSystematic::eval: Could not find the variables for tree " << theTree->sampleIdentifier << ". Call PerLeptonScaleResSystematic::setup first!" << endl;
+    MELAerr << "PerLeptonScaleSystematic::eval: Could not find the variables for tree " << theTree->sampleIdentifier << ". Call PerLeptonScaleSystematic::setup first!" << endl;
     return 0;
   }
   std::pair<float, float> res = rule(*(it->second.ref_shorts.at(0)), *(it->second.ref_shorts.at(1)), *(it->second.ref_floats.at(0)), it->second.ref_vfloats, id_requested);
   return (doUp ? res.second : res.first);
 }
-void SystematicsHelpers::PerLeptonScaleResSystematic::setup(CJLSTTree* theTree){
+void SystematicsHelpers::PerLeptonScaleSystematic::setup(CJLSTTree* theTree){
   if (!theTree || strVars.empty()) return;
   std::vector<short*> refId; refId.assign(2, nullptr);
   std::vector<float*> refMass; refMass.assign(1, nullptr);
@@ -149,21 +149,22 @@ void SystematicsHelpers::PerLeptonScaleResSystematic::setup(CJLSTTree* theTree){
   for (TString const& s:strVars){
     vector<float>* const* v = nullptr;
     theTree->getValRef(s, v);
-    if (!v) MELAerr << "PerLeptonScaleResSystematic::setup: Could not get the reference for " << s << endl;
+    if (!v) MELAerr << "PerLeptonScaleSystematic::setup: Could not get the reference for " << s << endl;
     refVar.push_back(v);
   }
   if (!refVar.empty()) componentRefs[theTree]=componentData(refId, refMass, refVar);
 }
 
-std::pair<float, float> SystematicsHelpers::getLeptonScaleResSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, std::vector<std::vector<float>* const*> const& LepVars, unsigned int const idreq){
+std::pair<float, float> SystematicsHelpers::getLeptonScaleSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, std::vector<std::vector<float>* const*> const& LepVars, unsigned int const idreq){
   std::pair<float, float> res(ZZMass, ZZMass);
   if ((Z1Flav*Z2Flav)%(short) idreq != 0) return res;
-  // LepVars: LepPt, LepEta, LepPhi, LepUnc
-  assert(LepVars.size()==4);
+  // LepVars: LepPt, LepEta, LepPhi, LepScaleUnc, LepResUnc
+  assert(LepVars.size()==5);
   std::vector<float>* const& LepPt = *(LepVars.at(0)); assert(LepPt);
   std::vector<float>* const& LepEta = *(LepVars.at(1)); assert(LepEta);
   std::vector<float>* const& LepPhi = *(LepVars.at(2)); assert(LepPhi);
-  std::vector<float>* const& LepUnc = *(LepVars.at(3)); assert(LepUnc);
+  std::vector<float>* const& LepScaleUnc = *(LepVars.at(3)); assert(LepScaleUnc);
+  std::vector<float>* const& LepResUnc = *(LepVars.at(4)); assert(LepResUnc);
   unsigned int const nleps = LepPt->size();
   assert(nleps>1);
   std::vector<std::vector<TLorentzVector>> LepP; LepP.assign(nleps, std::vector<TLorentzVector>()); for (auto& ls:LepP) ls.assign(3, TLorentzVector(0, 0, 0, 0));
@@ -174,7 +175,7 @@ std::pair<float, float> SystematicsHelpers::getLeptonScaleResSystematic(short co
       short absZflav;
       if (ilep<2) absZflav=std::abs(Z1Flav);
       else absZflav=std::abs(Z2Flav);
-      if (absZflav%(short) idreq==0 && isyst>0) pL = pL*pow(LepUnc->at(ilep), 2*isyst-3);
+      if (absZflav%(short) idreq==0 && isyst>0) pL = pL*pow(LepScaleUnc->at(ilep)*LepResUnc->at(ilep), 2*isyst-3);
     }
   }
   float scale=1;
@@ -192,6 +193,83 @@ std::pair<float, float> SystematicsHelpers::getLeptonScaleResSystematic(short co
   }
   res.first = ZZMassVars.front();
   res.second = ZZMassVars.back();
+  return res;
+}
+
+SystematicsHelpers::PerLeptonResSystematic::PerLeptonResSystematic(
+  const std::vector<TString>& inStrVars,
+  SystematicsHelpers::PerLeptonResSystematic::PerLeptonResSystematicFunction_t infcn,
+  unsigned int const id_requested_,
+  bool doUp_
+) : rule(infcn), strVars(inStrVars), id_requested(id_requested_), doUp(doUp_)
+{}
+float SystematicsHelpers::PerLeptonResSystematic::eval(CJLSTTree* theTree) const{
+  auto it = componentRefs.find(theTree);
+  if (it==componentRefs.cend()){
+    MELAerr << "PerLeptonResSystematic::eval: Could not find the variables for tree " << theTree->sampleIdentifier << ". Call PerLeptonResSystematic::setup first!" << endl;
+    return 0;
+  }
+  std::pair<float, float> res = rule(*(it->second.ref_shorts.at(0)), *(it->second.ref_shorts.at(1)), *(it->second.ref_floats.at(0)), *(it->second.ref_floats.at(1)), it->second.ref_vfloats, id_requested);
+  return (doUp ? res.second : res.first);
+}
+void SystematicsHelpers::PerLeptonResSystematic::setup(CJLSTTree* theTree){
+  if (!theTree || strVars.empty()) return;
+  std::vector<short*> refId; refId.assign(2, nullptr);
+  std::vector<float*> refMass; refMass.assign(2, nullptr);
+  theTree->getValRef("Z1Flav", refId.at(0));
+  theTree->getValRef("Z2Flav", refId.at(1));
+  theTree->getValRef("ZZMass", refMass.at(0));
+  theTree->getValRef("GenHMass", refMass.at(1));
+  std::vector<std::vector<float>* const*> refVar;
+  for (TString const& s:strVars){
+    vector<float>* const* v = nullptr;
+    theTree->getValRef(s, v);
+    if (!v) MELAerr << "PerLeptonResSystematic::setup: Could not get the reference for " << s << endl;
+    refVar.push_back(v);
+  }
+  if (!refVar.empty()) componentRefs[theTree]=componentData(refId, refMass, refVar);
+}
+
+std::pair<float, float> SystematicsHelpers::getLeptonResSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, float const& GenHMass, std::vector<std::vector<float>* const*> const& LepVars, unsigned int const idreq){
+  std::pair<float, float> res(0, 0);
+  if ((Z1Flav*Z2Flav)%(short) idreq != 0) return res;
+  // LepVars: LepPt, LepEta, LepPhi, LepScaleUnc, LepResUnc
+  assert(LepVars.size()==5);
+  std::vector<float>* const& LepPt = *(LepVars.at(0)); assert(LepPt);
+  std::vector<float>* const& LepEta = *(LepVars.at(1)); assert(LepEta);
+  std::vector<float>* const& LepPhi = *(LepVars.at(2)); assert(LepPhi);
+  std::vector<float>* const& LepScaleUnc = *(LepVars.at(3)); assert(LepScaleUnc);
+  std::vector<float>* const& LepResUnc = *(LepVars.at(4)); assert(LepResUnc);
+  unsigned int const nleps = LepPt->size(); assert(nleps>1);
+  unsigned int const nperms = pow(3, nleps);
+  std::vector<std::vector<TLorentzVector>> LepP; LepP.assign(nleps, std::vector<TLorentzVector>()); for (auto& ls:LepP) ls.assign(3, TLorentzVector(0, 0, 0, 0));
+  for (unsigned int ilep=0; ilep<nleps; ilep++){
+    for (int isyst=0; isyst<3; isyst++){
+      TLorentzVector& pL=LepP.at(ilep).at(isyst);
+      pL.SetPtEtaPhiM(LepPt->at(ilep), LepEta->at(ilep), LepPhi->at(ilep), 0);
+      short absZflav;
+      if (ilep<2) absZflav=std::abs(Z1Flav);
+      else absZflav=std::abs(Z2Flav);
+      if (absZflav%(short) idreq==0 && isyst>0) pL = pL*pow(LepScaleUnc->at(ilep)*LepResUnc->at(ilep), 2*isyst-3);
+    }
+  }
+  float scale=1;
+  std::vector<float> ZZMassVars; ZZMassVars.reserve(nperms);
+  std::vector<std::pair<float, int>> ZZMassDiffVars; ZZMassDiffVars.reserve(nperms);
+  for (unsigned int iperm=0; iperm<nperms; iperm++){
+    std::vector<unsigned int> isyst; isyst.reserve(nleps);
+    unsigned int jperm=iperm;
+    for (unsigned int ilep=0; ilep<nleps; ilep++){ isyst.push_back(jperm%3); jperm/=3; }
+    TLorentzVector sumP(0, 0, 0, 0);
+    for (unsigned int ilep=0; ilep<nleps; ilep++) sumP += LepP.at(ilep).at(isyst.at(ilep));
+    float mass=sumP.M();
+    if (iperm==0) scale = ZZMass/mass; // Account for FSR and missing lepton masses
+    mass *= scale;
+    HelperFunctions::addByLowest(ZZMassDiffVars, std::pair<float, int>(fabs(mass-GenHMass), iperm), true);
+    ZZMassVars.push_back(mass);
+  }
+  res.first = ZZMassVars.at(ZZMassDiffVars.front().second);
+  res.second = ZZMassVars.at(ZZMassDiffVars.back().second);
   return res;
 }
 
@@ -333,25 +411,6 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
     strVars.push_back("LepEta");
     strVars.push_back("LepPhi");
     strVars.push_back("LepScale_Unc");
-    for (CJLSTTree*& tree:trees){
-      tree->bookBranch<short>("Z1Flav", 0);
-      tree->bookBranch<short>("Z2Flav", 0);
-      tree->bookBranch<float>("ZZMass", 0);
-      for (TString const& s:strVars) tree->bookBranch<vector<float>*>(s, nullptr);
-    }
-    res = new PerLeptonScaleResSystematic(
-      strVars,
-      SystematicsHelpers::getLeptonScaleResSystematic,
-      (syst==eLepScaleEleDn || syst==eLepScaleEleUp ? 11 : 13),
-      (syst==eLepScaleEleUp || syst==eLepScaleMuUp)
-    );
-    for (CJLSTTree*& tree:trees) ((PerLeptonScaleResSystematic*) res)->setup(tree);
-  }
-  else if (syst==eLepResEleDn || syst==eLepResEleUp || syst==eLepResMuDn || syst==eLepResMuUp){
-    strVars.reserve(4);
-    strVars.push_back("LepPt");
-    strVars.push_back("LepEta");
-    strVars.push_back("LepPhi");
     strVars.push_back("LepSmear_Unc");
     for (CJLSTTree*& tree:trees){
       tree->bookBranch<short>("Z1Flav", 0);
@@ -359,13 +418,34 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
       tree->bookBranch<float>("ZZMass", 0);
       for (TString const& s:strVars) tree->bookBranch<vector<float>*>(s, nullptr);
     }
-    res = new PerLeptonScaleResSystematic(
+    res = new PerLeptonScaleSystematic(
       strVars,
-      SystematicsHelpers::getLeptonScaleResSystematic,
+      SystematicsHelpers::getLeptonScaleSystematic,
+      (syst==eLepScaleEleDn || syst==eLepScaleEleUp ? 11 : 13),
+      (syst==eLepScaleEleUp || syst==eLepScaleMuUp)
+    );
+    for (CJLSTTree*& tree:trees) ((PerLeptonScaleSystematic*) res)->setup(tree);
+  }
+  else if (syst==eLepResEleDn || syst==eLepResEleUp || syst==eLepResMuDn || syst==eLepResMuUp){
+    strVars.reserve(4);
+    strVars.push_back("LepPt");
+    strVars.push_back("LepEta");
+    strVars.push_back("LepPhi");
+    strVars.push_back("LepScale_Unc");
+    strVars.push_back("LepSmear_Unc");
+    for (CJLSTTree*& tree:trees){
+      tree->bookBranch<short>("Z1Flav", 0);
+      tree->bookBranch<short>("Z2Flav", 0);
+      tree->bookBranch<float>("ZZMass", 0);
+      for (TString const& s:strVars) tree->bookBranch<vector<float>*>(s, nullptr);
+    }
+    res = new PerLeptonResSystematic(
+      strVars,
+      SystematicsHelpers::getLeptonResSystematic,
       (syst==eLepResEleDn || syst==eLepResEleUp ? 11 : 13),
       (syst==eLepResEleUp || syst==eLepResMuUp)
     );
-    for (CJLSTTree*& tree:trees) ((PerLeptonScaleResSystematic*) res)->setup(tree);
+    for (CJLSTTree*& tree:trees) ((PerLeptonResSystematic*) res)->setup(tree);
   }
   else if (syst==tQQBkgEWCorrDn || syst==tQQBkgEWCorrUp){
     strVars.push_back("KFactor_EW_qqZZ");

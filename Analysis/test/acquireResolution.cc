@@ -915,6 +915,7 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     for (auto& syst:systhandle) theAnalyzer.addSystematic(syst.first, syst.second);
     // Loop
     theAnalyzer.loop(true, false, true);
+    theOutputTree->writeToFile(foutput);
 
     for (auto& syst:systhandle) delete syst.second;
     for (auto& rb:extraEvaluators) delete rb;

@@ -247,17 +247,16 @@ float ZXFakeRateHandler::getFakeRateWeight(CJLSTTree* tree) const{
         else if (absZ1Flav==121 && absZ2Flav==169) scale=1.30;
         else if (absZ1Flav==169 && absZ2Flav==169) scale=1.22;
         */
-        // FIXME: FROM 2017 AT THE MOMENT
-        if (absZ1Flav==121 && absZ2Flav==121) scale=1.00837; // +- 0.0132762
-        else if (absZ1Flav==169 && absZ2Flav==121) scale=1.00438; // +- 0.0114413
-        else if (absZ1Flav==121 && absZ2Flav==169) scale=1.00846; // +- 0.0301564
-        else if (absZ1Flav==169 && absZ2Flav==169) scale=1.04003; // +- 0.0267755
+        if (absZ1Flav==121 && absZ2Flav==121) scale=1.63857;
+        else if (absZ1Flav==169 && absZ2Flav==121) scale=1.55155;
+        else if (absZ1Flav==121 && absZ2Flav==169) scale=1.07453;
+        else if (absZ1Flav==169 && absZ2Flav==169) scale=0.98945;
       }
       else if (theDataPeriod=="2017"){
-        if (absZ1Flav==121 && absZ2Flav==121) scale=1.00837; // +- 0.0132762
-        else if (absZ1Flav==169 && absZ2Flav==121) scale=1.00438; // +- 0.0114413
-        else if (absZ1Flav==121 && absZ2Flav==169) scale=1.00846; // +- 0.0301564
-        else if (absZ1Flav==169 && absZ2Flav==169) scale=1.04003; // +- 0.0267755
+        if (absZ1Flav==121 && absZ2Flav==121) scale=1.39427;
+        else if (absZ1Flav==169 && absZ2Flav==121) scale=1.38892;
+        else if (absZ1Flav==121 && absZ2Flav==169) scale=0.98636;
+        else if (absZ1Flav==169 && absZ2Flav==169) scale=1.02401;
       }
       else{
         MELAerr << "ZXFakeRateHandler::getFakeRateWeight: Data period " << theDataPeriod << " has no OS/SS scales implemented!" << endl;

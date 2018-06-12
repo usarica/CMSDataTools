@@ -476,6 +476,7 @@ TGraph* HelperFunctions::addTGraphs(TGraph* tgfirst, TGraph* tgsecond){
 
   return makeGraphFromPair(xynew, Form("%s_plus_%s", tgfirst->GetName(), tgsecond->GetName()));
 }
+void HelperFunctions::multiplyTGraph(TGraph* tg, const double scale){ for (int ip=0; ip<tg->GetN(); ip++) tg->GetY()[ip] *= scale; }
 TGraph* HelperFunctions::multiplyTGraphs(TGraph* tgfirst, TGraph* tgsecond){
   TSpline3* spfirst = convertGraphToSpline3(tgfirst);
   TSpline3* spsecond = convertGraphToSpline3(tgsecond);

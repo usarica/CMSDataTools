@@ -194,6 +194,8 @@ namespace HelperFunctions{
 
   TGraphErrors* makeGraphFromCumulantHistogram(TH1 const* histo, TString name);
 
+  void multiplyTGraph(TGraph* tg, const double scale);
+
   TGraph* addTGraphs(TGraph* tgfirst, TGraph* tgsecond);
 
   TGraph* multiplyTGraphs(TGraph* tgfirst, TGraph* tgsecond);

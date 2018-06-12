@@ -2149,6 +2149,20 @@ void generic_gConstantProducer(TString strprod, TString strhypo, bool useproddec
     TGraph* tgBSMhypoZH = getSingleTGraph(Form("%s_%s", "ZH", strhypo.Data()));
     TGraph* tgSMhypoWH = getSingleTGraph(Form("%s_%s", "WH", strSMbare.Data()));
     TGraph* tgBSMhypoWH = getSingleTGraph(Form("%s_%s", "WH", strhypo.Data()));
+    constexpr float xsec_ZH_SM = 	0.883888217433748;
+    constexpr float xsec_WH_SM = 	0.532731376975169 + 0.839913391993366;
+    if (tgSMhypoZH){
+      const float scale = xsec_ZH_SM/tgSMhypoZH->Eval(125);
+      MELAout << "ZH xsec (125) is scaled by " << scale << endl;
+      multiplyTGraph(tgSMhypoZH, scale);
+      if (tgBSMhypoZH) multiplyTGraph(tgBSMhypoZH, scale);
+    }
+    if (tgSMhypoWH){
+      const float scale = xsec_WH_SM/tgSMhypoWH->Eval(125);
+      MELAout << "WH xsec (125) is scaled by " << scale << endl;
+      multiplyTGraph(tgSMhypoWH, scale);
+      if (tgBSMhypoWH) multiplyTGraph(tgBSMhypoWH, scale);
+    }
     if (tgSMhypoZH && tgSMhypoWH) tgSMhypo = addTGraphs(tgSMhypoZH, tgSMhypoWH);
     else if (tgSMhypoZH) tgSMhypo = new TGraph(*tgSMhypoZH);
     else if (tgSMhypoWH) tgSMhypo = new TGraph(*tgSMhypoWH);

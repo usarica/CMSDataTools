@@ -349,10 +349,9 @@ ExtendedBinning TemplateHelpers::getDiscriminantFineBinning(const SampleHelpers:
       res.addBinBoundary(340);
       res.addBinBoundary(370);
       res.addBinBoundary(400);
-      res.addBinBoundary(450);
+      res.addBinBoundary(475);
       res.addBinBoundary(550);
-      res.addBinBoundary(600);
-      res.addBinBoundary(650);
+      res.addBinBoundary(625);
       res.addBinBoundary(700);
       res.addBinBoundary(800);
       res.addBinBoundary(900);

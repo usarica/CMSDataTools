@@ -1,5 +1,6 @@
 #include <iterator>
 #include "SystematicsHelpers.h"
+#include "TemplateHelpers.h"
 #include "MELAStreamHelpers.hh"
 
 
@@ -379,7 +380,20 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
   SystematicsClass* res=nullptr;
   if (!systematicAllowed(category, channel, proc, syst, strGenerator)) return res;
 
-  ExtendedBinning binning((theSqrts*1000.-70.)/10., 70., theSqrts*1000., "GenHMass");
+  ExtendedBinning binning("GenHMass");
+  {
+    ExtendedBinning binning_offshell = TemplateHelpers::getDiscriminantFineBinning(channel, CategorizationHelpers::Inclusive, ACHypothesisHelpers::kSM, "ZZMass", CategorizationHelpers::kOffshell);
+    ExtendedBinning binning_onshell = TemplateHelpers::getDiscriminantCoarseBinning(channel, CategorizationHelpers::Inclusive, ACHypothesisHelpers::kSM, "ZZMass", CategorizationHelpers::kOnshell);
+    for (double const& bb:binning_offshell.getBinningVector()) binning.addBinBoundary(bb);
+    binning.addBinBoundary((binning_onshell.getMax() + binning_offshell.getMin())/2.);
+    binning.addBinBoundary(70.);
+    binning.addBinBoundary(85.);
+    binning.addBinBoundary(100.);
+    binning.addBinBoundary(110.);
+    binning.addBinBoundary(120.);
+    binning.addBinBoundary(140.);
+  }
+
   ReweightingBuilder* rewgtbuilder=nullptr;
   ReweightingBuilder* normbuilder=nullptr;
   std::vector<TString> strVars, strVarsNorm;

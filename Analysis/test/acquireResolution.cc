@@ -92,6 +92,131 @@ ExtendedBinning getIntermediateBinning(TH1F const* hwgt, TH1F* const hunwgt){
   return res;
 }
 
+BaseTree* getOutputTree(Channel const& channel, Category const& category, ProcessHandler::ProcessType const& proctype, TString const& strGenerator, std::vector<SystematicsHelpers::SystematicVariationTypes> const& systVariations, bool onlyAtMPOLE, bool addSyst, float centralValue=-999){
+  // Need to loop over each sample from scratch, so begin setting up samples
+  vector<int> mHListGlobal; // For ZZMass binning
+  BaseTree* theOutputTree = new BaseTree("OutputTree");
+
+  // Loop over the samples from scratch
+  vector<TString> strSampleIdentifiers;
+  if (proctype==ProcessHandler::kGG) strSampleIdentifiers.push_back("gg_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kTT) strSampleIdentifiers.push_back("tt_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kBB) strSampleIdentifiers.push_back("bb_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kVBF) strSampleIdentifiers.push_back("VBF_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kZH) strSampleIdentifiers.push_back("ZH_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kWH) strSampleIdentifiers.push_back("WH_Sig_POWHEG");
+  else if (proctype==ProcessHandler::kQQBkg) strSampleIdentifiers.push_back("qq_Bkg_Combined");
+  else assert(0);
+
+  // Ignore any Kfactors
+  // ...
+
+  // Kfactor variable names
+  //vector<TString> strKfactorVars;
+
+  // Register only the categorization the discriminants
+  vector<KDspecs> KDlist;
+  vector<TString> strExtraCatVars_short;
+  getCategorizationDiscriminants(sNominal, KDlist);
+  getExtraCategorizationVariables<short>(globalCategorizationScheme, sNominal, strExtraCatVars_short);
+
+  for (TString const& identifier:strSampleIdentifiers){
+    // For the non-nominal tree
+    std::vector<ReweightingBuilder*> extraEvaluators;
+    std::vector<std::pair<TString, SystematicsClass*>> systhandle;
+    if (addSyst) systhandle.reserve(systVariations.size());
+
+    vector<TString> strSamples;
+    vector<TString> idvector; idvector.push_back(identifier);
+    getSamplesList(theSqrts, idvector, strSamples, sNominal);
+    unordered_map<int, std::vector<TString>> mh_samplelist_map;
+    for (TString& strSample:strSamples){
+      int MHVal = SampleHelpers::findPoleMass(strSample);
+      if (onlyAtMPOLE && MHVal!=MHRefVal && proctype!=ProcessHandler::kQQBkg) continue;
+      TString cinput = CJLSTTree::constructCJLSTSamplePath(strSample);
+      if (!gSystem->AccessPathName(cinput)){
+        auto it=mh_samplelist_map.find(MHVal);
+        if (it!=mh_samplelist_map.end()) it->second.push_back(strSample);
+        else{
+          vector<TString> vtmp; vtmp.push_back(strSample);
+          mh_samplelist_map[MHVal]=vtmp;
+        }
+      }
+    }
+    strSamples.clear();
+    for (auto it=mh_samplelist_map.begin(); it!=mh_samplelist_map.end(); it++) addByLowest(mHListGlobal, it->first, true);
+    for (int const& mh:mHListGlobal){
+      for (auto& v:mh_samplelist_map[mh]) strSamples.push_back(v);
+    }
+
+    CJLSTSet* theSampleSet=new CJLSTSet(strSamples);
+    // Book common variables
+    theSampleSet->bookXS(); // "xsec"
+    theSampleSet->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
+    for (auto& tree:theSampleSet->getCJLSTTreeList()){
+      // Book common variables needed for analysis
+      tree->bookBranch<float>("GenHMass", 0);
+      tree->bookBranch<float>("ZZMass", -1);
+      tree->bookBranch<short>("Z1Flav", 0);
+      tree->bookBranch<short>("Z2Flav", 0);
+      // Common variables for reweighting
+      //for (auto& s:strKfactorVars) tree->bookBranch<float>(s, 1);
+      // Variables for KDs
+      for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
+      // Extra categorization variables
+      for (auto& s:strExtraCatVars_short) tree->bookBranch<short>(s, -1);
+      tree->silenceUnused(); // Will no longer book another branch
+    }
+    theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_XsecOverNgen_RelRenormToSumNgen, true, true); // We don't care about total xsec, but we care abou realative normalization in W- vs W+ H
+
+    if (addSyst){
+      for (auto& syst:systVariations){
+        systhandle.emplace_back(
+          getSystematicsName(syst),
+          constructSystematic(category, channel, proctype, syst, theSampleSet->getCJLSTTreeList(), extraEvaluators, strGenerator)
+        );
+        if (
+          syst==eLepResEleDn || syst==eLepResEleUp
+          ||
+          syst==eLepResMuDn || syst==eLepResMuUp
+          ) dynamic_cast<PerLeptonResSystematic*>(systhandle.back().second)->setCentralValue(centralValue);
+      }
+    }
+
+    // Build the analyzer and loop over the events
+    TemplatesEventAnalyzer theAnalyzer(theSampleSet, channel, category);
+    theAnalyzer.setExternalProductTree(theOutputTree);
+    // Book common variables needed for analysis
+    theAnalyzer.addConsumed<float>("PUWeight");
+    theAnalyzer.addConsumed<float>("genHEPMCweight");
+    theAnalyzer.addConsumed<float>("dataMCWeight");
+    theAnalyzer.addConsumed<float>("trigEffWeight");
+    theAnalyzer.addConsumed<float>("GenHMass");
+    theAnalyzer.addConsumed<float>("ZZMass");
+    theAnalyzer.addConsumed<short>("Z1Flav");
+    theAnalyzer.addConsumed<short>("Z2Flav");
+    // Add discriminant builders
+    for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
+    // Add extra categorization variables
+    for (auto& s:strExtraCatVars_short) theAnalyzer.addConsumed<short>(s);
+    // Add systematics handle
+    for (auto& syst:systhandle) theAnalyzer.addSystematic(syst.first, syst.second);
+    // Loop
+    theAnalyzer.loop(true, false, true);
+
+    for (auto& syst:systhandle) delete syst.second;
+    for (auto& rb:extraEvaluators) delete rb;
+    delete theSampleSet;
+
+    MELAout << "End Loop over tree sets" << endl;
+  }
+  for (auto& KD:KDlist) delete KD.KD;
+
+  // The output tree now has all the information needed
+  MELAout << "There are " << theOutputTree->getNEvents() << " products" << endl;
+
+  return theOutputTree;
+}
 
 void acquireResolution_one(const Channel channel, const Category category, const TString fixedDate, ProcessHandler::ProcessType proctype, const TString strGenerator){
   if (channel==NChannels) return;
@@ -810,123 +935,13 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   MELAout << "===============================" << endl;
   MELAout << endl;
 
-  // Need to loop over each sample from scratch, so begin setting up samples
-  vector<int> mHListGlobal; // For ZZMass binning
-  BaseTree* theOutputTree = new BaseTree("OutputTree");
-
-  // Loop over the samples from scratch
-  vector<TString> strSampleIdentifiers;
-  if (proctype==ProcessHandler::kGG) strSampleIdentifiers.push_back("gg_Sig_POWHEG");
-  else if (proctype==ProcessHandler::kTT) strSampleIdentifiers.push_back("tt_Sig_POWHEG");
-  else if (proctype==ProcessHandler::kBB) strSampleIdentifiers.push_back("bb_Sig_POWHEG");
-  else if (proctype==ProcessHandler::kVBF) strSampleIdentifiers.push_back("VBF_Sig_POWHEG");
-  else if (proctype==ProcessHandler::kZH) strSampleIdentifiers.push_back("ZH_Sig_POWHEG");
-  else if (proctype==ProcessHandler::kWH) strSampleIdentifiers.push_back("WH_Sig_POWHEG");
-  else if (proctype==ProcessHandler::kQQBkg) strSampleIdentifiers.push_back("qq_Bkg_Combined");
-  else assert(0);
-
   std::vector<SystematicsHelpers::SystematicVariationTypes> systVariations;
   for (int isyst=(int) SystematicsHelpers::eLepScaleEleDn; isyst<=(int) eLepResMuUp; isyst++){
     if (systematicAllowed(category, channel, proctype, (SystematicVariationTypes) isyst, strGenerator)) systVariations.push_back((SystematicVariationTypes) isyst);
- }
-
-  // Ignore any Kfactors
-  // ...
-
-  // Kfactor variable names
-  //vector<TString> strKfactorVars;
-
-  // Register only the categorization the discriminants
-  vector<KDspecs> KDlist;
-  vector<TString> strExtraCatVars_short;
-  getCategorizationDiscriminants(sNominal, KDlist);
-  getExtraCategorizationVariables<short>(globalCategorizationScheme, sNominal, strExtraCatVars_short);
-
-  for (TString const& identifier:strSampleIdentifiers){
-    // For the non-nominal tree
-    std::vector<ReweightingBuilder*> extraEvaluators;
-    std::vector<std::pair<TString, SystematicsClass*>> systhandle; systhandle.reserve(systVariations.size());
-
-    vector<TString> strSamples;
-    vector<TString> idvector; idvector.push_back(identifier);
-    getSamplesList(theSqrts, idvector, strSamples, sNominal);
-    unordered_map<int, std::vector<TString>> mh_samplelist_map;
-    for (TString& strSample:strSamples){
-      int MHVal = SampleHelpers::findPoleMass(strSample);
-      if (MHVal!=125 && proctype!=ProcessHandler::kQQBkg) continue;
-      TString cinput = CJLSTTree::constructCJLSTSamplePath(strSample);
-      if (!gSystem->AccessPathName(cinput)){
-        auto it=mh_samplelist_map.find(MHVal);
-        if (it!=mh_samplelist_map.end()) it->second.push_back(strSample);
-        else{
-          vector<TString> vtmp; vtmp.push_back(strSample);
-          mh_samplelist_map[MHVal]=vtmp;
-        }
-      }
-    }
-    strSamples.clear();
-    for (auto it=mh_samplelist_map.begin(); it!=mh_samplelist_map.end(); it++) addByLowest(mHListGlobal, it->first, true);
-    for (int const& mh:mHListGlobal){
-      for (auto& v:mh_samplelist_map[mh]) strSamples.push_back(v);
-    }
-
-    CJLSTSet* theSampleSet=new CJLSTSet(strSamples);
-    // Book common variables
-    theSampleSet->bookXS(); // "xsec"
-    theSampleSet->bookOverallEventWgt(); // Gen weigts "PUWeight", "genHEPMCweight" and reco weights "dataMCWeight", "trigEffWeight"
-    for (auto& tree:theSampleSet->getCJLSTTreeList()){
-      // Book common variables needed for analysis
-      tree->bookBranch<float>("GenHMass", 0);
-      tree->bookBranch<float>("ZZMass", -1);
-      tree->bookBranch<short>("Z1Flav", 0);
-      tree->bookBranch<short>("Z2Flav", 0);
-      // Common variables for reweighting
-      //for (auto& s:strKfactorVars) tree->bookBranch<float>(s, 1);
-      // Variables for KDs
-      for (auto& KD:KDlist){ for (auto& v:KD.KDvars) tree->bookBranch<float>(v, 0); }
-      // Extra categorization variables
-      for (auto& s:strExtraCatVars_short) tree->bookBranch<short>(s, -1);
-      tree->silenceUnused(); // Will no longer book another branch
-    }
-    theSampleSet->setPermanentWeights(CJLSTSet::NormScheme_XsecOverNgen_RelRenormToSumNgen, true, true); // We don't care about total xsec, but we care abou realative normalization in W- vs W+ H
-
-    for(auto& syst:systVariations) systhandle.emplace_back(
-      getSystematicsName(syst),
-      constructSystematic(category, channel, proctype, syst, theSampleSet->getCJLSTTreeList(), extraEvaluators, strGenerator)
-      );
-
-    // Build the analyzer and loop over the events
-    TemplatesEventAnalyzer theAnalyzer(theSampleSet, channel, category);
-    theAnalyzer.setExternalProductTree(theOutputTree);
-    // Book common variables needed for analysis
-    theAnalyzer.addConsumed<float>("PUWeight");
-    theAnalyzer.addConsumed<float>("genHEPMCweight");
-    theAnalyzer.addConsumed<float>("dataMCWeight");
-    theAnalyzer.addConsumed<float>("trigEffWeight");
-    theAnalyzer.addConsumed<float>("GenHMass");
-    theAnalyzer.addConsumed<float>("ZZMass");
-    theAnalyzer.addConsumed<short>("Z1Flav");
-    theAnalyzer.addConsumed<short>("Z2Flav");
-    // Add discriminant builders
-    for (auto& KD:KDlist){ theAnalyzer.addDiscriminantBuilder(KD.KDname, KD.KD, KD.KDvars); }
-    // Add extra categorization variables
-    for (auto& s:strExtraCatVars_short) theAnalyzer.addConsumed<short>(s);
-    // Add systematics handle
-    for (auto& syst:systhandle) theAnalyzer.addSystematic(syst.first, syst.second);
-    // Loop
-    theAnalyzer.loop(true, false, true);
-    theOutputTree->writeToFile(foutput);
-
-    for (auto& syst:systhandle) delete syst.second;
-    for (auto& rb:extraEvaluators) delete rb;
-    delete theSampleSet;
-
-    MELAout << "End Loop over tree sets" << endl;
   }
-  for (auto& KD:KDlist) delete KD.KD;
 
-  // The output tree now has all the information needed
-  MELAout << "There are " << theOutputTree->getNEvents() << " products" << endl;
+  BaseTree* theOutputTree = getOutputTree(channel, category, proctype, strGenerator, systVariations, true, false);
+  //theOutputTree->writeToFile(foutput);
 
   // Setup the binning
   ExtendedBinning binning_mass=getDiscriminantFineBinning(channel, category, kSM, "ZZMass", kOnshell);
@@ -972,17 +987,19 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
       sumwgts += wgt;
       ndata++;
       dataList.front().add(treevars);
+      /*
       for (unsigned int isyst=0; isyst<systVariations.size(); isyst++){
         var_mreco.setVal(systVar.at(isyst));
         dataList.at(isyst+1).add(treevars);
       }
+      */
     }
     var_mreco.setVal(125);
     var_weight.setVal(1);
     for (auto& data:dataList) data.Print("v");
     MELAout << "Average weight: " << sumwgts / float(ndata) << endl;
   }
-  delete theOutputTree;
+  delete theOutputTree; theOutputTree=nullptr;
 
   TString prefix = "CMS_"+OUTPUT_NAME_CORE+"_"+strSqrtsYear+"_";
   vector<RooRealVar> CB_parameter_list; CB_parameter_list.reserve(6);
@@ -1032,10 +1049,10 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
 
   RooRealVar res_uncvar_e("CMS_res_e", "CMS_res_e", 0, -7, 7);
   RooRealVar res_uncvar_mu("CMS_res_m", "CMS_res_m", 0, -7, 7);
-  RooRealVar res_uncval_e_up(prefix + "final_CB_CMS_res_eUp", "", 1, 1., 5.); res_uncval_e_up.setConstant(true);
-  RooRealVar res_uncval_e_dn(prefix + "final_CB_CMS_res_eDown", "", 1, 0.2, 1.); res_uncval_e_dn.setConstant(true);
-  RooRealVar res_uncval_mu_up(prefix + "final_CB_CMS_res_mUp", "", 1, 1., 5.); res_uncval_mu_up.setConstant(true);
-  RooRealVar res_uncval_mu_dn(prefix + "final_CB_CMS_res_mDown", "", 1, 0.2, 5.); res_uncval_mu_dn.setConstant(true);
+  RooRealVar res_uncval_e_up(prefix + "final_CB_CMS_res_eUp", "", 1, 1., 10.); res_uncval_e_up.setConstant(true);
+  RooRealVar res_uncval_e_dn(prefix + "final_CB_CMS_res_eDown", "", 1, 0.01, 1.); res_uncval_e_dn.setConstant(true);
+  RooRealVar res_uncval_mu_up(prefix + "final_CB_CMS_res_mUp", "", 1, 1., 10.); res_uncval_mu_up.setConstant(true);
+  RooRealVar res_uncval_mu_dn(prefix + "final_CB_CMS_res_mDown", "", 1, 0.01, 1.); res_uncval_mu_dn.setConstant(true);
   AsymPow res_uncval_e(prefix + "final_CB_CMS_res_e_AsymPow", "", res_uncval_e_dn, res_uncval_e_up, res_uncvar_e);
   AsymPow res_uncval_mu(prefix + "final_CB_CMS_res_m_AsymPow", "", res_uncval_mu_dn, res_uncval_mu_up, res_uncvar_mu);
   TString strreswidthFormula; RooArgList reswidtharglist;
@@ -1068,7 +1085,11 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     incl_CB_alpha2, incl_CB_n2
   );
 
+  /***************/
+  /* Nominal fit */
+  /***************/
   // Fit all parameters
+  var_mtrue.setConstant(true);
   res_uncvar_e.setConstant(true);
   res_uncvar_mu.setConstant(true);
   scale_uncvar_e.setConstant(true);
@@ -1121,6 +1142,50 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
     }
     delete fitResult;
   }
+
+  /*******************/
+  /* Systematic fits */
+  /*******************/
+  float shiftedMeanValue = var_mtrue.getVal() + incl_CB_mean.getVal();
+  delete theOutputTree; theOutputTree = getOutputTree(channel, category, proctype, strGenerator, systVariations, true, true, shiftedMeanValue);
+  theOutputTree->writeToFile(foutput);
+  {
+    TTree* tree = theOutputTree->getSelectedTree();
+    float mtrue, mreco, wgt;
+    vector<float> systVar; systVar.assign(systVariations.size(), 0);
+    bool isCategory=(category==Inclusive);
+    if (proctype==ProcessHandler::kQQBkg) tree->SetBranchAddress("GenHMass", &mtrue);
+    tree->SetBranchAddress("ZZMass", &mreco);
+    tree->SetBranchAddress("weight", &wgt);
+    for (unsigned int isyst=0; isyst<systVariations.size(); isyst++) tree->SetBranchAddress(getSystematicsName(systVariations.at(isyst)), &(systVar.at(isyst)));
+    if (!isCategory){
+      TString catFlagName = TString("is_") + strCategory + TString("_") + strACHypo;
+      tree->SetBranchAddress(catFlagName, &isCategory);
+    }
+    // Add maually because of the category flag
+    float sumwgts=0;
+    unsigned int ndata=0;
+    for (int ev=0; ev<tree->GetEntries(); ev++){
+      tree->GetEntry(ev);
+      if (!isCategory) continue;
+      if (proctype==ProcessHandler::kQQBkg) mreco = mreco-mtrue+125;
+      if (mreco<var_mreco.getMin() || mreco>var_mreco.getMax()) continue;
+      var_mreco.setVal(mreco);
+      var_weight.setVal(wgt);
+      sumwgts += wgt;
+      ndata++;
+      for (unsigned int isyst=0; isyst<systVariations.size(); isyst++){
+        var_mreco.setVal(systVar.at(isyst));
+        dataList.at(isyst+1).add(treevars);
+      }
+    }
+    var_mreco.setVal(125);
+    var_weight.setVal(1);
+    for (auto& data:dataList) data.Print("v");
+    MELAout << "Average weight: " << sumwgts / float(ndata) << endl;
+  }
+  delete theOutputTree;
+
   for (unsigned int isyst=0; isyst<systVariations.size(); isyst++){
     for (auto& var:CB_parameter_list) var.setConstant(true);
     auto& syst=systVariations.at(isyst);

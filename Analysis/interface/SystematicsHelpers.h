@@ -110,6 +110,7 @@ namespace SystematicsHelpers{
     std::vector<TString> strVars;
     unsigned int const id_requested;
     bool doUp;
+    float centralValue;
     std::unordered_map<CJLSTTree*, componentData> componentRefs;
   public:
     PerLeptonResSystematic(
@@ -121,10 +122,11 @@ namespace SystematicsHelpers{
     virtual ~PerLeptonResSystematic(){}
     virtual float eval(CJLSTTree* theTree) const;
     virtual void setup(CJLSTTree* theTree);
+    virtual void setCentralValue(float centralValue_){ centralValue=centralValue_; }
   };
 
   std::pair<float, float> getLeptonScaleSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, std::vector<std::vector<float>* const*> const& LepVars, unsigned int const idreq);
-  std::pair<float, float> getLeptonResSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, float const& GenHMass, std::vector<std::vector<float>* const*> const& LepVars, unsigned int const idreq);
+  std::pair<float, float> getLeptonResSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, float const& centralValue, std::vector<std::vector<float>* const*> const& LepVars, unsigned int const idreq);
 
 
   int convertSystematicVariationTypeToInt(SystematicsHelpers::SystematicVariationTypes type);

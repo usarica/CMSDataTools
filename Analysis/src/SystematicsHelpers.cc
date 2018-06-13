@@ -201,7 +201,7 @@ SystematicsHelpers::PerLeptonResSystematic::PerLeptonResSystematic(
   SystematicsHelpers::PerLeptonResSystematic::PerLeptonResSystematicFunction_t infcn,
   unsigned int const id_requested_,
   bool doUp_
-) : rule(infcn), strVars(inStrVars), id_requested(id_requested_), doUp(doUp_)
+) : rule(infcn), strVars(inStrVars), id_requested(id_requested_), doUp(doUp_), centralValue(-999.)
 {}
 float SystematicsHelpers::PerLeptonResSystematic::eval(CJLSTTree* theTree) const{
   auto it = componentRefs.find(theTree);
@@ -209,17 +209,17 @@ float SystematicsHelpers::PerLeptonResSystematic::eval(CJLSTTree* theTree) const
     MELAerr << "PerLeptonResSystematic::eval: Could not find the variables for tree " << theTree->sampleIdentifier << ". Call PerLeptonResSystematic::setup first!" << endl;
     return 0;
   }
-  std::pair<float, float> res = rule(*(it->second.ref_shorts.at(0)), *(it->second.ref_shorts.at(1)), *(it->second.ref_floats.at(0)), *(it->second.ref_floats.at(1)), it->second.ref_vfloats, id_requested);
+  if (centralValue==-999.) MELAerr << "PerLeptonResSystematic::eval: Reference value is " << centralValue << endl;
+  std::pair<float, float> res = rule(*(it->second.ref_shorts.at(0)), *(it->second.ref_shorts.at(1)), *(it->second.ref_floats.at(0)), centralValue, it->second.ref_vfloats, id_requested);
   return (doUp ? res.second : res.first);
 }
 void SystematicsHelpers::PerLeptonResSystematic::setup(CJLSTTree* theTree){
   if (!theTree || strVars.empty()) return;
   std::vector<short*> refId; refId.assign(2, nullptr);
-  std::vector<float*> refMass; refMass.assign(2, nullptr);
+  std::vector<float*> refMass; refMass.assign(1, nullptr);
   theTree->getValRef("Z1Flav", refId.at(0));
   theTree->getValRef("Z2Flav", refId.at(1));
   theTree->getValRef("ZZMass", refMass.at(0));
-  theTree->getValRef("GenHMass", refMass.at(1));
   std::vector<std::vector<float>* const*> refVar;
   for (TString const& s:strVars){
     vector<float>* const* v = nullptr;
@@ -230,7 +230,7 @@ void SystematicsHelpers::PerLeptonResSystematic::setup(CJLSTTree* theTree){
   if (!refVar.empty()) componentRefs[theTree]=componentData(refId, refMass, refVar);
 }
 
-std::pair<float, float> SystematicsHelpers::getLeptonResSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, float const& GenHMass, std::vector<std::vector<float>* const*> const& LepVars, unsigned int const idreq){
+std::pair<float, float> SystematicsHelpers::getLeptonResSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, float const& centralValue, std::vector<std::vector<float>* const*> const& LepVars, unsigned int const idreq){
   std::pair<float, float> res(0, 0);
   if ((Z1Flav*Z2Flav)%(short) idreq != 0) return res;
   // LepVars: LepPt, LepEta, LepPhi, LepScaleUnc, LepResUnc
@@ -265,7 +265,7 @@ std::pair<float, float> SystematicsHelpers::getLeptonResSystematic(short const& 
     float mass=sumP.M();
     if (iperm==0) scale = ZZMass/mass; // Account for FSR and missing lepton masses
     mass *= scale;
-    HelperFunctions::addByLowest(ZZMassDiffVars, std::pair<float, int>(fabs(mass-GenHMass), iperm), true);
+    HelperFunctions::addByLowest(ZZMassDiffVars, std::pair<float, int>(fabs(mass-centralValue), iperm), true);
     ZZMassVars.push_back(mass);
   }
   res.first = ZZMassVars.at(ZZMassDiffVars.front().second);

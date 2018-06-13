@@ -8,6 +8,7 @@
 #include "PA1PB1PBp1Discriminant.h"
 #include "PA1PB2PBp2Discriminant.h"
 #include "VHProdDecACDiscriminant.h"
+#include "VHProdDecACGsDiscriminant.h"
 #include "JJEWQCDBkgDiscriminant.h"
 #include "JJEWQCDBkgM4LDiscriminant.h"
 #include "SimpleInterferenceDiscriminant.h"
@@ -15,7 +16,6 @@
 #include "JJEWQCDInterferenceDiscriminant.h"
 #include "SimpleInterferenceTrigPhase.h"
 #include "SimpleAverageInterferenceTrigPhase.h"
-#include "VHProdIntTrigPhaseACDiscriminant.h"
 
 
 namespace DiscriminantClasses{

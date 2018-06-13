@@ -121,6 +121,10 @@ void makeZXTemplatesFromData_one(const Channel channel, const Category category,
 
     // Build the analyzer and loop over the events
     TemplatesEventAnalyzer theAnalyzer(theSampleSet, channel, category);
+    if (syst==sNominal){
+      theAnalyzer.setRecordCategorizationKDs(true);
+      theAnalyzer.setRecordKDVariables(true);
+    }
     theAnalyzer.setExternalProductTree(theFinalTree);
     // Loosen channel check if needed
     theAnalyzer.setAllowSSChannel((FRMethod==ZXFakeRateHandler::mSS));

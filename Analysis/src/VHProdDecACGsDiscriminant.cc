@@ -1,4 +1,4 @@
-#include "VHProdDecACDiscriminant.h"
+#include "VHProdDecACGsDiscriminant.h"
 #include "HelperFunctions.h"
 #include <cassert>
 
@@ -7,19 +7,18 @@ using namespace std;
 using namespace HelperFunctions;
 
 
-VHProdDecACDiscriminant::VHProdDecACDiscriminant(
+VHProdDecACGsDiscriminant::VHProdDecACGsDiscriminant(
   const TString cfilename, const TString splinename,
   const TString gfilename, const TString gsplinename,
   const float gscale_
 ) : Discriminant(cfilename, splinename, gfilename, gsplinename, gscale_){}
 
-void VHProdDecACDiscriminant::eval(const std::vector<float>& vars, const float& valReco){
+void VHProdDecACGsDiscriminant::eval(const std::vector<float>& vars, const float& valReco){
   enum{
     iZHSM=0,
     iWHSM,
     iDecSM,
     iZHBSM,
-    iWHBSM,
     iDecBSM,
     iZHConst,
     iWHConst,
@@ -41,7 +40,7 @@ void VHProdDecACDiscriminant::eval(const std::vector<float>& vars, const float& 
     float pZHSM = vars[iZHSM]/vars[iZHConst]*pZHMJJwgt;
     float pWHSM = vars[iWHSM]/vars[iWHConst]*pWHMJJwgt;
     float pZHBSM = vars[iZHBSM]/vars[iZHConst]*pZHMJJwgt;
-    float pWHBSM = vars[iWHBSM]/vars[iWHConst]*pWHMJJwgt;
+    constexpr float pWHBSM = 0;
     float pVHdecSM = (pZHSM + pWHSM)*vars[iDecSM];
     float pVHdecBSM = (pZHBSM + pWHBSM)*vars[iDecBSM];
 

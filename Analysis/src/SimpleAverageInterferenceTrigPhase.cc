@@ -22,30 +22,29 @@ void SimpleAverageInterferenceTrigPhase::eval(const std::vector<float>& vars, co
       )
     ){
     float constant = getCval(valReco);
+    val=0;
+    float d1=0, d2=0;
     if (!isWithAvgME){
-      val=0;
-      float d1=vars[0]*vars[1];
-      float d2=vars[3]*vars[4];
+      d1=vars[0]*vars[1];
+      d2=vars[3]*vars[4];
       if (d1>0.) val += vars[2]/(2.*sqrt(d1));
       if (d2>0.) val += constant*vars[5]/(2.*sqrt(d2));
     }
     else{
-      val=0;
       float pA = vars[0]/vars[3];
       float pB = vars[1]/vars[4];
       float pAB = vars[2]*(1./vars[3]+1./vars[4]);
       float pABInt = pAB-pA-pB;
-      float d1=pA*pB;
+      d1=pA*pB;
       if (d1>0.) val += pABInt/(2.*sqrt(d1));
 
       float pC = vars[5]/vars[8];
       float pD = vars[6]/vars[9];
       float pCD = vars[7]*(1./vars[8]+1./vars[9]);
       float pCDInt = pCD-pC-pD;
-      float d2=pC*pD;
+      d2=pC*pD;
       if (d2>0.) val += pCDInt/(2.*sqrt(d2));
-
-      if (d1>0. && d2>0.) val /= 2.;
     }
+    if (d1>0. && d2>0.) val /= 2.;
   }
 }

@@ -166,8 +166,8 @@ std::pair<float, float> SystematicsHelpers::getLeptonScaleSystematic(short const
   std::vector<float>* const& LepPhi = *(LepVars.at(2)); assert(LepPhi);
   std::vector<float>* const& LepScaleUnc = *(LepVars.at(3)); assert(LepScaleUnc);
   std::vector<float>* const& LepResUnc = *(LepVars.at(4)); assert(LepResUnc);
-  unsigned int const nleps = LepPt->size();
-  assert(nleps>1);
+  unsigned int const nleps = LepPt->size(); assert(nleps>1);
+  unsigned int const nperms = pow(3, nleps);
   std::vector<std::vector<TLorentzVector>> LepP; LepP.assign(nleps, std::vector<TLorentzVector>()); for (auto& ls:LepP) ls.assign(3, TLorentzVector(0, 0, 0, 0));
   for (unsigned int ilep=0; ilep<nleps; ilep++){
     for (int isyst=0; isyst<3; isyst++){
@@ -181,7 +181,8 @@ std::pair<float, float> SystematicsHelpers::getLeptonScaleSystematic(short const
   }
   float scale=1;
   std::vector<float> ZZMassVars;
-  unsigned int const nperms = pow(3, nleps);
+  std::vector<std::pair<float, int>> ZZMassDiffVars_neg; ZZMassDiffVars_neg.reserve(nperms);
+  std::vector<std::pair<float, int>> ZZMassDiffVars_pos; ZZMassDiffVars_pos.reserve(nperms);
   for (unsigned int iperm=0; iperm<nperms; iperm++){
     std::vector<unsigned int> isyst; isyst.reserve(nleps);
     unsigned int jperm=iperm;
@@ -190,10 +191,22 @@ std::pair<float, float> SystematicsHelpers::getLeptonScaleSystematic(short const
     for (unsigned int ilep=0; ilep<nleps; ilep++) sumP += LepP.at(ilep).at(isyst.at(ilep));
     float mass=sumP.M();
     if (iperm==0) scale = ZZMass/mass; // Account for FSR and missing lepton masses
-    HelperFunctions::addByLowest(ZZMassVars, mass*scale, true);
+    mass *= scale;
+
+    float massdiff=mass-ZZMass;
+    if (massdiff<0.) HelperFunctions::addByLowest(ZZMassDiffVars_neg, std::pair<float, int>(fabs(massdiff), iperm), true);
+    else HelperFunctions::addByLowest(ZZMassDiffVars_pos, std::pair<float, int>(fabs(massdiff), iperm), true);
+    ZZMassVars.push_back(mass);
   }
-  res.first = ZZMassVars.front();
-  res.second = ZZMassVars.back();
+
+  if (!ZZMassDiffVars_neg.empty()){
+    unsigned int index=ZZMassDiffVars_neg.size()*0.684;
+    res.first = ZZMassVars.at(ZZMassDiffVars_neg.at(index).second);
+  }
+  if (!ZZMassDiffVars_pos.empty()){
+    unsigned int index=ZZMassDiffVars_pos.size()*0.684;
+    res.second = ZZMassVars.at(ZZMassDiffVars_pos.at(index).second);
+  }
   return res;
 }
 
@@ -232,7 +245,7 @@ void SystematicsHelpers::PerLeptonResSystematic::setup(CJLSTTree* theTree){
 }
 
 std::pair<float, float> SystematicsHelpers::getLeptonResSystematic(short const& Z1Flav, short const& Z2Flav, float const& ZZMass, float const& centralValue, std::vector<std::vector<float>* const*> const& LepVars, unsigned int const idreq){
-  std::pair<float, float> res(0, 0);
+  std::pair<float, float> res(ZZMass, ZZMass);
   if ((Z1Flav*Z2Flav)%(short) idreq != 0) return res;
   // LepVars: LepPt, LepEta, LepPhi, LepScaleUnc, LepResUnc
   assert(LepVars.size()==5);
@@ -255,8 +268,10 @@ std::pair<float, float> SystematicsHelpers::getLeptonResSystematic(short const& 
     }
   }
   float scale=1;
+  float nominaldiff=fabs(ZZMass-centralValue);
   std::vector<float> ZZMassVars; ZZMassVars.reserve(nperms);
-  std::vector<std::pair<float, int>> ZZMassDiffVars; ZZMassDiffVars.reserve(nperms);
+  std::vector<std::pair<float, int>> ZZMassDiffVars_neg; ZZMassDiffVars_neg.reserve(nperms);
+  std::vector<std::pair<float, int>> ZZMassDiffVars_pos; ZZMassDiffVars_pos.reserve(nperms);
   for (unsigned int iperm=0; iperm<nperms; iperm++){
     std::vector<unsigned int> isyst; isyst.reserve(nleps);
     unsigned int jperm=iperm;
@@ -266,11 +281,20 @@ std::pair<float, float> SystematicsHelpers::getLeptonResSystematic(short const& 
     float mass=sumP.M();
     if (iperm==0) scale = ZZMass/mass; // Account for FSR and missing lepton masses
     mass *= scale;
-    HelperFunctions::addByLowest(ZZMassDiffVars, std::pair<float, int>(fabs(mass-centralValue), iperm), true);
+    float massdiff=fabs(mass-centralValue)-nominaldiff;
+    if (massdiff<0.) HelperFunctions::addByLowest(ZZMassDiffVars_neg, std::pair<float, int>(fabs(massdiff), iperm), true);
+    else HelperFunctions::addByLowest(ZZMassDiffVars_pos, std::pair<float, int>(fabs(massdiff), iperm), true);
     ZZMassVars.push_back(mass);
   }
-  res.first = ZZMassVars.at(ZZMassDiffVars.front().second);
-  res.second = ZZMassVars.at(ZZMassDiffVars.back().second);
+
+  if (!ZZMassDiffVars_neg.empty()){
+    unsigned int index=ZZMassDiffVars_neg.size()*0.684;
+    res.first = ZZMassVars.at(ZZMassDiffVars_neg.at(index).second);
+  }
+  if (!ZZMassDiffVars_pos.empty()){
+    unsigned int index=ZZMassDiffVars_pos.size()*0.684;
+    res.second = ZZMassVars.at(ZZMassDiffVars_pos.at(index).second);
+  }
   return res;
 }
 

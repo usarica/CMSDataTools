@@ -159,7 +159,7 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
       unsigned int index_entry = maxPrunedSize-2;
       unsigned int index_entry_prev=index_entry+1;
       threshold = (indexPruned.at(index_entry_prev).trackingval + indexPruned.at(index_entry).trackingval)*0.5;
-      cout << "Threshold raw: " << threshold << endl;
+      MELAout << "Threshold raw: " << threshold << endl;
       if ((threshold>0. && indexPruned.front().trackingval<threshold*5.) || fractionRequirement>=1.) threshold = indexPruned.front().trackingval; // Prevent false-positives
     }
     else if (nTotalPerBin==2) threshold = std::max(index.at(0).trackingval, index.at(1).trackingval);

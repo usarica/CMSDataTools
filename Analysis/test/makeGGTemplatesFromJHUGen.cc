@@ -155,7 +155,7 @@ void makeGGTemplatesFromJHUGen_one(const Channel channel, const Category categor
     melarewgtBuilder->rejectNegativeWeights(true);
     melarewgtBuilder->setDivideByNSample(true);
     melarewgtBuilder->setWeightBinning(GenHMassBinning);
-    for (auto& tree:theSampleSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.99999, 0);
+    for (auto& tree:theSampleSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.9999, 0);
 
     // Make reweighting conrol plots
     TDirectory* controlsDir = foutput->mkdir(Form("controls_%s", treename.Data()), "");

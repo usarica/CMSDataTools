@@ -75,8 +75,9 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
   vector<TString> strSampleIdentifiers;
   strSampleIdentifiers.push_back("gg_Sig_POWHEG");
   strSampleIdentifiers.push_back("gg_Sig_JHUGen");
+  std::vector<unsigned int> nSamples;
   vector<TString> strSamples;
-  getSamplesList(theSqrts, strSampleIdentifiers, strSamples, syst);
+  getSamplesList(theSqrts, strSampleIdentifiers, strSamples, syst, &nSamples);
 
   // Kfactor variable names
   vector<TString> strKfactorVars;
@@ -157,7 +158,11 @@ void makeGGTemplatesFromPOWHEG_one(const Channel channel, const Category categor
     melarewgtBuilder->rejectNegativeWeights(true);
     melarewgtBuilder->setDivideByNSample(true);
     melarewgtBuilder->setWeightBinning(GenHMassBinning);
-    for (auto& tree:theSampleSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.999, 250);
+    for (unsigned int itree=0; itree<theSampleSet->getCJLSTTreeList().size(); itree++){
+      CJLSTTree*& tree=theSampleSet->getCJLSTTreeList().at(itree);
+      if (itree<nSamples.at(0)) melarewgtBuilder->setupWeightVariables(tree, 0.999, 250);
+      else melarewgtBuilder->setupWeightVariables(tree, 0.9999, 0);
+    }
 
     // Make reweighting conrol plots
     TDirectory* controlsDir = foutput->mkdir(Form("controls_%s", treename.Data()), "");

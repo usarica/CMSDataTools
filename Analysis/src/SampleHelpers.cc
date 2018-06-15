@@ -144,10 +144,11 @@ void SampleHelpers::addXsecBranchNames(std::vector<TString>& vars){
   for (auto& v:xsecvars) vars.push_back(v);
 }
 
-void SampleHelpers::getSamplesList(float sqrts, std::vector<TString> const& s, std::vector<TString>& vs, SystematicsHelpers::SystematicVariationTypes syst){
+void SampleHelpers::getSamplesList(float sqrts, std::vector<TString> const& s, std::vector<TString>& vs, SystematicsHelpers::SystematicVariationTypes syst, std::vector<unsigned int>* ns){
   for (auto& ss:s){
     vector<TString> dumappend = constructSamplesList(ss, sqrts, syst);
     HelperFunctions::appendVector<TString>(vs, dumappend);
+    if (ns) ns->push_back(dumappend.size());
   }
 }
 void SampleHelpers::getSamplePairs(float sqrts, std::vector<TString> const& s1, std::vector<TString> const& s2, std::vector<TString>& vs1, std::vector<TString>& vs2, SystematicsHelpers::SystematicVariationTypes syst){

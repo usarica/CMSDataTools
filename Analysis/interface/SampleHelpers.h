@@ -48,7 +48,7 @@ namespace SampleHelpers{
   bool testChannel(SampleHelpers::Channel const& targetChannel, short const& Z1Flav, short const& Z2Flav, bool checkSS=false);
 
   std::vector<TString> constructSamplesList(TString strsample, float sqrts, SystematicsHelpers::SystematicVariationTypes syst=SystematicsHelpers::sNominal);
-  void getSamplesList(float sqrts, std::vector<TString> const& s, std::vector<TString>& vs, SystematicsHelpers::SystematicVariationTypes syst=SystematicsHelpers::sNominal);
+  void getSamplesList(float sqrts, std::vector<TString> const& s, std::vector<TString>& vs, SystematicsHelpers::SystematicVariationTypes syst=SystematicsHelpers::sNominal, std::vector<unsigned int>* ns=nullptr);
   void getSamplePairs(float sqrts, std::vector<TString> const& s1, std::vector<TString> const& s2, std::vector<TString>& vs1, std::vector<TString>& vs2, SystematicsHelpers::SystematicVariationTypes syst=SystematicsHelpers::sNominal);
 
   std::vector<TString> getXsecBranchNames();

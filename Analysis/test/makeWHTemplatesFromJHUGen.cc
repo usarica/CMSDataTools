@@ -133,6 +133,7 @@ void makeWHTemplatesFromJHUGen_one(const Channel channel, const Category categor
   // Construct reweighting variables vector
   for (unsigned int t=0; t<tplset.size(); t++){
     auto& hypotype = tplset.at(t);
+    if (t!=1) continue;
     foutput->cd();
 
     /************* Reweighting setup *************/

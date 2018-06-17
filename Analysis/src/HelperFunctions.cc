@@ -298,20 +298,22 @@ TSpline3* HelperFunctions::convertGraphToSpline3(TGraph* tg, bool faithfulFirst,
     tg->GetX(),
     tg->GetY()
   };
-
   double derivative_first=0;
   double derivative_last=0;
   TString spopt="";
-  if (faithfulFirst){
-    spopt += "b1";
-    derivative_first = (xy[1][1]-xy[1][0])/(xy[0][1]-xy[0][0]);
+  if (nbins==1) spopt="b1e1";
+  else{
+    if (faithfulFirst){
+      spopt += "b1";
+      derivative_first = (xy[1][1]-xy[1][0])/(xy[0][1]-xy[0][0]);
+    }
+    else spopt += "b2";
+    if (faithfulSecond){
+      spopt += "e1";
+      derivative_last = (xy[1][nbins-1]-xy[1][nbins-2])/(xy[0][nbins-1]-xy[0][nbins-2]);
+    }
+    else spopt += "e2";
   }
-  else spopt += "b2";
-  if (faithfulSecond){
-    spopt += "e1";
-    derivative_last = (xy[1][nbins-1]-xy[1][nbins-2])/(xy[0][nbins-1]-xy[0][nbins-2]);
-  }
-  else spopt += "e2";
   TSpline3* spline = new TSpline3("spline", tg, spopt, derivative_first, derivative_last);
   spline->SetName(Form("sp_%s", tg->GetName()));
   if (dfirst!=0) *dfirst = spline->Derivative(xy[0][0]);
@@ -651,38 +653,44 @@ TGraph* HelperFunctions::genericPatcher(
   bool useFaithfulSlopeFirst, bool useFaithfulSlopeSecond,
   std::vector<std::pair<std::pair<double, double>, unsigned int>>* addpoints
 ){
-  if (addpoints!=0){ for (auto& prange : *addpoints) addPointsBetween(tg, prange.first.first, prange.first.second, prange.second); }
-
-  int n = tg->GetN();
-  double* xx = tg->GetX();
-  double* yy = tg->GetY();
-
-  TSpline3* sp = convertGraphToSpline3(tg, useFaithfulSlopeFirst, useFaithfulSlopeSecond);
-  double tglow = xx[0];
-  double tghigh = xx[tg->GetN()-1];
-  TF1* lowFcn = lowf(sp, xmin, tglow, true);
-  TF1* highFcn = highf(sp, tghigh, xmax, false);
-  lowFcn->SetNpx((int) (tglow-xmin)*5);
-  highFcn->SetNpx((int) (xmax-tghigh)*5);
-  delete sp;
-
   vector<pair<double, double>> points;
-  for (double xval=xmin; xval<tglow; xval+=1){
-    double yval = lowFcn->Eval(xval);
-    addByLowest<double, double>(points, xval, yval);
+  if (tg->GetN()==1){
+    addByLowest<double, double>(points, xmin, tg->GetY()[0]);
+    addByLowest<double, double>(points, tg->GetX()[0], tg->GetY()[0]);
+    addByLowest<double, double>(points, xmax, tg->GetY()[0]);
   }
-  delete lowFcn;
+  else{
+    if (addpoints!=0){ for (auto& prange : *addpoints) addPointsBetween(tg, prange.first.first, prange.first.second, prange.second); }
 
-  for (int ix=0; ix<n; ix++) addByLowest<double, double>(points, xx[ix], yy[ix]);
+    int n = tg->GetN();
+    double* xx = tg->GetX();
+    double* yy = tg->GetY();
 
-  int tghigh_int = ((int) ((tghigh+1.)/100.+0.5))*100;
-  if (tghigh>=(double) tghigh_int) tghigh_int+=100;
-  for (double xval=tghigh_int; xval<=xmax; xval+=100){
-    double yval = highFcn->Eval(xval);
-    addByLowest<double, double>(points, xval, yval);
+    TSpline3* sp = convertGraphToSpline3(tg, useFaithfulSlopeFirst, useFaithfulSlopeSecond);
+    double tglow = xx[0];
+    double tghigh = xx[tg->GetN()-1];
+    TF1* lowFcn = lowf(sp, xmin, tglow, true);
+    TF1* highFcn = highf(sp, tghigh, xmax, false);
+    lowFcn->SetNpx((int) (tglow-xmin)*5);
+    highFcn->SetNpx((int) (xmax-tghigh)*5);
+    delete sp;
+
+    for (double xval=xmin; xval<tglow; xval+=1){
+      double yval = lowFcn->Eval(xval);
+      addByLowest<double, double>(points, xval, yval);
+    }
+    delete lowFcn;
+
+    for (int ix=0; ix<n; ix++) addByLowest<double, double>(points, xx[ix], yy[ix]);
+
+    int tghigh_int = ((int) ((tghigh+1.)/100.+0.5))*100;
+    if (tghigh>=(double) tghigh_int) tghigh_int+=100;
+    for (double xval=tghigh_int; xval<=xmax; xval+=100){
+      double yval = highFcn->Eval(xval);
+      addByLowest<double, double>(points, xval, yval);
+    }
+    delete highFcn;
   }
-  delete highFcn;
-
   TGraph* res = makeGraphFromPair(points, newname);
   return res;
 }

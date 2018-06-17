@@ -138,12 +138,39 @@ ExtendedHistogram_3D ExtendedHistogram_3D::divideHistograms(ExtendedHistogram_3D
   return res;
 }
 
-void ExtendedHistogram_3D::averageHistograms(ExtendedHistogram_3D& hTarget, ExtendedHistogram_3D const& h2){
+void ExtendedHistogram_3D::averageHistograms(ExtendedHistogram_3D& hTarget, ExtendedHistogram_3D const& h2, bool useNeff){
   if (!hTarget.histo || !h2.histo) return;
-  combineHistogramsByWeightedAverage(hTarget.histo, h2.histo, hTarget.histo);
-  if (hTarget.prof_x && h2.prof_x) combineHistogramsByWeightedAverage(hTarget.prof_x, h2.prof_x, hTarget.prof_x);
-  if (hTarget.prof_y && h2.prof_y) combineHistogramsByWeightedAverage(hTarget.prof_y, h2.prof_y, hTarget.prof_y);
-  if (hTarget.prof_z && h2.prof_z) combineHistogramsByWeightedAverage(hTarget.prof_z, h2.prof_z, hTarget.prof_z);
+  combineHistogramsByWeightedAverage(hTarget.histo, h2.histo, hTarget.histo, useNeff);
+  if (hTarget.prof_x && h2.prof_x) combineHistogramsByWeightedAverage(hTarget.prof_x, h2.prof_x, hTarget.prof_x, useNeff);
+  if (hTarget.prof_y && h2.prof_y) combineHistogramsByWeightedAverage(hTarget.prof_y, h2.prof_y, hTarget.prof_y, useNeff);
+  if (hTarget.prof_z && h2.prof_z) combineHistogramsByWeightedAverage(hTarget.prof_z, h2.prof_z, hTarget.prof_z, useNeff);
+}
+void ExtendedHistogram_3D::averageHistograms(ExtendedHistogram_3D& hTarget, std::vector<ExtendedHistogram_3D const*> const& hList, bool useNeff){
+  if (!hTarget.histo) return;
+
+  std::vector<TH3F const*> hhlist;
+  hhlist.push_back(hTarget.histo);
+
+  std::vector<TProfile const*> hprof_xlist;
+  hprof_xlist.push_back(hTarget.prof_x);
+  std::vector<TProfile const*> hprof_ylist;
+  hprof_ylist.push_back(hTarget.prof_y);
+  std::vector<TProfile const*> hprof_zlist;
+  hprof_zlist.push_back(hTarget.prof_z);
+
+  for (ExtendedHistogram_3D const* const& h:hList){
+    if (h){
+      if (h->histo) hhlist.push_back(h->histo);
+      if (h->prof_x) hprof_xlist.push_back(h->prof_x);
+      if (h->prof_y) hprof_ylist.push_back(h->prof_y);
+      if (h->prof_z) hprof_zlist.push_back(h->prof_z);
+    }
+  }
+
+  combineHistogramListByWeightedAverage(hhlist, hTarget.histo, useNeff);
+  if (hTarget.prof_x) combineHistogramListByWeightedAverage(hprof_xlist, hTarget.prof_x, useNeff);
+  if (hTarget.prof_y) combineHistogramListByWeightedAverage(hprof_ylist, hTarget.prof_y, useNeff);
+  if (hTarget.prof_z) combineHistogramListByWeightedAverage(hprof_zlist, hTarget.prof_z, useNeff);
 }
 
 void ExtendedHistogram_3D::constructFromTree(TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, bool* flag, ExtendedBinning const* binningX, ExtendedBinning const* binningY, ExtendedBinning const* binningZ){

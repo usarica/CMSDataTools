@@ -392,6 +392,16 @@ bool SystematicsHelpers::systematicAllowed(
   for (SystematicVariationTypes& st:allowedTypes){ if (st==syst) return true; }
   return false;
 }
+bool SystematicsHelpers::systematicHasMassRatio(SystematicsHelpers::SystematicVariationTypes const syst){
+  return !(
+    syst==sNominal
+    || syst==eLepScaleEleDn || syst==eLepScaleEleUp
+    || syst==eLepResEleDn || syst==eLepResEleUp
+    || syst==eLepScaleMuDn || syst==eLepScaleMuUp
+    || syst==eLepResMuDn || syst==eLepResMuUp
+    );
+}
+
 SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
   CategorizationHelpers::Category const category,
   SampleHelpers::Channel const channel,

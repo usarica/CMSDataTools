@@ -370,7 +370,7 @@ void acquireMassRatio_ProcessSystToNominal_one(
   ProcessHandler::ProcessType proctype, const TString strGenerator
 ){
   if (channel==NChannels) return;
-  if (syst==sNominal) return;
+  if (!systematicHasMassRatio(syst)) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
   ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;
@@ -680,7 +680,7 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
   ProcessHandler::ProcessType proctype, const TString strGenerator
 ){
   if (channel==NChannels) return;
-  if (syst==sNominal) return;
+  if (!systematicHasMassRatio(syst)) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
   ProcessHandler const* thePerProcessHandle=getOffshellProcessHandler(proctype);
   if (!thePerProcessHandle) return;

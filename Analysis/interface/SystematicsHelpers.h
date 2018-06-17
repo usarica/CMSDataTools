@@ -145,6 +145,7 @@ namespace SystematicsHelpers{
     SystematicsHelpers::SystematicVariationTypes const syst,
     TString strGenerator
   );
+  bool systematicHasMassRatio(SystematicsHelpers::SystematicVariationTypes const syst);
 
   SystematicsClass* constructSystematic(
     CategorizationHelpers::Category const category,

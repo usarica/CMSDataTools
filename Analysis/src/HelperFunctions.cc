@@ -2456,24 +2456,20 @@ template <> void HelperFunctions::translateCumulantToHistogram<TH3F>(TH3F const*
   }
 }
 
-template <> void HelperFunctions::combineHistogramsByWeightedAverage<TProfile>(TProfile const* h1, TProfile const* h2, TProfile*& hAssign){
-  if (h1->GetNbinsX()!=h2->GetNbinsX()) return;
-  const int nbinsx = h1->GetNbinsX();
+template <> void HelperFunctions::combineHistogramListByWeightedAverage<TProfile>(std::vector<TProfile const*> const& hList, TProfile*& hAssign, bool /*useNeff*/){
+  const int nbinsx = hList.at(0)->GetNbinsX();
+  for (auto const& h:hList){
+    if (h->GetNbinsX()!=nbinsx) return;
+  }
   for (int binx=0; binx<=nbinsx+1; binx++){
-    double sumW[2]={
-      h1->GetBinContent(binx),
-      h2->GetBinContent(binx)
-    };
-    double sumWsq[2]={
-      pow(h1->GetBinError(binx), 2),
-      pow(h2->GetBinError(binx), 2)
-    };
     float bincontent=0;
     float binerror=0;
-    for (unsigned int ih=0; ih<2; ih++){
-      if (sumWsq[ih]>0.){
-        bincontent += sumW[ih]/sumWsq[ih];
-        binerror += 1./sumWsq[ih];
+    for (auto const& h:hList){
+      double bc=h->GetBinContent(binx);
+      double be=pow(h->GetBinError(binx), 2);
+      if (be>0.){
+        bincontent += bc/be;
+        binerror += 1./be;
       }
     }
     if (binerror>0.){
@@ -2489,27 +2485,38 @@ template <> void HelperFunctions::combineHistogramsByWeightedAverage<TProfile>(T
     hAssign->SetBinError(binx, binerror);
   }
 }
-template <> void HelperFunctions::combineHistogramsByWeightedAverage<TH1F>(TH1F const* h1, TH1F const* h2, TH1F*& hAssign){
-  if (h1->GetNbinsX()!=h2->GetNbinsX()) return;
-  const int nbinsx = h1->GetNbinsX();
+template <> void HelperFunctions::combineHistogramListByWeightedAverage<TH1F>(std::vector<TH1F const*> const& hList, TH1F*& hAssign, bool useNeff){
+  const int nbinsx = hList.at(0)->GetNbinsX();
+  for (auto const& h:hList){
+    if (h->GetNbinsX()!=nbinsx) return;
+  }
   for (int binx=0; binx<=nbinsx+1; binx++){
-    double sumW[2]={
-      h1->GetBinContent(binx),
-      h2->GetBinContent(binx)
-    };
-    double sumWsq[2]={
-      pow(h1->GetBinError(binx), 2),
-      pow(h2->GetBinError(binx), 2)
-    };
     float bincontent=0;
     float binerror=0;
-    for (unsigned int ih=0; ih<2; ih++){
-      if (sumWsq[ih]>0.){
-        bincontent += sumW[ih]/sumWsq[ih];
-        binerror += 1./sumWsq[ih];
+    float norm=0;
+    for (auto const& h:hList){
+      double bc=h->GetBinContent(binx);
+      double be=pow(h->GetBinError(binx), 2);
+      if (be>0.){
+        if (!useNeff){
+          bincontent += bc/be;
+          binerror += 1./be;
+        }
+        else{
+          double neff = pow(bc, 2)/be;
+          bincontent += bc*neff;
+          binerror += be*neff;
+          norm += neff;
+        }
       }
     }
-    if (binerror>0.){
+    if (useNeff){
+      if (norm>0.){
+        bincontent /= norm;
+        binerror = sqrt(binerror/norm);
+      }
+    }
+    else if (binerror>0.){
       bincontent /= binerror;
       binerror = sqrt(1./binerror);
     }
@@ -2521,30 +2528,41 @@ template <> void HelperFunctions::combineHistogramsByWeightedAverage<TH1F>(TH1F 
     hAssign->SetBinError(binx, binerror);
   }
 }
-template <> void HelperFunctions::combineHistogramsByWeightedAverage<TH2F>(TH2F const* h1, TH2F const* h2, TH2F*& hAssign){
-  if (h1->GetNbinsX()!=h2->GetNbinsX()) return;
-  if (h1->GetNbinsY()!=h2->GetNbinsY()) return;
-  const int nbinsx = h1->GetNbinsX();
-  const int nbinsy = h1->GetNbinsY();
+template <> void HelperFunctions::combineHistogramListByWeightedAverage<TH2F>(std::vector<TH2F const*> const& hList, TH2F*& hAssign, bool useNeff){
+  const int nbinsx = hList.at(0)->GetNbinsX();
+  const int nbinsy = hList.at(0)->GetNbinsY();
+  for (auto const& h:hList){
+    if (h->GetNbinsX()!=nbinsx) return;
+    if (h->GetNbinsY()!=nbinsy) return;
+  }
   for (int binx=0; binx<=nbinsx+1; binx++){
     for (int biny=0; biny<=nbinsy+1; biny++){
-      double sumW[2]={
-        h1->GetBinContent(binx, biny),
-        h2->GetBinContent(binx, biny)
-      };
-      double sumWsq[2]={
-        pow(h1->GetBinError(binx, biny), 2),
-        pow(h2->GetBinError(binx, biny), 2)
-      };
       float bincontent=0;
       float binerror=0;
-      for (unsigned int ih=0; ih<2; ih++){
-        if (sumWsq[ih]>0.){
-          bincontent += sumW[ih]/sumWsq[ih];
-          binerror += 1./sumWsq[ih];
+      float norm=0;
+      for (auto const& h:hList){
+        double bc=h->GetBinContent(binx, biny);
+        double be=pow(h->GetBinError(binx, biny), 2);
+        if (be>0.){
+          if (!useNeff){
+            bincontent += bc/be;
+            binerror += 1./be;
+          }
+          else{
+            double neff = pow(bc, 2)/be;
+            bincontent += bc*neff;
+            binerror += be*neff;
+            norm += neff;
+          }
         }
       }
-      if (binerror>0.){
+      if (useNeff){
+        if (norm>0.){
+          bincontent /= norm;
+          binerror = sqrt(binerror/norm);
+        }
+      }
+      else if (binerror>0.){
         bincontent /= binerror;
         binerror = sqrt(1./binerror);
       }
@@ -2557,33 +2575,44 @@ template <> void HelperFunctions::combineHistogramsByWeightedAverage<TH2F>(TH2F 
     }
   }
 }
-template <> void HelperFunctions::combineHistogramsByWeightedAverage<TH3F>(TH3F const* h1, TH3F const* h2, TH3F*& hAssign){
-  if (h1->GetNbinsX()!=h2->GetNbinsX()) return;
-  if (h1->GetNbinsY()!=h2->GetNbinsY()) return;
-  if (h1->GetNbinsZ()!=h2->GetNbinsZ()) return;
-  const int nbinsx = h1->GetNbinsX();
-  const int nbinsy = h1->GetNbinsY();
-  const int nbinsz = h1->GetNbinsZ();
+template <> void HelperFunctions::combineHistogramListByWeightedAverage<TH3F>(std::vector<TH3F const*> const& hList, TH3F*& hAssign, bool useNeff){
+  const int nbinsx = hList.at(0)->GetNbinsX();
+  const int nbinsy = hList.at(0)->GetNbinsY();
+  const int nbinsz = hList.at(0)->GetNbinsZ();
+  for (auto const& h:hList){
+    if (h->GetNbinsX()!=nbinsx) return;
+    if (h->GetNbinsY()!=nbinsy) return;
+    if (h->GetNbinsZ()!=nbinsz) return;
+  }
   for (int binx=0; binx<=nbinsx+1; binx++){
     for (int biny=0; biny<=nbinsy+1; biny++){
       for (int binz=0; binz<=nbinsz+1; binz++){
-        double sumW[2]={
-          h1->GetBinContent(binx, biny, binz),
-          h2->GetBinContent(binx, biny, binz)
-        };
-        double sumWsq[2]={
-          pow(h1->GetBinError(binx, biny, binz), 2),
-          pow(h2->GetBinError(binx, biny, binz), 2)
-        };
         float bincontent=0;
         float binerror=0;
-        for (unsigned int ih=0; ih<2; ih++){
-          if (sumWsq[ih]>0.){
-            bincontent += sumW[ih]/sumWsq[ih];
-            binerror += 1./sumWsq[ih];
+        float norm=0;
+        for (auto const& h:hList){
+          double bc=h->GetBinContent(binx, biny, binz);
+          double be=pow(h->GetBinError(binx, biny, binz), 2);
+          if (be>0.){
+            if (!useNeff){
+              bincontent += bc/be;
+              binerror += 1./be;
+            }
+            else{
+              double neff = pow(bc, 2)/be;
+              bincontent += bc*neff;
+              binerror += be*neff;
+              norm += neff;
+            }
           }
         }
-        if (binerror>0.){
+        if (useNeff){
+          if (norm>0.){
+            bincontent /= norm;
+            binerror = sqrt(binerror/norm);
+          }
+        }
+        else if (binerror>0.){
           bincontent /= binerror;
           binerror = sqrt(1./binerror);
         }

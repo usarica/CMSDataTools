@@ -46,7 +46,8 @@ public:
 
   static ExtendedHistogram_1D divideHistograms(ExtendedHistogram_1D const& h1, ExtendedHistogram_1D const& h2, bool useEffErr, TString newname="");
 
-  static void averageHistograms(ExtendedHistogram_1D& hTarget, ExtendedHistogram_1D const& h2);
+  static void averageHistograms(ExtendedHistogram_1D& hTarget, ExtendedHistogram_1D const& h2, bool useNeff=false);
+  static void averageHistograms(ExtendedHistogram_1D& hTarget, std::vector<ExtendedHistogram_1D const*> const& hList, bool useNeff=false);
 
 };
 

@@ -119,11 +119,34 @@ ExtendedHistogram_2D ExtendedHistogram_2D::divideHistograms(ExtendedHistogram_2D
   return res;
 }
 
-void ExtendedHistogram_2D::averageHistograms(ExtendedHistogram_2D& hTarget, ExtendedHistogram_2D const& h2){
+void ExtendedHistogram_2D::averageHistograms(ExtendedHistogram_2D& hTarget, ExtendedHistogram_2D const& h2, bool useNeff){
   if (!hTarget.histo || !h2.histo) return;
-  combineHistogramsByWeightedAverage(hTarget.histo, h2.histo, hTarget.histo);
-  if (hTarget.prof_x && h2.prof_x) combineHistogramsByWeightedAverage(hTarget.prof_x, h2.prof_x, hTarget.prof_x);
-  if (hTarget.prof_y && h2.prof_y) combineHistogramsByWeightedAverage(hTarget.prof_y, h2.prof_y, hTarget.prof_y);
+  combineHistogramsByWeightedAverage(hTarget.histo, h2.histo, hTarget.histo, useNeff);
+  if (hTarget.prof_x && h2.prof_x) combineHistogramsByWeightedAverage(hTarget.prof_x, h2.prof_x, hTarget.prof_x, useNeff);
+  if (hTarget.prof_y && h2.prof_y) combineHistogramsByWeightedAverage(hTarget.prof_y, h2.prof_y, hTarget.prof_y, useNeff);
+}
+void ExtendedHistogram_2D::averageHistograms(ExtendedHistogram_2D& hTarget, std::vector<ExtendedHistogram_2D const*> const& hList, bool useNeff){
+  if (!hTarget.histo) return;
+
+  std::vector<TH2F const*> hhlist;
+  hhlist.push_back(hTarget.histo);
+
+  std::vector<TProfile const*> hprof_xlist;
+  hprof_xlist.push_back(hTarget.prof_x);
+  std::vector<TProfile const*> hprof_ylist;
+  hprof_ylist.push_back(hTarget.prof_y);
+
+  for (ExtendedHistogram_2D const* const& h:hList){
+    if (h){
+      if (h->histo) hhlist.push_back(h->histo);
+      if (h->prof_x) hprof_xlist.push_back(h->prof_x);
+      if (h->prof_y) hprof_ylist.push_back(h->prof_y);
+    }
+  }
+
+  combineHistogramListByWeightedAverage(hhlist, hTarget.histo, useNeff);
+  if (hTarget.prof_x) combineHistogramListByWeightedAverage(hprof_xlist, hTarget.prof_x, useNeff);
+  if (hTarget.prof_y) combineHistogramListByWeightedAverage(hprof_ylist, hTarget.prof_y, useNeff);
 }
 
 void ExtendedHistogram_2D::constructFromTree(TTree* tree, float& xvar, float& yvar, float& weight, bool* flag, ExtendedBinning const* binningX, ExtendedBinning const* binningY){

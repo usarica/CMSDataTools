@@ -159,11 +159,17 @@ namespace HelperFunctions{
   template <> void translateCumulantToHistogram<TH2F>(TH2F const* histo, TH2F*& res, TString newname, std::vector<unsigned int>* condDims);
   template <> void translateCumulantToHistogram<TH3F>(TH3F const* histo, TH3F*& res, TString newname, std::vector<unsigned int>* condDims);
 
-  template <typename T> void combineHistogramsByWeightedAverage(T const* h1, T const* h2, T*& hAssign);
-  template <> void combineHistogramsByWeightedAverage<TProfile>(TProfile const* h1, TProfile const* h2, TProfile*& hAssign);
-  template <> void combineHistogramsByWeightedAverage<TH1F>(TH1F const* h1, TH1F const* h2, TH1F*& hAssign);
-  template <> void combineHistogramsByWeightedAverage<TH2F>(TH2F const* h1, TH2F const* h2, TH2F*& hAssign);
-  template <> void combineHistogramsByWeightedAverage<TH3F>(TH3F const* h1, TH3F const* h2, TH3F*& hAssign);
+  template <typename T> void combineHistogramListByWeightedAverage(std::vector<T const*> const& hList, T*& hAssign, bool useNeff=false);
+  template <> void combineHistogramListByWeightedAverage<TProfile>(std::vector<TProfile const*> const& hList, TProfile*& hAssign, bool useNeff);
+  template <> void combineHistogramListByWeightedAverage<TH1F>(std::vector<TH1F const*> const& hList, TH1F*& hAssign, bool useNeff);
+  template <> void combineHistogramListByWeightedAverage<TH2F>(std::vector<TH2F const*> const& hList, TH2F*& hAssign, bool useNeff);
+  template <> void combineHistogramListByWeightedAverage<TH3F>(std::vector<TH3F const*> const& hList, TH3F*& hAssign, bool useNeff);
+
+  template <typename T> void combineHistogramsByWeightedAverage(T const* h1, T const* h2, T*& hAssign, bool useNeff=false);
+  template void combineHistogramsByWeightedAverage<TProfile>(TProfile const* h1, TProfile const* h2, TProfile*& hAssign, bool useNeff);
+  template void combineHistogramsByWeightedAverage<TH1F>(TH1F const* h1, TH1F const* h2, TH1F*& hAssign, bool useNeff);
+  template void combineHistogramsByWeightedAverage<TH2F>(TH2F const* h1, TH2F const* h2, TH2F*& hAssign, bool useNeff);
+  template void combineHistogramsByWeightedAverage<TH3F>(TH3F const* h1, TH3F const* h2, TH3F*& hAssign, bool useNeff);
 
   // Spline functions
   template<int N> TF1* getFcn_a0plusa1overXN(TSpline3* sp, double xmin, double xmax, bool useLowBound);
@@ -572,6 +578,13 @@ template <typename T> double HelperFunctions::getHistogramIntegralAndError(T con
   if (error) *error=reserror;
   return res;
 }
+template <typename T> void HelperFunctions::combineHistogramsByWeightedAverage(T const* h1, T const* h2, T*& hAssign, bool useNeff){
+  std::vector<T const*> hlist;
+  hlist.push_back(h1);
+  hlist.push_back(h2);
+  HelperFunctions::combineHistogramListByWeightedAverage<T>(hlist, hAssign, useNeff);
+}
+
 
 // TGraph functions
 template<typename T> TGraph* HelperFunctions::makeGraphFromPair(std::vector<std::pair<T, T>> points, TString name){

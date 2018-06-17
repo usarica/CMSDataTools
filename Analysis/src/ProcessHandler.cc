@@ -3028,7 +3028,7 @@ template<> void BBProcessHandler::recombineHistogramsToTemplates<TH1F*>(std::vec
     std::vector<unsigned int> asymAxes;
     if (hypo==ACHypothesisHelpers::kA3){
       if (type==BBTplSigBSMSMInt_Re){
-        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle()) && DiscriminantClasses::usesDecInfo(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
         if (asymAxes.empty()) hh->Reset("ICESM"); // If no asymmetrix axes found, histogram has to be 0 itself.
       }
       else{
@@ -3071,8 +3071,8 @@ template<> void BBProcessHandler::recombineHistogramsToTemplates<TH2F*>(std::vec
     std::vector<unsigned int> asymAxes;
     if (hypo==ACHypothesisHelpers::kA3){
       if (type==BBTplSigBSMSMInt_Re){
-        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
-        if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) asymAxes.push_back(1);
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle()) && DiscriminantClasses::usesDecInfo(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
+        if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle()) && DiscriminantClasses::usesDecInfo(hh->GetYaxis()->GetTitle())) asymAxes.push_back(1);
         if (asymAxes.empty()) hh->Reset("ICESM"); // If no asymmetrix axes found, histogram has to be 0 itself.
       }
       else{
@@ -3119,9 +3119,9 @@ template<> void BBProcessHandler::recombineHistogramsToTemplates<TH3F*>(std::vec
     std::vector<unsigned int> asymAxes;
     if (hypo==ACHypothesisHelpers::kA3){
       if (type==BBTplSigBSMSMInt_Re){
-        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
-        if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle())) asymAxes.push_back(1);
-        if (DiscriminantClasses::isCPSensitive(hh->GetZaxis()->GetTitle())) asymAxes.push_back(2);
+        if (DiscriminantClasses::isCPSensitive(hh->GetXaxis()->GetTitle()) && DiscriminantClasses::usesDecInfo(hh->GetXaxis()->GetTitle())) asymAxes.push_back(0);
+        if (DiscriminantClasses::isCPSensitive(hh->GetYaxis()->GetTitle()) && DiscriminantClasses::usesDecInfo(hh->GetYaxis()->GetTitle())) asymAxes.push_back(1);
+        if (DiscriminantClasses::isCPSensitive(hh->GetZaxis()->GetTitle()) && DiscriminantClasses::usesDecInfo(hh->GetZaxis()->GetTitle())) asymAxes.push_back(2);
         if (asymAxes.empty()) hh->Reset("ICESM"); // If no asymmetrix axes found, histogram has to be 0 itself.
       }
       else{

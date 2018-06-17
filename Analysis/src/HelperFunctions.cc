@@ -2505,7 +2505,7 @@ template <> void HelperFunctions::combineHistogramListByWeightedAverage<TH1F>(st
         else{
           double neff = pow(bc, 2)/be;
           bincontent += bc*neff;
-          binerror += be*neff;
+          binerror += be*pow(neff, 2);
           norm += neff;
         }
       }
@@ -2513,7 +2513,7 @@ template <> void HelperFunctions::combineHistogramListByWeightedAverage<TH1F>(st
     if (useNeff){
       if (norm>0.){
         bincontent /= norm;
-        binerror = sqrt(binerror/norm);
+        binerror = sqrt(binerror)/norm;
       }
     }
     else if (binerror>0.){
@@ -2551,7 +2551,7 @@ template <> void HelperFunctions::combineHistogramListByWeightedAverage<TH2F>(st
           else{
             double neff = pow(bc, 2)/be;
             bincontent += bc*neff;
-            binerror += be*neff;
+            binerror += be*pow(neff, 2);
             norm += neff;
           }
         }
@@ -2559,7 +2559,7 @@ template <> void HelperFunctions::combineHistogramListByWeightedAverage<TH2F>(st
       if (useNeff){
         if (norm>0.){
           bincontent /= norm;
-          binerror = sqrt(binerror/norm);
+          binerror = sqrt(binerror)/norm;
         }
       }
       else if (binerror>0.){
@@ -2601,7 +2601,7 @@ template <> void HelperFunctions::combineHistogramListByWeightedAverage<TH3F>(st
             else{
               double neff = pow(bc, 2)/be;
               bincontent += bc*neff;
-              binerror += be*neff;
+              binerror += be*pow(neff, 2);
               norm += neff;
             }
           }
@@ -2609,7 +2609,7 @@ template <> void HelperFunctions::combineHistogramListByWeightedAverage<TH3F>(st
         if (useNeff){
           if (norm>0.){
             bincontent /= norm;
-            binerror = sqrt(binerror/norm);
+            binerror = sqrt(binerror)/norm;
           }
         }
         else if (binerror>0.){

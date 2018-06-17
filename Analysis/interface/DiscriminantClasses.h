@@ -136,6 +136,12 @@ namespace DiscriminantClasses{
   bool isCPSensitive(const Type type);
   bool isCPSensitive(const TString name);
 
+  bool usesDecInfo(const Type type);
+  bool usesDecInfo(const TString name);
+
+  bool usesProdInfo(const Type type);
+  bool usesProdInfo(const TString name);
+
 }
 
 

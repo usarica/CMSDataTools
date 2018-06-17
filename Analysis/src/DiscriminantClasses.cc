@@ -803,12 +803,121 @@ std::vector<TString> DiscriminantClasses::getKDVars(const Type type){
 }
 std::vector<TString> DiscriminantClasses::getKDVars(const TString name){ return getKDVars(getKDType(name)); }
 
-bool DiscriminantClasses::isCPSensitive(const Type type){
+bool DiscriminantClasses::isCPSensitive(const DiscriminantClasses::Type type){
   bool res = (type==kDa3decint || type==kDa3jjVBFint || type==kDa3jjVHint || type==kCa3decint || type==kCa3jjVBFint || type==kCa3jjVHint);
   return res;
 }
 bool DiscriminantClasses::isCPSensitive(const TString name){
   std::unordered_map<TString, DiscriminantClasses::Type>::const_iterator it;
   if (HelperFunctions::getUnorderedMapIterator(name, mapKDNameType, it)) return isCPSensitive(it->second);
+  else return false;
+}
+
+bool DiscriminantClasses::usesDecInfo(const DiscriminantClasses::Type type){
+  bool res=false;
+  switch (type){
+  case kDbkgkin:
+  case kDbkgdec:
+  case kDbkgm4l:
+  case kDggbkgkin:
+  case kDggint:
+  case kCggint:
+  case kDbkgjjEWQCD:
+  case kDbkgm4ljjEWQCD:
+  case kDintjjEWQCD:
+  case kCjjVBFint:
+  case kCjjVHint:
+  case kDL1dec:
+  case kDa2dec:
+  case kDa3dec:
+  case kDL1ZGsdec:
+  case kDL1decint:
+  case kDa2decint:
+  case kDa3decint:
+  case kDL1ZGsdecint:
+  case kCL1decint:
+  case kCa2decint:
+  case kCa3decint:
+  case kCL1ZGsdecint:
+  case kDL1jjVBFdec:
+  case kDa2jjVBFdec:
+  case kDa3jjVBFdec:
+  case kDL1ZGsjjVBFdec:
+  case kDL1jjVHdec:
+  case kDa2jjVHdec:
+  case kDa3jjVHdec:
+  case kDL1ZGsjjVHdec:
+    res=true;
+    break;
+  default:
+    res=false;
+    break;
+  };
+  return res;
+}
+bool DiscriminantClasses::usesDecInfo(const TString name){
+  std::unordered_map<TString, DiscriminantClasses::Type>::const_iterator it;
+  if (HelperFunctions::getUnorderedMapIterator(name, mapKDNameType, it)) return usesDecInfo(it->second);
+  else return false;
+}
+
+bool DiscriminantClasses::usesProdInfo(const DiscriminantClasses::Type type){
+  bool res=false;
+  switch (type){
+  case kDjVBF:
+  case kDjjVBF:
+  case kDjjVBFL1:
+  case kDjjVBFa2:
+  case kDjjVBFa3:
+  case kDjjVBFL1ZGs:
+  case kDjjZH:
+  case kDjjZHL1:
+  case kDjjZHa2:
+  case kDjjZHa3:
+  case kDjjZHL1ZGs:
+  case kDjjWH:
+  case kDjjWHL1:
+  case kDjjWHa2:
+  case kDjjWHa3:
+  case kDbkgjjEWQCD:
+  case kDbkgm4ljjEWQCD:
+  case kDintjjEWQCD:
+  case kCjjVBFint:
+  case kCjjVHint:
+  case kCL1jjVHint:
+  case kCa2jjVHint:
+  case kCa3jjVHint:
+  case kDL1jjVBFdec:
+  case kDa2jjVBFdec:
+  case kDa3jjVBFdec:
+  case kDL1ZGsjjVBFdec:
+  case kDL1jjVHdec:
+  case kDa2jjVHdec:
+  case kDa3jjVHdec:
+  case kDL1ZGsjjVHdec:
+  case kDL1jjVBFint:
+  case kDa2jjVBFint:
+  case kDa3jjVBFint:
+  case kDL1ZGsjjVBFint:
+  case kCL1jjVBFint:
+  case kCa2jjVBFint:
+  case kCa3jjVBFint:
+  case kCL1ZGsjjVBFint:
+  case kDL1jjVHint:
+  case kDa2jjVHint:
+  case kDa3jjVHint:
+  case kDL1ZGsjjVHint:
+  case kCL1ZGsjjVHint:
+    res=true;
+    break;
+  default:
+    res=false;
+    break;
+  };
+  return res;
+}
+bool DiscriminantClasses::usesProdInfo(const TString name){
+  std::unordered_map<TString, DiscriminantClasses::Type>::const_iterator it;
+  if (HelperFunctions::getUnorderedMapIterator(name, mapKDNameType, it)) return usesProdInfo(it->second);
   else return false;
 }

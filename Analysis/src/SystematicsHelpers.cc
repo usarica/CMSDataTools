@@ -845,6 +845,30 @@ TString SystematicsHelpers::getSystematicsCombineName(
     else strProcess="Higgs_gg";
     break;
   }
+  case ProcessHandler::kTT:
+  {
+    if (
+      syst==tQCDScaleDn || syst==tQCDScaleUp
+      ||
+      syst==tPDFScaleDn || syst==tPDFScaleUp
+      ||
+      syst==tMINLODn || syst==tMINLOUp
+      ) strProcess="ttH";
+    else strProcess="Higgs_gg";
+    break;
+  }
+  case ProcessHandler::kBB:
+  {
+    if (
+      syst==tQCDScaleDn || syst==tQCDScaleUp
+      ||
+      syst==tPDFScaleDn || syst==tPDFScaleUp
+      ||
+      syst==tMINLODn || syst==tMINLOUp
+      ) strProcess="bbH";
+    else strProcess="Higgs_gg";
+    break;
+  }
   case ProcessHandler::kVV:
   case ProcessHandler::kVBF:
   {

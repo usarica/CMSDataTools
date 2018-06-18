@@ -1359,93 +1359,99 @@ template<> void getTemplatesPerCategory<3>(
 
   // Fill templates from POWHEG
   vector<ExtHist_t> hTemplates_POWHEG;
-  hTemplates_POWHEG.reserve(ntpls);
-  for (unsigned int t=0; t<ntpls; t++){
-    TTree*& tree=fixedTrees_POWHEG.at(t);
-    ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
-    ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-    TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_POWHEG";
-    TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
+  if (!fixedTrees_POWHEG.empty()){
+    hTemplates_POWHEG.reserve(ntpls);
+    for (unsigned int t=0; t<ntpls; t++){
+      TTree*& tree=fixedTrees_POWHEG.at(t);
+      ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
+      ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
+      TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_POWHEG";
+      TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
 
-    hTemplates_POWHEG.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2));
-    TH_t* hSmooth=getSmoothHistogram(
-      templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
-      tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
-      2, 2, 2
+      hTemplates_POWHEG.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2));
+      TH_t* hSmooth=getSmoothHistogram(
+        templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
+        tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
+        2, 2, 2
+      );
+      *(hTemplates_POWHEG.back().getHistogram()) = *hSmooth;
+      delete hSmooth;
+      hTemplates_POWHEG.back().getHistogram()->SetNameTitle(templatename, templatetitle);
+    }
+    // Do post-processing
+    PostProcessTemplatesWithPhase(
+      rootdir,
+      thePerProcessHandle, hypo,
+      tplset,
+      KDbinning,
+      hMass_FromNominalInclusive,
+      hTemplates_POWHEG
     );
-    *(hTemplates_POWHEG.back().getHistogram()) = *hSmooth;
-    delete hSmooth;
-    hTemplates_POWHEG.back().getHistogram()->SetNameTitle(templatename, templatetitle);
   }
-  // Do post-processing
-  PostProcessTemplatesWithPhase(
-    rootdir,
-    thePerProcessHandle, hypo,
-    tplset,
-    KDbinning,
-    hMass_FromNominalInclusive,
-    hTemplates_POWHEG
-  );
 
   // Fill templates from MCFM
   vector<ExtHist_t> hTemplates_MCFM;
-  hTemplates_MCFM.reserve(ntpls);
-  for (unsigned int t=0; t<ntpls; t++){
-    TTree*& tree=fixedTrees_MCFM.at(t);
-    ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
-    ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-    TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_MCFM";
-    TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
+  if (!fixedTrees_MCFM.empty()){
+    hTemplates_MCFM.reserve(ntpls);
+    for (unsigned int t=0; t<ntpls; t++){
+      TTree*& tree=fixedTrees_MCFM.at(t);
+      ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
+      ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
+      TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_MCFM";
+      TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
 
-    hTemplates_MCFM.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2));
-    TH_t* hSmooth=getSmoothHistogram(
-      templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
-      tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
-      2, 2, 2
+      hTemplates_MCFM.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2));
+      TH_t* hSmooth=getSmoothHistogram(
+        templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
+        tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
+        2, 2, 2
+      );
+      *(hTemplates_MCFM.back().getHistogram()) = *hSmooth;
+      delete hSmooth;
+      hTemplates_MCFM.back().getHistogram()->SetNameTitle(templatename, templatetitle);
+    }
+    // Do post-processing
+    PostProcessTemplatesWithPhase(
+      rootdir,
+      thePerProcessHandle, hypo,
+      tplset,
+      KDbinning,
+      hMass_FromNominalInclusive,
+      hTemplates_MCFM
     );
-    *(hTemplates_MCFM.back().getHistogram()) = *hSmooth;
-    delete hSmooth;
-    hTemplates_MCFM.back().getHistogram()->SetNameTitle(templatename, templatetitle);
   }
-  // Do post-processing
-  PostProcessTemplatesWithPhase(
-    rootdir,
-    thePerProcessHandle, hypo,
-    tplset,
-    KDbinning,
-    hMass_FromNominalInclusive,
-    hTemplates_MCFM
-  );
 
   // Fill templates from JHUGen
   vector<ExtHist_t> hTemplates_JHUGen;
-  hTemplates_JHUGen.reserve(ntpls);
-  for (unsigned int t=0; t<ntpls; t++){
-    TTree*& tree=fixedTrees_JHUGen.at(t);
-    ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
-    ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
-    TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_JHUGen";
-    TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
+  if (!fixedTrees_JHUGen.empty()){
+    hTemplates_JHUGen.reserve(ntpls);
+    for (unsigned int t=0; t<ntpls; t++){
+      TTree*& tree=fixedTrees_JHUGen.at(t);
+      ProcessHandleType::HypothesisType const& treetype = tplset.at(t);
+      ProcessHandleType::TemplateType tpltype = ProcessHandleType::castIntToTemplateType(ProcessHandleType::castHypothesisTypeToInt(treetype));
+      TString templatename = thePerProcessHandle->getTemplateName(tpltype) + "_JHUGen";
+      TString templatetitle = thePerProcessHandle->getProcessLabel(tpltype, hypo);
 
-    hTemplates_JHUGen.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2));
-    TH_t* hSmooth=getSmoothHistogram(
-      templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
-      tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
-      2, 2, 2
+      hTemplates_JHUGen.emplace_back(templatename, templatetitle, KDbinning.at(0), KDbinning.at(1), KDbinning.at(2));
+      TH_t* hSmooth=getSmoothHistogram(
+        templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
+        tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
+        2, 2, 2
+      );
+      *(hTemplates_JHUGen.back().getHistogram()) = *hSmooth;
+      delete hSmooth;
+      hTemplates_JHUGen.back().getHistogram()->SetNameTitle(templatename, templatetitle);
+    }
+    // Do post-processing
+    PostProcessTemplatesWithPhase(
+      rootdir,
+      thePerProcessHandle, hypo,
+      tplset,
+      KDbinning,
+      hMass_FromNominalInclusive,
+      hTemplates_JHUGen
     );
-    *(hTemplates_JHUGen.back().getHistogram()) = *hSmooth;
-    delete hSmooth;
-    hTemplates_JHUGen.back().getHistogram()->SetNameTitle(templatename, templatetitle);
   }
-  // Do post-processing
-  PostProcessTemplatesWithPhase(
-    rootdir,
-    thePerProcessHandle, hypo,
-    tplset,
-    KDbinning,
-    hMass_FromNominalInclusive,
-    hTemplates_JHUGen
-  );
 
   if (!hTemplates_POWHEG.empty() && !hTemplates_MCFM.empty()){ // Compare the templates, combine if necessary
     MELAout << "Combining conditional templates..." << endl;

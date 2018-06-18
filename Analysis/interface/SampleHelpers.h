@@ -20,6 +20,7 @@
 #include "TList.h"
 #include "HelperFunctions.h"
 #include "SystematicVariations.h"
+#include "MELAStreamHelpers.hh"
 
 
 namespace SampleHelpers{
@@ -70,8 +71,8 @@ template <typename T> std::vector<std::pair<T*, T*>> SampleHelpers::getZXFR_SS()
   finput = TFile::Open("../data/FakeRate_SS_Moriond368.root", "read");
   std::vector<std::pair<T*, T*>> result;
   for (int f=0; f<2; f++){
-    if (!(finput!=0 && finput->IsOpen())){ std::cerr << "getZXFR_SS: File is not open!" << std::endl; return result; }
-    else std::cout << "getZXFR_SS: File opened" << std::endl;
+    if (!(finput!=0 && finput->IsOpen())){ MELAStreamHelpers::MELAerr << "getZXFR_SS: File is not open!" << std::endl; return result; }
+    else MELAStreamHelpers::MELAout << "getZXFR_SS: File opened" << std::endl;
     T* htmp[2];
     gROOT->cd();
     for (unsigned int t=0; t<2; t++) htmp[t] = (T*) finput->Get(hname[f][t]);
@@ -88,6 +89,7 @@ template<typename T> void SampleHelpers::bookBranch(TTree* tree, TString strname
       tree->SetBranchStatus(strname, 1);
       tree->SetBranchAddress(strname, var);
     }
+    else MELAStreamHelpers::MELAout << "SampleHelpers::bookBranch: Branch " << strname << " does not exist in tree " << tree->GetName() << "!" << std::endl;
   }
 }
 template<typename T> void SampleHelpers::putBranch(TTree* tree, TString strname, T& var){

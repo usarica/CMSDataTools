@@ -243,6 +243,69 @@ bool getFilesAndTrees(
   return true;
 }
 
+void getResolutionFileAndWS(
+  const Channel channel, const Category category, const SystematicVariationTypes syst, CategorizationHelpers::MassRegion massregion,
+  const unsigned int istage, const TString fixedDate,
+  ProcessHandler::ProcessType proctype,
+  const TString strGenerator,
+  TFile*& finput, RooWorkspace*& w
+){
+  finput=nullptr;
+  w=nullptr;
+  TDirectory* curdir = gDirectory;
+  if (channel==NChannels) return;
+  if (massregion!=kOnshell) return;
+  if (strGenerator!="POWHEG") return;
+  ProcessHandler const* thePerProcessHandle=getOnshellProcessHandler(proctype);
+  if (!thePerProcessHandle) return;
+  if (
+    !(
+      syst==SystematicsHelpers::eLepScaleEleDn || syst==SystematicsHelpers::eLepScaleEleUp
+      ||
+      syst==SystematicsHelpers::eLepScaleMuDn || syst==SystematicsHelpers::eLepScaleMuUp
+      ||
+      syst==SystematicsHelpers::eLepResEleDn || syst==SystematicsHelpers::eLepResEleUp
+      ||
+      syst==SystematicsHelpers::eLepResMuDn || syst==SystematicsHelpers::eLepResMuUp
+      )
+    ) return;
+  if (!systematicAllowed(category, channel, proctype, syst, strGenerator)) return;
+
+  const TString strChannel = getChannelName(channel);
+  const TString strCategory = getCategoryName(category);
+  const TString strACHypo = getACHypothesisName(kSM);
+  const TString strSqrts = Form("%i", theSqrts);
+  const TString strYear = theDataPeriod;
+  const TString strSqrtsYear = strSqrts + "TeV_" + strYear;
+
+  // Setup the output directories
+  TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
+  TString const& strdate = fixedDate;
+  TString cinput_common = user_output_dir + sqrtsDir + "Templates/" + strdate + "/Resolution/";
+  TString INPUT_NAME_CORE = Form(
+    "HtoZZ%s_%s_FinalMassShape_%s",
+    strChannel.Data(), strCategory.Data(),
+    thePerProcessHandle->getProcessName().Data()
+  );
+  TString INPUT_NAME=INPUT_NAME_CORE;
+  TString cinput = cinput_common + INPUT_NAME + ".root";
+  
+  if (!gSystem->AccessPathName(cinput)){
+    finput = TFile::Open(cinput, "read");
+    if (finput){
+      if (!finput->IsZombie()) w = (RooWorkspace*) finput->Get("w");
+      else if (finput->IsOpen()){
+        MELAerr << "getResolutionFileAndWS::File " << cinput << " is zombie!" << endl;
+        finput->Close();
+        finput=nullptr;
+      }
+      else MELAerr << "getResolutionFileAndWS:: Could not open file " << cinput << "!" << endl;
+    }
+  }
+  else MELAerr << "getResolutionFileAndWS::File " << cinput << " is not found! Run resolution functions first." << endl;
+  curdir->cd();
+}
+
 
 void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const SystematicVariationTypes syst, CategorizationHelpers::MassRegion massregion, const unsigned int istage=1, const TString fixedDate=""){
   const ProcessHandler::ProcessType proctype=ProcessHandler::kGG;
@@ -263,6 +326,15 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
     syst==tPythiaTuneDn || syst==tPythiaTuneUp
     ||
     syst==tMINLODn || syst==tMINLOUp
+    );
+  bool needsExternalResolution = (
+    syst==SystematicsHelpers::eLepScaleEleDn || syst==SystematicsHelpers::eLepScaleEleUp
+    ||
+    syst==SystematicsHelpers::eLepScaleMuDn || syst==SystematicsHelpers::eLepScaleMuUp
+    ||
+    syst==SystematicsHelpers::eLepResEleDn || syst==SystematicsHelpers::eLepResEleUp
+    ||
+    syst==SystematicsHelpers::eLepResMuDn || syst==SystematicsHelpers::eLepResMuUp
     );
 
   const TString strChannel = getChannelName(channel);
@@ -566,6 +638,17 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
     const TString strCategory = getCategoryName(cat);
     MELAout << "\t- Begin category " << strCategory << endl;
 
+    // Resolution input
+    TFile* finput_reso=nullptr;
+    RooWorkspace* w_reso=nullptr;
+    getResolutionFileAndWS(
+      channel, cat, syst, massregion, istage, fixedDate,
+      inputProcessHandle->getProcessType(), "POWHEG",
+      finput_reso, w_reso
+    );
+    bool const doResoRewgt = (w_reso!=nullptr);
+    if (doResoRewgt) MELAout << "\t- Will apply resolution reweighting." << endl;
+
     float weight=0;
     bool isCategory=(cat==Inclusive);
     TString catFlagName="";
@@ -597,7 +680,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       channel, cat, hypo, syst,
       istage, fixedDate, inputProcessHandle, "POWHEG",
       finputs_POWHEG, treeList_POWHEG,
-      needsKDreweighting
+      needsKDreweighting || needsExternalResolution
     );
     MELAout << "\t-- " << (success_POWHEG ? "Success!" : "Failure!") << endl;
     MELAout << "\t- Obtaining MCFM samples..." << endl;
@@ -605,7 +688,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       channel, cat, hypo, syst,
       istage, fixedDate, inputProcessHandle, "MCFM",
       finputs_MCFM, treeList_MCFM,
-      needsKDreweighting
+      needsKDreweighting || needsExternalResolution
     );
     MELAout << "\t-- " << (success_MCFM ? "Success!" : "Failure!") << endl;
     bool success_JHUGen = false;
@@ -615,7 +698,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         channel, cat, hypo, syst,
         istage, fixedDate, inputProcessHandle, "JHUGen",
         finputs_JHUGen, treeList_JHUGen,
-        needsKDreweighting
+        needsKDreweighting || needsExternalResolution
       );
       MELAout << "\t-- " << (success_JHUGen ? "Success!" : "Failure!") << endl;
     }
@@ -647,11 +730,42 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
           if (!branchExists(tree, catFlagName)) isCategory=true;
         }
 
+        TTree* intermediateTree=nullptr;
+        if (doResoRewgt){
+          float GenHMass;
+          bookBranch(tree, "GenHMass", &GenHMass);
+          float* ZZMassRef=nullptr;
+          for (auto& KDname:KDset){ if (KDname=="ZZMass") ZZMassRef = &(KDvars[KDname]); }
+          bool hasNewZZMass = (ZZMassRef==nullptr);
+          if (hasNewZZMass){
+            ZZMassRef=new float(0);
+            bookBranch(tree, "ZZMass", ZZMassRef);
+          }
+          intermediateTree = fixTreeWeights(
+            cat, channel,
+            inputProcessHandle->getProcessType(), syst,
+            tree, w_reso,
+            getDiscriminantFineBinning(channel, cat, hypo, "ZZMass", massregion),
+            *ZZMassRef, GenHMass, weight
+          );
+          if (hasNewZZMass) delete ZZMassRef;
+
+          // Re-book all branches
+          if (intermediateTree){
+            intermediateTree->ResetBranchAddresses();
+            bookBranch(intermediateTree, "weight", &weight);
+            for (auto& KDname:KDset) bookBranch(intermediateTree, KDname, &(KDvars.find(KDname)->second));
+            if (catFlagName!="") bookBranch(intermediateTree, catFlagName, &isCategory);
+          }
+        }
+
         float& vartrack=KDvars.find(KDset.at(0))->second;
-        TTree* newtree = fixTreeWeights(tree, KDbinning.at(0), vartrack, weight, 1);
+        TTree* newtree = fixTreeWeights((intermediateTree ? intermediateTree : tree), KDbinning.at(0), vartrack, weight, 1);
+        newtree->ResetBranchAddresses();
         bookBranch(newtree, "weight", &weight);
         for (auto& KDname:KDset) bookBranch(newtree, KDname, &(KDvars.find(KDname)->second));
         if (catFlagName!="") bookBranch(newtree, catFlagName, &isCategory);
+        if (intermediateTree) delete intermediateTree;
 
         // Fix KD shapes for Pythia or MINLO systematics
         if (systratio_KDfix){
@@ -665,6 +779,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
             break;
           }
           if (tmptree){
+            tmptree->ResetBranchAddresses();
             delete newtree;
             newtree=tmptree;
 
@@ -692,10 +807,42 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
           if (!branchExists(tree, catFlagName)) isCategory=true;
         }
 
+        TTree* intermediateTree=nullptr;
+        if (doResoRewgt){
+          float GenHMass;
+          bookBranch(tree, "GenHMass", &GenHMass);
+          float* ZZMassRef=nullptr;
+          for (auto& KDname:KDset){ if (KDname=="ZZMass") ZZMassRef = &(KDvars[KDname]); }
+          bool hasNewZZMass = (ZZMassRef==nullptr);
+          if (hasNewZZMass){
+            ZZMassRef=new float(0);
+            bookBranch(tree, "ZZMass", ZZMassRef);
+          }
+          intermediateTree = fixTreeWeights(
+            cat, channel,
+            inputProcessHandle->getProcessType(), syst,
+            tree, w_reso,
+            getDiscriminantFineBinning(channel, cat, hypo, "ZZMass", massregion),
+            *ZZMassRef, GenHMass, weight
+          );
+          if (hasNewZZMass) delete ZZMassRef;
+
+          // Re-book all branches
+          if (intermediateTree){
+            intermediateTree->ResetBranchAddresses();
+            bookBranch(intermediateTree, "weight", &weight);
+            for (auto& KDname:KDset) bookBranch(intermediateTree, KDname, &(KDvars.find(KDname)->second));
+            if (catFlagName!="") bookBranch(intermediateTree, catFlagName, &isCategory);
+          }
+        }
+
         float& vartrack=KDvars.find(KDset.at(0))->second;
-        TTree* newtree = fixTreeWeights(tree, KDbinning.at(0), vartrack, weight, 1);
+        TTree* newtree = fixTreeWeights((intermediateTree ? intermediateTree : tree), KDbinning.at(0), vartrack, weight, 1);
+        newtree->ResetBranchAddresses();
+        bookBranch(newtree, "weight", &weight);
         for (auto& KDname:KDset) bookBranch(newtree, KDname, &(KDvars.find(KDname)->second));
         if (catFlagName!="") bookBranch(newtree, catFlagName, &isCategory);
+        if (intermediateTree) delete intermediateTree;
 
         // Fix KD shapes for Pythia or MINLO systematics
         if (systratio_KDfix){
@@ -709,6 +856,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
             break;
           }
           if (tmptree){
+            tmptree->ResetBranchAddresses();
             delete newtree;
             newtree=tmptree;
 
@@ -736,10 +884,42 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
           if (!branchExists(tree, catFlagName)) isCategory=true;
         }
 
+        TTree* intermediateTree=nullptr;
+        if (doResoRewgt){
+          float GenHMass;
+          bookBranch(tree, "GenHMass", &GenHMass);
+          float* ZZMassRef=nullptr;
+          for (auto& KDname:KDset){ if (KDname=="ZZMass") ZZMassRef = &(KDvars[KDname]); }
+          bool hasNewZZMass = (ZZMassRef==nullptr);
+          if (hasNewZZMass){
+            ZZMassRef=new float(0);
+            bookBranch(tree, "ZZMass", ZZMassRef);
+          }
+          intermediateTree = fixTreeWeights(
+            cat, channel,
+            inputProcessHandle->getProcessType(), syst,
+            tree, w_reso,
+            getDiscriminantFineBinning(channel, cat, hypo, "ZZMass", massregion),
+            *ZZMassRef, GenHMass, weight
+          );
+          if (hasNewZZMass) delete ZZMassRef;
+
+          // Re-book all branches
+          if (intermediateTree){
+            intermediateTree->ResetBranchAddresses();
+            bookBranch(intermediateTree, "weight", &weight);
+            for (auto& KDname:KDset) bookBranch(intermediateTree, KDname, &(KDvars.find(KDname)->second));
+            if (catFlagName!="") bookBranch(intermediateTree, catFlagName, &isCategory);
+          }
+        }
+
         float& vartrack=KDvars.find(KDset.at(0))->second;
-        TTree* newtree = fixTreeWeights(tree, KDbinning.at(0), vartrack, weight, 1);
+        TTree* newtree = fixTreeWeights((intermediateTree ? intermediateTree : tree), KDbinning.at(0), vartrack, weight, 1);
+        newtree->ResetBranchAddresses();
+        bookBranch(newtree, "weight", &weight);
         for (auto& KDname:KDset) bookBranch(newtree, KDname, &(KDvars.find(KDname)->second));
         if (catFlagName!="") bookBranch(newtree, catFlagName, &isCategory);
+        if (intermediateTree) delete intermediateTree;
 
         // Fix KD shapes for Pythia or MINLO systematics
         if (systratio_KDfix){
@@ -753,6 +933,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
             break;
           }
           if (tmptree){
+            tmptree->ResetBranchAddresses();
             delete newtree;
             newtree=tmptree;
 
@@ -795,6 +976,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
     for (TFile*& finput:finputs_JHUGen) finput->Close();
     for (TFile*& finput:finputs_MCFM) finput->Close();
     for (TFile*& finput:finputs_POWHEG) finput->Close();
+    if (finput_reso) finput_reso->Close();
     MELAout << "\t- Cleanup done." << endl;
     rootdir->cd();
   }

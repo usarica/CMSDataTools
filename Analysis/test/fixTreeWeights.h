@@ -3,6 +3,9 @@
 
 #include <cassert>
 #include "common_includes.h"
+#include "RooWorkspace.h"
+#include "RooRealVar.h"
+#include "RooAbsPdf.h"
 
 
 TTree* fixTreeWeights(TTree* tree){
@@ -601,6 +604,7 @@ TTree* fixTreeWeights(
     << "Fixing tree weights with the histogram " << hRatio->GetName() << "."
     << endl;
 
+  flag=true;
   for (int ev=0; ev<nEntries; ev++){
     tree->GetEntry(ev);
     if (!flag) continue;
@@ -631,6 +635,7 @@ TTree* fixTreeWeights(
     << "Fixing tree weights with the histogram " << hRatio->GetName() << "."
     << endl;
 
+  flag=true;
   for (int ev=0; ev<nEntries; ev++){
     tree->GetEntry(ev);
     if (!flag) continue;
@@ -645,5 +650,109 @@ TTree* fixTreeWeights(
   return newtree;
 }
 
+// Fix tree weights with the resolution
+TTree* fixTreeWeights(
+  CategorizationHelpers::Category const category,
+  SampleHelpers::Channel const channel,
+  ProcessHandler::ProcessType const proctype,
+  SystematicsHelpers::SystematicVariationTypes const syst,
+  TTree* tree,
+  RooWorkspace* w,
+  const ExtendedBinning& binning_mass,
+  float& ZZMass, float& GenHMass, float& weight
+){
+  if (
+    !tree || !w
+    || !(
+      syst==SystematicsHelpers::eLepScaleEleDn || syst==SystematicsHelpers::eLepScaleEleUp
+      ||
+      syst==SystematicsHelpers::eLepScaleMuDn || syst==SystematicsHelpers::eLepScaleMuUp
+      ||
+      syst==SystematicsHelpers::eLepResEleDn || syst==SystematicsHelpers::eLepResEleUp
+      ||
+      syst==SystematicsHelpers::eLepResMuDn || syst==SystematicsHelpers::eLepResMuUp
+      )
+    ) return nullptr;
+
+  const TString treename=tree->GetName();
+  MELAout << "Begin fixTreeWeights(" << treename << ")" << endl;
+
+  TString const strSystVarName = SystematicsHelpers::getSystematicsCombineName(category, channel, proctype, syst);
+  bool const doUp = (
+    syst==SystematicsHelpers::eLepScaleEleUp
+    ||
+    syst==SystematicsHelpers::eLepScaleMuUp
+    ||
+    syst==SystematicsHelpers::eLepResEleUp
+    ||
+    syst==SystematicsHelpers::eLepResMuUp
+    );
+
+  RooAbsPdf* pdf = w->pdf("ResolutionModel");
+  RooRealVar* ZZMassVar = w->var("mass");
+  RooRealVar* GenHMassVar = w->var("MH"); // FIXME: Name to be revised later
+  RooRealVar* systVar = w->var(strSystVarName);
+  if (!pdf) MELAout
+    << "fixTreeWeights(" << treename << "): "
+    << "ResolutionModel could not be found!"
+    << endl;
+  if (!ZZMassVar) MELAout
+    << "fixTreeWeights(" << treename << "): "
+    << "Reco. mass variable could not be found!"
+    << endl;
+  if (!GenHMassVar) MELAout
+    << "fixTreeWeights(" << treename << "): "
+    << "True mass variable could not be found!"
+    << endl;
+  if (!systVar) MELAout
+    << "fixTreeWeights(" << treename << "): "
+    << "Systematic variation variable " << strSystVarName << " could not be found!"
+    << endl;
+
+  int const nbins=binning_mass.getNbins();
+  double const thrlow=2.*binning_mass.getBinLowEdge(0)-binning_mass.getBinLowEdge(1);
+  double const thrhigh=2.*binning_mass.getBinLowEdge(nbins)-binning_mass.getBinLowEdge(nbins-1);
+  double const curthrlow=ZZMassVar->getMin();
+  double const curthrhigh=ZZMassVar->getMax();
+  ZZMassVar->setRange(thrlow, thrhigh); // Re-adjust the range of reco. mass
+
+  bool const GenHMassWasConstant = GenHMassVar->getAttribute("Constant");
+  GenHMassVar->setConstant(false);
+  double const curthrlow_true=GenHMassVar->getMin();
+  double const curthrhigh_true=GenHMassVar->getMax();
+  GenHMassVar->setRange(0, theSqrts*1000.);
+
+  const int nEntries = tree->GetEntries();
+  TTree* newtree = tree->CloneTree(0);
+
+  MELAout
+    << "fixTreeWeights(" << treename << "): "
+    << "Fixing tree weights with the pdf " << pdf->GetName() << "."
+    << endl;
+
+  for (int ev=0; ev<nEntries; ev++){
+    tree->GetEntry(ev);
+    if (ZZMass<thrlow || ZZMass>thrhigh) continue;
+
+    ZZMassVar->setVal(ZZMass);
+    GenHMassVar->setVal(GenHMass);
+    systVar->setVal(0);
+    double vnom = pdf->getVal(*ZZMassVar);
+    systVar->setVal((doUp ? 1. : -1.));
+    double vvar = pdf->getVal(*ZZMassVar);
+    systVar->setVal(0);
+
+    //if (ev%100==0) cout << "Event " << ev << " ZZMass / GenHMass = " << ZZMass << " / " << GenHMass << " | addiitonal wgt = " << vvar/vnom << endl;
+
+    weight *= vvar/vnom;
+
+    if (weight>0.) newtree->Fill();
+  }
+
+  ZZMassVar->setRange(curthrlow, curthrhigh);
+  GenHMassVar->setRange(curthrlow_true, curthrhigh_true);
+  GenHMassVar->setConstant(GenHMassWasConstant);
+  return newtree;
+}
 
 #endif

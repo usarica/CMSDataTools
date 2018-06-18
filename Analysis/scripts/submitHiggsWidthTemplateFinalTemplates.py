@@ -213,6 +213,9 @@ class FinalTemplatesStageXBatchManager:
                   if anreg=="kOffshell" and hypo=="kL1ZGs":
                      print "L1ZGs is not analyzed off-shell."
                      continue
+                  if anreg!="kOnshell" and (self.opt.process=="BB" or self.opt.process=="TT"):
+                     print "{} is only analyzed on-shell.".format(self.opt.process)
+                     continue
                   if (anreg=="kOffshell" or hypo=="kSM") and ("LepScale" in syst or "LepRes" in syst):
                      print "{} systematic distributions in process {} are not handled through templates in hypothesis {} of analysis region {}.".format(syst, self.opt.process, hypo, anreg)
                      continue

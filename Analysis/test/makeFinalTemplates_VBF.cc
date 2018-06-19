@@ -690,9 +690,39 @@ void makeFinalTemplates_VBF(const Channel channel, const ACHypothesis hypo, cons
           if (!branchExists(tree, catFlagName)) isCategory=true;
         }
 
+        TTree* intermediateTree=nullptr;
+        if (doResoRewgt){
+          float GenHMass;
+          bookBranch(tree, "GenHMass", &GenHMass);
+          float* ZZMassRef=nullptr;
+          for (auto& KDname:KDset){ if (KDname=="ZZMass") ZZMassRef = &(KDvars[KDname]); }
+          bool hasNewZZMass = (ZZMassRef==nullptr);
+          if (hasNewZZMass){
+            ZZMassRef=new float(0);
+            bookBranch(tree, "ZZMass", ZZMassRef);
+          }
+          intermediateTree = fixTreeWeights(
+            cat, channel,
+            inputProcessHandle->getProcessType(), syst,
+            tree, w_reso,
+            getDiscriminantFineBinning(channel, cat, hypo, "ZZMass", massregion),
+            *ZZMassRef, GenHMass, weight
+          );
+          if (hasNewZZMass) delete ZZMassRef;
+
+          // Re-book all branches
+          if (intermediateTree){
+            intermediateTree->ResetBranchAddresses();
+            bookBranch(intermediateTree, "weight", &weight);
+            for (auto& KDname:KDset) bookBranch(intermediateTree, KDname, &(KDvars.find(KDname)->second));
+            if (catFlagName!="") bookBranch(intermediateTree, catFlagName, &isCategory);
+          }
+        }
+
         float& vartrack=KDvars.find(KDset.at(0))->second;
-        TTree* newtree = fixTreeWeights(tree, KDbinning.at(0), vartrack, weight, 1);
+        TTree* newtree = fixTreeWeights((intermediateTree ? intermediateTree : tree), KDbinning.at(0), vartrack, weight, 1);
         newtree->ResetBranchAddresses();
+        if (intermediateTree) delete intermediateTree; // Absolutely necessary to do this BEFORE bookBranch(newtree)
         bookBranch(newtree, "weight", &weight);
         for (auto& KDname:KDset) bookBranch(newtree, KDname, &(KDvars.find(KDname)->second));
         if (catFlagName!="") bookBranch(newtree, catFlagName, &isCategory);
@@ -737,9 +767,39 @@ void makeFinalTemplates_VBF(const Channel channel, const ACHypothesis hypo, cons
           if (!branchExists(tree, catFlagName)) isCategory=true;
         }
 
+        TTree* intermediateTree=nullptr;
+        if (doResoRewgt){
+          float GenHMass;
+          bookBranch(tree, "GenHMass", &GenHMass);
+          float* ZZMassRef=nullptr;
+          for (auto& KDname:KDset){ if (KDname=="ZZMass") ZZMassRef = &(KDvars[KDname]); }
+          bool hasNewZZMass = (ZZMassRef==nullptr);
+          if (hasNewZZMass){
+            ZZMassRef=new float(0);
+            bookBranch(tree, "ZZMass", ZZMassRef);
+          }
+          intermediateTree = fixTreeWeights(
+            cat, channel,
+            inputProcessHandle->getProcessType(), syst,
+            tree, w_reso,
+            getDiscriminantFineBinning(channel, cat, hypo, "ZZMass", massregion),
+            *ZZMassRef, GenHMass, weight
+          );
+          if (hasNewZZMass) delete ZZMassRef;
+
+          // Re-book all branches
+          if (intermediateTree){
+            intermediateTree->ResetBranchAddresses();
+            bookBranch(intermediateTree, "weight", &weight);
+            for (auto& KDname:KDset) bookBranch(intermediateTree, KDname, &(KDvars.find(KDname)->second));
+            if (catFlagName!="") bookBranch(intermediateTree, catFlagName, &isCategory);
+          }
+        }
+
         float& vartrack=KDvars.find(KDset.at(0))->second;
-        TTree* newtree = fixTreeWeights(tree, KDbinning.at(0), vartrack, weight, 1);
+        TTree* newtree = fixTreeWeights((intermediateTree ? intermediateTree : tree), KDbinning.at(0), vartrack, weight, 1);
         newtree->ResetBranchAddresses();
+        if (intermediateTree) delete intermediateTree; // Absolutely necessary to do this BEFORE bookBranch(newtree)
         bookBranch(newtree, "weight", &weight);
         for (auto& KDname:KDset) bookBranch(newtree, KDname, &(KDvars.find(KDname)->second));
         if (catFlagName!="") bookBranch(newtree, catFlagName, &isCategory);

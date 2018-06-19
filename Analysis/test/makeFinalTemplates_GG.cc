@@ -762,10 +762,10 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         float& vartrack=KDvars.find(KDset.at(0))->second;
         TTree* newtree = fixTreeWeights((intermediateTree ? intermediateTree : tree), KDbinning.at(0), vartrack, weight, 1);
         newtree->ResetBranchAddresses();
+        if (intermediateTree) delete intermediateTree; // Absolutely necessary to do this BEFORE bookBranch(newtree)
         bookBranch(newtree, "weight", &weight);
         for (auto& KDname:KDset) bookBranch(newtree, KDname, &(KDvars.find(KDname)->second));
         if (catFlagName!="") bookBranch(newtree, catFlagName, &isCategory);
-        if (intermediateTree) delete intermediateTree;
 
         // Fix KD shapes for Pythia or MINLO systematics
         if (systratio_KDfix){
@@ -839,10 +839,10 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         float& vartrack=KDvars.find(KDset.at(0))->second;
         TTree* newtree = fixTreeWeights((intermediateTree ? intermediateTree : tree), KDbinning.at(0), vartrack, weight, 1);
         newtree->ResetBranchAddresses();
+        if (intermediateTree) delete intermediateTree; // Absolutely necessary to do this BEFORE bookBranch(newtree)
         bookBranch(newtree, "weight", &weight);
         for (auto& KDname:KDset) bookBranch(newtree, KDname, &(KDvars.find(KDname)->second));
         if (catFlagName!="") bookBranch(newtree, catFlagName, &isCategory);
-        if (intermediateTree) delete intermediateTree;
 
         // Fix KD shapes for Pythia or MINLO systematics
         if (systratio_KDfix){
@@ -916,10 +916,10 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         float& vartrack=KDvars.find(KDset.at(0))->second;
         TTree* newtree = fixTreeWeights((intermediateTree ? intermediateTree : tree), KDbinning.at(0), vartrack, weight, 1);
         newtree->ResetBranchAddresses();
+        if (intermediateTree) delete intermediateTree; // Absolutely necessary to do this BEFORE bookBranch(newtree)
         bookBranch(newtree, "weight", &weight);
         for (auto& KDname:KDset) bookBranch(newtree, KDname, &(KDvars.find(KDname)->second));
         if (catFlagName!="") bookBranch(newtree, catFlagName, &isCategory);
-        if (intermediateTree) delete intermediateTree;
 
         // Fix KD shapes for Pythia or MINLO systematics
         if (systratio_KDfix){

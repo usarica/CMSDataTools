@@ -677,7 +677,10 @@ TTree* fixTreeWeights(
   const TString treename=tree->GetName();
   MELAout << "Begin fixTreeWeights(" << treename << ")" << endl;
 
-  TString const strSystVarName = SystematicsHelpers::getSystematicsCombineName(category, channel, proctype, syst);
+  TString strSystVarName = SystematicsHelpers::getSystematicsCombineName(category, channel, proctype, syst);
+  HelperFunctions::replaceString(strSystVarName, "Down", "");
+  HelperFunctions::replaceString(strSystVarName, "Dn", ""); // Just in case naming convention changes
+  HelperFunctions::replaceString(strSystVarName, "Up", "");
   bool const doUp = (
     syst==SystematicsHelpers::eLepScaleEleUp
     ||

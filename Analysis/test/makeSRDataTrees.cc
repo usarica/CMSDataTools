@@ -119,26 +119,55 @@ void makeSRDataTrees_one(const Channel channel, const Category category, ACHypot
   }
   unsigned int nKDs = KDset.size();
   MELAout << "Number of template dimensions = " << nKDs << ": " << KDset << endl;
-  TTree* tin = theFinalTree->getSelectedTree();
+
   TTree* tout=nullptr;
-  {
-    unsigned int jKD=0;
-    for (unsigned int iKD=0; iKD<KDset.size(); iKD++){
-      TString newbranchname;
-      if (KDset.at(iKD)=="ZZMass") newbranchname="mass";
-      else{
-        jKD++;
-        newbranchname = Form("KD%i", jKD);
+  TTree* tin = theFinalTree->getSelectedTree();
+  if (!tin) MELAerr << "Input tree is not found!" << endl;
+  else{
+    MELAout << "Input tree is present, will now truncate it." << endl;
+    {
+      unsigned int jKD=0;
+      for (unsigned int iKD=0; iKD<KDset.size(); iKD++){
+        TString newbranchname;
+        if (KDset.at(iKD)=="ZZMass") newbranchname="mass";
+        else{
+          jKD++;
+          newbranchname = Form("KD%i", jKD);
+        }
+        MELAout << "\t- Adjusting branch name " << KDset.at(iKD) << " -> " << newbranchname << endl;
+        TBranch* br = tin->GetBranch(KDset.at(iKD));
+        if (br) br->SetName(newbranchname);
+        else MELAerr << "\t\t- Branch " << KDset.at(iKD) << " is not found!" << endl;
+        TLeaf* lf = tin->GetLeaf(KDset.at(iKD));
+        if (lf) lf->SetName(newbranchname);
+        else MELAerr << "\t\t- Leaf " << KDset.at(iKD) << " is not found!" << endl;
       }
-      TBranch* br = tin->GetBranch(KDset.at(iKD));
-      br->SetName(newbranchname);
-      TLeaf* lf = tin->GetLeaf(KDset.at(iKD));
-      lf->SetName(newbranchname);
+    }
+    tout = tin->CopyTree(catFlagName);
+    if (!tout){
+      MELAerr << "Output tree is null!" << endl;
+      tout = new TTree("data_obs", "data_obs_tree");
+      std::vector<float> tmpKDvals; tmpKDvals.assign(KDset.size(), 0);
+      {
+        unsigned int jKD=0;
+        for (unsigned int iKD=0; iKD<KDset.size(); iKD++){
+          TString newbranchname;
+          if (KDset.at(iKD)=="ZZMass") newbranchname="mass";
+          else{
+            jKD++;
+            newbranchname = Form("KD%i", jKD);
+          }
+          tout->Branch(newbranchname, &(tmpKDvals.at(iKD)));
+        }
+      }
+      foutput->WriteTObject(tout);
+    }
+    else{
+      MELAout << "Output tree is present. Writing it..." << endl;
+      tout->SetName("data_obs");
+      foutput->WriteTObject(tout);
     }
   }
-  tout = tin->CopyTree(catFlagName);
-  tout->SetName("data_obs");
-  foutput->WriteTObject(tout);
 
   delete tout;
   delete theFinalTree;

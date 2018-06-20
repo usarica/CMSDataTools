@@ -10,10 +10,7 @@
 const TString user_output_dir = "output/";
 #endif
 
-// Function to build one templates
-// ichan = 0,1,2 (final state corresponds to 4mu, 4e, 2mu2e respectively)
-// theSqrts = 13 (CoM energy) is fixed in Samples.h
-void makeFinalSRDataTrees_one(const Channel channel, const Category category, ACHypothesis const& hypo, MassRegion massregion, const TString fixedDate){
+void makeSRDataTrees_one(const Channel channel, const Category category, ACHypothesis const& hypo, MassRegion massregion, const TString fixedDate){
   if (channel==NChannels) return;
   if (!CheckSetTemplatesCategoryScheme(category)) return;
 
@@ -149,4 +146,17 @@ void makeFinalSRDataTrees_one(const Channel channel, const Category category, AC
   delete theSampleSet;
   foutput->Close();
   MELAout.close();
+}
+
+void makeSRDataTrees(CategorizationHelpers::MassRegion massregion, const TString fixedDate=""){
+  if (!CheckSetTemplatesCategoryScheme(Inclusive)) return;
+  vector<Category> allowedCats = getAllowedCategories(globalCategorizationScheme);
+  for (int ch=0; ch<(int) NChannels; ch++){
+    Channel channel = (Channel) ch;
+    if (channel==k4l || channel==k2l2l) continue;
+    for (int ih=0; ih<nACHypotheses; ih++){
+      ACHypothesis hypo = (ACHypothesis) ih;
+      for (auto& category:allowedCats) makeSRDataTrees_one(channel, category, hypo, massregion, fixedDate);
+    }
+  }
 }

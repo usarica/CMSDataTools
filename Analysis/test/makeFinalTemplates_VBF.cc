@@ -539,6 +539,8 @@ void makeFinalTemplates_VBF(const Channel channel, const ACHypothesis hypo, cons
         for (MassRatioObject& systratio:CategorizationSystRatios){
           if (systratio.category==Inclusive){
             one=std::max(0., systratio.interpolators[treename]->Eval(KDvars[KDset.at(0)]));
+            if (one==0.) inclusivenorm=0;
+            else inclusivenorm/=one;
             break;
           }
         }

@@ -561,7 +561,8 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         for (MassRatioObject& systratio:CategorizationSystRatios_POWHEG){
           if (systratio.category==Inclusive){
             one=std::max(0., systratio.interpolators[treename]->Eval(KDvars[KDset.at(0)]));
-            inclusivenorm/=one;
+            if (one==0.) inclusivenorm=0;
+            else inclusivenorm/=one;
             break;
           }
         }

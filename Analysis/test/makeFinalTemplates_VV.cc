@@ -111,6 +111,7 @@ void makeFinalTemplates_VV_one(const Channel channel, const ACHypothesis hypo, c
   );
   MELAout.open(OUTPUT_LOG_NAME.Data());
 
+  if (!CheckSetTemplatesCategoryScheme(Inclusive)) return;
   vector<Category> catList = getAllowedCategories(globalCategorizationScheme);
   for (auto& cat:catList){
     rootdir->cd();
@@ -260,6 +261,7 @@ void getControl2DXSlices(
 
 
 void makeFinalTemplates_VV(CategorizationHelpers::MassRegion massregion, const unsigned int istage=1, const TString fixedDate=""){
+  if (!CheckSetTemplatesCategoryScheme(Inclusive)) return;
   vector<Category> allowedCats = getAllowedCategories(globalCategorizationScheme);
   for (int ch=0; ch<(int) NChannels; ch++){
     Channel channel = (Channel) ch;

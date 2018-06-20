@@ -337,6 +337,7 @@ void plotFinalTemplatesStacked_one(const Category category, const ACHypothesis h
 
 
 void plotFinalTemplates(CategorizationHelpers::MassRegion massregion, const unsigned int istage=1, const TString fixedDate=""){
+  if (!CheckSetTemplatesCategoryScheme(Inclusive)) return;
   vector<Category> allowedCats = getAllowedCategories(globalCategorizationScheme);
   for (int ch=0; ch<(int) NChannels; ch++){
     Channel channel = (Channel) ch;

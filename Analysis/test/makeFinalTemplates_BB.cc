@@ -307,6 +307,7 @@ void getResolutionFileAndWS(
 void makeFinalTemplates_BB(const Channel channel, const ACHypothesis hypo, const SystematicVariationTypes syst, CategorizationHelpers::MassRegion massregion, const unsigned int istage=1, const TString fixedDate=""){
   const ProcessHandler::ProcessType proctype=ProcessHandler::kBB;
   if (channel==NChannels) return;
+  if (!CheckSetTemplatesCategoryScheme(Inclusive)) return;
   ProcessHandleType const* inputProcessHandle=(ProcessHandleType const*) getProcessHandlerPerMassRegion(proctype, CategorizationHelpers::kOffshell); // Input is always organized in offshell conventions
   ProcessHandleType const* outputProcessHandle=(ProcessHandleType const*) getProcessHandlerPerMassRegion(proctype, massregion);
   if (!inputProcessHandle || !outputProcessHandle) return;

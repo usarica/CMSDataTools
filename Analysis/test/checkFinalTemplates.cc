@@ -123,6 +123,7 @@ void checkFinalTemplates_one(const Channel channel, const Category category, con
 
 
 void checkFinalTemplates(CategorizationHelpers::MassRegion massregion, const unsigned int istage=1, const TString fixedDate=""){
+  if (!CheckSetTemplatesCategoryScheme(Inclusive)) return;
   vector<Category> allowedCats = getAllowedCategories(globalCategorizationScheme);
   for (int ih=0; ih<nACHypotheses; ih++){
     ACHypothesis hypo = (ACHypothesis) ih;

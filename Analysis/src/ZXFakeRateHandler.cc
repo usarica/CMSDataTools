@@ -145,21 +145,21 @@ float ZXFakeRateHandler::eval(int const& CRFlag, short const& Z1Flav, short cons
       unsigned short const absLepId=std::abs(LepId);
       if (absZ1Flav==121){ // Zee
         if (absLepId==11){
-          if (LepEta<1.2) spChosen = FakeRateInterpolator_ZeeE_barrel;
+          if (LepEta<1.479) spChosen = FakeRateInterpolator_ZeeE_barrel;
           else spChosen = FakeRateInterpolator_ZeeE_endcap;
         }
         else if (absLepId==13){
-          if (LepEta<1.449) spChosen = FakeRateInterpolator_ZeeM_barrel;
+          if (LepEta<1.2) spChosen = FakeRateInterpolator_ZeeM_barrel;
           else spChosen = FakeRateInterpolator_ZeeM_endcap;
         }
       }
       else{ // Zmm
         if (absLepId==11){
-          if (LepEta<1.2) spChosen = FakeRateInterpolator_ZmmE_barrel;
+          if (LepEta<1.479) spChosen = FakeRateInterpolator_ZmmE_barrel;
           else spChosen = FakeRateInterpolator_ZmmE_endcap;
         }
         else if (absLepId==13){
-          if (LepEta<1.449) spChosen = FakeRateInterpolator_ZmmM_barrel;
+          if (LepEta<1.2) spChosen = FakeRateInterpolator_ZmmM_barrel;
           else spChosen = FakeRateInterpolator_ZmmM_endcap;
         }
       }

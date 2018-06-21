@@ -2829,7 +2829,7 @@ TString BBProcessHandler::getMELAHypothesisWeight(BBProcessHandler::HypothesisTy
       strWeight = "p_Gen_Dec_SIG_ghz2_1_JHUGen";
       break;
     case ACHypothesisHelpers::kA3:
-      strWeight = "p_Gen_Dec_SIG_ghz4_1_JHUGe";
+      strWeight = "p_Gen_Dec_SIG_ghz4_1_JHUGen";
       break;
     case ACHypothesisHelpers::kL1ZGs:
       strWeight = "p_Gen_Dec_SIG_ghza1prime2_1E4_JHUGen";

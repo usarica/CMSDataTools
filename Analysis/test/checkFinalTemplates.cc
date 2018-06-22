@@ -103,14 +103,20 @@ void checkFinalTemplates_one(const Channel channel, const Category category, con
           if (!htmp_2D && !htmp_3D) MELAout << "Template " << tplname << " could not be found! BAD FILE...";
           else if (htmp_2D && htmp_3D) MELAout << "Template " << tplname << " is both 2 and 3D!? BAD FILE...";
           else if (htmp_2D){
-            MELAout << "2D template " << tplname << " is GOOD. ";
-            integral = getHistogramIntegralAndError(htmp_2D, 1, htmp_2D->GetNbinsX(), 1, htmp_2D->GetNbinsY(), true, &integralerror);
-            MELAout << "Integral: " << integral << " +- " << integralerror << ".";
+            if (checkHistogramIntegrity(htmp_2D)){
+              MELAout << "2D template " << tplname << " is GOOD. ";
+              integral = getHistogramIntegralAndError(htmp_2D, 1, htmp_2D->GetNbinsX(), 1, htmp_2D->GetNbinsY(), true, &integralerror);
+              MELAout << "Integral: " << integral << " +- " << integralerror;
+            }
+            else MELAout << "2D template " << tplname << " integrity check failed! BAD TEMPLATE...";
           }
           else /*if (htmp_3D)*/{
-            MELAout << "3D template " << tplname << " is GOOD. ";
-            integral = getHistogramIntegralAndError(htmp_3D, 1, htmp_3D->GetNbinsX(), 1, htmp_3D->GetNbinsY(), 1, htmp_3D->GetNbinsZ(), true, &integralerror);
-            MELAout << "Integral: " << integral << " +- " << integralerror << ".";
+            if (checkHistogramIntegrity(htmp_3D)){
+              MELAout << "3D template " << tplname << " is GOOD. ";
+              integral = getHistogramIntegralAndError(htmp_3D, 1, htmp_3D->GetNbinsX(), 1, htmp_3D->GetNbinsY(), 1, htmp_3D->GetNbinsZ(), true, &integralerror);
+              MELAout << "Integral: " << integral << " +- " << integralerror;
+            }
+            else MELAout << "3D template " << tplname << " integrity check failed! BAD TEMPLATE...";
           }
           MELAout << endl;
         }

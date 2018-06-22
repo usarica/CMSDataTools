@@ -741,7 +741,7 @@ TString SystematicsHelpers::getSystematicsLabel(SystematicsHelpers::SystematicVa
     return "";
   }
 }
-TString SystematicsHelpers::getSystematicsCombineName(
+TString SystematicsHelpers::getSystematicsCombineName_NoDownUp(
   CategorizationHelpers::Category const category,
   SampleHelpers::Channel const channel,
   ProcessHandler::ProcessType const proc,
@@ -827,7 +827,7 @@ TString SystematicsHelpers::getSystematicsCombineName(
     systname="CMS_fake_[channel]";
     break;
   default:
-    MELAerr << "SystematicsHelpers::getSystematicsCombineName: Combine name for systematic " << getSystematicsName(syst) << " is not found! Aborting..." << endl;
+    MELAerr << "SystematicsHelpers::getSystematicsCombineName_NoDownUp: Combine name for systematic " << getSystematicsName(syst) << " is not found! Aborting..." << endl;
     assert(0);
   }
 
@@ -913,7 +913,7 @@ TString SystematicsHelpers::getSystematicsCombineName(
     strProcess="zjets";
     break;
   default:
-    MELAerr << "SystematicsHelpers::getSystematicsCombineName: " << proc << " process name of systematic " << getSystematicsName(syst) << " is not found! Aborting..." << endl;
+    MELAerr << "SystematicsHelpers::getSystematicsCombineName_NoDownUp: " << proc << " process name of systematic " << getSystematicsName(syst) << " is not found! Aborting..." << endl;
     assert(0);
   }
   assert(!systname.Contains("[process]") || strProcess!=""); HelperFunctions::replaceString(systname, "[process]", strProcess.Data());
@@ -930,6 +930,20 @@ TString SystematicsHelpers::getSystematicsCombineName(
   TString strCategory = CategorizationHelpers::getCategoryName(category);
   assert(!systname.Contains("[category]") || strCategory!=""); HelperFunctions::replaceString(systname, "[category]", strCategory.Data());
 
+  return systname;
+}
+TString SystematicsHelpers::getSystematicsCombineName(
+  CategorizationHelpers::Category const category,
+  SampleHelpers::Channel const channel,
+  ProcessHandler::ProcessType const proc,
+  SystematicsHelpers::SystematicVariationTypes const syst
+){
+  TString systname=SystematicsHelpers::getSystematicsCombineName_NoDownUp(
+    category,
+    channel,
+    proc,
+    syst
+  );
   if (((int) syst)%2==1) systname += "Down";
   else if (syst!=sNominal) systname += "Up";
   return systname;

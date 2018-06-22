@@ -1007,14 +1007,8 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   for (auto& par:CB_parameter_list) CB_parameter_init.push_back(par.getVal());
   vector<unsigned int> prelimfitOrder{ 1, 0, 3, 5, 2, 4 };
 
-  TString strSystVarName;
-
-  strSystVarName = getSystematicsCombineName(category, channel, proctype, eLepScaleEleUp);
-  HelperFunctions::replaceString(strSystVarName, "Up", "");
-  RooRealVar scale_uncvar_e(strSystVarName, "CMS_scale_e", 0, -7, 7);
-  strSystVarName = getSystematicsCombineName(category, channel, proctype, eLepScaleMuUp);
-  HelperFunctions::replaceString(strSystVarName, "Up", "");
-  RooRealVar scale_uncvar_mu(strSystVarName, "CMS_scale_m", 0, -7, 7);
+  RooRealVar scale_uncvar_e(getSystematicsCombineName_NoDownUp(category, channel, proctype, eLepScaleEleDn), "CMS_scale_e", 0, -7, 7);
+  RooRealVar scale_uncvar_mu(getSystematicsCombineName_NoDownUp(category, channel, proctype, eLepScaleMuDn), "CMS_scale_m", 0, -7, 7);
   RooConstVar scale_uncval_center(prefix + "final_CB_CMS_scale_emcenter", "", 0);
   RooRealVar scale_uncval_e_up(prefix + "final_CB_CMS_scale_eUp", "", (channel==k2e2mu ? 0.0024 : 0.003), 0., 0.5); scale_uncval_e_up.setConstant(true);
   RooRealVar scale_uncval_e_dn(prefix + "final_CB_CMS_scale_eDown", "", -scale_uncval_e_up.getVal(), -0.5, 0.); scale_uncval_e_dn.setConstant(true);
@@ -1047,12 +1041,8 @@ void acquireH125OnshellMassShape_one(const Channel channel, const Category categ
   scalemeanarglist.add(scale_uncval);
   strscalemeanFormula="(@0+@1)*(1.+@2)-@1"; // Until a new procedure is found, keep var_mtrue as part of the scale unc. definition
 
-  strSystVarName = getSystematicsCombineName(category, channel, proctype, eLepResEleUp);
-  HelperFunctions::replaceString(strSystVarName, "Up", "");
-  RooRealVar res_uncvar_e(strSystVarName, "CMS_res_e", 0, -7, 7);
-  strSystVarName = getSystematicsCombineName(category, channel, proctype, eLepResMuUp);
-  HelperFunctions::replaceString(strSystVarName, "Up", "");
-  RooRealVar res_uncvar_mu(strSystVarName, "CMS_res_m", 0, -7, 7);
+  RooRealVar res_uncvar_e(getSystematicsCombineName_NoDownUp(category, channel, proctype, eLepResEleDn), "CMS_res_e", 0, -7, 7);
+  RooRealVar res_uncvar_mu(getSystematicsCombineName_NoDownUp(category, channel, proctype, eLepResMuDn), "CMS_res_m", 0, -7, 7);
   RooRealVar res_uncval_e_up(prefix + "final_CB_CMS_res_eUp", "", (channel==k2e2mu ? sqrt(1.2) : 1.2), 1., 10.); res_uncval_e_up.setConstant(true);
   RooRealVar res_uncval_e_dn(prefix + "final_CB_CMS_res_eDown", "", 1./res_uncval_e_up.getVal(), 0.01, 1.); res_uncval_e_dn.setConstant(true);
   RooRealVar res_uncval_mu_up(prefix + "final_CB_CMS_res_mUp", "", (channel==k2e2mu ? sqrt(1.2) : 1.2), 1., 10.); res_uncval_mu_up.setConstant(true);
@@ -1413,8 +1403,8 @@ void acquireH125OnshellMassShape_rederive_one(const Channel channel, const Categ
   for (auto& par:CB_parameter_list) CB_parameter_init.push_back(par.getVal());
   vector<unsigned int> prelimfitOrder{1, 0, 3, 5, 2, 4};
 
-  RooRealVar scale_uncvar_e(getSystematicsCombineName(category, channel, proctype, eLepScaleEleDn), "CMS_scale_e", 0, -7, 7);
-  RooRealVar scale_uncvar_mu(getSystematicsCombineName(category, channel, proctype, eLepScaleMuDn), "CMS_scale_m", 0, -7, 7);
+  RooRealVar scale_uncvar_e(getSystematicsCombineName_NoDownUp(category, channel, proctype, eLepScaleEleDn), "CMS_scale_e", 0, -7, 7);
+  RooRealVar scale_uncvar_mu(getSystematicsCombineName_NoDownUp(category, channel, proctype, eLepScaleMuDn), "CMS_scale_m", 0, -7, 7);
   RooConstVar scale_uncval_center(prefix + "final_CB_CMS_scale_emcenter", "", 0);
   RooRealVar scale_uncval_e_up(prefix + "final_CB_CMS_scale_eUp", "", 0, 0., 0.5); scale_uncval_e_up.setConstant(true);
   RooRealVar scale_uncval_e_dn(prefix + "final_CB_CMS_scale_eDown", "", 0, -0.5, 0.); scale_uncval_e_dn.setConstant(true);
@@ -1447,8 +1437,8 @@ void acquireH125OnshellMassShape_rederive_one(const Channel channel, const Categ
   scalemeanarglist.add(scale_uncval);
   strscalemeanFormula="(@0+@1)*(1.+@2)-@1"; // Until a new procedure is found, keep var_mtrue as part of the scale unc. definition
 
-  RooRealVar res_uncvar_e(getSystematicsCombineName(category, channel, proctype, eLepResEleDn), "CMS_res_e", 0, -7, 7);
-  RooRealVar res_uncvar_mu(getSystematicsCombineName(category, channel, proctype, eLepResMuDn), "CMS_res_m", 0, -7, 7);
+  RooRealVar res_uncvar_e(getSystematicsCombineName_NoDownUp(category, channel, proctype, eLepResEleDn), "CMS_res_e", 0, -7, 7);
+  RooRealVar res_uncvar_mu(getSystematicsCombineName_NoDownUp(category, channel, proctype, eLepResMuDn), "CMS_res_m", 0, -7, 7);
   RooRealVar res_uncval_e_up(prefix + "final_CB_CMS_res_eUp", "", 1, 1., 10.); res_uncval_e_up.setConstant(true);
   RooRealVar res_uncval_e_dn(prefix + "final_CB_CMS_res_eDown", "", 1, 0.01, 1.); res_uncval_e_dn.setConstant(true);
   RooRealVar res_uncval_mu_up(prefix + "final_CB_CMS_res_mUp", "", 1, 1., 10.); res_uncval_mu_up.setConstant(true);

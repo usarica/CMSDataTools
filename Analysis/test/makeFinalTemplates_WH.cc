@@ -893,6 +893,9 @@ template<> void getTemplatesPerCategory<2>(
   assert(fixedTrees_POWHEG.size()==ntpls);
   assert(nKDs==2);
 
+  float const sX = getDiscriminantSmearingStrengthCoefficient(KDset.at(0), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+  float const sY = getDiscriminantSmearingStrengthCoefficient(KDset.at(1), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+
   // Reweight JHUGen such that SM agrees with POWHEG
   if (
     !(category==Untagged || category==Inclusive)
@@ -979,7 +982,7 @@ template<> void getTemplatesPerCategory<2>(
         TH_t* hSmooth=getSmoothHistogram(
           templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1),
           tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, weight, isCategory,
-          2, 2
+          sX, sY
         );
         *(hTemplates_POWHEG.at(t).getHistogram()) = *hSmooth;
         delete hSmooth;
@@ -989,7 +992,7 @@ template<> void getTemplatesPerCategory<2>(
     }
     vector<TH_t*> hSmoothList = getSimultaneousSmoothHistograms(
       KDbinning.at(0), KDbinning.at(1), treeList,
-      2, 2
+      sX, sY
     );
     {
       unsigned int ih=0;
@@ -1041,7 +1044,7 @@ template<> void getTemplatesPerCategory<2>(
         TH_t* hSmooth=getSmoothHistogram(
           templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1),
           tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, weight, isCategory,
-          2, 2
+          sX, sY
         );
         *(hTemplates_JHUGen.at(t).getHistogram()) = *hSmooth;
         delete hSmooth;
@@ -1051,7 +1054,7 @@ template<> void getTemplatesPerCategory<2>(
     }
     vector<TH_t*> hSmoothList = getSimultaneousSmoothHistograms(
       KDbinning.at(0), KDbinning.at(1), treeList,
-      2, 2
+      sX, sY
     );
     {
       unsigned int ih=0;
@@ -1198,6 +1201,10 @@ template<> void getTemplatesPerCategory<3>(
   assert(fixedTrees_POWHEG.size()==ntpls);
   assert(nKDs==3);
 
+  float const sX = getDiscriminantSmearingStrengthCoefficient(KDset.at(0), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+  float const sY = getDiscriminantSmearingStrengthCoefficient(KDset.at(1), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+  float const sZ = getDiscriminantSmearingStrengthCoefficient(KDset.at(2), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+
   // Reweight JHUGen such that SM agrees with POWHEG
   if (
     !(category==Untagged || category==Inclusive)
@@ -1284,7 +1291,7 @@ template<> void getTemplatesPerCategory<3>(
         TH_t* hSmooth=getSmoothHistogram(
           templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
           tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
-          2, 2, 2
+          sX, sY, sZ
         );
         *(hTemplates_POWHEG.at(t).getHistogram()) = *hSmooth;
         delete hSmooth;
@@ -1294,7 +1301,7 @@ template<> void getTemplatesPerCategory<3>(
     }
     vector<TH_t*> hSmoothList = getSimultaneousSmoothHistograms(
       KDbinning.at(0), KDbinning.at(1), KDbinning.at(2), treeList,
-      2, 2, 2
+      sX, sY, sZ
     );
     {
       unsigned int ih=0;
@@ -1346,7 +1353,7 @@ template<> void getTemplatesPerCategory<3>(
         TH_t* hSmooth=getSmoothHistogram(
           templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
           tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
-          2, 2, 2
+          sX, sY, sZ
         );
         *(hTemplates_JHUGen.at(t).getHistogram()) = *hSmooth;
         delete hSmooth;
@@ -1356,7 +1363,7 @@ template<> void getTemplatesPerCategory<3>(
     }
     vector<TH_t*> hSmoothList = getSimultaneousSmoothHistograms(
       KDbinning.at(0), KDbinning.at(1), KDbinning.at(2), treeList,
-      2, 2, 2
+      sX, sY, sZ
     );
     {
       unsigned int ih=0;

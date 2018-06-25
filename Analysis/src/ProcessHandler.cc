@@ -1836,6 +1836,16 @@ template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
       tpl->SetBinError(ix, binerror);
     }
   }
+
+  // Extra processing to ensure templates are physical, does not exist in single-vertex interactions
+  for (int ix=1; ix<=nx; ix++){
+    std::vector<float> binvals; binvals.assign(vals.size(), 0);
+    std::vector<float>::iterator ih=binvals.begin();
+    for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix); ih++; }
+    imposeTplPhysicality(binvals);
+    ih=binvals.begin();
+    for (htype_t*& hh:vals){ hh->SetBinContent(ix, *ih); ih++; }
+  }
 }
 template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
   if (vals.empty()) return;
@@ -1872,6 +1882,18 @@ template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
         tpl->SetBinContent(ix, iy, bincontent);
         tpl->SetBinError(ix, iy, binerror);
       }
+    }
+  }
+
+  // Extra processing to ensure templates are physical, does not exist in single-vertex interactions
+  for (int ix=1; ix<=nx; ix++){
+    for (int iy=1; iy<=ny; iy++){
+      std::vector<float> binvals; binvals.assign(vals.size(), 0);
+      std::vector<float>::iterator ih=binvals.begin();
+      for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix, iy); ih++; }
+      imposeTplPhysicality(binvals);
+      ih=binvals.begin();
+      for (htype_t*& hh:vals){ hh->SetBinContent(ix, iy, *ih); ih++; }
     }
   }
 }
@@ -1912,6 +1934,20 @@ template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
           tpl->SetBinContent(ix, iy, iz, bincontent);
           tpl->SetBinError(ix, iy, iz, binerror);
         }
+      }
+    }
+  }
+
+  // Extra processing to ensure templates are physical, does not exist in single-vertex interactions
+  for (int ix=1; ix<=nx; ix++){
+    for (int iy=1; iy<=ny; iy++){
+      for (int iz=1; iz<=nz; iz++){
+        std::vector<float> binvals; binvals.assign(vals.size(), 0);
+        std::vector<float>::iterator ih=binvals.begin();
+        for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix, iy, iz); ih++; }
+        imposeTplPhysicality(binvals);
+        ih=binvals.begin();
+        for (htype_t*& hh:vals){ hh->SetBinContent(ix, iy, iz, *ih); ih++; }
       }
     }
   }

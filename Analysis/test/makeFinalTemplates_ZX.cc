@@ -645,6 +645,9 @@ template<> void getTemplatesPerCategory<2>(
   assert(fixedTrees.size()==ntpls);
   assert(nKDs==2);
 
+  float const sX = getDiscriminantSmearingStrengthCoefficient(KDset.at(0), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+  float const sY = getDiscriminantSmearingStrengthCoefficient(KDset.at(1), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+
   // Fill templates
   vector<ExtHist_t> hTemplates;
   hTemplates.reserve(ntpls);
@@ -659,7 +662,7 @@ template<> void getTemplatesPerCategory<2>(
     TH_t* hSmooth=getSmoothHistogram(
       templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1),
       tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, weight, isCategory,
-      2, 2
+      sX, sY
     );
     *(hTemplates.back().getHistogram()) = *hSmooth;
     delete hSmooth;
@@ -761,6 +764,10 @@ template<> void getTemplatesPerCategory<3>(
   assert(fixedTrees.size()==ntpls);
   assert(nKDs==3);
 
+  float const sX = getDiscriminantSmearingStrengthCoefficient(KDset.at(0), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+  float const sY = getDiscriminantSmearingStrengthCoefficient(KDset.at(1), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+  float const sZ = getDiscriminantSmearingStrengthCoefficient(KDset.at(2), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+
   // Fill templates
   vector<ExtHist_t> hTemplates;
   hTemplates.reserve(ntpls);
@@ -775,7 +782,7 @@ template<> void getTemplatesPerCategory<3>(
     TH_t* hSmooth=getSmoothHistogram(
       templatename+"_Smooth", "", KDbinning.at(0), KDbinning.at(1), KDbinning.at(2),
       tree, KDvars.find(KDset.at(0))->second, KDvars.find(KDset.at(1))->second, KDvars.find(KDset.at(2))->second, weight, isCategory,
-      2, 2, 2
+      sX, sY, sZ
     );
     *(hTemplates.back().getHistogram()) = *hSmooth;
     delete hSmooth;

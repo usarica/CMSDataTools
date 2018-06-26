@@ -475,7 +475,7 @@ ExtendedBinning TemplateHelpers::getDiscriminantCoarseBinning(const SampleHelper
   }
   return res;
 }
-float TemplateHelpers::getDiscriminantSmearingStrengthCoefficient(TString KDname, ProcessHandler::ProcessType proctype, CategorizationHelpers::MassRegion massregion){
+float TemplateHelpers::getDiscriminantSmearingStrengthCoefficient(CategorizationHelpers::Category category, ACHypothesisHelpers::ACHypothesis hypo, TString KDname, ProcessHandler::ProcessType proctype, CategorizationHelpers::MassRegion massregion){
   float res=0;
   if (massregion==CategorizationHelpers::kOnshell){
     if (KDname=="ZZMass") res=2;
@@ -501,6 +501,13 @@ float TemplateHelpers::getDiscriminantSmearingStrengthCoefficient(TString KDname
         break;
       }
     }
+    if (
+      hypo==ACHypothesisHelpers::kL1 && (
+        ((proctype==ProcessHandler::kZH || proctype==ProcessHandler::kWH) && category==CategorizationHelpers::JJVBFTagged)
+        ||
+        (proctype==ProcessHandler::kVBF && category==CategorizationHelpers::HadVHTagged)
+        )
+      ) res *= 5;
   }
   else res=2;
   return res;

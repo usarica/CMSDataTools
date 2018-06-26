@@ -25,7 +25,7 @@ namespace TemplateHelpers{
   void getCategorizationDiscriminants(const SystematicsHelpers::SystematicVariationTypes syst, std::vector<DiscriminantClasses::KDspecs>& KDlist);
   ExtendedBinning getDiscriminantFineBinning(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, ACHypothesisHelpers::ACHypothesis hypo, TString const strKD, CategorizationHelpers::MassRegion const massregion);
   ExtendedBinning getDiscriminantCoarseBinning(const SampleHelpers::Channel channel, const CategorizationHelpers::Category category, ACHypothesisHelpers::ACHypothesis hypo, TString const strKD, CategorizationHelpers::MassRegion const massregion);
-  float getDiscriminantSmearingStrengthCoefficient(TString KDname, ProcessHandler::ProcessType proctype, CategorizationHelpers::MassRegion massregion);
+  float getDiscriminantSmearingStrengthCoefficient(CategorizationHelpers::Category category, ACHypothesisHelpers::ACHypothesis hypo, TString KDname, ProcessHandler::ProcessType proctype, CategorizationHelpers::MassRegion massregion);
 
   ProcessHandler const* getOnshellProcessHandler(ProcessHandler::ProcessType type);
   ProcessHandler const* getOffshellProcessHandler(ProcessHandler::ProcessType type);

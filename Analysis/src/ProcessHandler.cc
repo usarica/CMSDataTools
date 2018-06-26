@@ -1430,27 +1430,30 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
     vals.at(VVTplSigBSMSMInt_ai1_3_Re) *= pow(scale_a1, 1) * pow(scale_ai, 3);
     vals.at(VVTplIntBSM_ai1_1_Re) *= scale_a1 * scale_ai;
 
-    { // Check signal-only sum
+    for (unsigned int it=0; it<1; it++){ // Check signal-only sum
+      float chopper=0.99;
+      if (it==1) chopper=0.8;
+      else if (it==2) chopper=0;
       float fai_mostNeg=-2;
       float val_fai_mostNeg=0;
       float sum_pure=0;
-      for (float fai=-1; fai<=1; fai+=0.001){
+      for (float fai=-1; fai<=1; fai+=0.0005){
         float sum=0;
-        sum += pow((1-fabs(fai)), 2) * vals.at(VVTplSig);
-        sum += TMath::Sign(1, fai)*sqrt(fabs(fai))*pow(sqrt(1-fabs(fai)), 3) * vals.at(VVTplSigBSMSMInt_ai1_1_Re);
-        sum += fabs(fai)*(1-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_2_PosDef);
-        sum += TMath::Sign(1, fai)*pow(sqrt(fabs(fai)), 3)*sqrt(1-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_3_Re);
+        sum += pow((1.-fabs(fai)), 2) * vals.at(VVTplSig);
+        sum += TMath::Sign(1, fai)*sqrt(fabs(fai))*pow(sqrt(1.-fabs(fai)), 3) * vals.at(VVTplSigBSMSMInt_ai1_1_Re);
+        sum += fabs(fai)*(1.-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_2_PosDef);
+        sum += TMath::Sign(1, fai)*pow(sqrt(fabs(fai)), 3)*sqrt(1.-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_3_Re);
         sum += pow(fai, 2) * vals.at(VVTplSigBSM);
         if (sum<val_fai_mostNeg){
           val_fai_mostNeg=sum;
           fai_mostNeg=fai;
-          sum_pure = pow((1-fabs(fai)), 2) * vals.at(VVTplSig) + pow(fai, 2) * vals.at(VVTplSigBSM);
+          sum_pure = pow((1.-fabs(fai)), 2) * vals.at(VVTplSig) + pow(fai, 2) * vals.at(VVTplSigBSM);
         }
       }
       if (fai_mostNeg>=-1){
         float excess_mostNeg = val_fai_mostNeg - sum_pure;
         float thr_neg = -sum_pure;
-        float neg_scale = fabs(thr_neg*0.99/excess_mostNeg);
+        float neg_scale = fabs(thr_neg*chopper/excess_mostNeg);
         vals.at(VVTplSigBSMSMInt_ai1_1_Re) *= neg_scale;
         vals.at(VVTplSigBSMSMInt_ai1_2_PosDef) *= neg_scale;
         vals.at(VVTplSigBSMSMInt_ai1_3_Re) *= neg_scale;
@@ -1458,34 +1461,37 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
     }
 
     // No need to check Sig SM - Bkg or Sig BSM - Bkg sums; they are already handled
-    { // Check sum of all components
+    for (unsigned int it=0; it<1; it++){ // Check sum of all components
+      float chopper=0.99;
+      if (it==1) chopper=0.8;
+      else if (it==2) chopper=0;
       float fai_mostNeg=-2;
       float val_fai_mostNeg=0;
       float sum_pure=0;
-      for (float fai=-1; fai<=1; fai+=0.001){
+      for (float fai=-1; fai<=1; fai+=0.0005){
         float sum=0;
         sum += vals.at(VVTplBkg);
 
-        sum += pow((1-fabs(fai)), 2) * vals.at(VVTplSig);
-        sum += TMath::Sign(1, fai)*sqrt(fabs(fai))*pow(sqrt(1-fabs(fai)), 3) * vals.at(VVTplSigBSMSMInt_ai1_1_Re);
-        sum += fabs(fai)*(1-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_2_PosDef);
-        sum += TMath::Sign(1, fai)*pow(sqrt(fabs(fai)), 3)*sqrt(1-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_3_Re);
+        sum += pow((1.-fabs(fai)), 2) * vals.at(VVTplSig);
+        sum += TMath::Sign(1, fai)*sqrt(fabs(fai))*pow(sqrt(1.-fabs(fai)), 3) * vals.at(VVTplSigBSMSMInt_ai1_1_Re);
+        sum += fabs(fai)*(1.-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_2_PosDef);
+        sum += TMath::Sign(1, fai)*pow(sqrt(fabs(fai)), 3)*sqrt(1.-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_3_Re);
         sum += pow(fai, 2) * vals.at(VVTplSigBSM);
 
-        sum += (1-fabs(fai)) * vals.at(VVTplInt_Re);
-        sum += TMath::Sign(1, fai)*sqrt(fabs(fai)*(1-fabs(fai))) * vals.at(VVTplIntBSM_ai1_1_Re);
+        sum += (1.-fabs(fai)) * vals.at(VVTplInt_Re);
+        sum += TMath::Sign(1, fai)*sqrt(fabs(fai)*(1.-fabs(fai))) * vals.at(VVTplIntBSM_ai1_1_Re);
         sum += fabs(fai) * vals.at(VVTplIntBSM_ai1_2_Re);
 
         if (sum<val_fai_mostNeg){
           val_fai_mostNeg=sum;
           fai_mostNeg=fai;
-          sum_pure = vals.at(VVTplBkg) + pow((1-fabs(fai)), 2) * vals.at(VVTplSig) + pow(fai, 2) * vals.at(VVTplSigBSM);
+          sum_pure = vals.at(VVTplBkg) + pow((1.-fabs(fai)), 2) * vals.at(VVTplSig) + pow(fai, 2) * vals.at(VVTplSigBSM);
         }
       }
       if (fai_mostNeg>=-1){
         float excess_mostNeg = val_fai_mostNeg - sum_pure;
         float thr_neg = -sum_pure;
-        float neg_scale = fabs(thr_neg*0.99/excess_mostNeg);
+        float neg_scale = fabs(thr_neg*chopper/excess_mostNeg);
         vals.at(VVTplSigBSMSMInt_ai1_1_Re) *= neg_scale;
         vals.at(VVTplSigBSMSMInt_ai1_2_PosDef) *= neg_scale;
         vals.at(VVTplSigBSMSMInt_ai1_3_Re) *= neg_scale;

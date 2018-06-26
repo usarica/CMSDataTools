@@ -89,7 +89,7 @@ const TString& ProcessHandler::getProcessName() const{ return procname; }
 const ProcessHandler::ProcessType& ProcessHandler::getProcessType() const{ return proctype; }
 const CategorizationHelpers::MassRegion& ProcessHandler::getProcessMassRegion() const{ return massregion; }
 float ProcessHandler::getProcessScale() const{ return 1; }
-void ProcessHandler::imposeTplPhysicality(std::vector<float>& /*vals*/) const{}
+void ProcessHandler::imposeTplPhysicality(std::vector<float>& /*vals*/, bool /*robust*/) const{}
 
 
 /****************/
@@ -396,7 +396,7 @@ float GGProcessHandler::getProcessScale() const{
   else if (theDataPeriod=="2017") return 1.098946;
   else return 1;
 }
-void GGProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
+void GGProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool /*robust*/) const{
   vector<TemplateContributionList> pairing;
   if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes) pairing.emplace_back(GGTplInt_Re);
   if (vals.size()==nGGTplTypes){
@@ -1381,7 +1381,7 @@ bool VVProcessHandler::isInterferenceContribution(VVProcessHandler::TemplateType
     );
 }
 
-void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
+void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool robust) const{
   vector<TemplateContributionList> pairing;
   if (vals.size()==nVVTplSMTypes || vals.size()==nVVTplTypes) pairing.emplace_back(VVTplInt_Re);
   if (vals.size()==nVVTplTypes){
@@ -1430,7 +1430,7 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
     vals.at(VVTplSigBSMSMInt_ai1_3_Re) *= pow(scale_a1, 1) * pow(scale_ai, 3);
     vals.at(VVTplIntBSM_ai1_1_Re) *= scale_a1 * scale_ai;
 
-    for (unsigned int it=0; it<1; it++){ // Check signal-only sum
+    for (unsigned int it=0; it<(robust ? 3 : 1); it++){ // Check signal-only sum
       float chopper=0.99;
       if (it==1) chopper=0.8;
       else if (it==2) chopper=0;
@@ -1461,7 +1461,7 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
     }
 
     // No need to check Sig SM - Bkg or Sig BSM - Bkg sums; they are already handled
-    for (unsigned int it=0; it<1; it++){ // Check sum of all components
+    for (unsigned int it=0; it<(robust ? 3 : 1); it++){ // Check sum of all components
       float chopper=0.99;
       if (it==1) chopper=0.8;
       else if (it==2) chopper=0;
@@ -1843,14 +1843,14 @@ template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
     }
   }
 
-  // Extra processing to ensure templates are physical, does not exist in single-vertex interactions
-  for (int ix=1; ix<=nx; ix++){
-    std::vector<float> binvals; binvals.assign(vals.size(), 0);
-    std::vector<float>::iterator ih=binvals.begin();
-    for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix); ih++; }
-    imposeTplPhysicality(binvals);
-    ih=binvals.begin();
-    for (htype_t*& hh:vals){ hh->SetBinContent(ix, *ih); ih++; }
+  // Extra processing to ensure template integrals are physical, does not exist in single-vertex interactions
+  vector<float> integral_vals;
+  for (htype_t*& hh:vals) integral_vals.push_back(HelperFunctions::getHistogramIntegralAndError(hh, 1, hh->GetNbinsX(), false));
+  imposeTplPhysicality(integral_vals);
+  for (unsigned int ih=0; ih<vals.size(); ih++){
+    float const& intval=integral_vals.at(ih);
+    htype_t*& hh=vals.at(ih);
+    hh->Scale(intval/(HelperFunctions::getHistogramIntegralAndError(hh, 1, hh->GetNbinsX(), false)));
   }
 }
 template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
@@ -1891,16 +1891,14 @@ template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
     }
   }
 
-  // Extra processing to ensure templates are physical, does not exist in single-vertex interactions
-  for (int ix=1; ix<=nx; ix++){
-    for (int iy=1; iy<=ny; iy++){
-      std::vector<float> binvals; binvals.assign(vals.size(), 0);
-      std::vector<float>::iterator ih=binvals.begin();
-      for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix, iy); ih++; }
-      imposeTplPhysicality(binvals);
-      ih=binvals.begin();
-      for (htype_t*& hh:vals){ hh->SetBinContent(ix, iy, *ih); ih++; }
-    }
+  // Extra processing to ensure template integrals are physical, does not exist in single-vertex interactions
+  vector<float> integral_vals;
+  for (htype_t*& hh:vals) integral_vals.push_back(HelperFunctions::getHistogramIntegralAndError(hh, 1, hh->GetNbinsX(), 1, hh->GetNbinsY(), false));
+  imposeTplPhysicality(integral_vals, true);
+  for (unsigned int ih=0; ih<vals.size(); ih++){
+    float const& intval=integral_vals.at(ih);
+    htype_t*& hh=vals.at(ih);
+    hh->Scale(intval/(HelperFunctions::getHistogramIntegralAndError(hh, 1, hh->GetNbinsX(), 1, hh->GetNbinsY(), false)));
   }
 }
 template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
@@ -1944,18 +1942,14 @@ template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
     }
   }
 
-  // Extra processing to ensure templates are physical, does not exist in single-vertex interactions
-  for (int ix=1; ix<=nx; ix++){
-    for (int iy=1; iy<=ny; iy++){
-      for (int iz=1; iz<=nz; iz++){
-        std::vector<float> binvals; binvals.assign(vals.size(), 0);
-        std::vector<float>::iterator ih=binvals.begin();
-        for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix, iy, iz); ih++; }
-        imposeTplPhysicality(binvals);
-        ih=binvals.begin();
-        for (htype_t*& hh:vals){ hh->SetBinContent(ix, iy, iz, *ih); ih++; }
-      }
-    }
+  // Extra processing to ensure template integrals are physical, does not exist in single-vertex interactions
+  vector<float> integral_vals;
+  for (htype_t*& hh:vals) integral_vals.push_back(HelperFunctions::getHistogramIntegralAndError(hh, 1, hh->GetNbinsX(), 1, hh->GetNbinsY(), 1, hh->GetNbinsZ(), false));
+  imposeTplPhysicality(integral_vals, true);
+  for (unsigned int ih=0; ih<vals.size(); ih++){
+    float const& intval=integral_vals.at(ih);
+    htype_t*& hh=vals.at(ih);
+    hh->Scale(intval/(HelperFunctions::getHistogramIntegralAndError(hh, 1, hh->GetNbinsX(), 1, hh->GetNbinsY(), 1, hh->GetNbinsZ(), false)));
   }
 }
 template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
@@ -2301,7 +2295,7 @@ bool TTProcessHandler::isInterferenceContribution(TTProcessHandler::TemplateType
 float TTProcessHandler::getProcessScale() const{
   return 1;
 }
-void TTProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
+void TTProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool /*robust*/) const{
   vector<TemplateContributionList> pairing;
   if (vals.size()==nTTTplTypes) pairing.emplace_back(TTTplSigBSMSMInt_Re);
   for (TemplateContributionList const& pair:pairing){
@@ -2992,7 +2986,7 @@ bool BBProcessHandler::isInterferenceContribution(BBProcessHandler::TemplateType
 float BBProcessHandler::getProcessScale() const{
   return 1;
 }
-void BBProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
+void BBProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool /*robust*/) const{
   vector<TemplateContributionList> pairing;
   if (vals.size()==nBBTplTypes) pairing.emplace_back(BBTplSigBSMSMInt_Re);
   for (TemplateContributionList const& pair:pairing){

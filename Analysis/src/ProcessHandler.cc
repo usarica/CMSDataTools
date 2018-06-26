@@ -422,7 +422,7 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<std::pair<float
   errs.assign(vals.size(), 0);
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nGGSMTypes);
-    const float invA[nGGSMTypes][nGGSMTypes]={
+    const double invA[nGGSMTypes][nGGSMTypes]={
       { 1, 0, 0 },
       { 0, 1, 0 },
       { -1, -1, 1 }
@@ -437,11 +437,11 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<std::pair<float
   }
   else{
     assert(vals.size()==nGGTypes);
-    const float couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
-    const float couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
-    const float cscale = couplA/couplM;
-    const float cscalesq = pow(cscale, float(2));
-    const float invA[nGGTypes][nGGTypes]={
+    const double couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
+    const double couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
+    const double cscale = couplA/couplM;
+    const double cscalesq = pow(cscale, double(2));
+    const double invA[nGGTypes][nGGTypes]={
       { 1, 0, 0, 0, 0, 0 },
       { 0, 1, 0, 0, 0, 0 },
       { -1, -1, 1, 0, 0, 0 },
@@ -1512,7 +1512,7 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<std::pair<float
   errs.assign(vals.size(), 0);
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nVVSMTypes);
-    const float invA[nVVSMTypes][nVVSMTypes]={
+    const double invA[nVVSMTypes][nVVSMTypes]={
       { 1, 0, 0 },
       { 0, 1, 0 },
       { -1, -1, 1 }
@@ -1527,21 +1527,21 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<std::pair<float
   }
   else{
     assert(vals.size()==nVVTypes);
-    const float couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
-    const float couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
-    const float c = couplA/couplM;
-    const float c2 = pow(c, 2);
-    const float c3 = pow(c, 3);
-    const float c4 = pow(c, 4);
-    const float invA[nVVTypes][nVVTypes]={
+    const double couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
+    const double couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
+    const double c = couplA/couplM;
+    const double c2 = pow(c, 2);
+    const double c3 = pow(c, 3);
+    const double c4 = pow(c, 4);
+    const double invA[nVVTypes][nVVTypes]={
       { 1, 0, 0, 0, 0, 0, 0, 0, 0 },
       { 0, 1, 0, 0, 0, 0, 0, 0, 0 },
       { -1, -1, 1, 0, 0, 0, 0, 0, 0 },
       { 0, 0, 0, c4, 0, 0, 0, 0, 0 },
-      { 0, float(-22./3.)*c, 0, float(-3./32.)*c, float(12.)*c, float(-6.)*c, float(4./3.)*c, 0, 0 },
-      { 0, float(16.)*c2, 0, float(11./16.)*c2, float(-40.)*c2, float(32.)*c2, float(-8.)*c2, 0, 0 },
-      { 0, float(-32./3.)*c3, 0, float(-3./2.)*c3, float(32.)*c3, float(-32.)*c3, float(32./3.)*c3, 0, 0 },
-      { c, float(2.)*c, -c, float(29./32.)*c, float(-4.)*c, float(6.)*c, float(-4.)*c, -c, c },
+      { 0, double(-22./3.)*c, 0, double(-3./32.)*c, double(12.)*c, double(-6.)*c, double(4./3.)*c, 0, 0 },
+      { 0, double(16.)*c2, 0, double(11./16.)*c2, double(-40.)*c2, double(32.)*c2, double(-8.)*c2, 0, 0 },
+      { 0, double(-32./3.)*c3, 0, double(-3./2.)*c3, double(32.)*c3, double(-32.)*c3, double(32./3.)*c3, 0, 0 },
+      { c, double(2.)*c, -c, double(29./32.)*c, double(-4.)*c, double(6.)*c, double(-4.)*c, -c, c },
       { -c2, 0, 0, -c2, 0, 0, 0, c2, 0 }
     };
     for (int ix=0; ix<(int) nVVTypes; ix++){
@@ -2317,7 +2317,7 @@ template<> void TTProcessHandler::recombineHistogramsToTemplates<std::pair<float
   errs.assign(vals.size(), 0);
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nTTSMTypes);
-    const float invA[nTTSMTypes][nTTSMTypes]={ { 1 } };
+    const double invA[nTTSMTypes][nTTSMTypes]={ { 1 } };
     for (int ix=0; ix<(int) nTTSMTypes; ix++){
       for (int iy=0; iy<(int) nTTSMTypes; iy++){
         res.at(ix) += invA[ix][iy]*vals.at(iy).first;
@@ -2328,11 +2328,11 @@ template<> void TTProcessHandler::recombineHistogramsToTemplates<std::pair<float
   }
   else{
     assert(vals.size()==nTTTypes);
-    const float couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
-    const float couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
-    const float cscale = couplA/couplM;
-    const float cscalesq = pow(cscale, float(2));
-    const float invA[nTTTypes][nTTTypes]={
+    const double couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
+    const double couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
+    const double cscale = couplA/couplM;
+    const double cscalesq = pow(cscale, double(2));
+    const double invA[nTTTypes][nTTTypes]={
       { 1, 0, 0 },
       { 0, cscalesq, 0 },
       { -cscale, -cscale, cscale }
@@ -3008,7 +3008,7 @@ template<> void BBProcessHandler::recombineHistogramsToTemplates<std::pair<float
   errs.assign(vals.size(), 0);
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nBBSMTypes);
-    const float invA[nBBSMTypes][nBBSMTypes]={ { 1 } };
+    const double invA[nBBSMTypes][nBBSMTypes]={ { 1 } };
     for (int ix=0; ix<(int) nBBSMTypes; ix++){
       for (int iy=0; iy<(int) nBBSMTypes; iy++){
         res.at(ix) += invA[ix][iy]*vals.at(iy).first;
@@ -3019,11 +3019,11 @@ template<> void BBProcessHandler::recombineHistogramsToTemplates<std::pair<float
   }
   else{
     assert(vals.size()==nBBTypes);
-    const float couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
-    const float couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
-    const float cscale = couplA/couplM;
-    const float cscalesq = pow(cscale, float(2));
-    const float invA[nBBTypes][nBBTypes]={
+    const double couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
+    const double couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
+    const double cscale = couplA/couplM;
+    const double cscalesq = pow(cscale, double(2));
+    const double invA[nBBTypes][nBBTypes]={
       { 1, 0, 0 },
     { 0, cscalesq, 0 },
     { -cscale, -cscale, cscale }

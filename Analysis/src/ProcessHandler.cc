@@ -1,4 +1,5 @@
 #include <cassert>
+#include "MELAAccumulators.h"
 #include "MELAStreamHelpers.hh"
 #include "ProcessHandler.h"
 #include "TemplateHelpers.h"
@@ -6,6 +7,7 @@
 
 
 using namespace std;
+using namespace TNumericUtil;
 using namespace MELAStreamHelpers;
 
 
@@ -1438,7 +1440,7 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool robus
       float val_fai_mostNeg=0;
       float sum_pure=0;
       for (float fai=-1; fai<=1; fai+=0.0005){
-        float sum=0;
+        KahanAccumulator<float> sum;
         sum += pow((1.-fabs(fai)), 2) * vals.at(VVTplSig);
         sum += TMath::Sign(1, fai)*sqrt(fabs(fai))*pow(sqrt(1.-fabs(fai)), 3) * vals.at(VVTplSigBSMSMInt_ai1_1_Re);
         sum += fabs(fai)*(1.-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_2_PosDef);
@@ -1469,7 +1471,7 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool robus
       float val_fai_mostNeg=0;
       float sum_pure=0;
       for (float fai=-1; fai<=1; fai+=0.0005){
-        float sum=0;
+        KahanAccumulator<float> sum;
         sum += vals.at(VVTplBkg);
 
         sum += pow((1.-fabs(fai)), 2) * vals.at(VVTplSig);

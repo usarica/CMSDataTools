@@ -1439,8 +1439,10 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool robus
     unsigned int it=0;
     while(!isSigOnlyOK){
       if (!robust && it==1) break;
+      if (it>1000) break;
 
-      constexpr float chopper=0.99;
+      float chopper=0.99;
+      if (it==1000) chopper=0;
       float fai_mostNeg=-2;
       float val_fai_mostNeg=0;
       float sum_pure=0;
@@ -1474,8 +1476,10 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool robus
     it=0;
     while (!isSigBkgOK){
       if (!robust && it==1) break;
+      if (it>1000) break;
 
-      constexpr float chopper=0.99;
+      float chopper=0.99;
+      if (it==1000) chopper=0;
       float fai_mostNeg=-2;
       float val_fai_mostNeg=0;
       float sum_pure=0;

@@ -1407,6 +1407,8 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool robus
     if (fabs(tplVal)>thr) tplVal = thr;
   }
 
+  const bool doCheckBkgInt=(this->massregion!=CategorizationHelpers::kOnshell);
+
   float scale_a1=1;
   float scale_ai=1;
   for (TemplateContributionList const& pair:pairing){
@@ -1425,17 +1427,20 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool robus
     }
   }
 
-  // If there are more than one interference terms, make sure that they all satisfy positive-definite sums
+  // If there is more than one interference term, make sure that they all satisfy positive-definite sums
   if (vals.size()==nVVTplTypes){
     vals.at(VVTplSigBSMSMInt_ai1_1_Re) *= pow(scale_a1, 3) * pow(scale_ai, 1);
     vals.at(VVTplSigBSMSMInt_ai1_2_PosDef) *= pow(scale_a1, 2) * pow(scale_ai, 2);
     vals.at(VVTplSigBSMSMInt_ai1_3_Re) *= pow(scale_a1, 1) * pow(scale_ai, 3);
     vals.at(VVTplIntBSM_ai1_1_Re) *= scale_a1 * scale_ai;
 
-    for (unsigned int it=0; it<(robust ? 3 : 1); it++){ // Check signal-only sum
-      float chopper=0.99;
-      if (it==1) chopper=0.8;
-      else if (it==2) chopper=0;
+    // Check signal-only sum
+    bool isSigOnlyOK=false;
+    unsigned int it=0;
+    while(!isSigOnlyOK){
+      if (!robust && it==1) break;
+
+      constexpr float chopper=0.99;
       float fai_mostNeg=-2;
       float val_fai_mostNeg=0;
       float sum_pure=0;
@@ -1460,13 +1465,17 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool robus
         vals.at(VVTplSigBSMSMInt_ai1_2_PosDef) *= neg_scale;
         vals.at(VVTplSigBSMSMInt_ai1_3_Re) *= neg_scale;
       }
+      else isSigOnlyOK=true;
+      it++;
     }
 
-    // No need to check Sig SM - Bkg or Sig BSM - Bkg sums; they are already handled
-    for (unsigned int it=0; it<(robust ? 3 : 1); it++){ // Check sum of all components
-      float chopper=0.99;
-      if (it==1) chopper=0.8;
-      else if (it==2) chopper=0;
+    // Check sum of all components
+    bool isSigBkgOK=!doCheckBkgInt;
+    it=0;
+    while (!isSigBkgOK){
+      if (!robust && it==1) break;
+
+      constexpr float chopper=0.99;
       float fai_mostNeg=-2;
       float val_fai_mostNeg=0;
       float sum_pure=0;
@@ -1501,6 +1510,8 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool robus
         vals.at(VVTplIntBSM_ai1_1_Re) *= neg_scale;
         vals.at(VVTplIntBSM_ai1_2_Re) *= neg_scale;
       }
+      else isSigBkgOK=true;
+      it++;
     }
   }
 

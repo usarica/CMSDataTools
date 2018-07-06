@@ -1682,6 +1682,15 @@ void getControl2DXSlices(
     TString tplztitle=hTemplates.at(t).getHistogram()->GetZaxis()->GetTitle();
     TDirectory* savedir=foutput->mkdir(tplname+"_control_" + tplxtitle + "_slices");
     savedir->cd();
+    {
+      TString projname=tplname + "_ProjX";
+      TString projtitle = tplxtitle;
+      TH1F* hX = getHistogramSlice(hTemplates.at(t).getHistogram(), 0, 1, hTemplates.at(t).getHistogram()->GetNbinsY(), 1, hTemplates.at(t).getHistogram()->GetNbinsZ(), projname);
+      hX->SetOption("hist");
+      hX->SetTitle(projtitle);
+      savedir->WriteTObject(hX);
+      delete hX;
+    }
     for (int ix=1; ix<=htpl->GetNbinsX(); ix++){
       TString slicename=tplname+(isPhaseHist ? "_Phase_" : "_")+Form("%s_Slice%i", KDbinning.at(0).getLabel().Data(), ix);
       TString slicetitle = tplxtitle + Form(": [%.1f, %.1f]", KDbinning.at(0).getBinLowEdge(ix-1), KDbinning.at(0).getBinLowEdge(ix));

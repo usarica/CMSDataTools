@@ -796,8 +796,8 @@ template<> void getTemplatesPerCategory<2>(
   assert(fixedTrees.size()==ntpls);
   assert(nKDs==2);
 
-  float const sX = getDiscriminantSmearingStrengthCoefficient(KDset.at(0), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
-  float const sY = getDiscriminantSmearingStrengthCoefficient(KDset.at(1), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+  float const sX = getDiscriminantSmearingStrengthCoefficient(category, hypo, KDset.at(0), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+  float const sY = getDiscriminantSmearingStrengthCoefficient(category, hypo, KDset.at(1), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
 
   // Fill templates from POWHEG
   vector<ExtHist_t> hTemplates;
@@ -937,9 +937,9 @@ template<> void getTemplatesPerCategory<3>(
   assert(fixedTrees.size()==ntpls);
   assert(nKDs==3);
 
-  float const sX = getDiscriminantSmearingStrengthCoefficient(KDset.at(0), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
-  float const sY = getDiscriminantSmearingStrengthCoefficient(KDset.at(1), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
-  float const sZ = getDiscriminantSmearingStrengthCoefficient(KDset.at(2), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+  float const sX = getDiscriminantSmearingStrengthCoefficient(category, hypo, KDset.at(0), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+  float const sY = getDiscriminantSmearingStrengthCoefficient(category, hypo, KDset.at(1), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
+  float const sZ = getDiscriminantSmearingStrengthCoefficient(category, hypo, KDset.at(2), thePerProcessHandle->getProcessType(), thePerProcessHandle->getProcessMassRegion());
 
   // Fill templates from POWHEG
   vector<ExtHist_t> hTemplates;

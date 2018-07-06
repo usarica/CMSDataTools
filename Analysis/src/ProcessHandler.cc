@@ -1,4 +1,5 @@
 #include <cassert>
+#include "MELAAccumulators.h"
 #include "MELAStreamHelpers.hh"
 #include "ProcessHandler.h"
 #include "TemplateHelpers.h"
@@ -6,6 +7,7 @@
 
 
 using namespace std;
+using namespace TNumericUtil;
 using namespace MELAStreamHelpers;
 
 
@@ -89,7 +91,7 @@ const TString& ProcessHandler::getProcessName() const{ return procname; }
 const ProcessHandler::ProcessType& ProcessHandler::getProcessType() const{ return proctype; }
 const CategorizationHelpers::MassRegion& ProcessHandler::getProcessMassRegion() const{ return massregion; }
 float ProcessHandler::getProcessScale() const{ return 1; }
-void ProcessHandler::imposeTplPhysicality(std::vector<float>& /*vals*/) const{}
+void ProcessHandler::imposeTplPhysicality(std::vector<float>& /*vals*/, bool /*robust*/) const{}
 
 
 /****************/
@@ -396,7 +398,7 @@ float GGProcessHandler::getProcessScale() const{
   else if (theDataPeriod=="2017") return 1.098946;
   else return 1;
 }
-void GGProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
+void GGProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool /*robust*/) const{
   vector<TemplateContributionList> pairing;
   if (vals.size()==nGGTplSMTypes || vals.size()==nGGTplTypes) pairing.emplace_back(GGTplInt_Re);
   if (vals.size()==nGGTplTypes){
@@ -420,7 +422,7 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<std::pair<float
   errs.assign(vals.size(), 0);
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nGGSMTypes);
-    const float invA[nGGSMTypes][nGGSMTypes]={
+    const double invA[nGGSMTypes][nGGSMTypes]={
       { 1, 0, 0 },
       { 0, 1, 0 },
       { -1, -1, 1 }
@@ -435,11 +437,11 @@ template<> void GGProcessHandler::recombineHistogramsToTemplates<std::pair<float
   }
   else{
     assert(vals.size()==nGGTypes);
-    const float couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
-    const float couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
-    const float cscale = couplA/couplM;
-    const float cscalesq = pow(cscale, float(2));
-    const float invA[nGGTypes][nGGTypes]={
+    const double couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
+    const double couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
+    const double cscale = couplA/couplM;
+    const double cscalesq = pow(cscale, double(2));
+    const double invA[nGGTypes][nGGTypes]={
       { 1, 0, 0, 0, 0, 0 },
       { 0, 1, 0, 0, 0, 0 },
       { -1, -1, 1, 0, 0, 0 },
@@ -1381,7 +1383,7 @@ bool VVProcessHandler::isInterferenceContribution(VVProcessHandler::TemplateType
     );
 }
 
-void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
+void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool robust) const{
   vector<TemplateContributionList> pairing;
   if (vals.size()==nVVTplSMTypes || vals.size()==nVVTplTypes) pairing.emplace_back(VVTplInt_Re);
   if (vals.size()==nVVTplTypes){
@@ -1405,6 +1407,8 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
     if (fabs(tplVal)>thr) tplVal = thr;
   }
 
+  const bool doCheckBkgInt=(this->massregion!=CategorizationHelpers::kOnshell);
+
   float scale_a1=1;
   float scale_ai=1;
   for (TemplateContributionList const& pair:pairing){
@@ -1423,69 +1427,86 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
     }
   }
 
-  // If there are more than one interference terms, make sure that they all satisfy positive-definite sums
+  // If there is more than one interference term, make sure that they all satisfy positive-definite sums
   if (vals.size()==nVVTplTypes){
     vals.at(VVTplSigBSMSMInt_ai1_1_Re) *= pow(scale_a1, 3) * pow(scale_ai, 1);
     vals.at(VVTplSigBSMSMInt_ai1_2_PosDef) *= pow(scale_a1, 2) * pow(scale_ai, 2);
     vals.at(VVTplSigBSMSMInt_ai1_3_Re) *= pow(scale_a1, 1) * pow(scale_ai, 3);
     vals.at(VVTplIntBSM_ai1_1_Re) *= scale_a1 * scale_ai;
 
-    { // Check signal-only sum
+    // Check signal-only sum
+    bool isSigOnlyOK=false;
+    unsigned int it=0;
+    while(!isSigOnlyOK){
+      if (!robust && it==1) break;
+      if (it>1000) break;
+
+      float chopper=0.99;
+      if (it==1000) chopper=0;
       float fai_mostNeg=-2;
       float val_fai_mostNeg=0;
       float sum_pure=0;
-      for (float fai=-1; fai<=1; fai+=0.001){
-        float sum=0;
-        sum += pow((1-fabs(fai)), 2) * vals.at(VVTplSig);
-        sum += TMath::Sign(1, fai)*sqrt(fabs(fai))*pow(sqrt(1-fabs(fai)), 3) * vals.at(VVTplSigBSMSMInt_ai1_1_Re);
-        sum += fabs(fai)*(1-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_2_PosDef);
-        sum += TMath::Sign(1, fai)*pow(sqrt(fabs(fai)), 3)*sqrt(1-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_3_Re);
+      for (float fai=-1; fai<=1; fai+=0.0005){
+        KahanAccumulator<float> sum;
+        sum += pow((1.-fabs(fai)), 2) * vals.at(VVTplSig);
+        sum += TMath::Sign(1, fai)*sqrt(fabs(fai))*pow(sqrt(1.-fabs(fai)), 3) * vals.at(VVTplSigBSMSMInt_ai1_1_Re);
+        sum += fabs(fai)*(1.-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_2_PosDef);
+        sum += TMath::Sign(1, fai)*pow(sqrt(fabs(fai)), 3)*sqrt(1.-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_3_Re);
         sum += pow(fai, 2) * vals.at(VVTplSigBSM);
         if (sum<val_fai_mostNeg){
           val_fai_mostNeg=sum;
           fai_mostNeg=fai;
-          sum_pure = pow((1-fabs(fai)), 2) * vals.at(VVTplSig) + pow(fai, 2) * vals.at(VVTplSigBSM);
+          sum_pure = pow((1.-fabs(fai)), 2) * vals.at(VVTplSig) + pow(fai, 2) * vals.at(VVTplSigBSM);
         }
       }
       if (fai_mostNeg>=-1){
         float excess_mostNeg = val_fai_mostNeg - sum_pure;
         float thr_neg = -sum_pure;
-        float neg_scale = fabs(thr_neg*0.99/excess_mostNeg);
+        float neg_scale = fabs(thr_neg*chopper/excess_mostNeg);
         vals.at(VVTplSigBSMSMInt_ai1_1_Re) *= neg_scale;
         vals.at(VVTplSigBSMSMInt_ai1_2_PosDef) *= neg_scale;
         vals.at(VVTplSigBSMSMInt_ai1_3_Re) *= neg_scale;
       }
+      else isSigOnlyOK=true;
+      it++;
     }
 
-    // No need to check Sig SM - Bkg or Sig BSM - Bkg sums; they are already handled
-    { // Check sum of all components
+    // Check sum of all components
+    bool isSigBkgOK=!doCheckBkgInt;
+    it=0;
+    while (!isSigBkgOK){
+      if (!robust && it==1) break;
+      if (it>1000) break;
+
+      float chopper=0.99;
+      if (it==1000) chopper=0;
       float fai_mostNeg=-2;
       float val_fai_mostNeg=0;
       float sum_pure=0;
-      for (float fai=-1; fai<=1; fai+=0.001){
-        float sum=0;
+      for (float fai=-1; fai<=1; fai+=0.0005){
+        KahanAccumulator<float> sum;
         sum += vals.at(VVTplBkg);
 
-        sum += pow((1-fabs(fai)), 2) * vals.at(VVTplSig);
-        sum += TMath::Sign(1, fai)*sqrt(fabs(fai))*pow(sqrt(1-fabs(fai)), 3) * vals.at(VVTplSigBSMSMInt_ai1_1_Re);
-        sum += fabs(fai)*(1-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_2_PosDef);
-        sum += TMath::Sign(1, fai)*pow(sqrt(fabs(fai)), 3)*sqrt(1-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_3_Re);
+        sum += pow((1.-fabs(fai)), 2) * vals.at(VVTplSig);
+        sum += TMath::Sign(1, fai)*sqrt(fabs(fai))*pow(sqrt(1.-fabs(fai)), 3) * vals.at(VVTplSigBSMSMInt_ai1_1_Re);
+        sum += fabs(fai)*(1.-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_2_PosDef);
+        sum += TMath::Sign(1, fai)*pow(sqrt(fabs(fai)), 3)*sqrt(1.-fabs(fai)) * vals.at(VVTplSigBSMSMInt_ai1_3_Re);
         sum += pow(fai, 2) * vals.at(VVTplSigBSM);
 
-        sum += (1-fabs(fai)) * vals.at(VVTplInt_Re);
-        sum += TMath::Sign(1, fai)*sqrt(fabs(fai)*(1-fabs(fai))) * vals.at(VVTplIntBSM_ai1_1_Re);
+        sum += (1.-fabs(fai)) * vals.at(VVTplInt_Re);
+        sum += TMath::Sign(1, fai)*sqrt(fabs(fai)*(1.-fabs(fai))) * vals.at(VVTplIntBSM_ai1_1_Re);
         sum += fabs(fai) * vals.at(VVTplIntBSM_ai1_2_Re);
 
         if (sum<val_fai_mostNeg){
           val_fai_mostNeg=sum;
           fai_mostNeg=fai;
-          sum_pure = vals.at(VVTplBkg) + pow((1-fabs(fai)), 2) * vals.at(VVTplSig) + pow(fai, 2) * vals.at(VVTplSigBSM);
+          sum_pure = vals.at(VVTplBkg) + pow((1.-fabs(fai)), 2) * vals.at(VVTplSig) + pow(fai, 2) * vals.at(VVTplSigBSM);
         }
       }
       if (fai_mostNeg>=-1){
         float excess_mostNeg = val_fai_mostNeg - sum_pure;
         float thr_neg = -sum_pure;
-        float neg_scale = fabs(thr_neg*0.99/excess_mostNeg);
+        float neg_scale = fabs(thr_neg*chopper/excess_mostNeg);
         vals.at(VVTplSigBSMSMInt_ai1_1_Re) *= neg_scale;
         vals.at(VVTplSigBSMSMInt_ai1_2_PosDef) *= neg_scale;
         vals.at(VVTplSigBSMSMInt_ai1_3_Re) *= neg_scale;
@@ -1493,6 +1514,8 @@ void VVProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
         vals.at(VVTplIntBSM_ai1_1_Re) *= neg_scale;
         vals.at(VVTplIntBSM_ai1_2_Re) *= neg_scale;
       }
+      else isSigBkgOK=true;
+      it++;
     }
   }
 
@@ -1504,7 +1527,7 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<std::pair<float
   errs.assign(vals.size(), 0);
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nVVSMTypes);
-    const float invA[nVVSMTypes][nVVSMTypes]={
+    const double invA[nVVSMTypes][nVVSMTypes]={
       { 1, 0, 0 },
       { 0, 1, 0 },
       { -1, -1, 1 }
@@ -1519,21 +1542,21 @@ template<> void VVProcessHandler::recombineHistogramsToTemplates<std::pair<float
   }
   else{
     assert(vals.size()==nVVTypes);
-    const float couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
-    const float couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
-    const float c = couplA/couplM;
-    const float c2 = pow(c, 2);
-    const float c3 = pow(c, 3);
-    const float c4 = pow(c, 4);
-    const float invA[nVVTypes][nVVTypes]={
+    const double couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
+    const double couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
+    const double c = couplA/couplM;
+    const double c2 = pow(c, 2);
+    const double c3 = pow(c, 3);
+    const double c4 = pow(c, 4);
+    const double invA[nVVTypes][nVVTypes]={
       { 1, 0, 0, 0, 0, 0, 0, 0, 0 },
       { 0, 1, 0, 0, 0, 0, 0, 0, 0 },
       { -1, -1, 1, 0, 0, 0, 0, 0, 0 },
       { 0, 0, 0, c4, 0, 0, 0, 0, 0 },
-      { 0, float(-22./3.)*c, 0, float(-3./32.)*c, float(12.)*c, float(-6.)*c, float(4./3.)*c, 0, 0 },
-      { 0, float(16.)*c2, 0, float(11./16.)*c2, float(-40.)*c2, float(32.)*c2, float(-8.)*c2, 0, 0 },
-      { 0, float(-32./3.)*c3, 0, float(-3./2.)*c3, float(32.)*c3, float(-32.)*c3, float(32./3.)*c3, 0, 0 },
-      { c, float(2.)*c, -c, float(29./32.)*c, float(-4.)*c, float(6.)*c, float(-4.)*c, -c, c },
+      { 0, double(-22./3.)*c, 0, double(-3./32.)*c, double(12.)*c, double(-6.)*c, double(4./3.)*c, 0, 0 },
+      { 0, double(16.)*c2, 0, double(11./16.)*c2, double(-40.)*c2, double(32.)*c2, double(-8.)*c2, 0, 0 },
+      { 0, double(-32./3.)*c3, 0, double(-3./2.)*c3, double(32.)*c3, double(-32.)*c3, double(32./3.)*c3, 0, 0 },
+      { c, double(2.)*c, -c, double(29./32.)*c, double(-4.)*c, double(6.)*c, double(-4.)*c, -c, c },
       { -c2, 0, 0, -c2, 0, 0, 0, c2, 0 }
     };
     for (int ix=0; ix<(int) nVVTypes; ix++){
@@ -1837,14 +1860,14 @@ template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
     }
   }
 
-  // Extra processing to ensure templates are physical, does not exist in single-vertex interactions
-  for (int ix=1; ix<=nx; ix++){
-    std::vector<float> binvals; binvals.assign(vals.size(), 0);
-    std::vector<float>::iterator ih=binvals.begin();
-    for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix); ih++; }
-    imposeTplPhysicality(binvals);
-    ih=binvals.begin();
-    for (htype_t*& hh:vals){ hh->SetBinContent(ix, *ih); ih++; }
+  // Extra processing to ensure template integrals are physical, does not exist in single-vertex interactions
+  vector<float> integral_vals;
+  for (htype_t*& hh:vals) integral_vals.push_back(HelperFunctions::getHistogramIntegralAndError(hh, 1, hh->GetNbinsX(), false));
+  imposeTplPhysicality(integral_vals);
+  for (unsigned int ih=0; ih<vals.size(); ih++){
+    float const& intval=integral_vals.at(ih);
+    htype_t*& hh=vals.at(ih);
+    hh->Scale(intval/(HelperFunctions::getHistogramIntegralAndError(hh, 1, hh->GetNbinsX(), false)));
   }
 }
 template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH2F*>(std::vector<TH2F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
@@ -1885,16 +1908,14 @@ template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
     }
   }
 
-  // Extra processing to ensure templates are physical, does not exist in single-vertex interactions
-  for (int ix=1; ix<=nx; ix++){
-    for (int iy=1; iy<=ny; iy++){
-      std::vector<float> binvals; binvals.assign(vals.size(), 0);
-      std::vector<float>::iterator ih=binvals.begin();
-      for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix, iy); ih++; }
-      imposeTplPhysicality(binvals);
-      ih=binvals.begin();
-      for (htype_t*& hh:vals){ hh->SetBinContent(ix, iy, *ih); ih++; }
-    }
+  // Extra processing to ensure template integrals are physical, does not exist in single-vertex interactions
+  vector<float> integral_vals;
+  for (htype_t*& hh:vals) integral_vals.push_back(HelperFunctions::getHistogramIntegralAndError(hh, 1, hh->GetNbinsX(), 1, hh->GetNbinsY(), false));
+  imposeTplPhysicality(integral_vals, true);
+  for (unsigned int ih=0; ih<vals.size(); ih++){
+    float const& intval=integral_vals.at(ih);
+    htype_t*& hh=vals.at(ih);
+    hh->Scale(intval/(HelperFunctions::getHistogramIntegralAndError(hh, 1, hh->GetNbinsX(), 1, hh->GetNbinsY(), false)));
   }
 }
 template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<TH3F*>(std::vector<TH3F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
@@ -1938,18 +1959,14 @@ template<> void VVProcessHandler::recombineTemplatesWithPhaseToRegularTemplates<
     }
   }
 
-  // Extra processing to ensure templates are physical, does not exist in single-vertex interactions
-  for (int ix=1; ix<=nx; ix++){
-    for (int iy=1; iy<=ny; iy++){
-      for (int iz=1; iz<=nz; iz++){
-        std::vector<float> binvals; binvals.assign(vals.size(), 0);
-        std::vector<float>::iterator ih=binvals.begin();
-        for (htype_t*& hh:vals){ *ih=hh->GetBinContent(ix, iy, iz); ih++; }
-        imposeTplPhysicality(binvals);
-        ih=binvals.begin();
-        for (htype_t*& hh:vals){ hh->SetBinContent(ix, iy, iz, *ih); ih++; }
-      }
-    }
+  // Extra processing to ensure template integrals are physical, does not exist in single-vertex interactions
+  vector<float> integral_vals;
+  for (htype_t*& hh:vals) integral_vals.push_back(HelperFunctions::getHistogramIntegralAndError(hh, 1, hh->GetNbinsX(), 1, hh->GetNbinsY(), 1, hh->GetNbinsZ(), false));
+  imposeTplPhysicality(integral_vals, true);
+  for (unsigned int ih=0; ih<vals.size(); ih++){
+    float const& intval=integral_vals.at(ih);
+    htype_t*& hh=vals.at(ih);
+    hh->Scale(intval/(HelperFunctions::getHistogramIntegralAndError(hh, 1, hh->GetNbinsX(), 1, hh->GetNbinsY(), 1, hh->GetNbinsZ(), false)));
   }
 }
 template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<TH1F*>(std::vector<TH1F*>& vals, ACHypothesisHelpers::ACHypothesis /*hypo*/) const{
@@ -2295,7 +2312,7 @@ bool TTProcessHandler::isInterferenceContribution(TTProcessHandler::TemplateType
 float TTProcessHandler::getProcessScale() const{
   return 1;
 }
-void TTProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
+void TTProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool /*robust*/) const{
   vector<TemplateContributionList> pairing;
   if (vals.size()==nTTTplTypes) pairing.emplace_back(TTTplSigBSMSMInt_Re);
   for (TemplateContributionList const& pair:pairing){
@@ -2315,7 +2332,7 @@ template<> void TTProcessHandler::recombineHistogramsToTemplates<std::pair<float
   errs.assign(vals.size(), 0);
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nTTSMTypes);
-    const float invA[nTTSMTypes][nTTSMTypes]={ { 1 } };
+    const double invA[nTTSMTypes][nTTSMTypes]={ { 1 } };
     for (int ix=0; ix<(int) nTTSMTypes; ix++){
       for (int iy=0; iy<(int) nTTSMTypes; iy++){
         res.at(ix) += invA[ix][iy]*vals.at(iy).first;
@@ -2326,11 +2343,11 @@ template<> void TTProcessHandler::recombineHistogramsToTemplates<std::pair<float
   }
   else{
     assert(vals.size()==nTTTypes);
-    const float couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
-    const float couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
-    const float cscale = couplA/couplM;
-    const float cscalesq = pow(cscale, float(2));
-    const float invA[nTTTypes][nTTTypes]={
+    const double couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
+    const double couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
+    const double cscale = couplA/couplM;
+    const double cscalesq = pow(cscale, double(2));
+    const double invA[nTTTypes][nTTTypes]={
       { 1, 0, 0 },
       { 0, cscalesq, 0 },
       { -cscale, -cscale, cscale }
@@ -2986,7 +3003,7 @@ bool BBProcessHandler::isInterferenceContribution(BBProcessHandler::TemplateType
 float BBProcessHandler::getProcessScale() const{
   return 1;
 }
-void BBProcessHandler::imposeTplPhysicality(std::vector<float>& vals) const{
+void BBProcessHandler::imposeTplPhysicality(std::vector<float>& vals, bool /*robust*/) const{
   vector<TemplateContributionList> pairing;
   if (vals.size()==nBBTplTypes) pairing.emplace_back(BBTplSigBSMSMInt_Re);
   for (TemplateContributionList const& pair:pairing){
@@ -3006,7 +3023,7 @@ template<> void BBProcessHandler::recombineHistogramsToTemplates<std::pair<float
   errs.assign(vals.size(), 0);
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nBBSMTypes);
-    const float invA[nBBSMTypes][nBBSMTypes]={ { 1 } };
+    const double invA[nBBSMTypes][nBBSMTypes]={ { 1 } };
     for (int ix=0; ix<(int) nBBSMTypes; ix++){
       for (int iy=0; iy<(int) nBBSMTypes; iy++){
         res.at(ix) += invA[ix][iy]*vals.at(iy).first;
@@ -3017,11 +3034,11 @@ template<> void BBProcessHandler::recombineHistogramsToTemplates<std::pair<float
   }
   else{
     assert(vals.size()==nBBTypes);
-    const float couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
-    const float couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
-    const float cscale = couplA/couplM;
-    const float cscalesq = pow(cscale, float(2));
-    const float invA[nBBTypes][nBBTypes]={
+    const double couplM = ACHypothesisHelpers::getACHypothesisMEHZZGVal(hypo);
+    const double couplA = ACHypothesisHelpers::getACHypothesisHZZGVal(hypo);
+    const double cscale = couplA/couplM;
+    const double cscalesq = pow(cscale, double(2));
+    const double invA[nBBTypes][nBBTypes]={
       { 1, 0, 0 },
     { 0, cscalesq, 0 },
     { -cscale, -cscale, cscale }

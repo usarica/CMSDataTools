@@ -28,7 +28,7 @@ public:
   const TString& getProcessName() const;
 
   virtual float getProcessScale() const;
-  virtual void imposeTplPhysicality(std::vector<float>& vals) const;
+  virtual void imposeTplPhysicality(std::vector<float>& vals, bool robust=false) const;
 
   virtual std::vector<TString> getOutputTreeNames(ACHypothesisHelpers::ACHypothesis hypo, bool includeSM) const = 0;
   virtual std::vector<TString> getTemplateNames(ACHypothesisHelpers::ACHypothesis hypo, bool includeSM) const = 0;
@@ -94,7 +94,7 @@ public:
   static bool isInterferenceContribution(GGProcessHandler::TemplateType const type);
 
   float getProcessScale() const;
-  void imposeTplPhysicality(std::vector<float>& vals) const;
+  void imposeTplPhysicality(std::vector<float>& vals, bool robust=false) const;
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
   template<typename T> void recombineHistogramsToTemplatesWithPhase(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
   template<typename T> void recombineTemplatesWithPhaseToRegularTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
@@ -241,7 +241,7 @@ public:
   static VVProcessHandler::TemplateType castIntToTemplateType(int type, bool useN=false);
   static bool isInterferenceContribution(VVProcessHandler::TemplateType const type);
 
-  void imposeTplPhysicality(std::vector<float>& vals) const;
+  void imposeTplPhysicality(std::vector<float>& vals, bool robust=false) const;
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
   template<typename T> void recombineHistogramsToTemplatesWithPhase(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
   template<typename T> void recombineTemplatesWithPhaseToRegularTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
@@ -394,7 +394,7 @@ public:
   static bool isInterferenceContribution(TTProcessHandler::TemplateType const type);
 
   float getProcessScale() const;
-  void imposeTplPhysicality(std::vector<float>& vals) const;
+  void imposeTplPhysicality(std::vector<float>& vals, bool robust=false) const;
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
   template<typename T> void recombineHistogramsToTemplatesWithPhase(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
   template<typename T> void recombineTemplatesWithPhaseToRegularTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
@@ -522,7 +522,7 @@ public:
   static bool isInterferenceContribution(BBProcessHandler::TemplateType const type);
 
   float getProcessScale() const;
-  void imposeTplPhysicality(std::vector<float>& vals) const;
+  void imposeTplPhysicality(std::vector<float>& vals, bool robust=false) const;
   template<typename T> void recombineHistogramsToTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
   template<typename T> void recombineHistogramsToTemplatesWithPhase(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;
   template<typename T> void recombineTemplatesWithPhaseToRegularTemplates(std::vector<T>& vals, ACHypothesisHelpers::ACHypothesis hypo) const;

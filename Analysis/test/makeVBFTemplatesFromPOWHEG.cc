@@ -155,7 +155,7 @@ void makeVBFTemplatesFromPOWHEG_one(const Channel channel, const Category catego
     melarewgtBuilder->rejectNegativeWeights(true);
     melarewgtBuilder->setDivideByNSample(true);
     melarewgtBuilder->setWeightBinning(GenHMassBinning);
-    for (auto& tree:theSampleSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.999, 250);
+    for (auto& tree:theSampleSet->getCJLSTTreeList()) melarewgtBuilder->setupWeightVariables(tree, 0.9999, 250);
 
     // Make reweighting conrol plots
     TDirectory* controlsDir = foutput->mkdir(Form("controls_%s", treename.Data()), "");

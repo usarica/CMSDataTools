@@ -540,12 +540,16 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       TString treename=tree->GetName();
       MELAout << "Looping over " << treename << " to get mass distributions" << endl;
 
+      unordered_map<Category, pair<float, float>> binning_hmass_thresholds;
       for (Category& cat:catList){
         const TString strCategory = getCategoryName(cat);
         TString hname = outputProcessHandle->getOutputTreeName(ProcessHandleType::castIntToHypothesisType(it));
         hname = hname + "_" + strCategory + "_" + strSystematics + "_" + KDset.at(0);
         MELAout << "Setting up mass histogram " << hname << endl;
-        hMass_FromNominalInclusive[cat].emplace_back(hname, hname, getDiscriminantFineBinning(channel, cat, hypo, KDset.back(), massregion));
+        ExtendedBinning binning_hmass = getDiscriminantFineBinning(channel, cat, hypo, KDset.back(), massregion);
+        ExtendedBinning binning_hmass_ext = HistogramSmootherWithGaussianKernel::getIntermediateBinning(binning_hmass);
+        binning_hmass_thresholds[cat] = pair<float, float>(binning_hmass_ext.getMin(), binning_hmass_ext.getMax());
+        hMass_FromNominalInclusive[cat].emplace_back(hname, hname, binning_hmass);
       }
 
       tree->SetBranchStatus("*", 0);
@@ -556,12 +560,13 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         tree->GetEntry(ev);
         progressbar(ev, nEntries);
 
+        float const& vartrack = KDvars[KDset.at(0)];
         float inclusivenorm=1;
         float one=1;
 
         for (MassRatioObject& systratio:CategorizationSystRatios_POWHEG){
           if (systratio.category==Inclusive){
-            one=std::max(0., systratio.interpolators[treename]->Eval(KDvars[KDset.at(0)]));
+            one=std::max(0., systratio.interpolators[treename]->Eval(KDvars[vartrack]));
             if (one==0.) inclusivenorm=0;
             else inclusivenorm/=one;
             break;
@@ -569,7 +574,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         }
         for (MassRatioObject& systratio:CategorizationSystRatios_MCFM){
           if (systratio.category==Inclusive){
-            inclusivenorm *= std::max(0., systratio.interpolators[treename]->Eval(KDvars[KDset.at(0)]));
+            inclusivenorm *= std::max(0., systratio.interpolators[treename]->Eval(KDvars[vartrack]));
             break;
           }
         }
@@ -581,11 +586,11 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
               float systadj=1;
               for (MassRatioObject& systratio:CategorizationSystRatios_POWHEG){
                 if (systratio.category==cateff.category){
-                  systadj = std::max(0., systratio.interpolators[treename]->Eval(KDvars[KDset.at(0)]));
+                  systadj = std::max(0., systratio.interpolators[treename]->Eval(KDvars[vartrack]));
                   break;
                 }
               }
-              extraweight -= systadj * std::min(1., std::max(0., cateff.interpolators[treename]->Eval(KDvars[KDset.at(0)])));
+              extraweight -= systadj * std::min(1., std::max(0., cateff.interpolators[treename]->Eval(KDvars[vartrack])));
             }
             extraweight = std::min(one, std::max(float(0), extraweight));
           }
@@ -593,10 +598,10 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
             extraweight=0;
             for (MassRatioObject& cateff:CategorizationEfficiencies){
               if (cateff.category==cat){
-                extraweight = std::min(1., std::max(0., cateff.interpolators[treename]->Eval(KDvars[KDset.at(0)])));
+                extraweight = std::min(1., std::max(0., cateff.interpolators[treename]->Eval(KDvars[vartrack])));
                 for (MassRatioObject& systratio:CategorizationSystRatios_POWHEG){
                   if (systratio.category==cateff.category){
-                    extraweight *= std::max(0., systratio.interpolators[treename]->Eval(KDvars[KDset.at(0)]));
+                    extraweight *= std::max(0., systratio.interpolators[treename]->Eval(KDvars[vartrack]));
                     break;
                   }
                 }
@@ -605,9 +610,17 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
             }
           }
           if (ev==0) MELAout << "Filling category hist with weight/extraweight/inclusivenorm = " << weight << " / " << extraweight << " / " << inclusivenorm << endl;
-          hMass_FromNominalInclusive[cat].at(it).fill(KDvars[KDset.at(0)], weight*extraweight*inclusivenorm);
+          if (vartrack<binning_hmass_thresholds[cat].first || vartrack>binning_hmass_thresholds[cat].second) continue;
+          hMass_FromNominalInclusive[cat].at(it).fill(vartrack, weight*extraweight*inclusivenorm);
         }
       } // End loop over tree events
+
+      // Smoothen bkg. mass distributions in case of on-shell
+      if (massregion==kOnshell && ProcessHandlerType::castIntToHypothesisType(it)==ProcessHandlerType::GGBkg){
+        for (Category& cat:catList){
+          if (cat==Untagged || cat==Inclusive) getSmoothHistogram(hMass_FromNominalInclusive[cat].at(it).getHistogram(), binning_hmass_list[cat], 1);
+        }
+      }
     } // End loop over trees
 
     for (Category& cat:catList){ // Check integrity of mass histograms and scale them as necessary

@@ -72,6 +72,22 @@ namespace HistogramSmootherWithGaussianKernel{
   );
   void getMinimumNeffReference(std::vector<ExtendedProfileHistogram>& referenceList, ExtendedProfileHistogram& reference);
 
+  void getSmoothHistogram(
+    TH1F* hinput,
+    ExtendedBinning const& finalXBinning,
+    double sigmaXmult=1
+  );
+  void getSmoothHistogram(
+    TH2F* hinput,
+    ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning,
+    double sigmaXmult=1, double sigmaYmult=1
+  );
+  void getSmoothHistogram(
+    TH3F* hinput,
+    ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning, ExtendedBinning const& finalZBinning,
+    double sigmaXmult=1, double sigmaYmult=1, double sigmaZmult=1
+  );
+
   TH1F* getSmoothHistogram(
     TString const hname, TString const htitle, ExtendedBinning const& finalXBinning,
     TTree* tree, float& xvar, float& weight, bool& selflag,

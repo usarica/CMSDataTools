@@ -540,6 +540,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       TString treename=tree->GetName();
       MELAout << "Looping over " << treename << " to get mass distributions" << endl;
 
+      unordered_map<Category, ExtendedBinning> binning_hmass_list;
       unordered_map<Category, pair<float, float>> binning_hmass_thresholds;
       for (Category& cat:catList){
         const TString strCategory = getCategoryName(cat);
@@ -548,6 +549,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         MELAout << "Setting up mass histogram " << hname << endl;
         ExtendedBinning binning_hmass = getDiscriminantFineBinning(channel, cat, hypo, KDset.back(), massregion);
         ExtendedBinning binning_hmass_ext = HistogramSmootherWithGaussianKernel::getIntermediateBinning(binning_hmass);
+        binning_hmass_list[cat] = binning_hmass;
         binning_hmass_thresholds[cat] = pair<float, float>(binning_hmass_ext.getMin(), binning_hmass_ext.getMax());
         hMass_FromNominalInclusive[cat].emplace_back(hname, hname, binning_hmass);
       }
@@ -616,7 +618,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       } // End loop over tree events
 
       // Smoothen bkg. mass distributions in case of on-shell
-      if (massregion==kOnshell && ProcessHandlerType::castIntToHypothesisType(it)==ProcessHandlerType::GGBkg){
+      if (massregion==kOnshell && ProcessHandleType::castIntToHypothesisType(it)==ProcessHandleType::GGBkg){
         for (Category& cat:catList){
           if (cat==Untagged || cat==Inclusive) getSmoothHistogram(hMass_FromNominalInclusive[cat].at(it).getHistogram(), binning_hmass_list[cat], 1);
         }

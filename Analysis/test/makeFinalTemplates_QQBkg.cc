@@ -412,6 +412,7 @@ void makeFinalTemplates_QQBkg(const Channel channel, const ACHypothesis hypo, co
       TString treename=tree->GetName();
       MELAout << "Looping over " << treename << " to get mass distributions" << endl;
 
+      unordered_map<Category, ExtendedBinning> binning_hmass_list;
       unordered_map<Category, pair<float, float>> binning_hmass_thresholds;
       for (Category& cat:catList){
         const TString strCategory = getCategoryName(cat);
@@ -420,6 +421,7 @@ void makeFinalTemplates_QQBkg(const Channel channel, const ACHypothesis hypo, co
         MELAout << "Setting up mass histogram " << hname << endl;
         ExtendedBinning binning_hmass = getDiscriminantFineBinning(channel, cat, hypo, KDset.back(), massregion);
         ExtendedBinning binning_hmass_ext = HistogramSmootherWithGaussianKernel::getIntermediateBinning(binning_hmass);
+        binning_hmass_list[cat] = binning_hmass;
         binning_hmass_thresholds[cat] = pair<float, float>(binning_hmass_ext.getMin(), binning_hmass_ext.getMax());
         hMass_FromNominalInclusive[cat].emplace_back(hname, hname, binning_hmass);
       }

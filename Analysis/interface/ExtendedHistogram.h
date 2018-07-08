@@ -23,6 +23,7 @@ public:
 
   virtual void setNameTitle(const TString name_, const TString title_="");
   virtual void setBinning(const ExtendedBinning& binning, const int xyz=0, const TString label="")=0; // xyz=0,1,2 for x, y, z
+  virtual ExtendedBinning const& getBinning(const int xyz=0)=0;
   virtual void build()=0;
 
 };

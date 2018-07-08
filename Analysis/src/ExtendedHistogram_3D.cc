@@ -69,6 +69,11 @@ void ExtendedHistogram_3D::setBinning(const ExtendedBinning& binning, const int 
     if (label!="") zbinning.setLabel(label);
   }
 }
+ExtendedBinning const& ExtendedHistogram_3D::getBinning(const int xyz){
+  if (xyz==0) return xbinning;
+  else if (xyz==1) return ybinning;
+  else return zbinning;
+}
 void ExtendedHistogram_3D::build(){
   reset();
   if (xbinning.isValid() && ybinning.isValid() && zbinning.isValid()){

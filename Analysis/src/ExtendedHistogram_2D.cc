@@ -59,6 +59,10 @@ void ExtendedHistogram_2D::setBinning(const ExtendedBinning& binning, const int 
     if (label!="") ybinning.setLabel(label);
   }
 }
+ExtendedBinning const& ExtendedHistogram_2D::getBinning(const int xyz){
+  if (xyz==0) return xbinning;
+  else return ybinning;
+}
 void ExtendedHistogram_2D::build(){
   reset();
   if (xbinning.isValid() && ybinning.isValid()){

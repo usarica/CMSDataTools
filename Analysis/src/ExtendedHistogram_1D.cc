@@ -47,6 +47,9 @@ void ExtendedHistogram_1D::setBinning(const ExtendedBinning& binning, const int 
   xbinning = binning;
   if (label!="") xbinning.setLabel(label);
 }
+ExtendedBinning const& ExtendedHistogram_1D::getBinning(const int /*xyz*/){
+  return xbinning;
+}
 void ExtendedHistogram_1D::build(){
   reset();
   if (xbinning.isValid()){

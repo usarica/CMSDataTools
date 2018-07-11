@@ -240,7 +240,7 @@ void getControl2DXSlices(
     {
       TString projname=tplname + "_ProjX";
       TString projtitle = tplxtitle;
-      TH1F* hX = getHistogramSlice(hTemplates.at(t).getHistogram(), 0, 1, hTemplates.at(t).getHistogram()->GetNbinsY(), 1, hTemplates.at(t).getHistogram()->GetNbinsZ(), projname);
+      TH1F* hX = getHistogramSlice(hTemplates.at(t), 0, 1, hTemplates.at(t)->GetNbinsY(), 1, hTemplates.at(t)->GetNbinsZ(), projname);
       hX->SetOption("hist");
       hX->SetTitle(projtitle);
       savedir->WriteTObject(hX);

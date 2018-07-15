@@ -39,6 +39,7 @@ void acquireMassRatio_ProcessNominalToNominalInclusive_one(
   if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst, strGenerator)) return;
   if (proctype==ProcessHandler::kZX && strGenerator!="Data") return;
 
+  TDirectory* curdir = gDirectory;
   bool const doFixWeights=(proctype==ProcessHandler::kVBF || proctype==ProcessHandler::kZH || proctype==ProcessHandler::kWH); // Weights can be very large
   vector<TTree*> newtreeList;
 
@@ -267,6 +268,8 @@ void acquireMassRatio_ProcessNominalToNominalInclusive_one(
 
       // Fix tree weights
       if (doFixWeights){
+        TDirectory* tmpdir = gDirectory;
+        curdir->cd();
         float thrFrac=0.0005;
         TTree* newtree = fixTreeWeights(tree, binning, ZZMass, weight, 1);
         newtree->ResetBranchAddresses();
@@ -281,6 +284,7 @@ void acquireMassRatio_ProcessNominalToNominalInclusive_one(
           hname+"_Smooth", "",
           newtree, ZZMass, weight, isCategory
         );
+        tmpdir->cd();
       }
       else treeAssocList.emplace_back(
         hname+"_Smooth", "",
@@ -412,6 +416,7 @@ void acquireMassRatio_ProcessSystToNominal_one(
     return;
   }
 
+  TDirectory* curdir = gDirectory;
   bool const doFixWeights=(proctype==ProcessHandler::kVBF || proctype==ProcessHandler::kZH || proctype==ProcessHandler::kWH); // Weights can be very large
   vector<TTree*> newtreeList;
 
@@ -632,7 +637,9 @@ void acquireMassRatio_ProcessSystToNominal_one(
 
       // Fix tree weights
       if (doFixWeights){
-        float thrFrac=0.005;
+        TDirectory* tmpdir = gDirectory;
+        curdir->cd();
+        float thrFrac=0.0005;
         TTree* newtree = fixTreeWeights(tree, binning, ZZMass, weight, 1);
         newtree->ResetBranchAddresses();
         bookBranch(newtree, "weight", &weight);
@@ -646,6 +653,7 @@ void acquireMassRatio_ProcessSystToNominal_one(
           hname+"_Smooth", "",
           newtree, ZZMass, weight, isCategory
         );
+        tmpdir->cd();
       }
       else treeAssocList.emplace_back(
         hname+"_Smooth", "",

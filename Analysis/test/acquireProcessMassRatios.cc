@@ -632,7 +632,7 @@ void acquireMassRatio_ProcessSystToNominal_one(
 
       // Fix tree weights
       if (doFixWeights){
-        float thrFrac=0.0005;
+        float thrFrac=0.005;
         TTree* newtree = fixTreeWeights(tree, binning, ZZMass, weight, 1);
         newtree->ResetBranchAddresses();
         bookBranch(newtree, "weight", &weight);

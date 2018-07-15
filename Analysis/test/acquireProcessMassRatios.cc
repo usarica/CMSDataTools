@@ -271,7 +271,7 @@ void acquireMassRatio_ProcessNominalToNominalInclusive_one(
         TDirectory* tmpdir = gDirectory;
         curdir->cd();
         float thrFrac=0.0005;
-        TTree* newtree = fixTreeWeights(tree, binning, ZZMass, weight, 1);
+        TTree* newtree = fixTreeWeights(tree, binning, ZZMass, weight, 1, thrFrac);
         newtree->ResetBranchAddresses();
         bookBranch(newtree, "weight", &weight);
         bookBranch(newtree, "ZZMass", &ZZMass);
@@ -639,8 +639,8 @@ void acquireMassRatio_ProcessSystToNominal_one(
       if (doFixWeights){
         TDirectory* tmpdir = gDirectory;
         curdir->cd();
-        float thrFrac=0.0005;
-        TTree* newtree = fixTreeWeights(tree, binning, ZZMass, weight, 1);
+        float thrFrac=0.001;
+        TTree* newtree = fixTreeWeights(tree, binning, ZZMass, weight, 1, thrFrac);
         newtree->ResetBranchAddresses();
         bookBranch(newtree, "weight", &weight);
         bookBranch(newtree, "ZZMass", &ZZMass);

@@ -535,9 +535,22 @@ void makeFinalTemplates_VBF(const Channel channel, const ACHypothesis hypo, cons
       tree->SetBranchStatus("*", 0);
       bookBranch(tree, "weight", &weight);
       for (auto const& KDname:KDset) bookBranch(tree, KDname, &(KDvars[KDname]));
-      int nEntries=tree->GetEntries();
-      for (int ev=0; ev<tree->GetEntries(); ev++){
-        tree->GetEntry(ev);
+
+      TTree* newtree = tree;
+      // Fix inclusive tree weights based on inclusive binning
+      if (massregion==kOffshell){
+        TDirectory* tmpdir = gDirectory;
+        rootdir->cd();
+        newtree = fixTreeWeights(tree, binning_hmass_list[Inclusive], KDvars[KDset.back()], weight, 1);
+        newtree->ResetBranchAddresses();
+        newtree->SetBranchStatus("*", 0);
+        bookBranch(newtree, "weight", &weight);
+        for (auto const& KDname:KDset) bookBranch(newtree, KDname, &(KDvars[KDname]));
+        tmpdir->cd();
+      }
+      int nEntries=newtree->GetEntries();
+      for (int ev=0; ev<nEntries; ev++){
+        newtree->GetEntry(ev);
         progressbar(ev, nEntries);
 
         float const& vartrack = KDvars[KDset.at(0)];
@@ -588,6 +601,7 @@ void makeFinalTemplates_VBF(const Channel channel, const ACHypothesis hypo, cons
           hMass_FromNominalInclusive[cat].at(it).fill(vartrack, weight*extraweight*inclusivenorm);
         }
       } // End loop over tree events
+      if (massregion==kOffshell) delete newtree;
 
       // Smoothen bkg. mass distributions in case of on-shell
       if (massregion==kOnshell && ProcessHandleType::castIntToHypothesisType(it)==ProcessHandleType::VVBkg){

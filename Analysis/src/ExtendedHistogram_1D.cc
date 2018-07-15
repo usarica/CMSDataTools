@@ -66,7 +66,7 @@ void ExtendedHistogram_1D::reset(){
 
 void ExtendedHistogram_1D::fill(double x, double wgt){
   if (histo) histo->Fill(x, wgt);
-  if (prof_x) prof_x->Fill(x, x, wgt);
+  if (prof_x) prof_x->Fill(x, x, fabs(wgt));
 }
 
 void ExtendedHistogram_1D::rebin(ExtendedBinning const* binningX){

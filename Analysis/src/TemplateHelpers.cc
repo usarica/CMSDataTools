@@ -501,6 +501,7 @@ float TemplateHelpers::getDiscriminantSmearingStrengthCoefficient(Categorization
         break;
       }
     }
+    // Cross-category production modes should have large smaring at on-shell in L1
     if (
       hypo==ACHypothesisHelpers::kL1 && (
         ((proctype==ProcessHandler::kZH || proctype==ProcessHandler::kWH) && category==CategorizationHelpers::JJVBFTagged)

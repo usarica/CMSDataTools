@@ -83,8 +83,8 @@ void ExtendedHistogram_2D::reset(){
 
 void ExtendedHistogram_2D::fill(double x, double y, double wgt){
   if (histo) histo->Fill(x, y, wgt);
-  if (prof_x) prof_x->Fill(x, x, wgt);
-  if (prof_y) prof_y->Fill(y, y, wgt);
+  if (prof_x) prof_x->Fill(x, x, fabs(wgt));
+  if (prof_y) prof_y->Fill(y, y, fabs(wgt));
 }
 
 void ExtendedHistogram_2D::rebin(ExtendedBinning const* binningX, ExtendedBinning const* binningY, signed char condDim){

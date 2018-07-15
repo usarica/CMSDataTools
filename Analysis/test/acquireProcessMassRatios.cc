@@ -5,6 +5,7 @@
 #include "CheckSetTemplatesCategoryScheme.h"
 #include "TemplatesEventAnalyzer.h"
 #include "HistogramSmootherWithGaussianKernel.h"
+#include "fixTreeWeights.h"
 
 
 // Constants to affect the template code
@@ -38,6 +39,9 @@ void acquireMassRatio_ProcessNominalToNominalInclusive_one(
   if (!systematicAllowed(category, channel, thePerProcessHandle->getProcessType(), syst, strGenerator)) return;
   if (proctype==ProcessHandler::kZX && strGenerator!="Data") return;
 
+  bool const doFixWeights=(proctype==ProcessHandler::kVBF || proctype==ProcessHandler::kZH || proctype==ProcessHandler::kWH); // Weights can be very large
+  vector<TTree*> newtreeList;
+
   TDirectory* rootdir = gDirectory;
 
   const TString strChannel = getChannelName(channel);
@@ -47,6 +51,7 @@ void acquireMassRatio_ProcessNominalToNominalInclusive_one(
   const TString strStage = Form("Stage%i", istage);
   const TString strSystematics = getSystematicsName(syst);
   const TString strSystematics_Nominal = getSystematicsName(sNominal);
+  float const sX = getDiscriminantSmearingStrengthCoefficient(category, hypo, "ZZMass", thePerProcessHandle->getProcessType(), kOffshell);
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -258,12 +263,31 @@ void acquireMassRatio_ProcessNominalToNominalInclusive_one(
     for (unsigned int it=0; it<InputTypeSize; it++){
       TTree*& tree = treeGroup.at(it);
       TString hname = Form("MassDistribution_%s_%i", tree->GetName(), it);
-      treeAssocList.emplace_back(
+      isCategory=(it==0);
+
+      // Fix tree weights
+      if (doFixWeights){
+        float thrFrac=0.0005;
+        TTree* newtree = fixTreeWeights(tree, binning, ZZMass, weight, 1);
+        newtree->ResetBranchAddresses();
+        bookBranch(newtree, "weight", &weight);
+        bookBranch(newtree, "ZZMass", &ZZMass);
+        if (!isCategory){
+          TString catFlagName = TString("is_") + strCategory + TString("_") + getACHypothesisName(hypo);
+          bookBranch(newtree, catFlagName, &isCategory);
+        }
+        newtreeList.push_back(newtree);
+        treeAssocList.emplace_back(
+          hname+"_Smooth", "",
+          newtree, ZZMass, weight, isCategory
+        );
+      }
+      else treeAssocList.emplace_back(
         hname+"_Smooth", "",
         tree, ZZMass, weight, isCategory
       );
+
       ExtendedHistogram_1D*& hh = hMass.at(it); hh = new ExtendedHistogram_1D(hname, "", binning);
-      isCategory=(it==0);
       for (int ev=0; ev<tree->GetEntries(); ev++){
         tree->GetEntry(ev);
         if (!isCategory) continue;
@@ -358,6 +382,7 @@ void acquireMassRatio_ProcessNominalToNominalInclusive_one(
     delete gr;
   }
 
+  for (TTree*& newtree:newtreeList) delete newtree;
   for (unsigned int it=0; it<InputTypeSize; it++){ for (auto& finput:finputList.at(it)) finput->Close(); }
   foutput->Close();
   MELAout.close();
@@ -387,12 +412,16 @@ void acquireMassRatio_ProcessSystToNominal_one(
     return;
   }
 
+  bool const doFixWeights=(proctype==ProcessHandler::kVBF || proctype==ProcessHandler::kZH || proctype==ProcessHandler::kWH); // Weights can be very large
+  vector<TTree*> newtreeList;
+
   const TString strChannel = getChannelName(channel);
   const TString strCategory = getCategoryName(category);
   const TString strACHypo = getACHypothesisName(hypo);
   const TString strStage = Form("Stage%i", istage);
   const TString strSystematics = getSystematicsName(syst);
   const TString strSystematics_Nominal = getSystematicsName(sNominal);
+  float const sX = getDiscriminantSmearingStrengthCoefficient(category, hypo, "ZZMass", thePerProcessHandle->getProcessType(), kOffshell);
 
   // Setup the output directories
   TString sqrtsDir = Form("LHC_%iTeV/", theSqrts);
@@ -600,10 +629,29 @@ void acquireMassRatio_ProcessSystToNominal_one(
     for (unsigned int it=0; it<InputTypeSize; it++){
       TTree*& tree = treeGroup.at(it);
       TString hname = Form("MassDistribution_%s_%i", tree->GetName(), it);
-      treeAssocList.emplace_back(
+
+      // Fix tree weights
+      if (doFixWeights){
+        float thrFrac=0.0005;
+        TTree* newtree = fixTreeWeights(tree, binning, ZZMass, weight, 1);
+        newtree->ResetBranchAddresses();
+        bookBranch(newtree, "weight", &weight);
+        bookBranch(newtree, "ZZMass", &ZZMass);
+        if (!isCategory){
+          TString catFlagName = TString("is_") + strCategory + TString("_") + getACHypothesisName(hypo);
+          bookBranch(newtree, catFlagName, &isCategory);
+        }
+        newtreeList.push_back(newtree);
+        treeAssocList.emplace_back(
+          hname+"_Smooth", "",
+          newtree, ZZMass, weight, isCategory
+        );
+      }
+      else treeAssocList.emplace_back(
         hname+"_Smooth", "",
         tree, ZZMass, weight, isCategory
       );
+
       ExtendedHistogram_1D*& hh = hMass.at(it); hh = new ExtendedHistogram_1D(hname, "", binning);
       for (int ev=0; ev<tree->GetEntries(); ev++){
         tree->GetEntry(ev);
@@ -668,6 +716,7 @@ void acquireMassRatio_ProcessSystToNominal_one(
     }
   }
 
+  for (TTree*& newtree:newtreeList) delete newtree;
   for (unsigned int it=0; it<InputTypeSize; it++){ for (auto& finput:finputList.at(it)) finput->Close(); }
   foutput->Close();
   MELAout.close();
@@ -938,16 +987,17 @@ void acquireMassRatio_ProcessSystToNominal_PythiaMINLO_one(
       for (int ev=0; ev<tree->GetEntries(); ev++){
         tree->GetEntry(ev);
         if (!isCategory) continue;
-        if (
-          proctype==ProcessHandler::kZH && i==1 && CJLSTversion<=180224 && theDataPeriod=="2016"
-          && (
-            syst==tPythiaScaleDn || syst==tPythiaScaleUp
-            ||
-            syst==tPythiaTuneDn || syst==tPythiaTuneUp
-            )
-          ) weight /= 0.148; // FIXME: Rescale Pythia variation samples for missing filter efficiency; should be part of xsec in the future
         hh->fill(ZZMass, weight);
       }
+      // FIXME: Rescale Pythia variation samples for missing filter efficiency; should be part of xsec in the future
+      if (
+        proctype==ProcessHandler::kZH && i==1 && theDataPeriod=="2016"
+        && (
+          syst==tPythiaScaleDn || syst==tPythiaScaleUp
+          ||
+          syst==tPythiaTuneDn || syst==tPythiaTuneUp
+          )
+        ) hh->getHistogram()->Scale(1./0.148);
       MELAout << "Mass integral of " << hh->getName() << ": " << hh->getHistogram()->Integral() << endl;
       //foutput->WriteTObject(hh->getHistogram());
       //foutput->WriteTObject(hh->getProfileX());

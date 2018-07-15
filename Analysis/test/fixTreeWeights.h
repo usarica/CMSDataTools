@@ -123,7 +123,7 @@ TTree* fixTreeWeights(TTree* tree){
 // trimEdges==0 keeps underflow and overflow bins with no range restriction
 // trimEdges==1 keeps underflow and overflow bins but restricts their range
 // trimEdges==2 discards underflow and overflow bins
-TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackvar, float& weight, int trimEdges){
+TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackvar, float& weight, int trimEdges, float thrFrac=-1){
   if (!tree) return nullptr;
 
   const TString treename=tree->GetName();
@@ -145,14 +145,15 @@ TTree* fixTreeWeights(TTree* tree, const ExtendedBinning& binning, float& trackv
   const int nEntries = tree->GetEntries();
   TTree* newtree = tree->CloneTree(0);
 
-  unsigned int nMarginalMax;
-  if (nEntries>100000) nMarginalMax=100;
-  else nMarginalMax=50;
   unsigned int nMarginalMaxMult;
-  if (nEntries>100000) nMarginalMaxMult=1000;
-  else if (nEntries>50000) nMarginalMaxMult=500;
-  else nMarginalMaxMult=100;
-  const float nMarginalMaxFrac = 1./static_cast<float>(nMarginalMaxMult);
+  float nMarginalMaxFrac;
+  if (thrFrac==-1.){
+    if (nEntries>100000) nMarginalMaxMult=1000;
+    else if (nEntries>50000) nMarginalMaxMult=500;
+    else nMarginalMaxMult=100;
+    nMarginalMaxFrac = 1./static_cast<float>(nMarginalMaxMult);
+  }
+  else nMarginalMaxFrac = thrFrac;
 
   int nbins=binning.getNbins()+2;
   vector<unsigned int> counts; counts.assign(nbins, 0);
@@ -348,10 +349,7 @@ void wipeLargeWeights(std::vector<TTree*>& treeList, const ExtendedBinning& binn
       vector<unsigned int>& counts=countsList.at(it);
       const int nEntries = tree->GetEntries();
 
-      unsigned int nMarginalMax;
-      if (nEntries>100000) nMarginalMax=100;
-      else nMarginalMax=50;
-      unsigned int nMarginalMaxMult;
+      unsigned int nMarginalMaxMult=100;
       if (nEntries>100000) nMarginalMaxMult=1000;
       else if (nEntries>50000) nMarginalMaxMult=500;
       else nMarginalMaxMult=100;

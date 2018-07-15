@@ -98,9 +98,9 @@ void ExtendedHistogram_3D::reset(){
 
 void ExtendedHistogram_3D::fill(double x, double y, double z, double wgt){
   if (histo) histo->Fill(x, y, z, wgt);
-  if (prof_x) prof_x->Fill(x, x, wgt);
-  if (prof_y) prof_y->Fill(y, y, wgt);
-  if (prof_z) prof_z->Fill(z, z, wgt);
+  if (prof_x) prof_x->Fill(x, x, fabs(wgt));
+  if (prof_y) prof_y->Fill(y, y, fabs(wgt));
+  if (prof_z) prof_z->Fill(z, z, fabs(wgt));
 }
 
 void ExtendedHistogram_3D::rebin(ExtendedBinning const* binningX, ExtendedBinning const* binningY, ExtendedBinning const* binningZ, signed char condDim){

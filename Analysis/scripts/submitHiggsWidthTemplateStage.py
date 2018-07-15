@@ -39,6 +39,8 @@ class StageXBatchManager:
       self.parser.add_option("--plotcheckstage", dest="plotcheckstage", action="store_true", default=False, help="Plot checkstage")
       self.parser.add_option("--plotcheckstagesystpairs", dest="plotcheckstagesystpairs", action="store_true", default=False, help="Plot checkstage systematics ratiso to nominal")
 
+      self.parser.add_option("--batchqueue", type="string", default="default", help="Batch queue")
+
       (self.opt,self.args) = self.parser.parse_args()
 
       if not hasattr(self.opt, "process") or self.opt.process is None:
@@ -257,7 +259,7 @@ class StageXBatchManager:
 
                      strscrcmd = argstr.format(channel=ch,category=cat,achypothesis=hypo,systematic=syst,frmethod=frm)
                      strscrcmd = strscrcmd.replace(' ','') # The command passed to bash script should not contain whitespace itself
-                     jobcmd = "submitHiggsWidthTemplateStageGeneric.sh {} \({}\)".format(self.fcnname, strscrcmd)
+                     jobcmd = "submitHiggsWidthTemplateStageGeneric.sh {} \({}\) {}".format(self.fcnname, strscrcmd, self.opt.batchqueue)
                      if self.opt.interactive:
                         jobcmd = "root -l -b -q -e \"gROOT->ProcessLine(\\\".x loadLib.C\\\");gROOT->ProcessLine(\\\".x {}.c+({})\\\");\"".format(self.fcnname, strscrcmd)
                      if self.opt.dryRun:

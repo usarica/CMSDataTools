@@ -33,6 +33,8 @@ class ResolutionHarvesterBatchManager:
       self.parser.add_option("--H125only", action="store_true", default=False, help="Parameterize H125 shape only")
       self.parser.add_option("--norecompile", action="store_true", default=False, help="Do not remove executable and shared objects")
 
+      self.parser.add_option("--batchqueue", type="string", default="default", help="Batch queue")
+
       (self.opt,self.args) = self.parser.parse_args()
 
       processDict = processDictionary()
@@ -200,7 +202,7 @@ class ResolutionHarvesterBatchManager:
             # Do not submit unnecessary jobs
             strscrcmd = argstr.format(channel=ch,category=cat,processtype=self.process)
             strscrcmd = strscrcmd.replace(' ','') # The command passed to bash script should not contain whitespace itself
-            jobcmd = "submitHiggsWidthTemplateStageGeneric.sh {} \({}\)".format(self.fcnname, strscrcmd)
+            jobcmd = "submitHiggsWidthTemplateStageGeneric.sh {} \({}\) {}".format(self.fcnname, strscrcmd, self.opt.batchqueue)
             if self.opt.interactive:
                jobcmd = "root -l -b -q -e \"gROOT->ProcessLine(\\\".x loadLib.C\\\");gROOT->ProcessLine(\\\".x {}.c+({})\\\");\"".format(self.fcnname, strscrcmd)
             if self.opt.dryRun:

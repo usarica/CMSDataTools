@@ -34,6 +34,8 @@ class FinalTemplatesStageXBatchManager:
       self.parser.add_option("--interactive", dest="interactive", action="store_true", default=False, help="Do not submit jobs; run them interactively")
       self.parser.add_option("--norecompile", action="store_true", default=False, help="Do not remove executable and shared objects")
 
+      self.parser.add_option("--batchqueue", type="string", default="default", help="Batch queue")
+
       (self.opt,self.args) = self.parser.parse_args()
 
       if self.opt.process is None:
@@ -222,7 +224,7 @@ class FinalTemplatesStageXBatchManager:
 
                   strscrcmd = argstr.format(channel=ch,achypothesis=hypo,systematic=syst,anaregion=anreg)
                   strscrcmd = strscrcmd.replace(' ','') # The command passed to bash script should not contain whitespace itself
-                  jobcmd = "submitHiggsWidthROOTCommand.sh {} {} {}".format(self.cpscriptnamebare, self.fcnname, strscrcmd)
+                  jobcmd = "submitHiggsWidthROOTCommand.sh {} {} {} {}".format(self.cpscriptnamebare, self.fcnname, strscrcmd, self.opt.batchqueue)
                   if self.opt.interactive:
                      jobcmd = "root -l -b -q -e \"gROOT->ProcessLine(\\\".x loadLib.C\\\");gROOT->ProcessLine(\\\".L {}+\\\");gROOT->ProcessLine(\\\"{}({})\\\");\"".format(self.cpscriptname, self.fcnname, strscrcmd)
                   if self.opt.dryRun:

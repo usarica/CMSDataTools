@@ -3,6 +3,7 @@
 SCRIPT=$1
 FCN=$2
 FCNARGS=$3
+QUEUE=$4
 
 
 echo "Calling "$SCRIPT"::"$FCN"("$FCNARGS")"
@@ -38,10 +39,18 @@ if [[ -f $SCRIPT ]]; then
   echo $hname
   if [[ "$hname" == *"lxplus"* ]];then
     echo "Host is on LXPLUS, so need to use LXBATCH"
-    bsub -q 2nd -C 0 -o "./output/Logs/lsflog_"$extLog".txt" -e "./output/Logs/lsferr_"$extLog".err" submitHiggsWidthROOTCommand.lsf.sh $SCRIPT $FCN $FCNARGS
+    THEQUEUE="2nd"
+    if [[ "$QUEUE" != "default" ]];then
+      THEQUEUE=$QUEUE
+    fi
+    bsub -q $THEQUEUE -C 0 -o "./output/Logs/lsflog_"$extLog".txt" -e "./output/Logs/lsferr_"$extLog".err" submitHiggsWidthROOTCommand.lsf.sh $SCRIPT $FCN $FCNARGS
   elif [[ "$hname" == *"login-node"* ]]; then
     echo "Host is on MARCC, so need to use SLURM batch"
-    sbatch --output="./output/Logs/lsflog_"$extLog".txt" --error="./output/Logs/lsferr_"$extLog".err" submitHiggsWidthROOTCommand.slurm.sh $SCRIPT $FCN $FCNARGS
+    THEQUEUE="lrgmem"
+    if [[ "$QUEUE" != "default" ]];then
+      THEQUEUE=$QUEUE
+    fi
+    sbatch --output="./output/Logs/lsflog_"$extLog".txt" --error="./output/Logs/lsferr_"$extLog".err" --partition=$THEQUEUE submitHiggsWidthROOTCommand.slurm.sh $SCRIPT $FCN $FCNARGS
   fi
 
 fi

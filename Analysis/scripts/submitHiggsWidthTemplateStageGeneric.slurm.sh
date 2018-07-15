@@ -3,7 +3,6 @@
 #SBATCH --time=72:0:0
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=2
-#SBATCH --partition=lrgmem
 #SBATCH --mem=32G
 #SBATCH --mail-type=FAIL,TIME_LIMIT_80
 #SBATCH --mail-user=usarica1@jhu.edu

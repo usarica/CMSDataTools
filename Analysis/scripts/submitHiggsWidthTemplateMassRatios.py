@@ -38,6 +38,8 @@ class MassRatioStageXBatchManager:
       self.parser.add_option("--interactive", dest="interactive", action="store_true", default=False, help="Do not submit jobs; run them interactively")
       self.parser.add_option("--norecompile", action="store_true", default=False, help="Do not remove executable and shared objects")
 
+      self.parser.add_option("--batchqueue", type="string", default="default", help="Batch queue")
+
       (self.opt,self.args) = self.parser.parse_args()
 
       processDict = processDictionary()
@@ -250,7 +252,7 @@ class MassRatioStageXBatchManager:
 
                   strscrcmd = argstr.format(channel=ch,category=cat,achypothesis=hypo,systematic=syst,processtype=self.process)
                   strscrcmd = strscrcmd.replace(' ','') # The command passed to bash script should not contain whitespace itself
-                  jobcmd = "submitHiggsWidthTemplateStageGeneric.sh {} \({}\)".format(self.fcnname, strscrcmd)
+                  jobcmd = "submitHiggsWidthTemplateStageGeneric.sh {} \({}\) {}".format(self.fcnname, strscrcmd, self.opt.batchqueue)
                   if self.opt.interactive:
                      jobcmd = "root -l -b -q -e \"gROOT->ProcessLine(\\\".x loadLib.C\\\");gROOT->ProcessLine(\\\".x {}.c+({})\\\");\"".format(self.fcnname, strscrcmd)
                   if self.opt.dryRun:

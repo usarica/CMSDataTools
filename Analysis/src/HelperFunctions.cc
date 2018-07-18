@@ -272,6 +272,9 @@ TF1* HelperFunctions::getFcn_EfficiencyAtan(TSpline3* sp, double xmin, double xm
   }
   else if (s!=0.){
     a0=y/pi_over_two;
+    if (y>0.5){
+      if ((!useLowBound && s>0.) || (useLowBound && s<0.)) a0 = (1.-y)/pi_over_two;
+    }
     a1=s/a0;
     //MELAout << "a1, a0: " << a1 << ", " << a0 << endl;
 

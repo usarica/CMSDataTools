@@ -40,7 +40,8 @@ void acquireMassRatio_ProcessNominalToNominalInclusive_one(
   if (proctype==ProcessHandler::kZX && strGenerator!="Data") return;
 
   TDirectory* curdir = gDirectory;
-  bool const doFixWeights=(proctype==ProcessHandler::kVBF || proctype==ProcessHandler::kZH || proctype==ProcessHandler::kWH); // Weights can be very large
+  //bool const doFixWeights=(proctype==ProcessHandler::kVBF || proctype==ProcessHandler::kZH || proctype==ProcessHandler::kWH); // Weights can be very large
+  bool const doFixWeights=false;
   vector<TTree*> newtreeList;
 
   TDirectory* rootdir = gDirectory;
@@ -298,7 +299,7 @@ void acquireMassRatio_ProcessNominalToNominalInclusive_one(
         hh->fill(ZZMass, weight);
       }
     }
-    vector<TH1F*> hSmoothList = getSimultaneousSmoothHistograms(binning, treeAssocList, 5 + 5*(proctype==ProcessHandler::kZX));
+    vector<TH1F*> hSmoothList = getSimultaneousSmoothHistograms(binning, treeAssocList, sX);
     for (unsigned int it=0; it<InputTypeSize; it++){
       ExtendedHistogram_1D*& hh = hMass.at(it);
       TString hname = hh->getName();
@@ -343,7 +344,7 @@ void acquireMassRatio_ProcessNominalToNominalInclusive_one(
       false, true,
       nullptr
     );
-    if (grPatched->Eval(ZZMass_Supremum)<0.){
+    if (grPatched->Eval(ZZMass_Supremum)<0. || grPatched->Eval(ZZMass_Supremum)>1.){
       delete grPatched;
       grPatched = genericPatcher(
         gr, Form("%s_Patched", gr->GetName()),
@@ -352,7 +353,8 @@ void acquireMassRatio_ProcessNominalToNominalInclusive_one(
         false, false,
         nullptr
       );
-      if (grPatched->Eval(ZZMass_Supremum)<0.) MELAerr << "acquireMassRatio_ProcessNominalToNominalInclusive_one: ERROR! grPatched " << grPatched->GetName() << " is still negative at sqrts!" << endl;
+      float valAtSupremum = grPatched->Eval(ZZMass_Supremum);
+      if (valAtSupremum<0. || valAtSupremum>1.) MELAerr << "acquireMassRatio_ProcessNominalToNominalInclusive_one: ERROR! grPatched " << grPatched->GetName() << " = " << valAtSupremum << " is still negative or >1 at sqrts!" << endl;
       else useEfficiencyAtan=true;
     }
     delete grPatched;
@@ -667,7 +669,7 @@ void acquireMassRatio_ProcessSystToNominal_one(
         hh->fill(ZZMass, weight);
       }
     }
-    vector<TH1F*> hSmoothList = getSimultaneousSmoothHistograms(binning, treeAssocList, 5);
+    vector<TH1F*> hSmoothList = getSimultaneousSmoothHistograms(binning, treeAssocList, sX);
     for (unsigned int it=0; it<InputTypeSize; it++){
       ExtendedHistogram_1D*& hh = hMass.at(it);
       TString hname = hh->getName();

@@ -536,18 +536,22 @@ void makeFinalTemplates_TT(const Channel channel, const ACHypothesis hypo, const
         progressbar(ev, nEntries);
 
         float const& vartrack = KDvars[KDset.at(0)];
-        float inclusivenorm=1;
+        float constexpr inclusivenorm=1; // When normalization comes from something other than POWHEG, change this line to non-constexpr and the two commented lines below should be uncommmented.
         float one=1;
 
         for (MassRatioObject& systratio:CategorizationSystRatios){
           if (systratio.category==Inclusive){
             one=std::max(0., systratio.interpolators[treename]->Eval(vartrack));
-            if (one==0.) inclusivenorm=0;
-            else inclusivenorm/=one;
+            //if (one==0.) inclusivenorm=0;
+            //else inclusivenorm/=one;
             break;
           }
         }
 
+        if (ev==0) MELAout << "Inclusive systematic/normalization: " << one << "/" << inclusivenorm << endl;
+
+        unordered_map<Category, float> extraweightMap;
+        float sumExtraWeights=0;
         for (Category& cat:catList){
           float extraweight=one;
           if (cat==Untagged){
@@ -578,9 +582,16 @@ void makeFinalTemplates_TT(const Channel channel, const ACHypothesis hypo, const
               }
             }
           }
-          if (ev==0) MELAout << "Filling category hist with weight/extraweight/inclusivenorm = " << weight << " / " << extraweight << " / " << inclusivenorm << endl;
+          float overallExtraWeight = extraweight*inclusivenorm;
+          extraweightMap[cat] = overallExtraWeight;
+          if (cat!=Inclusive) sumExtraWeights += overallExtraWeight;
+        }
+        for (Category& cat:catList){ if (cat!=Inclusive) extraweightMap[cat] *= extraweightMap[Inclusive]/sumExtraWeights; }
+        for (Category& cat:catList){
+          float const& extraweight = extraweightMap[cat];
+          if (ev==0) MELAout << "Filling category hist with weight/extraweight = " << weight << " / " << extraweight << endl;
           if (vartrack<binning_hmass_thresholds[cat].first || vartrack>binning_hmass_thresholds[cat].second) continue;
-          hMass_FromNominalInclusive[cat].at(it).fill(vartrack, weight*extraweight*inclusivenorm);
+          hMass_FromNominalInclusive[cat].at(it).fill(vartrack, weight*extraweight);
         }
       } // End loop over tree events
     } // End loop over trees

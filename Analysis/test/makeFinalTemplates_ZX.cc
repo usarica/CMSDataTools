@@ -499,7 +499,7 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
       } // End loop over tree events
 
       // Smoothen bkg. mass distributions in case of on-shell
-      if (massregion==kOnshell && ProcessHandleType::castIntToHypothesisType(it)==ProcessHandleType::VVBkg){
+      if (massregion==kOnshell){
         float sumIntegrals=0;
         float integralInclusive=0;
         for (Category& cat:catList){

@@ -82,6 +82,8 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
     unordered_map<TString, float*>::const_iterator it_genHEPMCweight;
     if (HelperFunctions::getUnorderedMapIterator("genHEPMCweight", valfloats, it_genHEPMCweight)) // Probably registered all others as well
       wgt *= (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]))*(*(valfloats["PUWeight"]))*(*(it_genHEPMCweight->second));
+    if (wgt==0.){ validProducts=false; return validProducts; } // Exit here if wgt==0
+
     for (auto rewgt_it=Rewgtbuilders.cbegin(); rewgt_it!=Rewgtbuilders.cend(); rewgt_it++){
       auto& rewgtBuilder = rewgt_it->second;
       if (rewgt_it->first=="MELARewgt"){

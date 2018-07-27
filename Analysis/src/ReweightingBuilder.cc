@@ -36,6 +36,10 @@ float ReweightingBuilder::eval(CJLSTTree* theTree) const{
   float divisor=1; if (divideByNSample) divisor=theTree->getNGenNoPU();
   float weight=0;
   if (rule && divisor!=0.) weight=rule(theTree, it->second)/divisor;
+  if (!checkVarNanInf(weight)){
+    MELAerr << "ReweightingBuilder::eval(" << theTree->sampleIdentifier << ") weight (" << weight << ") is nan/inf!" << endl;
+    weight=0;
+  }
   if (!allowNegativeWeights && weight<0.){
     weight=0;
     MELAerr << "ReweightingBuilder::eval: Negative weight encountered: "; for (auto& v:it->second) MELAerr << *v << ", "; MELAerr << endl;

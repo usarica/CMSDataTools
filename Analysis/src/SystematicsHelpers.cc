@@ -13,6 +13,10 @@ SystematicsHelpers::YieldSystematic::YieldSystematic(const std::vector<Reweighti
 float SystematicsHelpers::YieldSystematic::eval(CJLSTTree* theTree) const{
   float weight=0;
   if (rule) weight=rule(theTree, evaluators);
+  if (!HelperFunctions::checkVarNanInf(weight)){
+    MELAerr << "SystematicsHelpers::YieldSystematic::eval(" << theTree->sampleIdentifier << ") weight (" << weight << ") is nan/inf!" << endl;
+    weight=0;
+  }
   return weight;
 }
 

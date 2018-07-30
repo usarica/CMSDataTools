@@ -521,11 +521,16 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
       strVarsNorm.push_back("KFactor_QCD_ggZZ_Nominal");
     }
     for (CJLSTTree*& tree:trees){ for (TString const& s:strVars) tree->bookBranch<float>(s, 1); for (TString const& s:strVarsNorm) tree->bookBranch<float>(s, 1); }
+    bool const mayNeedThreshold=((proc==ProcessHandler::kTT || proc==ProcessHandler::kVBF || proc==ProcessHandler::kZH || proc==ProcessHandler::kWH) && strGenerator=="POWHEG");
     rewgtbuilder = new ReweightingBuilder(strVars, computeFcn); evaluators.push_back(rewgtbuilder);
+    if (mayNeedThreshold) rewgtbuilder->setWeightThresholdReference(1);
     if (!strVarsNorm.empty()){ normbuilder = new ReweightingBuilder(strVarsNorm, computeFcn); evaluators.push_back(normbuilder); }
     for (ReweightingBuilder*& rb:evaluators){
+      bool const needThreshold=(rb==rewgtbuilder && mayNeedThreshold);
       rb->setWeightBinning(binning);
-      for (CJLSTTree*& tree:trees) rb->setupWeightVariables(tree, (normbuilder ? 1 : -1), 0);
+      float fractionRequirement = (normbuilder ? 1. : -1.);
+      if (needThreshold) fractionRequirement = 0.999;
+      for (CJLSTTree*& tree:trees) rb->setupWeightVariables(tree, fractionRequirement, 0);
     }
     res = new YieldSystematic(evaluators, (normbuilder ? SystematicsHelpers::getNormalizedSystematic : SystematicsHelpers::getRawSystematic));
   }
@@ -538,11 +543,16 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
       strVarsNorm.push_back("KFactor_QCD_ggZZ_Nominal");
     }
     for (CJLSTTree*& tree:trees){ for (TString const& s:strVars) tree->bookBranch<float>(s, 1); for (TString const& s:strVarsNorm) tree->bookBranch<float>(s, 1); }
+    bool const mayNeedThreshold=((proc==ProcessHandler::kTT || proc==ProcessHandler::kVBF || proc==ProcessHandler::kZH || proc==ProcessHandler::kWH) && strGenerator=="POWHEG");
     rewgtbuilder = new ReweightingBuilder(strVars, computeFcn); evaluators.push_back(rewgtbuilder);
+    if (mayNeedThreshold) rewgtbuilder->setWeightThresholdReference(1);
     if (!strVarsNorm.empty()){ normbuilder = new ReweightingBuilder(strVarsNorm, computeFcn); evaluators.push_back(normbuilder); }
     for (ReweightingBuilder*& rb:evaluators){
+      bool const needThreshold=(rb==rewgtbuilder && mayNeedThreshold);
       rb->setWeightBinning(binning);
-      for (CJLSTTree*& tree:trees) rb->setupWeightVariables(tree, (normbuilder ? 1 : -1), 0);
+      float fractionRequirement = (normbuilder ? 1. : -1.);
+      if (needThreshold) fractionRequirement = 0.999;
+      for (CJLSTTree*& tree:trees) rb->setupWeightVariables(tree, fractionRequirement, 0);
     }
     res = new YieldSystematic(evaluators, (normbuilder ? SystematicsHelpers::getNormalizedSystematic : SystematicsHelpers::getRawSystematic));
   }

@@ -14,6 +14,7 @@ using namespace HelperFunctions;
 ReweightingBuilder::ReweightingBuilder(TString inStrWeight, ReweightingFunctions::ReweightingFunction_t infcn) :
   allowNegativeWeights(true),
   divideByNSample(false),
+  weightThresholdReference(0),
   rule(infcn)
 {
   if (inStrWeight!="") strWeights.push_back(inStrWeight);
@@ -21,6 +22,7 @@ ReweightingBuilder::ReweightingBuilder(TString inStrWeight, ReweightingFunctions
 ReweightingBuilder::ReweightingBuilder(std::vector<TString> inStrWeights, ReweightingFunctions::ReweightingFunction_t infcn) :
   allowNegativeWeights(true),
   divideByNSample(false),
+  weightThresholdReference(0),
   rule(infcn),
   strWeights(inStrWeights)
 {}
@@ -63,7 +65,8 @@ int ReweightingBuilder::findBin(CJLSTTree* theTree) const{
 }
 void ReweightingBuilder::rejectNegativeWeights(const bool flag){ allowNegativeWeights = !flag; }
 void ReweightingBuilder::setDivideByNSample(const bool flag){ divideByNSample = flag; }
-void ReweightingBuilder::setWeightBinning(const ExtendedBinning& binning){ weightBinning=binning; }
+void ReweightingBuilder::setWeightBinning(const ExtendedBinning& binning){ weightBinning = binning; }
+void ReweightingBuilder::setWeightThresholdReference(const float& weightThresholdReference_){ weightThresholdReference = weightThresholdReference_; }
 
 void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fractionRequirement, unsigned int minimumNevents){
   MELAout << "ReweightingBuilder[" << strWeights << "]::setupWeightVariables is called for tree " << theTree->sampleIdentifier << "." << endl;
@@ -120,7 +123,7 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
 
     float wgt = this->eval(theTree);
     float const& orderingVal=*orderingValRef;
-    SimpleEntry theEntry(0, fabs(wgt), wgt);
+    SimpleEntry theEntry(0, fabs(wgt-weightThresholdReference), wgt);
 
     int bin=0;
     if (!noBoundaries) bin = binning.getBin(orderingVal);
@@ -176,14 +179,18 @@ void ReweightingBuilder::setupWeightVariables(CJLSTTree* theTree, float fraction
     KahanAccumulator<float> sumsq;
     for (auto& theEntry:index){
       float weight = theEntry.weight;
-      if (fabs(weight)>threshold) weight = pow(threshold, 2)/weight;
+      float weightRel = weight-weightThresholdReference;
+      if (fabs(weightRel)>threshold){
+        weightRel = pow(threshold, 2)/weightRel;
+        weight = weightRel + weightThresholdReference;
+      }
       sum += weight;
       sumsq += pow(weight, 2);
     }
     // Assign the sum
     sumPostThrWeights[theTree].at(ibin)=sum;
     sumPostThrSqWeights[theTree].at(ibin)=sumsq;
-    if (sumEvents[theTree].at(ibin)>0) MELAout << "\t- Threshold at bin " << ibin << ": " << threshold
+    if (sumEvents[theTree].at(ibin)>0) MELAout << "\t- Threshold at bin " << ibin << ": " << weightThresholdReference << " +- " << threshold
       << ", sum of post-threshold weights: " << sumPostThrWeights[theTree].at(ibin) << " +- " << sqrt(sumPostThrSqWeights[theTree].at(ibin))
       << ", Nevents: " << sumNonZeroWgtEvents[theTree].at(ibin) << " / " << sumEvents[theTree].at(ibin)
       << endl;
@@ -206,28 +213,40 @@ std::vector<float> ReweightingBuilder::getWeightThresholds(CJLSTTree* theTree) c
 }
 float ReweightingBuilder::getPostThresholdWeight(CJLSTTree* theTree) const{
   float weight = this->eval(theTree);
+  float weightRel = weight-weightThresholdReference;
   int bin=this->findBin(theTree);
   if (bin>=0){
     const float& threshold=weightThresholds.find(theTree)->second.at(bin);
-    if (threshold>=0. && fabs(weight)>threshold) weight = pow(threshold, 2)/weight;
+    if (threshold>=0. && fabs(weightRel)>threshold){
+      weightRel = pow(threshold, 2)/weightRel;
+      weight = weightRel + weightThresholdReference;
+    }
   }
   return weight;
 }
 float ReweightingBuilder::getPostThresholdSqWeight(CJLSTTree* theTree) const{
   float weight = this->eval(theTree);
+  float weightRel = weight-weightThresholdReference;
   int bin=this->findBin(theTree);
   if (bin>=0){
     const float& threshold=weightThresholds.find(theTree)->second.at(bin);
-    if (threshold>=0. && fabs(weight)>threshold) weight = pow(threshold, 2)/weight;
+    if (threshold>=0. && fabs(weightRel)>threshold){
+      weightRel = pow(threshold, 2)/weightRel;
+      weight = weightRel + weightThresholdReference;
+    }
   }
   return pow(weight, 2);
 }
 float ReweightingBuilder::getPostThresholdSqWeightInv(CJLSTTree* theTree) const{
   float weight = this->eval(theTree);
+  float weightRel = weight-weightThresholdReference;
   int bin=this->findBin(theTree);
   if (bin>=0){
     const float& threshold=weightThresholds.find(theTree)->second.at(bin);
-    if (threshold>=0. && fabs(weight)>threshold) weight = pow(threshold, 2)/weight;
+    if (threshold>=0. && fabs(weightRel)>threshold){
+      weightRel = pow(threshold, 2)/weightRel;
+      weight = weightRel + weightThresholdReference;
+    }
   }
   return (weight!=0. ? pow(weight, -2) : 0.);
 }

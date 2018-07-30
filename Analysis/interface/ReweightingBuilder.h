@@ -13,6 +13,7 @@ public:
 protected:
   bool allowNegativeWeights;
   bool divideByNSample;
+  float weightThresholdReference;
   ReweightingFunctions::ReweightingFunction_t rule;
   std::vector<TString> strWeights;
 
@@ -48,6 +49,7 @@ public:
   void rejectNegativeWeights(const bool flag);
   void setDivideByNSample(const bool flag);
   void setWeightBinning(const ExtendedBinning& binning);
+  void setWeightThresholdReference(const float& weightThresholdReference_);
   void setupWeightVariables(CJLSTTree* theTree, float fractionRequirement=0.999, unsigned int minimumNevents=0);
   std::vector<CJLSTTree*> getRegisteredTrees() const;
 

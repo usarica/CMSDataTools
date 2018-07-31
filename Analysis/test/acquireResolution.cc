@@ -395,9 +395,8 @@ void acquireResolution_one(const Channel channel, const Category category, const
   //binning_mass.addBinBoundary(theSqrts*1000.);
   if (mHListGlobal.size()>2){ // Approximate ZZMass binning with GenHMass binning
     for (unsigned int imh=0; imh<mHListGlobal.size()-1; imh++){
-    if (mHListGlobal.at(imh)>160){continue;} 
-    binning_mass.addBinBoundary((mHListGlobal.at(imh) + mHListGlobal.at(imh+1)) / 2.);
-    
+      if (mHListGlobal.at(imh)>160.) continue;
+      binning_mass.addBinBoundary((mHListGlobal.at(imh) + mHListGlobal.at(imh+1)) / 2.);
     }
   }
   else{
@@ -405,6 +404,8 @@ void acquireResolution_one(const Channel channel, const Category category, const
     binning_mass.addBinBoundary(124);
     binning_mass.addBinBoundary(140);
     binning_mass.addBinBoundary(160);
+    //binning_mass.addBinBoundary(220);
+    //binning_mass.addBinBoundary(1000);
   }
 
   RooRealVar var_mreco("var_mreco", "m^{reco}_{4l} (GeV)", 125, 70, 13000);
@@ -797,39 +798,10 @@ void acquireResolution_one(const Channel channel, const Category category, const
 
   /*
   // Fit all parameters simultaneously
-  //var_mtrue.setConstant(true);
   res_uncvar_e.setConstant(true);
   res_uncvar_mu.setConstant(true);
   scale_uncvar_e.setConstant(true);
   scale_uncvar_mu.setConstant(true);
-  for (auto& var:CB_parameter_list) var.setConstant(true);
-  for (unsigned int const& ivar:prelimfitOrder)  
-  {
-    CB_parameter_list.at(ivar).setConstant(false);
-
-    RooLinkedList cmdList;
-    RooCmdArg saveArg = RooFit::Save(true); cmdList.Add((TObject*) &saveArg);
-    RooCmdArg condObsArg = RooFit::ConditionalObservables(conditionals); cmdList.Add((TObject*) &condObsArg);
-    RooCmdArg sumw2Arg = RooFit::SumW2Error(true); cmdList.Add((TObject*) &sumw2Arg);
-    RooCmdArg hesseArg = RooFit::Hesse(false); cmdList.Add((TObject*) &hesseArg);
-    RooCmdArg minimizerStrategyArg = RooFit::Strategy(0); cmdList.Add((TObject*) &minimizerStrategyArg);
-    // Misc. options
-    RooCmdArg timerArg = RooFit::Timer(true); cmdList.Add((TObject*) &timerArg);
-    RooCmdArg printlevelArg = RooFit::PrintLevel(-1); cmdList.Add((TObject*) &printlevelArg);
-    //RooCmdArg printerrorsArg = RooFit::PrintEvalErrors(-1); cmdList.Add((TObject*) &printerrorsArg);
-
-    RooFitResult* fitResult=incl_pdf.fitTo(incldata, cmdList);
-    if (fitResult){
-      int fitStatus = fitResult->status();
-      cout << "Fit status is " << fitStatus << endl;
-      cout << "Fit properties:" << endl;
-      fitResult->Print("v");
-    }
-    delete fitResult;
-  }
-  
-  unsigned int nfits=5;
-  for (unsigned int ifit=0; ifit<nfits; ifit++ )
   {
     RooLinkedList cmdList;
     RooCmdArg saveArg = RooFit::Save(true); cmdList.Add((TObject*) &saveArg);
@@ -850,18 +822,12 @@ void acquireResolution_one(const Channel channel, const Category category, const
       fitResult->Print("v");
     }
     delete fitResult;
-
   }
-
-
-
-
-
   res_uncvar_e.setConstant(false);
   res_uncvar_mu.setConstant(false);
   scale_uncvar_e.setConstant(false);
   scale_uncvar_mu.setConstant(false);
-*/  
+  */
 
   {
     RooAbsData* reducedData=incldata.reduce("var_mreco>=105 && var_mreco<=140 && var_mtrue>=124.5 && var_mtrue<=125.5");
@@ -1442,9 +1408,9 @@ void acquireH125OnshellMassShape_rederive_one(const Channel channel, const Categ
   RooRealVar scale_uncvar_mu(getSystematicsCombineName_NoDownUp(category, channel, proctype, eLepScaleMuDn), "CMS_scale_m", 0, -7, 7);
   RooConstVar scale_uncval_center(prefix + "final_CB_CMS_scale_emcenter", "", 0);
   RooRealVar scale_uncval_e_up(prefix + "final_CB_CMS_scale_eUp", "", 0, 0., 0.5); scale_uncval_e_up.setConstant(true);
-  RooRealVar scale_uncval_e_dn(prefix + "final_CB_CMS_scale_eDown", "",0 , -0.5, 0.); scale_uncval_e_dn.setConstant(true);
+  RooRealVar scale_uncval_e_dn(prefix + "final_CB_CMS_scale_eDown", "", 0, -0.5, 0.); scale_uncval_e_dn.setConstant(true);
   RooRealVar scale_uncval_mu_up(prefix + "final_CB_CMS_scale_mUp", "", 0, 0., 0.5); scale_uncval_mu_up.setConstant(true);
-  RooRealVar scale_uncval_mu_dn(prefix + "final_CB_CMS_scale_mDown", "",0, -0.5, 0.); scale_uncval_mu_dn.setConstant(true);
+  RooRealVar scale_uncval_mu_dn(prefix + "final_CB_CMS_scale_mDown", "", 0, -0.5, 0.); scale_uncval_mu_dn.setConstant(true);
   RooArgList scalemeanthetaarglist; RooArgList scalemeanfcnarglist;
   scalemeanfcnarglist.add(scale_uncval_center);
   if (channel==k2e2mu){

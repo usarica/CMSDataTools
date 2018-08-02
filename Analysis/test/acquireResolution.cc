@@ -392,9 +392,10 @@ void acquireResolution_one(const Channel channel, const Category category, const
   // Setup the binning
   ExtendedBinning binning_mass("ZZMass");
   binning_mass.addBinBoundary(70.);
-  binning_mass.addBinBoundary(theSqrts*1000.);
+  //binning_mass.addBinBoundary(theSqrts*1000.);
   if (mHListGlobal.size()>2){ // Approximate ZZMass binning with GenHMass binning
     for (unsigned int imh=0; imh<mHListGlobal.size()-1; imh++){
+      if (mHListGlobal.at(imh)>160.) continue;
       binning_mass.addBinBoundary((mHListGlobal.at(imh) + mHListGlobal.at(imh+1)) / 2.);
     }
   }
@@ -403,8 +404,8 @@ void acquireResolution_one(const Channel channel, const Category category, const
     binning_mass.addBinBoundary(124);
     binning_mass.addBinBoundary(140);
     binning_mass.addBinBoundary(160);
-    binning_mass.addBinBoundary(220);
-    binning_mass.addBinBoundary(1000);
+    //binning_mass.addBinBoundary(220);
+    //binning_mass.addBinBoundary(1000);
   }
 
   RooRealVar var_mreco("var_mreco", "m^{reco}_{4l} (GeV)", 125, 70, 13000);
@@ -532,7 +533,7 @@ void acquireResolution_one(const Channel channel, const Category category, const
       }
       delete fitResult;
     }
-    const unsigned int nit=3;
+    const unsigned int nit=5;
     bool fitSuccessful=false;
     for (unsigned int it=0; it<nit; it++){
       RooLinkedList cmdList;
@@ -604,7 +605,7 @@ void acquireResolution_one(const Channel channel, const Category category, const
   const unsigned int npolypars = nnodes + (polyndof-2)*(nfcn-2) + (polyndof-1)*2;
   vector<RooRealVar> nodeVars;
   for (unsigned int inode=0; inode<nnodes; inode++){
-    double mean=(inode==0 ? 200 : 1000);
+    double mean=(inode==0 ? 122 : 128);
     double low=mean*0.8;
     double high=mean*1.2;
     nodeVars.emplace_back(prefix+Form("CB_node_%i", inode), "", mean, low, high);

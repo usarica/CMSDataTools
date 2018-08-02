@@ -568,7 +568,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
 
         for (MassRatioObject& systratio:CategorizationSystRatios_POWHEG){
           if (systratio.category==Inclusive){
-            one=std::max(0., systratio.interpolators[treename]->Eval(KDvars[vartrack]));
+            one=std::max(0., systratio.interpolators[treename]->Eval(vartrack));
             if (one==0.) inclusivenorm=0;
             else inclusivenorm/=one;
             break;
@@ -576,7 +576,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         }
         for (MassRatioObject& systratio:CategorizationSystRatios_MCFM){
           if (systratio.category==Inclusive){
-            inclusivenorm *= std::max(0., systratio.interpolators[treename]->Eval(KDvars[vartrack]));
+            inclusivenorm *= std::max(0., systratio.interpolators[treename]->Eval(vartrack));
             break;
           }
         }
@@ -592,11 +592,11 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
               float systadj=1;
               for (MassRatioObject& systratio:CategorizationSystRatios_POWHEG){
                 if (systratio.category==cateff.category){
-                  systadj = std::max(0., systratio.interpolators[treename]->Eval(KDvars[vartrack]));
+                  systadj = std::max(0., systratio.interpolators[treename]->Eval(vartrack));
                   break;
                 }
               }
-              extraweight -= systadj * std::min(1., std::max(0., cateff.interpolators[treename]->Eval(KDvars[vartrack])));
+              extraweight -= systadj * std::min(1., std::max(0., cateff.interpolators[treename]->Eval(vartrack)));
             }
             extraweight = std::min(one, std::max(float(0), extraweight));
           }
@@ -604,10 +604,10 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
             extraweight=0;
             for (MassRatioObject& cateff:CategorizationEfficiencies){
               if (cateff.category==cat){
-                extraweight = std::min(1., std::max(0., cateff.interpolators[treename]->Eval(KDvars[vartrack])));
+                extraweight = std::min(1., std::max(0., cateff.interpolators[treename]->Eval(vartrack)));
                 for (MassRatioObject& systratio:CategorizationSystRatios_POWHEG){
                   if (systratio.category==cateff.category){
-                    extraweight *= std::max(0., systratio.interpolators[treename]->Eval(KDvars[vartrack]));
+                    extraweight *= std::max(0., systratio.interpolators[treename]->Eval(vartrack));
                     break;
                   }
                 }

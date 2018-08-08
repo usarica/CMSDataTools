@@ -53,13 +53,14 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
     //product.setNamedVal("MH", tree->MHVal);
 
     // Get main observables
-    float& ZZMass = *(valfloats["ZZMass"]);
-    product.setNamedVal("ZZMass", ZZMass);
-    unordered_map<TString, float*>::const_iterator it_GenHMass;
-    if (HelperFunctions::getUnorderedMapIterator("GenHMass", valfloats, it_GenHMass)){
-      float const& GenHMass = *(it_GenHMass->second);
-      product.setNamedVal("GenHMass", GenHMass);
-    }
+    float const* ZZMassPtr=nullptr;
+    if (this->getConsumed("ZZMass", ZZMassPtr)) product.setNamedVal("ZZMass", *ZZMassPtr);
+    else{ MELAerr << "TemplatesEventAnalyzer::runEvent: ZZMass has to be consumed!" << endl; exit(1); }
+    float const* GenHMassPtr=nullptr;
+    if (this->getConsumed("GenHMass", GenHMassPtr)) product.setNamedVal("GenHMass", *GenHMassPtr);
+
+    // Just to make coding simpler
+    float const& ZZMass=*ZZMassPtr;
 
     if (!mass_boundaries.empty()){
       bool mass_range_found=false;
@@ -79,9 +80,8 @@ bool TemplatesEventAnalyzer::runEvent(CJLSTTree* tree, float const& externalWgt,
 
     // Construct the weights
     float wgt = externalWgt;
-    unordered_map<TString, float*>::const_iterator it_genHEPMCweight;
-    if (HelperFunctions::getUnorderedMapIterator("genHEPMCweight", valfloats, it_genHEPMCweight)) // Probably registered all others as well
-      wgt *= (*(valfloats["dataMCWeight"]))*(*(valfloats["trigEffWeight"]))*(*(valfloats["PUWeight"]))*(*(it_genHEPMCweight->second));
+    std::vector<TString> commonWeightsSearch{ "genHEPMCweight", "trigEffWeight", "PUWeight", "dataMCWeight" };
+    for (TString& wgtname:commonWeightsSearch){ float const* wgtptr=nullptr; if (this->getConsumed(wgtname, wgtptr)) wgt *= *wgtptr; }
     if (wgt==0.){ validProducts=false; return validProducts; } // Exit here if wgt==0
 
     for (auto rewgt_it=Rewgtbuilders.cbegin(); rewgt_it!=Rewgtbuilders.cend(); rewgt_it++){

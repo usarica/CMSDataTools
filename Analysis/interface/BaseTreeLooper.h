@@ -51,6 +51,13 @@ protected:
   template<typename T> bool linkConsumed(CJLSTTree* tree);
   bool linkConsumes(CJLSTTree* tree);
 
+  // Get consumed map
+  template<typename T> void getConsumedMap(std::unordered_map<TString, T*>*& theMap);
+  template<typename T> void getConsumedMap(std::unordered_map<TString, T*> const*& theMap) const;
+
+  // Get consumed
+  template<typename T> bool getConsumed(TString name, T const*& val) const;
+
   // External dependencies
   std::unordered_map<TString, std::pair<Discriminant*, std::vector<TString>>> KDbuilders;
   std::unordered_map<TString, ReweightingBuilder*> Rewgtbuilders;

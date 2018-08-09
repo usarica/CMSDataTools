@@ -529,7 +529,7 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
       bool const needThreshold=(rb==rewgtbuilder && mayNeedThreshold);
       rb->setWeightBinning(binning);
       float fractionRequirement = (normbuilder ? 1. : -1.);
-      if (needThreshold) fractionRequirement = 0.999;
+      if (needThreshold) fractionRequirement = 0.99;
       for (CJLSTTree*& tree:trees) rb->setupWeightVariables(tree, fractionRequirement, 0);
     }
     res = new YieldSystematic(evaluators, (normbuilder ? SystematicsHelpers::getNormalizedSystematic : SystematicsHelpers::getRawSystematic));
@@ -551,7 +551,7 @@ SystematicsHelpers::SystematicsClass* SystematicsHelpers::constructSystematic(
       bool const needThreshold=(rb==rewgtbuilder && mayNeedThreshold);
       rb->setWeightBinning(binning);
       float fractionRequirement = (normbuilder ? 1. : -1.);
-      if (needThreshold) fractionRequirement = 0.999;
+      if (needThreshold) fractionRequirement = 0.99;
       for (CJLSTTree*& tree:trees) rb->setupWeightVariables(tree, fractionRequirement, 0);
     }
     res = new YieldSystematic(evaluators, (normbuilder ? SystematicsHelpers::getNormalizedSystematic : SystematicsHelpers::getRawSystematic));

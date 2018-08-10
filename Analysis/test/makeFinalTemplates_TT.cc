@@ -334,6 +334,11 @@ void makeFinalTemplates_TT(const Channel channel, const ACHypothesis hypo, const
     ||
     syst==SystematicsHelpers::eLepResMuDn || syst==SystematicsHelpers::eLepResMuUp
     );
+  bool forceUseNominalInShapes = (
+    syst==SystematicsHelpers::eLepSFEleDn || syst==SystematicsHelpers::eLepSFEleUp
+    ||
+    syst==SystematicsHelpers::eLepSFMuDn || syst==SystematicsHelpers::eLepSFMuUp
+    );
 
   const TString strChannel = getChannelName(channel);
   const TString strACHypo = getACHypothesisName(hypo);
@@ -662,7 +667,7 @@ void makeFinalTemplates_TT(const Channel channel, const ACHypothesis hypo, const
       channel, cat, hypo, syst,
       istage, fixedDate, inputProcessHandle, "POWHEG",
       finputs, treeList,
-      needsKDreweighting || needsExternalResolution
+      needsKDreweighting || needsExternalResolution || forceUseNominalInShapes
     );
     MELAout << "\t-- " << (success ? "Success!" : "failure!") << endl;
 

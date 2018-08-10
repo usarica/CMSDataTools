@@ -246,7 +246,9 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
     for (auto& cat:catList) doProceed |= (systematicAllowed(cat, channel, proctype, syst, "Data"));
     if (!doProceed) return;
   }
-  bool needsKDreweighting = false;
+  // constexpr for now
+  constexpr bool needsKDreweighting = false;
+  constexpr bool forceUseNominalInShapes = false;
 
   const TString strChannel = getChannelName(channel);
   const TString strACHypo = getACHypothesisName(hypo);
@@ -569,7 +571,7 @@ void makeFinalTemplates_ZX(const Channel channel, const ACHypothesis hypo, const
       channel, cat, syst,
       istage, fixedDate, inputProcessHandle, "Data",
       finputs, treeList,
-      false
+      needsKDreweighting || forceUseNominalInShapes
     );
     MELAout << "\t-- " << (success ? "Success!" : "failure!") << endl;
 

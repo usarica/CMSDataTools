@@ -245,6 +245,11 @@ void makeFinalTemplates_QQBkg(const Channel channel, const ACHypothesis hypo, co
     ||
     syst==tPythiaTuneDn || syst==tPythiaTuneUp
     );
+  bool forceUseNominalInShapes = (
+    syst==SystematicsHelpers::eLepSFEleDn || syst==SystematicsHelpers::eLepSFEleUp
+    ||
+    syst==SystematicsHelpers::eLepSFMuDn || syst==SystematicsHelpers::eLepSFMuUp
+    );
 
   const TString strChannel = getChannelName(channel);
   const TString strACHypo = getACHypothesisName(hypo);
@@ -563,7 +568,7 @@ void makeFinalTemplates_QQBkg(const Channel channel, const ACHypothesis hypo, co
       channel, cat, syst,
       istage, fixedDate, inputProcessHandle, "POWHEG",
       finputs, treeList,
-      needsKDreweighting
+      needsKDreweighting || forceUseNominalInShapes
     );
     MELAout << "\t-- " << (success ? "Success!" : "failure!") << endl;
 

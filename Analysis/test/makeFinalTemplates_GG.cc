@@ -337,6 +337,11 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
     ||
     syst==SystematicsHelpers::eLepResMuDn || syst==SystematicsHelpers::eLepResMuUp
     );
+  bool forceUseNominalInShapes = (
+    syst==SystematicsHelpers::eLepSFEleDn || syst==SystematicsHelpers::eLepSFEleUp
+    ||
+    syst==SystematicsHelpers::eLepSFMuDn || syst==SystematicsHelpers::eLepSFMuUp
+    );
 
   const TString strChannel = getChannelName(channel);
   const TString strACHypo = getACHypothesisName(hypo);
@@ -719,7 +724,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       channel, cat, hypo, syst,
       istage, fixedDate, inputProcessHandle, "POWHEG",
       finputs_POWHEG, treeList_POWHEG,
-      needsKDreweighting || needsExternalResolution
+      needsKDreweighting || needsExternalResolution || forceUseNominalInShapes
     );
     MELAout << "\t-- " << (success_POWHEG ? "Success!" : "Failure!") << endl;
     MELAout << "\t- Obtaining MCFM samples..." << endl;
@@ -727,7 +732,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
       channel, cat, hypo, syst,
       istage, fixedDate, inputProcessHandle, "MCFM",
       finputs_MCFM, treeList_MCFM,
-      needsKDreweighting || needsExternalResolution
+      needsKDreweighting || needsExternalResolution || forceUseNominalInShapes
     );
     MELAout << "\t-- " << (success_MCFM ? "Success!" : "Failure!") << endl;
     bool success_JHUGen = false;
@@ -737,7 +742,7 @@ void makeFinalTemplates_GG(const Channel channel, const ACHypothesis hypo, const
         channel, cat, hypo, syst,
         istage, fixedDate, inputProcessHandle, "JHUGen",
         finputs_JHUGen, treeList_JHUGen,
-        needsKDreweighting || needsExternalResolution
+        needsKDreweighting || needsExternalResolution || forceUseNominalInShapes
       );
       MELAout << "\t-- " << (success_JHUGen ? "Success!" : "Failure!") << endl;
     }

@@ -514,12 +514,14 @@ template <typename T> double HelperFunctions::getHistogramIntegralAndError(T con
     else{
       int xb[2]={ std::max(1, std::min(histo->GetNbinsX(), ix)), std::max(1, std::min(histo->GetNbinsX(), jx)) };
 
-      res=histo->IntegralAndError(xb[0], xb[1], reserror, "width");
-
-      double integralinside, integralerrorinside;
-      integralinside=histo->IntegralAndError(xb[0], xb[1], integralerrorinside, "");
-
-      double integraloutside, integralerroroutside;
+      double integralinside=0, integralerrorinside=0;
+      double integraloutside=0, integralerroroutside=0;
+      if (
+        xb[0]>=ix && xb[1]<=jx
+        ){
+        res=histo->IntegralAndError(xb[0], xb[1], reserror, "width");
+        integralinside=histo->IntegralAndError(xb[0], xb[1], integralerrorinside, "");
+      }
       integraloutside=histo->IntegralAndError(ix, jx, integralerroroutside, "");
 
       res = res + integraloutside - integralinside;
@@ -538,12 +540,16 @@ template <typename T> double HelperFunctions::getHistogramIntegralAndError(T con
       int xb[2]={ std::max(1, std::min(histo->GetNbinsX(), ix)), std::max(1, std::min(histo->GetNbinsX(), jx)) };
       int yb[2]={ std::max(1, std::min(histo->GetNbinsY(), iy)), std::max(1, std::min(histo->GetNbinsY(), jy)) };
 
-      res=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], reserror, "width");
-
-      double integralinside, integralerrorinside;
-      integralinside=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], integralerrorinside, "");
-
-      double integraloutside, integralerroroutside;
+      double integralinside=0, integralerrorinside=0;
+      double integraloutside=0, integralerroroutside=0;
+      if (
+        xb[0]>=ix && xb[1]<=jx
+        &&
+        yb[0]>=iy && yb[1]<=jy
+        ){
+        res=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], reserror, "width");
+        integralinside=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], integralerrorinside, "");
+      }
       integraloutside=histo->IntegralAndError(ix, jx, iy, jy, integralerroroutside, "");
 
       res = res + integraloutside - integralinside;
@@ -563,12 +569,18 @@ template <typename T> double HelperFunctions::getHistogramIntegralAndError(T con
       int yb[2]={ std::max(1, std::min(histo->GetNbinsY(), iy)), std::max(1, std::min(histo->GetNbinsY(), jy)) };
       int zb[2]={ std::max(1, std::min(histo->GetNbinsZ(), iz)), std::max(1, std::min(histo->GetNbinsZ(), jz)) };
 
-      res=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], zb[0], zb[1], reserror, "width");
-
-      double integralinside, integralerrorinside;
-      integralinside=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], zb[0], zb[1], integralerrorinside, "");
-
-      double integraloutside, integralerroroutside;
+      double integralinside=0, integralerrorinside=0;
+      double integraloutside=0, integralerroroutside=0;
+      if (
+        xb[0]>=ix && xb[1]<=jx
+        &&
+        yb[0]>=iy && yb[1]<=jy
+        &&
+        zb[0]>=iz && zb[1]<=jz
+        ){
+        res=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], zb[0], zb[1], reserror, "width");
+        integralinside=histo->IntegralAndError(xb[0], xb[1], yb[0], yb[1], zb[0], zb[1], integralerrorinside, "");
+      }
       integraloutside=histo->IntegralAndError(ix, jx, iy, jy, iz, jz, integralerroroutside, "");
 
       res = res + integraloutside - integralinside;

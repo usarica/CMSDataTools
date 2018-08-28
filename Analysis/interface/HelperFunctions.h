@@ -682,7 +682,7 @@ template<typename T> void HelperFunctions::extractHistogramsFromDirectory(TDirec
   // Loop on all entries of this directory
   TKey* key;
   TIter nextkey(source->GetListOfKeys());
-  vector<TString> copiedKeys;
+  std::vector<TString> copiedKeys;
   while ((key = (TKey*) nextkey())){
     const char* classname = key->GetClassName();
     TClass* cl = gROOT->GetClass(classname);

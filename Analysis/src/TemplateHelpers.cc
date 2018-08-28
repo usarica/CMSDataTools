@@ -4,6 +4,7 @@
 
 
 using namespace MELAStreamHelpers;
+using namespace std;
 
 
 /*********************/

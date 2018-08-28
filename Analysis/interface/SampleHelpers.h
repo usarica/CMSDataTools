@@ -33,7 +33,7 @@ namespace SampleHelpers{
     NChannels
   };
 
-  extern shared_ptr<Mela> GlobalMELA;
+  extern std::shared_ptr<Mela> GlobalMELA;
 
   void makeGlobalMELA(int CoM, TVar::VerbosityLevel verbosity=TVar::ERROR);
 

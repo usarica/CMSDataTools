@@ -122,7 +122,7 @@ template<> void GGProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<
 template<typename T> void GGProcessHandler::getHypothesisHistogramFromTemplates(T& res, std::vector<T> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const{
   if (!res) return;
   if (vals.empty()) return;
-  vector<float> coeffs;
+  std::vector<float> coeffs;
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nGGSMTypes);
     coeffs.reserve(vals.size());
@@ -153,8 +153,8 @@ template<typename T> void GGProcessHandler::conditionalizeTemplates(std::vector<
   if (hypo==ACHypothesisHelpers::kSM) assert(vals.size()==nGGSMTypes);
   else assert(vals.size()==nGGTypes);
 
-  vector<vector<unsigned int>> divideByTpl;
-  divideByTpl.assign(vals.size(), vector<unsigned int>());
+  std::vector<std::vector<unsigned int>> divideByTpl;
+  divideByTpl.assign(vals.size(), std::vector<unsigned int>());
   for (unsigned int t=0; t<vals.size(); t++){
     if ((int) t==GGProcessHandler::castTemplateTypeToInt(GGTplInt_Re)){
       divideByTpl.at(t).push_back(GGProcessHandler::castTemplateTypeToInt(GGTplBkg));
@@ -172,7 +172,7 @@ template<typename T> void GGProcessHandler::conditionalizeTemplates(std::vector<
   }
   for (unsigned int t=0; t<vals.size(); t++){
     if (divideByTpl.at(t).size()==1) continue;
-    vector<std::pair<T, float>> ctpls; ctpls.reserve(divideByTpl.at(t).size());
+    std::vector<std::pair<T, float>> ctpls; ctpls.reserve(divideByTpl.at(t).size());
     for (unsigned int& ht:divideByTpl.at(t)) ctpls.push_back(std::pair<T, float>(vals.at(ht), 0.5));
     HelperFunctions::conditionalizeHistogram(vals.at(t), iaxis, &ctpls);
   }
@@ -269,7 +269,7 @@ template<> void VVProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<
 template<typename T> void VVProcessHandler::getHypothesisHistogramFromTemplates(T& res, std::vector<T> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const{
   if (!res) return;
   if (vals.empty()) return;
-  vector<float> coeffs;
+  std::vector<float> coeffs;
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nVVSMTypes);
     coeffs.reserve(vals.size());
@@ -306,8 +306,8 @@ template<typename T> void VVProcessHandler::conditionalizeTemplates(std::vector<
   if (hypo==ACHypothesisHelpers::kSM) assert(vals.size()==nVVSMTypes);
   else assert(vals.size()==nVVTypes);
 
-  vector<vector<std::pair<T, float>>> divideByTpl;
-  divideByTpl.assign(vals.size(), vector<std::pair<T, float>>());
+  std::vector<std::vector<std::pair<T, float>>> divideByTpl;
+  divideByTpl.assign(vals.size(), std::vector<std::pair<T, float>>());
   for (unsigned int t=0; t<vals.size(); t++){
     if ((int) t==VVProcessHandler::castTemplateTypeToInt(VVTplInt_Re)){
       divideByTpl.at(t).push_back(std::pair<T, float>(vals.at(VVProcessHandler::castTemplateTypeToInt(VVTplBkg)), 0.5));
@@ -422,7 +422,7 @@ template<> void TTProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<
 template<typename T> void TTProcessHandler::getHypothesisHistogramFromTemplates(T& res, std::vector<T> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const{
   if (!res) return;
   if (vals.empty()) return;
-  vector<float> coeffs;
+  std::vector<float> coeffs;
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nTTSMTypes);
     coeffs.reserve(vals.size());
@@ -453,8 +453,8 @@ template<typename T> void TTProcessHandler::conditionalizeTemplates(std::vector<
   if (hypo==ACHypothesisHelpers::kSM) assert(vals.size()==nTTSMTypes);
   else assert(vals.size()==nTTTypes);
 
-  vector<vector<unsigned int>> divideByTpl;
-  divideByTpl.assign(vals.size(), vector<unsigned int>());
+  std::vector<std::vector<unsigned int>> divideByTpl;
+  divideByTpl.assign(vals.size(), std::vector<unsigned int>());
   for (unsigned int t=0; t<vals.size(); t++){
     if ((int) t==TTProcessHandler::castTemplateTypeToInt(TTTplSigBSMSMInt_Re)){
       divideByTpl.at(t).push_back(TTProcessHandler::castTemplateTypeToInt(TTTplSig));
@@ -464,7 +464,7 @@ template<typename T> void TTProcessHandler::conditionalizeTemplates(std::vector<
   }
   for (unsigned int t=0; t<vals.size(); t++){
     if (divideByTpl.at(t).size()==1) continue;
-    vector<std::pair<T, float>> ctpls; ctpls.reserve(divideByTpl.at(t).size());
+    std::vector<std::pair<T, float>> ctpls; ctpls.reserve(divideByTpl.at(t).size());
     for (unsigned int& ht:divideByTpl.at(t)) ctpls.push_back(std::pair<T, float>(vals.at(ht), 0.5));
     HelperFunctions::conditionalizeHistogram(vals.at(t), iaxis, &ctpls);
   }
@@ -550,7 +550,7 @@ template<> void BBProcessHandler::recombineRegularTemplatesToTemplatesWithPhase<
 template<typename T> void BBProcessHandler::getHypothesisHistogramFromTemplates(T& res, std::vector<T> const& vals, ACHypothesisHelpers::ACHypothesis hypo, float scaleBkg, float scaleSig, float scaleBSM) const{
   if (!res) return;
   if (vals.empty()) return;
-  vector<float> coeffs;
+  std::vector<float> coeffs;
   if (hypo==ACHypothesisHelpers::kSM){
     assert(vals.size()==nBBSMTypes);
     coeffs.reserve(vals.size());
@@ -581,8 +581,8 @@ template<typename T> void BBProcessHandler::conditionalizeTemplates(std::vector<
   if (hypo==ACHypothesisHelpers::kSM) assert(vals.size()==nBBSMTypes);
   else assert(vals.size()==nBBTypes);
 
-  vector<vector<unsigned int>> divideByTpl;
-  divideByTpl.assign(vals.size(), vector<unsigned int>());
+  std::vector<std::vector<unsigned int>> divideByTpl;
+  divideByTpl.assign(vals.size(), std::vector<unsigned int>());
   for (unsigned int t=0; t<vals.size(); t++){
     if ((int) t==BBProcessHandler::castTemplateTypeToInt(BBTplSigBSMSMInt_Re)){
       divideByTpl.at(t).push_back(BBProcessHandler::castTemplateTypeToInt(BBTplSig));
@@ -592,7 +592,7 @@ template<typename T> void BBProcessHandler::conditionalizeTemplates(std::vector<
   }
   for (unsigned int t=0; t<vals.size(); t++){
     if (divideByTpl.at(t).size()==1) continue;
-    vector<std::pair<T, float>> ctpls; ctpls.reserve(divideByTpl.at(t).size());
+    std::vector<std::pair<T, float>> ctpls; ctpls.reserve(divideByTpl.at(t).size());
     for (unsigned int& ht:divideByTpl.at(t)) ctpls.push_back(std::pair<T, float>(vals.at(ht), 0.5));
     HelperFunctions::conditionalizeHistogram(vals.at(t), iaxis, &ctpls);
   }

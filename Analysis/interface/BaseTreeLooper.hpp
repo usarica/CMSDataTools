@@ -6,6 +6,7 @@
 
 
 using namespace MELAStreamHelpers;
+using namespace std;
 
 
 template<> void BaseTreeLooper::getConsumedMap<short>(std::unordered_map<TString, short*>*& theMap){ theMap = &valshorts; }

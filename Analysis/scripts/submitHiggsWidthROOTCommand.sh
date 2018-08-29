@@ -5,6 +5,9 @@ FCN=$2
 FCNARGS=$3
 QUEUE=$4
 
+if [[ "$QUEUE" == "" ]];then
+  QUEUE="default"
+fi
 
 echo "Calling "$SCRIPT"::"$FCN"("$FCNARGS")"
 

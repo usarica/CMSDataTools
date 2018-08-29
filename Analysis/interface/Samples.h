@@ -4,6 +4,19 @@
 #include "HostHelpers.h"
 #include <string>
 
+// Package directory
+#ifndef xstr_lit
+#define xstr_lit(s) str_lit(s)
+#define str_lit(s) #s
+#endif
+#ifndef _higgswidthpkgpathstr_
+#ifndef _higgswidthpkgpath_
+#define _higgswidthpkgpath_ ./
+#endif
+#define _higgswidthpkgpathstr_ xstr_lit(_higgswidthpkgpath_)
+#endif
+const TString HIGGSWIDTHPKGPATH = _higgswidthpkgpathstr_;
+
 // LHC sqrts and data period
 constexpr unsigned int theSqrts = 13;
 const TString theDataPeriod = "2016";

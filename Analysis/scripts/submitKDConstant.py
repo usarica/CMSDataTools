@@ -4,6 +4,7 @@ import sys
 import imp
 import copy
 import os
+import filecmp
 import shutil
 import pickle
 import math
@@ -11,6 +12,7 @@ import pprint
 import subprocess
 from datetime import date
 from optparse import OptionParser
+from HiggsWidth_PostICHEP.Analysis.ProcessHelpers import *
 
 
 class StageXBatchManager:
@@ -19,7 +21,6 @@ class StageXBatchManager:
       self.parser = OptionParser()
 
       self.parser.add_option("--outdir", dest="outdir", type="string", help="Name of the local output directory for your jobs. This directory will be created automatically.", default="./")
-
 
       self.parser.add_option("--KD", dest="KD", type="string", help="KD constant to run (mandatory)")
 
@@ -53,65 +54,23 @@ class StageXBatchManager:
       if not self.fcnname:
          sys.exit("The function name could not be generated. Exiting...")
 
-      self.mkdir(self.opt.outdir)
-      self.rm(self.opt.outdir + '/' + self.fcnname + ".c")
-      self.rm(self.opt.outdir + '/' + self.fcnname + "_c.d")
-      self.rm(self.opt.outdir + '/' + self.fcnname + "_c.so")
-      self.rm(self.opt.outdir + '/' + self.fcnname + "_c_ACLiC_dict_rdict.pcm")
-      self.rm(self.opt.outdir + '/' + self.fcnname + ".c")
-      self.cp(self.scriptname, self.opt.outdir + '/' + self.fcnname + ".c")
+      mkdir(self.opt.outdir)
+      if not os.path.isfile(self.opt.outdir + '/loadLib.C') or not filecmp.cmp('loadLib.C',self.opt.outdir + '/loadLib.C'):
+         print 'Need a new loadLib.C file'
+         cp('loadLib.C',self.opt.outdir + '/loadLib.C')
+      rm(self.opt.outdir + '/' + self.fcnname + ".c")
+      rm(self.opt.outdir + '/' + self.fcnname + "_c.d")
+      rm(self.opt.outdir + '/' + self.fcnname + "_c.so")
+      rm(self.opt.outdir + '/' + self.fcnname + "_c_ACLiC_dict_rdict.pcm")
+      rm(self.opt.outdir + '/' + self.fcnname + ".c")
+      cp(self.scriptname, self.opt.outdir + '/' + self.fcnname + ".c")
+
+      currentdir = os.getcwd()
+      os.chdir(self.opt.outdir)
+      print "Job submission directory: {}".format(os.getcwd())
       self.submitJobs()
-
-
-   def getFcnArguments( self, fname, fcnname ):
-      fcnargs=[]
-      fcnfound=False
-      fcnendfound=False
-      with open(fname) as testfile:
-         for line in testfile:
-            if fcnfound and fcnendfound: break
-            if fcnname in line:
-               fcnfound=True
-            if fcnfound:
-               linecpy=line
-               linecpy=linecpy.rstrip()
-               linecpy=linecpy.replace(' ','')
-               linecpy=linecpy.replace(fcnname,'')
-               linecpy=linecpy.replace('(','')
-               linecpy=linecpy.replace(')','')
-               linecpy=linecpy.replace('{','')
-               tmpargs=linecpy.split(',')
-               for tmparg in tmpargs:
-                  fcnargs.append(tmparg.lower())
-            if fcnfound and ')' in line:
-               fcnendfound=True
-      if not (fcnfound and fcnendfound):
-         sys.exit("Function {} is not found in file {}!".format(fcnname,fname))
-      return fcnargs
-
-
-   def mkdir( self, dirname ):
-      strcmd = 'mkdir -p %s' % dirname
-      ret = os.system(strcmd)
-      if( ret != 0 ):
-         print 'Please remove or rename directory: ', dirname
-         sys.exit(4)
-
-
-   def rm( self, target ):
-      strcmd = "rm -rf {}".format(target)
-      ret = os.system(strcmd)
-      if( ret != 0 ):
-         print 'Command {} failed!'.format(strcmd)
-         sys.exit(4)
-
-
-   def cp( self, inname, target ):
-      strcmd = "cp {} {}".format(inname, target)
-      ret = os.system(strcmd)
-      if( ret != 0 ):
-         print 'Command {} failed!'.format(strcmd)
-         sys.exit(4)
+      os.chdir(currentdir)
+      print "Working directory: {}".format(os.getcwd())
 
 
    def submitJobs(self):
@@ -120,7 +79,7 @@ class StageXBatchManager:
          channels = [ "k2l2l", "k4l" ]
       categories = [ "Inclusive", "JJVBFTagged", "HadVHTagged" ]
 
-      fcnargs=self.getFcnArguments(self.scriptname, self.fcnname)
+      fcnargs=getFcnArguments(self.scriptname, self.fcnname)
       argstr=""
       for fcnarg in fcnargs:
          tmpargstr=""

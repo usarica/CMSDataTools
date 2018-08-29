@@ -7,7 +7,8 @@
 #SBATCH --mail-type=FAIL,TIME_LIMIT_80
 #SBATCH --mail-user=usarica1@jhu.edu
 
-cd ${SLURM_SUBMIT_DIR}
+RUNDIR=${SLURM_SUBMIT_DIR}
+cd $RUNDIR
 echo "SLURM job running in: " `pwd`
 
 # ROOT
@@ -21,16 +22,19 @@ module load boost/1.60.0
 export LIBRARY_PATH=$LIBRARY_PATH:/cm/shared/apps/boost/1.60.0/lib
 export CPATH=$CPATH:/cm/shared/apps/boost/1.60.0/include
 
+CMSENVDIR=$1
+cd $CMSENVDIR
 eval `scram runtime -sh`
+cd $RUNDIR
 
 echo $CMSSW_VERSION
 
 echo "Host name: "$(hostname)
 
-runfile=$1
+runfile=$2
 extcmd="()"
-if [[ "$2" != "" ]];then
-  extcmd=$2
+if [[ "$3" != "" ]];then
+  extcmd=$3
 fi
 
 cmd=$runfile".c+"$extcmd

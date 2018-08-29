@@ -5,6 +5,12 @@ FCN=$2
 FCNARGS=$3
 QUEUE=$4
 
+CMSENVDIR=$CMSSW_BASE
+if [[ "$CMSENVDIR" == "" ]];then
+  echo "Set up CMSSW first!"
+  exit 1
+fi
+
 if [[ "$QUEUE" == "" ]];then
   QUEUE="default"
 fi
@@ -46,14 +52,14 @@ if [[ -f $SCRIPT ]]; then
     if [[ "$QUEUE" != "default" ]];then
       THEQUEUE=$QUEUE
     fi
-    bsub -q $THEQUEUE -C 0 -o "./output/Logs/lsflog_"$extLog".txt" -e "./output/Logs/lsferr_"$extLog".err" submitHiggsWidthROOTCommand.lsf.sh $SCRIPT $FCN $FCNARGS
+    bsub -q $THEQUEUE -C 0 -o "./output/Logs/lsflog_"$extLog".txt" -e "./output/Logs/lsferr_"$extLog".err" submitHiggsWidthROOTCommand.lsf.sh $CMSENVDIR $SCRIPT $FCN $FCNARGS
   elif [[ "$hname" == *"login-node"* ]]; then
     echo "Host is on MARCC, so need to use SLURM batch"
     THEQUEUE="lrgmem"
     if [[ "$QUEUE" != "default" ]];then
       THEQUEUE=$QUEUE
     fi
-    sbatch --output="./output/Logs/lsflog_"$extLog".txt" --error="./output/Logs/lsferr_"$extLog".err" --partition=$THEQUEUE submitHiggsWidthROOTCommand.slurm.sh $SCRIPT $FCN $FCNARGS
+    sbatch --output="./output/Logs/lsflog_"$extLog".txt" --error="./output/Logs/lsferr_"$extLog".err" --partition=$THEQUEUE submitHiggsWidthROOTCommand.slurm.sh $CMSENVDIR $SCRIPT $FCN $FCNARGS
   fi
 
 fi

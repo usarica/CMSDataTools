@@ -1,17 +1,21 @@
 #!/bin/sh
 
-cd ${LS_SUBCWD}
 
+RUNDIR=${LS_SUBCWD}
+cd $RUNDIR
 echo "LSF job running in: " `pwd`
 
+CMSENVDIR=$1
+cd $CMSENVDIR
 eval `scram runtime -sh`
+cd $RUNDIR
 
 echo $CMSSW_VERSION
 
-runfile=$1
+runfile=$2
 extcmd="()"
-if [[ "$2" != "" ]];then
-  extcmd=$2
+if [[ "$3" != "" ]];then
+  extcmd=$3
 fi
 
 cmd=$runfile".c+"$extcmd

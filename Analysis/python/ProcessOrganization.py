@@ -1,14 +1,4 @@
-import sys
-import imp
-import copy
-import os
-import shutil
-import pickle
-import math
-import pprint
-import subprocess
-
-
+# No imports needed
 
 
 def processDictionary():
@@ -99,3 +89,4 @@ def checkValidRun(syst, cat, ch, proc, generator=""):
    if proc != "QQBkg" and "QQBkg" in syst:
       testval=False
    return testval
+

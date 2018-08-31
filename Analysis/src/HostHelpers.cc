@@ -7,7 +7,7 @@ HostHelpers::Hosts HostHelpers::GetHostLocation(){
   gethostname(hostname, HOST_NAME_MAX);
   TString strhost = hostname;
   if (strhost.Contains("lxplus") || strhost.Contains("cern")) return kLXPLUS;
-  else if (strhost.Contains("login-node") || strhost.Contains("gateway") || strhost.Contains("compute") || strhost.Contains("bigmem")) return kMARCC;
+  else if (strhost.Contains("login-node") || strhost.Contains("bc-login") || strhost.Contains("gateway") || strhost.Contains("compute") || strhost.Contains("bigmem")) return kMARCC;
   else return kUNKNOWN;
 }
 bool HostHelpers::DirectoryExists(const char* dirname){

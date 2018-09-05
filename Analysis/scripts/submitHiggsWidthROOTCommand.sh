@@ -53,7 +53,7 @@ if [[ -f $SCRIPT ]]; then
       THEQUEUE=$QUEUE
     fi
     bsub -q $THEQUEUE -C 0 -o "./output/Logs/lsflog_"$extLog".txt" -e "./output/Logs/lsferr_"$extLog".err" submitHiggsWidthROOTCommand.lsf.sh $CMSENVDIR $SCRIPT $FCN $FCNARGS
-  elif [[ "$hname" == *"login-node"* ]] || [[ "$hname" == *"bc-node"* ]]; then
+  elif [[ "$hname" == *"login-node"* ]] || [[ "$hname" == *"bc-login"* ]]; then
     echo "Host is on MARCC, so need to use SLURM batch"
     THEQUEUE="lrgmem"
     if [[ "$QUEUE" != "default" ]];then

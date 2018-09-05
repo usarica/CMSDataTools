@@ -38,7 +38,7 @@ if [[ -f $FCN".c" ]]; then
       THEQUEUE=$QUEUE
     fi
     bsub -q $THEQUEUE -C 0 -o "./output/Logs/lsflog_"$extLog".txt" -e "./output/Logs/lsferr_"$extLog".err" submitHiggsWidthTemplateStageGeneric.lsf.sh $CMSENVDIR $FCN $FCNARGS
-  elif [[ "$hname" == *"login-node"* ]]; then
+  elif [[ "$hname" == *"login-node"* ]] || [[ "$hname" == *"bc-node"* ]]; then
     echo "Host is on MARCC, so need to use SLURM batch"
     THEQUEUE="lrgmem"
     if [[ "$QUEUE" != "default" ]];then

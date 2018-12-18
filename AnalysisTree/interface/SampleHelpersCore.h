@@ -1,5 +1,5 @@
-#ifndef SAMPLEHELPERS_H
-#define SAMPLEHELPERS_H
+#ifndef SAMPLEHELPERSCORE_H
+#define SAMPLEHELPERSCORE_H
 
 #include <iostream>
 #include <fstream>

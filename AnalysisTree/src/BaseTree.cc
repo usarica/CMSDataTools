@@ -67,9 +67,11 @@ BaseTree::~BaseTree(){
   HelperFunctions::cleanUnorderedMap(valints);
   HelperFunctions::cleanUnorderedMap(valulongs);
   HelperFunctions::cleanUnorderedMap(vallongs);
+  HelperFunctions::cleanUnorderedMap(valulonglongs);
   HelperFunctions::cleanUnorderedMap(vallonglongs);
   HelperFunctions::cleanUnorderedMap(valfloats);
   HelperFunctions::cleanUnorderedMap(valdoubles);
+  HelperFunctions::cleanUnorderedMap(valCMSLorentzVectors);
   if (!receiver){
     HelperFunctions::cleanUnorderedMap(valVbools);
     HelperFunctions::cleanUnorderedMap(valVshorts);
@@ -77,9 +79,11 @@ BaseTree::~BaseTree(){
     HelperFunctions::cleanUnorderedMap(valVints);
     HelperFunctions::cleanUnorderedMap(valVulongs);
     HelperFunctions::cleanUnorderedMap(valVlongs);
+    HelperFunctions::cleanUnorderedMap(valVulonglongs);
     HelperFunctions::cleanUnorderedMap(valVlonglongs);
     HelperFunctions::cleanUnorderedMap(valVfloats);
     HelperFunctions::cleanUnorderedMap(valVdoubles);
+    HelperFunctions::cleanUnorderedMap(valVCMSLorentzVectors);
 
     delete hCounters;
     delete failedtree;
@@ -94,6 +98,7 @@ BaseTree::BranchType BaseTree::searchBranchType(TString branchname) const{
   else if (valints.find(branchname)!=valints.cend()) return BranchType_int_t;
   else if (valulongs.find(branchname)!=valulongs.cend()) return BranchType_ulong_t;
   else if (vallongs.find(branchname)!=vallongs.cend()) return BranchType_long_t;
+  else if (valulonglongs.find(branchname)!=valulonglongs.cend()) return BranchType_ulonglong_t;
   else if (vallonglongs.find(branchname)!=vallonglongs.cend()) return BranchType_longlong_t;
   else if (valfloats.find(branchname)!=valfloats.cend()) return BranchType_float_t;
   else if (valdoubles.find(branchname)!=valdoubles.cend()) return BranchType_double_t;
@@ -105,6 +110,7 @@ BaseTree::BranchType BaseTree::searchBranchType(TString branchname) const{
   else if (valVints.find(branchname)!=valVints.cend()) return BranchType_vint_t;
   else if (valVulongs.find(branchname)!=valVulongs.cend()) return BranchType_vulong_t;
   else if (valVlongs.find(branchname)!=valVlongs.cend()) return BranchType_vlong_t;
+  else if (valVulonglongs.find(branchname)!=valVulonglongs.cend()) return BranchType_vulonglong_t;
   else if (valVlonglongs.find(branchname)!=valVlonglongs.cend()) return BranchType_vlonglong_t;
   else if (valVfloats.find(branchname)!=valVfloats.cend()) return BranchType_vfloat_t;
   else if (valVdoubles.find(branchname)!=valVdoubles.cend()) return BranchType_vdouble_t;
@@ -174,9 +180,11 @@ void BaseTree::resetBranches(){
   this->resetBranch<BaseTree::BranchType_int_t>();
   this->resetBranch<BaseTree::BranchType_ulong_t>();
   this->resetBranch<BaseTree::BranchType_long_t>();
+  this->resetBranch<BaseTree::BranchType_ulonglong_t>();
   this->resetBranch<BaseTree::BranchType_longlong_t>();
   this->resetBranch<BaseTree::BranchType_float_t>();
   this->resetBranch<BaseTree::BranchType_double_t>();
+  this->resetBranch<BaseTree::BranchType_CMSLorentzVector_t>();
   if (!receiver){
     this->resetBranch<BaseTree::BranchType_vbool_t>();
     this->resetBranch<BaseTree::BranchType_vshort_t>();
@@ -184,9 +192,11 @@ void BaseTree::resetBranches(){
     this->resetBranch<BaseTree::BranchType_vint_t>();
     this->resetBranch<BaseTree::BranchType_vulong_t>();
     this->resetBranch<BaseTree::BranchType_vlong_t>();
+    this->resetBranch<BaseTree::BranchType_vulonglong_t>();
     this->resetBranch<BaseTree::BranchType_vlonglong_t>();
     this->resetBranch<BaseTree::BranchType_vfloat_t>();
     this->resetBranch<BaseTree::BranchType_vdouble_t>();
+    this->resetBranch<BaseTree::BranchType_vCMSLorentzVector_t>();
   }
 }
 
@@ -239,6 +249,9 @@ void BaseTree::releaseBranch(TString branchname){
   case BranchType_long_t:
     this->removeBranch<BranchType_long_t>(branchname);
     break;
+  case BranchType_ulonglong_t:
+    this->removeBranch<BranchType_ulonglong_t>(branchname);
+    break;
   case BranchType_longlong_t:
     this->removeBranch<BranchType_longlong_t>(branchname);
     break;
@@ -251,6 +264,7 @@ void BaseTree::releaseBranch(TString branchname){
   case BranchType_CMSLorentzVector_t:
     this->removeBranch<BranchType_CMSLorentzVector_t>(branchname);
     break;
+
   case BranchType_vbool_t:
     this->removeBranch<BranchType_vbool_t>(branchname);
     break;
@@ -268,6 +282,9 @@ void BaseTree::releaseBranch(TString branchname){
     break;
   case BranchType_vlong_t:
     this->removeBranch<BranchType_vlong_t>(branchname);
+    break;
+  case BranchType_vulonglong_t:
+    this->removeBranch<BranchType_vulonglong_t>(branchname);
     break;
   case BranchType_vlonglong_t:
     this->removeBranch<BranchType_vlonglong_t>(branchname);
@@ -308,6 +325,7 @@ void BaseTree::writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecB
       for (auto itb=entry.namedints.begin(); itb!=entry.namedints.end(); itb++) tree->putBranch(itb->first, itb->second);
       for (auto itb=entry.namedulongs.begin(); itb!=entry.namedulongs.end(); itb++) tree->putBranch(itb->first, itb->second);
       for (auto itb=entry.namedlongs.begin(); itb!=entry.namedlongs.end(); itb++) tree->putBranch(itb->first, itb->second);
+      for (auto itb=entry.namedulonglongs.begin(); itb!=entry.namedulonglongs.end(); itb++) tree->putBranch(itb->first, itb->second);
       for (auto itb=entry.namedlonglongs.begin(); itb!=entry.namedlonglongs.end(); itb++) tree->putBranch(itb->first, itb->second);
       for (auto itb=entry.namedfloats.begin(); itb!=entry.namedfloats.end(); itb++) tree->putBranch(itb->first, itb->second);
       for (auto itb=entry.nameddoubles.begin(); itb!=entry.nameddoubles.end(); itb++) tree->putBranch(itb->first, itb->second);
@@ -318,6 +336,7 @@ void BaseTree::writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecB
       for (auto itb=entry.namedVints.begin(); itb!=entry.namedVints.end(); itb++) tree->putBranch(itb->first, &(itb->second));
       for (auto itb=entry.namedVulongs.begin(); itb!=entry.namedVulongs.end(); itb++) tree->putBranch(itb->first, &(itb->second));
       for (auto itb=entry.namedVlongs.begin(); itb!=entry.namedVlongs.end(); itb++) tree->putBranch(itb->first, &(itb->second));
+      for (auto itb=entry.namedVulonglongs.begin(); itb!=entry.namedVulonglongs.end(); itb++) tree->putBranch(itb->first, &(itb->second));
       for (auto itb=entry.namedVlonglongs.begin(); itb!=entry.namedVlonglongs.end(); itb++) tree->putBranch(itb->first, &(itb->second));
       for (auto itb=entry.namedVfloats.begin(); itb!=entry.namedVfloats.end(); itb++) tree->putBranch(itb->first, &(itb->second));
       for (auto itb=entry.namedVdoubles.begin(); itb!=entry.namedVdoubles.end(); itb++) tree->putBranch(itb->first, &(itb->second));
@@ -329,6 +348,7 @@ void BaseTree::writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecB
     for (auto itb=entry.namedints.begin(); itb!=entry.namedints.end(); itb++) tree->setVal(itb->first, itb->second);
     for (auto itb=entry.namedulongs.begin(); itb!=entry.namedulongs.end(); itb++) tree->setVal(itb->first, itb->second);
     for (auto itb=entry.namedlongs.begin(); itb!=entry.namedlongs.end(); itb++) tree->setVal(itb->first, itb->second);
+    for (auto itb=entry.namedulonglongs.begin(); itb!=entry.namedulonglongs.end(); itb++) tree->setVal(itb->first, itb->second);
     for (auto itb=entry.namedlonglongs.begin(); itb!=entry.namedlonglongs.end(); itb++) tree->setVal(itb->first, itb->second);
     for (auto itb=entry.namedfloats.begin(); itb!=entry.namedfloats.end(); itb++) tree->setVal(itb->first, itb->second);
     for (auto itb=entry.nameddoubles.begin(); itb!=entry.nameddoubles.end(); itb++) tree->setVal(itb->first, itb->second);
@@ -339,6 +359,7 @@ void BaseTree::writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecB
     for (auto itb=entry.namedVints.begin(); itb!=entry.namedVints.end(); itb++) tree->setVal(itb->first, &(itb->second));
     for (auto itb=entry.namedVulongs.begin(); itb!=entry.namedVulongs.end(); itb++) tree->setVal(itb->first, &(itb->second));
     for (auto itb=entry.namedVlongs.begin(); itb!=entry.namedVlongs.end(); itb++) tree->setVal(itb->first, &(itb->second));
+    for (auto itb=entry.namedVulonglongs.begin(); itb!=entry.namedVulonglongs.end(); itb++) tree->setVal(itb->first, &(itb->second));
     for (auto itb=entry.namedVlonglongs.begin(); itb!=entry.namedVlonglongs.end(); itb++) tree->setVal(itb->first, &(itb->second));
     for (auto itb=entry.namedVfloats.begin(); itb!=entry.namedVfloats.end(); itb++) tree->setVal(itb->first, &(itb->second));
     for (auto itb=entry.namedVdoubles.begin(); itb!=entry.namedVdoubles.end(); itb++) tree->setVal(itb->first, &(itb->second));

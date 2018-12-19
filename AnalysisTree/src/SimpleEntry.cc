@@ -21,6 +21,7 @@ SimpleEntry::SimpleEntry(SimpleEntry const& other) :
   namedints(other.namedints),
   namedulongs(other.namedulongs),
   namedlongs(other.namedlongs),
+  namedulonglongs(other.namedulonglongs),
   namedlonglongs(other.namedlonglongs),
   namedfloats(other.namedfloats),
   nameddoubles(other.nameddoubles),
@@ -31,6 +32,7 @@ SimpleEntry::SimpleEntry(SimpleEntry const& other) :
   namedVints(other.namedVints),
   namedVulongs(other.namedVulongs),
   namedVlongs(other.namedVlongs),
+  namedVulonglongs(other.namedVulonglongs),
   namedVlonglongs(other.namedVlonglongs),
   namedVfloats(other.namedVfloats),
   namedVdoubles(other.namedVdoubles),
@@ -50,6 +52,7 @@ void SimpleEntry::swap(SimpleEntry& other){
   std::swap(namedints, other.namedints);
   std::swap(namedulongs, other.namedulongs);
   std::swap(namedlongs, other.namedlongs);
+  std::swap(namedulonglongs, other.namedulonglongs);
   std::swap(namedlonglongs, other.namedlonglongs);
   std::swap(namedfloats, other.namedfloats);
   std::swap(nameddoubles, other.nameddoubles);
@@ -60,6 +63,7 @@ void SimpleEntry::swap(SimpleEntry& other){
   std::swap(namedVints, other.namedVints);
   std::swap(namedVulongs, other.namedVulongs);
   std::swap(namedVlongs, other.namedVlongs);
+  std::swap(namedVulonglongs, other.namedVulonglongs);
   std::swap(namedVlonglongs, other.namedVlonglongs);
   std::swap(namedVfloats, other.namedVfloats);
   std::swap(namedVdoubles, other.namedVdoubles);
@@ -98,6 +102,7 @@ void SimpleEntry::writeToTree(std::vector<SimpleEntry>::const_iterator const& ve
     for (auto itb=entry.namedints.begin(); itb!=entry.namedints.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
     for (auto itb=entry.namedulongs.begin(); itb!=entry.namedulongs.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
     for (auto itb=entry.namedlongs.begin(); itb!=entry.namedlongs.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    for (auto itb=entry.namedulonglongs.begin(); itb!=entry.namedulonglongs.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
     for (auto itb=entry.namedlonglongs.begin(); itb!=entry.namedlonglongs.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
     for (auto itb=entry.namedfloats.begin(); itb!=entry.namedfloats.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
     for (auto itb=entry.nameddoubles.begin(); itb!=entry.nameddoubles.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
@@ -108,6 +113,7 @@ void SimpleEntry::writeToTree(std::vector<SimpleEntry>::const_iterator const& ve
     for (auto itb=entry.namedVints.begin(); itb!=entry.namedVints.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
     for (auto itb=entry.namedVulongs.begin(); itb!=entry.namedVulongs.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
     for (auto itb=entry.namedVlongs.begin(); itb!=entry.namedVlongs.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
+    for (auto itb=entry.namedVulonglongs.begin(); itb!=entry.namedVulonglongs.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
     for (auto itb=entry.namedVlonglongs.begin(); itb!=entry.namedVlonglongs.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
     for (auto itb=entry.namedVfloats.begin(); itb!=entry.namedVfloats.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
     for (auto itb=entry.namedVdoubles.begin(); itb!=entry.namedVdoubles.end(); itb++) commonEntry.setNamedVal(itb->first, itb->second);
@@ -119,6 +125,7 @@ void SimpleEntry::writeToTree(std::vector<SimpleEntry>::const_iterator const& ve
       for (auto itb=commonEntry.namedints.begin(); itb!=commonEntry.namedints.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedints[itb->first]);
       for (auto itb=commonEntry.namedulongs.begin(); itb!=commonEntry.namedulongs.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedulongs[itb->first]);
       for (auto itb=commonEntry.namedlongs.begin(); itb!=commonEntry.namedlongs.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedlongs[itb->first]);
+      for (auto itb=commonEntry.namedulonglongs.begin(); itb!=commonEntry.namedulonglongs.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedulonglongs[itb->first]);
       for (auto itb=commonEntry.namedlonglongs.begin(); itb!=commonEntry.namedlonglongs.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedlonglongs[itb->first]);
       for (auto itb=commonEntry.namedfloats.begin(); itb!=commonEntry.namedfloats.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedfloats[itb->first]);
       for (auto itb=commonEntry.nameddoubles.begin(); itb!=commonEntry.nameddoubles.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.nameddoubles[itb->first]);
@@ -129,6 +136,7 @@ void SimpleEntry::writeToTree(std::vector<SimpleEntry>::const_iterator const& ve
       for (auto itb=commonEntry.namedVints.begin(); itb!=commonEntry.namedVints.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedVints[itb->first]);
       for (auto itb=commonEntry.namedVulongs.begin(); itb!=commonEntry.namedVulongs.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedVulongs[itb->first]);
       for (auto itb=commonEntry.namedVlongs.begin(); itb!=commonEntry.namedVlongs.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedVlongs[itb->first]);
+      for (auto itb=commonEntry.namedVulonglongs.begin(); itb!=commonEntry.namedVulonglongs.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedVulonglongs[itb->first]);
       for (auto itb=commonEntry.namedVlonglongs.begin(); itb!=commonEntry.namedVlonglongs.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedVlonglongs[itb->first]);
       for (auto itb=commonEntry.namedVfloats.begin(); itb!=commonEntry.namedVfloats.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedVfloats[itb->first]);
       for (auto itb=commonEntry.namedVdoubles.begin(); itb!=commonEntry.namedVdoubles.end(); itb++) SampleHelpers::putBranch(tree, itb->first, commonEntry.namedVdoubles[itb->first]);

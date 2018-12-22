@@ -9,13 +9,7 @@
 #include <unordered_map>
 #include "StdExtensions.h"
 #include "TUtilHelpers.hh"
-// CMSSW includes
-#include <DataFormats/Math/interface/LorentzVector.h>
-
-#ifndef DEFINE_CMSVECTOR4D
-#define DEFINE_CMSVECTOR4D
-typedef math::XYZTLorentzVectorF CMSLorentzVector;
-#endif
+#include "CMSLorentzVector.h"
 
 
 namespace HelperFunctions{

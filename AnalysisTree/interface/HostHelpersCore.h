@@ -6,8 +6,8 @@
 #include <sys/stat.h>
 #include <cstdio>
 #include <ctime>
-#include "TString.h"
 #include <cassert>
+#include "TString.h"
 
 namespace HostHelpers{
 

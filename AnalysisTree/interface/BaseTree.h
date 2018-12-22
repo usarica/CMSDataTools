@@ -10,13 +10,7 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TH1F.h"
-// CMSSW includes
-#include <DataFormats/Math/interface/LorentzVector.h>
-
-#ifndef DEFINE_CMSVECTOR4D
-#define DEFINE_CMSVECTOR4D
-typedef math::XYZTLorentzVectorF CMSLorentzVector;
-#endif
+#include "CMSLorentzVector.h"
 
 
 class BaseTree{
@@ -48,6 +42,8 @@ public:
 
     BranchType_unknown_t
   };
+
+  TString sampleIdentifier;
 
 protected:
   TFile* finput;

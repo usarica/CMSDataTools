@@ -20,13 +20,7 @@
 #include "TList.h"
 #include "HelperFunctions.h"
 #include "MELAStreamHelpers.hh"
-// CMSSW includes
-#include <DataFormats/Math/interface/LorentzVector.h>
-
-#ifndef DEFINE_CMSVECTOR4D
-#define DEFINE_CMSVECTOR4D
-typedef math::XYZTLorentzVectorF CMSLorentzVector;
-#endif
+#include "CMSLorentzVector.h"
 
 
 namespace SampleHelpers{

@@ -8,6 +8,7 @@ using namespace std;
 
 
 BaseTree::BaseTree() :
+  sampleIdentifier(""),
   finput(nullptr),
   tree(nullptr),
   failedtree(nullptr),
@@ -18,6 +19,7 @@ BaseTree::BaseTree() :
   currentTree(nullptr)
 {}
 BaseTree::BaseTree(const TString cinput, const TString treename, const TString failedtreename, const TString countersname) :
+  sampleIdentifier(""), // Sample identifier is supposed to be overwritten by the daughter class
   finput(nullptr),
   tree(nullptr),
   failedtree(nullptr),
@@ -50,6 +52,7 @@ BaseTree::BaseTree(const TString cinput, const TString treename, const TString f
   curdir->cd(); // Return back to the directory before opening the input file
 }
 BaseTree::BaseTree(const TString treename) :
+  sampleIdentifier(""),
   finput(nullptr),
   tree(new TTree(treename, "")),
   failedtree(nullptr),

@@ -40,15 +40,29 @@ namespace SampleHelpers{
 
 template<typename T> void SampleHelpers::bookBranch(TTree* tree, TString strname, T* var){
   if (tree){
-    if (SampleHelpers::branchExists(tree, strname)){
-      tree->SetBranchStatus(strname, 1);
-      tree->SetBranchAddress(strname, var);
+    TString strbname = strname;
+    // First search in aliases and replace strbname
+    const TList* aliasList = (const TList*) tree->GetListOfAliases();
+    for (int ia=0; ia<aliasList->GetSize(); ia++){
+      TObject* alias = aliasList->At(ia);
+      if (!alias) continue;
+      TString aname = alias->GetName();
+      if (aname==strbname){
+        strbname = alias->GetTitle();
+        MELAStreamHelpers::MELAout << "SampleHelpers::bookBranch: Using branch name " << strbname << " instead of the alias " << strname << "." << std::endl;
+        break;
+      }
     }
-    else MELAStreamHelpers::MELAout << "SampleHelpers::bookBranch: Branch " << strname << " does not exist in tree " << tree->GetName() << "!" << std::endl;
+    if (SampleHelpers::branchExists(tree, strbname)){
+      tree->SetBranchStatus(strbname, 1);
+      tree->SetBranchAddress(strbname, var);
+    }
+    else MELAStreamHelpers::MELAout << "SampleHelpers::bookBranch: Branch " << strbname << " does not exist in tree " << tree->GetName() << "!" << std::endl;
   }
 }
 template<typename T> void SampleHelpers::putBranch(TTree* tree, TString strname, T& var){
   if (tree){
+    // Do not check for branch alias
     if (!SampleHelpers::branchExists(tree, strname)) tree->Branch(strname, &var);
     else{
       tree->SetBranchStatus(strname, 1);

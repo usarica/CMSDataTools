@@ -28,6 +28,8 @@ namespace SampleHelpers{
 
   void makeGlobalMELA(int CoM, TVar::VerbosityLevel verbosity=TVar::ERROR);
 
+  std::vector<TString> lsdir(TString indir);
+
   float findPoleMass(const TString samplename);
   TTree* findTree(std::vector<TTree*> const& treeList, int evid);
   bool branchExists(TTree* tree, TString strname);

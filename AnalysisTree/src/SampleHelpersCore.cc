@@ -1,3 +1,5 @@
+#include <sys/types.h>
+#include <dirent.h>
 #include "SampleHelpersCore.h"
 #include "MELAStreamHelpers.hh"
 
@@ -11,6 +13,21 @@ namespace SampleHelpers{
 }
 
 void SampleHelpers::makeGlobalMELA(int CoM, TVar::VerbosityLevel verbosity){ if (!GlobalMELA) GlobalMELA.reset(new Mela(CoM, 125, verbosity)); }
+
+std::vector<TString> SampleHelpers::lsdir(TString indir){
+  std::vector<TString> res;
+
+  struct dirent* ep;
+  DIR* dp = opendir(indir.Data());
+  if (dp != NULL){
+    while ((ep = readdir(dp))) res.push_back(ep->d_name);
+    closedir(dp);
+  }
+  else MELAerr << "Couldn't open the directory" << endl;
+
+  return res;
+}
+
 
 float SampleHelpers::findPoleMass(const TString samplename){
   float mass = -1;

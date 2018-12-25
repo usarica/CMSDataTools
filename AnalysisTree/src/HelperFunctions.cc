@@ -64,12 +64,12 @@ void HelperFunctions::splitOption(const std::string rawoption, std::string& wish
     value=rawoption;
   }
 }
-void HelperFunctions::splitOptionRecursive(const std::string rawoption, std::vector<std::string>& splitoptions, char delimiter){
+void HelperFunctions::splitOptionRecursive(const std::string rawoption, std::vector<std::string>& splitoptions, char delimiter, bool uniqueResults){
   string suboption=rawoption, result=rawoption;
   string remnant;
   while (result!=""){
     splitOption(suboption, result, remnant, delimiter);
-    if (result!="" && !checkListVariable(splitoptions, result)) splitoptions.push_back(result);
+    if (result!="" && (!uniqueResults || (uniqueResults && !checkListVariable(splitoptions, result)))) splitoptions.push_back(result);
     suboption = remnant;
   }
   if (remnant!="") splitoptions.push_back(remnant);
@@ -82,10 +82,10 @@ void HelperFunctions::splitOption(const TString rawoption, TString& wish, TStrin
   wish=s_wish.c_str();
   value=s_value.c_str();
 }
-void HelperFunctions::splitOptionRecursive(const TString rawoption, std::vector<TString>& splitoptions, char delimiter){
+void HelperFunctions::splitOptionRecursive(const TString rawoption, std::vector<TString>& splitoptions, char delimiter, bool uniqueResults){
   std::string const s_rawoption = rawoption.Data();
   std::vector<std::string> s_splitoptions;
-  splitOptionRecursive(s_rawoption, s_splitoptions, delimiter);
+  splitOptionRecursive(s_rawoption, s_splitoptions, delimiter, uniqueResults);
   for (std::string const& s:s_splitoptions) splitoptions.push_back(s.c_str());
 }
 
@@ -952,21 +952,25 @@ float HelperFunctions::translateEfficiencyErrorToNumeratorError(
 }
 
 
-template<> void HelperFunctions::replaceString<TString, const TString>(TString& strinput, const TString strTakeOut, const TString strPutIn){
+template<> bool HelperFunctions::replaceString<TString, const TString>(TString& strinput, const TString strTakeOut, const TString strPutIn){
   Ssiz_t ipos=strinput.Index(strTakeOut);
-  if (ipos!=-1) strinput.Replace(ipos, strTakeOut.Length(), strPutIn);
+  if (ipos!=-1){ strinput.Replace(ipos, strTakeOut.Length(), strPutIn); return true; }
+  else return false;
 }
-template<> void HelperFunctions::replaceString<TString, const char*>(TString& strinput, const char* strTakeOut, const char* strPutIn){
+template<> bool HelperFunctions::replaceString<TString, const char*>(TString& strinput, const char* strTakeOut, const char* strPutIn){
   Ssiz_t ipos=strinput.Index(strTakeOut);
-  if (ipos!=-1) strinput.Replace(ipos, strlen(strTakeOut), strPutIn);
+  if (ipos!=-1){ strinput.Replace(ipos, strlen(strTakeOut), strPutIn); return true; }
+  else return false;
 }
-template<> void HelperFunctions::replaceString<std::string, const std::string>(std::string& strinput, const std::string strTakeOut, const std::string strPutIn){
+template<> bool HelperFunctions::replaceString<std::string, const std::string>(std::string& strinput, const std::string strTakeOut, const std::string strPutIn){
   std::string::size_type ipos=strinput.find(strTakeOut);
-  if (ipos!=std::string::npos) strinput.replace(ipos, strTakeOut.length(), strPutIn);
+  if (ipos!=std::string::npos){ strinput.replace(ipos, strTakeOut.length(), strPutIn); return true; }
+  else return false;
 }
-template<> void HelperFunctions::replaceString<std::string, const char*>(std::string& strinput, const char* strTakeOut, const char* strPutIn){
+template<> bool HelperFunctions::replaceString<std::string, const char*>(std::string& strinput, const char* strTakeOut, const char* strPutIn){
   std::string::size_type ipos=strinput.find(strTakeOut);
-  if (ipos!=std::string::npos) strinput.replace(ipos, strlen(strTakeOut), strPutIn);
+  if (ipos!=std::string::npos){ strinput.replace(ipos, strlen(strTakeOut), strPutIn); return true; }
+  else return false;
 }
 
 template<> void HelperFunctions::addPointsBetween<TGraph>(TGraph*& tgOriginal, double xmin, double xmax, unsigned int nadd){

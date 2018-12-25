@@ -61,7 +61,7 @@ public:
   TVar::VerbosityLevel getVerbosity() const{ return verbosity; }
 
   // Tree
-  bool wrapTree(BaseTree* tree);
+  virtual bool wrapTree(BaseTree* tree);
   BaseTree* getWrappedTree(){ return currentTree; }
 
 };

@@ -33,6 +33,7 @@ namespace SampleHelpers{
   float findPoleMass(const TString samplename);
   TTree* findTree(std::vector<TTree*> const& treeList, int evid);
   bool branchExists(TTree* tree, TString strname);
+  bool aliasExists(TTree* tree, TString strname);
   void getEntry(std::vector<TTree*>& treeList, int evid);
   float getEntry(std::vector<std::pair<TTree*, TH1F*>>& treeList, int evid);
 

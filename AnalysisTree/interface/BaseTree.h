@@ -26,6 +26,7 @@ public:
     BranchType_longlong_t,
     BranchType_float_t,
     BranchType_double_t,
+    BranchType_string_t,
     BranchType_CMSLorentzVector_t,
 
     BranchType_vbool_t,
@@ -38,6 +39,7 @@ public:
     BranchType_vlonglong_t,
     BranchType_vfloat_t,
     BranchType_vdouble_t,
+    BranchType_vstring_t,
     BranchType_vCMSLorentzVector_t,
 
     BranchType_unknown_t
@@ -66,6 +68,7 @@ protected:
   std::unordered_map<TString, std::pair<long long, long long>*> vallonglongs;
   std::unordered_map<TString, std::pair<float, float>*> valfloats;
   std::unordered_map<TString, std::pair<double, double>*> valdoubles;
+  std::unordered_map<TString, std::pair<std::string, std::string>*> valstrings;
   std::unordered_map<TString, std::pair<CMSLorentzVector, CMSLorentzVector>*> valCMSLorentzVectors;
 
   std::unordered_map<TString, std::vector<bool>*> valVbools;
@@ -78,6 +81,7 @@ protected:
   std::unordered_map<TString, std::vector<long long>*> valVlonglongs;
   std::unordered_map<TString, std::vector<float>*> valVfloats;
   std::unordered_map<TString, std::vector<double>*> valVdoubles;
+  std::unordered_map<TString, std::vector<std::string>*> valVstrings;
   std::unordered_map<TString, std::vector<CMSLorentzVector>*> valVCMSLorentzVectors;
 
   BranchType searchBranchType(TString branchname) const;
@@ -102,8 +106,10 @@ public:
   template<typename T> bool putBranch(TString branchname, T valdef);
   template<BranchType T> bool putBranch(TString branchname);
 
+  TFile* getInputFile();
   TTree* getSelectedTree();
   TTree* getFailedTree();
+  TFile const* getInputFile() const;
   TTree const* getSelectedTree() const;
   TTree const* getFailedTree() const;
 

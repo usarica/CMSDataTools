@@ -74,6 +74,7 @@ BaseTree::~BaseTree(){
   HelperFunctions::cleanUnorderedMap(vallonglongs);
   HelperFunctions::cleanUnorderedMap(valfloats);
   HelperFunctions::cleanUnorderedMap(valdoubles);
+  HelperFunctions::cleanUnorderedMap(valstrings);
   HelperFunctions::cleanUnorderedMap(valCMSLorentzVectors);
   if (!receiver){
     HelperFunctions::cleanUnorderedMap(valVbools);
@@ -86,6 +87,7 @@ BaseTree::~BaseTree(){
     HelperFunctions::cleanUnorderedMap(valVlonglongs);
     HelperFunctions::cleanUnorderedMap(valVfloats);
     HelperFunctions::cleanUnorderedMap(valVdoubles);
+    HelperFunctions::cleanUnorderedMap(valVstrings);
     HelperFunctions::cleanUnorderedMap(valVCMSLorentzVectors);
 
     delete hCounters;
@@ -105,6 +107,7 @@ BaseTree::BranchType BaseTree::searchBranchType(TString branchname) const{
   else if (vallonglongs.find(branchname)!=vallonglongs.cend()) return BranchType_longlong_t;
   else if (valfloats.find(branchname)!=valfloats.cend()) return BranchType_float_t;
   else if (valdoubles.find(branchname)!=valdoubles.cend()) return BranchType_double_t;
+  else if (valstrings.find(branchname)!=valstrings.cend()) return BranchType_string_t;
   else if (valCMSLorentzVectors.find(branchname)!=valCMSLorentzVectors.cend()) return BranchType_CMSLorentzVector_t;
 
   else if (valVbools.find(branchname)!=valVbools.cend()) return BranchType_vbool_t;
@@ -117,13 +120,16 @@ BaseTree::BranchType BaseTree::searchBranchType(TString branchname) const{
   else if (valVlonglongs.find(branchname)!=valVlonglongs.cend()) return BranchType_vlonglong_t;
   else if (valVfloats.find(branchname)!=valVfloats.cend()) return BranchType_vfloat_t;
   else if (valVdoubles.find(branchname)!=valVdoubles.cend()) return BranchType_vdouble_t;
+  else if (valVstrings.find(branchname)!=valVstrings.cend()) return BranchType_vstring_t;
   else if (valVCMSLorentzVectors.find(branchname)!=valVCMSLorentzVectors.cend()) return BranchType_vCMSLorentzVector_t;
 
   else return BranchType_unknown_t;
 }
 
+TFile* BaseTree::getInputFile(){ return finput; }
 TTree* BaseTree::getSelectedTree(){ return tree; }
 TTree* BaseTree::getFailedTree(){ return failedtree; }
+TFile const* BaseTree::getInputFile() const{ return finput; }
 TTree const* BaseTree::getSelectedTree() const{ return tree; }
 TTree const* BaseTree::getFailedTree() const{ return failedtree; }
 
@@ -187,6 +193,7 @@ void BaseTree::resetBranches(){
   this->resetBranch<BaseTree::BranchType_longlong_t>();
   this->resetBranch<BaseTree::BranchType_float_t>();
   this->resetBranch<BaseTree::BranchType_double_t>();
+  this->resetBranch<BaseTree::BranchType_string_t>();
   this->resetBranch<BaseTree::BranchType_CMSLorentzVector_t>();
   if (!receiver){
     this->resetBranch<BaseTree::BranchType_vbool_t>();
@@ -199,6 +206,7 @@ void BaseTree::resetBranches(){
     this->resetBranch<BaseTree::BranchType_vlonglong_t>();
     this->resetBranch<BaseTree::BranchType_vfloat_t>();
     this->resetBranch<BaseTree::BranchType_vdouble_t>();
+    this->resetBranch<BaseTree::BranchType_vstring_t>();
     this->resetBranch<BaseTree::BranchType_vCMSLorentzVector_t>();
   }
 }
@@ -264,6 +272,9 @@ void BaseTree::releaseBranch(TString branchname){
   case BranchType_double_t:
     this->removeBranch<BranchType_double_t>(branchname);
     break;
+  case BranchType_string_t:
+    this->removeBranch<BranchType_string_t>(branchname);
+    break;
   case BranchType_CMSLorentzVector_t:
     this->removeBranch<BranchType_CMSLorentzVector_t>(branchname);
     break;
@@ -298,6 +309,9 @@ void BaseTree::releaseBranch(TString branchname){
   case BranchType_vdouble_t:
     this->removeBranch<BranchType_vdouble_t>(branchname);
     break;
+  case BranchType_vstring_t:
+    this->removeBranch<BranchType_vstring_t>(branchname);
+    break;
   case BranchType_vCMSLorentzVector_t:
     this->removeBranch<BranchType_vCMSLorentzVector_t>(branchname);
     break;
@@ -306,7 +320,7 @@ void BaseTree::releaseBranch(TString branchname){
   }
 }
 
-bool BaseTree::isValidEvent() const{ return true; } // To be overloaded in the daughter tree
+bool BaseTree::isValidEvent() const{ return BaseTree::isValid(); } // To be overloaded in the daughter tree
 
 void BaseTree::fill(){
   if (receiver || !tree) return;

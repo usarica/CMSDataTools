@@ -73,6 +73,18 @@ bool SampleHelpers::branchExists(TTree* tree, TString strname){
   }
   return found;
 }
+bool SampleHelpers::aliasExists(TTree* tree, TString strname){
+  if (!tree) return false;
+  bool found=false;
+  const TList* blist = (const TList*) tree->GetListOfAliases();
+  for (int ib=0; ib<blist->GetSize(); ib++){
+    TObject* branch = blist->At(ib);
+    if (!branch) continue;
+    TString bname = branch->GetName();
+    if (strname==bname){ found=true; break; }
+  }
+  return found;
+}
 void SampleHelpers::getEntry(std::vector<TTree*>& treeList, int evid){
   int ev = evid;
   for (unsigned int t=0; t<treeList.size(); t++){

@@ -12,6 +12,8 @@ protected:
   BaseTree* currentTree;
 
   // Consumes
+  std::vector<TString> sloppyConsumes; // In case some variables are known to be absent in some trees
+
   std::unordered_map<TString, bool*> valbools;
   std::unordered_map<TString, short*> valshorts;
   std::unordered_map<TString, unsigned int*> valuints;
@@ -22,6 +24,7 @@ protected:
   std::unordered_map<TString, long long*> vallonglongs;
   std::unordered_map<TString, float*> valfloats;
   std::unordered_map<TString, double*> valdoubles;
+  std::unordered_map<TString, std::string*> valstrings;
   std::unordered_map<TString, CMSLorentzVector*> valCMSLorentzVectors;
 
   std::unordered_map<TString, std::vector<bool>*> valVbools;
@@ -34,6 +37,7 @@ protected:
   std::unordered_map<TString, std::vector<long long>*> valVlonglongs;
   std::unordered_map<TString, std::vector<float>*> valVfloats;
   std::unordered_map<TString, std::vector<double>*> valVdoubles;
+  std::unordered_map<TString, std::vector<std::string>*> valVstrings;
   std::unordered_map<TString, std::vector<CMSLorentzVector>*> valVCMSLorentzVectors;
 
   template<typename T> bool linkConsumed(BaseTree* tree);
@@ -55,6 +59,7 @@ public:
 
   // Add the necessary objects
   template<typename T> void addConsumed(TString name);
+  void defineConsumedSloppy(TString name);
 
   // Verbosity
   void setVerbosity(TVar::VerbosityLevel flag){ verbosity=flag; }

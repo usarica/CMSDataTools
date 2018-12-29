@@ -13,7 +13,12 @@ IvyBase::IvyBase() : verbosity(TVar::ERROR), currentTree(nullptr) {}
 IvyBase::~IvyBase(){}
 
 
-void IvyBase::defineConsumedSloppy(TString name){ if (std::find(this->sloppyConsumes.begin(), this->sloppyConsumes.end(), name)==this->sloppyConsumes.end()) this->sloppyConsumes.push_back(name); }
+void IvyBase::defineConsumedSloppy(TString name){
+  if (std::find(this->sloppyConsumes.begin(), this->sloppyConsumes.end(), name)==this->sloppyConsumes.end()){
+    this->sloppyConsumes.push_back(name);
+    if (verbosity>=TVar::INFO) MELAout << "IvyBase::defineConsumedSloppy: Consumed " << name << " will be treated sloppily." << endl;
+  }
+}
 
 
 bool IvyBase::linkConsumes(BaseTree* tree){

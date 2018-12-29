@@ -64,12 +64,24 @@ TTree* SampleHelpers::findTree(std::vector<TTree*> const& treeList, int evid){
 bool SampleHelpers::branchExists(TTree* tree, TString strname){
   if (!tree) return false;
   bool found=false;
-  const TList* blist = (const TList*) tree->GetListOfBranches();
+  const TList* blist = nullptr;
+  // First search all branches
+  blist = (const TList*) tree->GetListOfBranches();
   for (int ib=0; ib<blist->GetSize(); ib++){
     TObject* branch = blist->At(ib);
     if (!branch) continue;
     TString bname = branch->GetName();
     if (strname==bname){ found=true; break; }
+  }
+  // It is possible that the branch is more composite, so search every leaf in that case.
+  if (!found){
+    blist = (const TList*) tree->GetListOfLeaves();
+    for (int ib=0; ib<blist->GetSize(); ib++){
+      TObject* branch = blist->At(ib);
+      if (!branch) continue;
+      TString bname = branch->GetName();
+      if (strname==bname){ found=true; break; }
+    }
   }
   return found;
 }

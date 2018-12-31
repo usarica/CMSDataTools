@@ -1075,5 +1075,126 @@ template<> void BaseTree::getValRef<std::vector<CMSLorentzVector>* const>(TStrin
   if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
 }
 
+template<> void BaseTree::getValRef<bool>(TString branchname, bool*& val){
+  typedef bool itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
+template<> void BaseTree::getValRef<short>(TString branchname, short*& val){
+  typedef short itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
+template<> void BaseTree::getValRef<unsigned int>(TString branchname, unsigned int*& val){
+  typedef unsigned int itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
+template<> void BaseTree::getValRef<int>(TString branchname, int*& val){
+  typedef int itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
+template<> void BaseTree::getValRef<unsigned long>(TString branchname, unsigned long*& val){
+  typedef unsigned long itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
+template<> void BaseTree::getValRef<long>(TString branchname, long*& val){
+  typedef long itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
+template<> void BaseTree::getValRef<unsigned long long>(TString branchname, unsigned long long*& val){
+  typedef unsigned long long itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
+template<> void BaseTree::getValRef<long long>(TString branchname, long long*& val){
+  typedef long long itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
+template<> void BaseTree::getValRef<float>(TString branchname, float*& val){
+  typedef float itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
+template<> void BaseTree::getValRef<double>(TString branchname, double*& val){
+  typedef double itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
+template<> void BaseTree::getValRef<std::string>(TString branchname, std::string*& val){
+  typedef std::string itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
+template<> void BaseTree::getValRef<CMSLorentzVector>(TString branchname, CMSLorentzVector*& val){
+  typedef CMSLorentzVector itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
+template<> void BaseTree::getValRef<std::vector<bool>*>(TString branchname, std::vector<bool>**& val){
+  typedef bool itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+template<> void BaseTree::getValRef<std::vector<short>*>(TString branchname, std::vector<short>**& val){
+  typedef short itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+template<> void BaseTree::getValRef<std::vector<unsigned int>*>(TString branchname, std::vector<unsigned int>**& val){
+  typedef unsigned int itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+template<> void BaseTree::getValRef<std::vector<int>*>(TString branchname, std::vector<int>**& val){
+  typedef int itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+template<> void BaseTree::getValRef<std::vector<unsigned long>*>(TString branchname, std::vector<unsigned long>**& val){
+  typedef unsigned long itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+template<> void BaseTree::getValRef<std::vector<long>*>(TString branchname, std::vector<long>**& val){
+  typedef long itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+template<> void BaseTree::getValRef<std::vector<unsigned long long>*>(TString branchname, std::vector<unsigned long long>**& val){
+  typedef unsigned long long itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+template<> void BaseTree::getValRef<std::vector<long long>*>(TString branchname, std::vector<long long>**& val){
+  typedef long long itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+template<> void BaseTree::getValRef<std::vector<float>*>(TString branchname, std::vector<float>**& val){
+  typedef float itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+template<> void BaseTree::getValRef<std::vector<double>*>(TString branchname, std::vector<double>**& val){
+  typedef double itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+template<> void BaseTree::getValRef<std::vector<std::string>*>(TString branchname, std::vector<std::string>**& val){
+  typedef std::string itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+template<> void BaseTree::getValRef<std::vector<CMSLorentzVector>*>(TString branchname, std::vector<CMSLorentzVector>**& val){
+  typedef CMSLorentzVector itType;
+  std::unordered_map<TString, std::vector<itType>*>::iterator it;
+  if (this->getBranchCIterator<std::vector<itType>*>(branchname, it)) val = &(it->second);
+}
+
 
 #endif

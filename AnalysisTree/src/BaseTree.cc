@@ -2,9 +2,13 @@
 #include "TDirectory.h"
 #include "BaseTree.h"
 #include "BaseTree.hpp"
+#include "HelperFunctions.h"
+#include "MELAStreamHelpers.hh"
 
 
 using namespace std;
+using namespace MELAStreamHelpers;
+using namespace HelperFunctions;
 
 
 BaseTree::BaseTree() :
@@ -134,7 +138,7 @@ TTree const* BaseTree::getSelectedTree() const{ return tree; }
 TTree const* BaseTree::getFailedTree() const{ return failedtree; }
 
 bool BaseTree::getSelectedEvent(int ev){
-  resetBranches();
+  this->resetBranches();
   bool result=false;
   if (tree && ev<tree->GetEntries()) result = (tree->GetEntry(ev)>0);
   if (result){
@@ -144,7 +148,7 @@ bool BaseTree::getSelectedEvent(int ev){
   return result;
 }
 bool BaseTree::getFailedEvent(int ev){
-  resetBranches();
+  this->resetBranches();
   bool result=false;
   if (failedtree && ev<failedtree->GetEntries()) result = (failedtree->GetEntry(ev)>0);
   if (result){
@@ -160,7 +164,7 @@ bool BaseTree::getEvent(int ev){
 void BaseTree::refreshCurrentEvent(){
   TTree* tmpTree = currentTree;
   int tmpEv = currentEvent;
-  resetBranches();
+  this->resetBranches();
   if (tmpTree){
     tmpTree->GetEntry(tmpEv);
     currentEvent = tmpEv;
@@ -177,6 +181,34 @@ bool BaseTree::branchExists(TString branchname, BranchType* type){
   BranchType theType = searchBranchType(branchname);
   if (type) *type=theType;
   return (theType!=BranchType_unknown_t);
+}
+
+void BaseTree::print() const{
+  for (auto const& it:valbools){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
+  for (auto const& it:valshorts){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
+  for (auto const& it:valuints){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
+  for (auto const& it:valints){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
+  for (auto const& it:valulongs){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
+  for (auto const& it:vallongs){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
+  for (auto const& it:valulonglongs){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
+  for (auto const& it:vallonglongs){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
+  for (auto const& it:valfloats){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
+  for (auto const& it:valdoubles){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
+  for (auto const& it:valstrings){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
+  for (auto const& it:valCMSLorentzVectors){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
+
+  for (auto const& it:valVbools){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVshorts){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVuints){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVints){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVulongs){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVlongs){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVulonglongs){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVlonglongs){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVfloats){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVdoubles){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVstrings){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVCMSLorentzVectors){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
 }
 
 void BaseTree::resetBranches(){
@@ -211,25 +243,79 @@ void BaseTree::resetBranches(){
   }
 }
 
+void BaseTree::getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& res) const{
+  if (!t) return;
+
+  const TList* alist = (const TList*) t->GetListOfAliases();
+  const TList* llist = (const TList*) t->GetListOfLeaves();
+  const TList* blist = (const TList*) t->GetListOfBranches();
+  // First check all aliases and record the proper names
+  for (int ib=0; ib<alist->GetSize(); ib++){
+    TString bname = alist->At(ib)->GetName();
+    TString bnameproper = t->GetAlias(bname);
+    TString bnamegen="";
+    if (bnameproper.Contains(".")){
+      std::vector<TString> tmplist;
+      splitOptionRecursive(bnameproper, tmplist, '.');
+      if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
+    }
+    if (searchBranchType(bname)!=BranchType_unknown_t){
+      if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
+      else if (!checkListVariable(res, bnameproper)) res.push_back(bnameproper);
+    }
+  }
+  // Then check all leaves
+  for (int ib=0; ib<llist->GetSize(); ib++){
+    TString bname = llist->At(ib)->GetName();
+    TString bnamegen="";
+    if (bname.Contains(".")){
+      std::vector<TString> tmplist;
+      splitOptionRecursive(bname, tmplist, '.');
+      if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
+    }
+    if (searchBranchType(bname)!=BranchType_unknown_t){
+      if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
+      else if (!checkListVariable(res, bname)) res.push_back(bname);
+    }
+  }
+  // Then check all branches
+  for (int ib=0; ib<blist->GetSize(); ib++){
+    TString bname = blist->At(ib)->GetName();
+    TString bnamegen="";
+    if (bname.Contains(".")){
+      std::vector<TString> tmplist;
+      splitOptionRecursive(bname, tmplist, '.');
+      if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
+    }
+    if (searchBranchType(bname)!=BranchType_unknown_t){
+      if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
+      else if (!checkListVariable(res, bname)) res.push_back(bname);
+    }
+  }
+}
 void BaseTree::silenceUnused(){
-  const unsigned int ntrees = 2;
+  constexpr unsigned int ntrees = 2;
   TTree* trees[ntrees]={
     tree,
     failedtree
   };
   for (unsigned int it=0; it<ntrees; it++){
     if (!trees[it]) continue;
-    const TList* blist = (const TList*)trees[it]->GetListOfBranches();
-    for (int ib=0; ib<blist->GetSize(); ib++){
-      TString bname = blist->At(ib)->GetName();
-      if (searchBranchType(bname)==BranchType_unknown_t) trees[it]->SetBranchStatus(bname, 0);
+    trees[it]->SetBranchStatus("*", 0);
+
+    std::vector<TString> currentBranchList;
+    this->getValidBranchNamesWithoutAlias(trees[it], currentBranchList);
+
+    for (TString const& bname:currentBranchList){
+      trees[it]->SetBranchStatus(bname, 1);
+      //cout << "Unmuting branch " << bname << endl;
     }
   }
 }
 void BaseTree::releaseBranch(TString branchname){
   const BranchType btype = searchBranchType(branchname);
   if (btype!=BranchType_unknown_t){
-    const unsigned int ntrees = 2;
+    constexpr unsigned int ntrees = 2;
     TTree* trees[ntrees]={
       tree,
       failedtree

@@ -755,6 +755,7 @@ template void HelperFunctions::addByHighest<double, int>(std::vector<std::pair<d
 template void HelperFunctions::addByHighest<double, double>(std::vector<std::pair<double, double>>& valArray, std::vector<std::pair<double, double>>& inArray, bool consecutive, bool inputordered);
 
 template bool HelperFunctions::checkListVariable<std::string>(const std::vector<std::string>& list, const std::string& var);
+template bool HelperFunctions::checkListVariable<TString>(const std::vector<TString>& list, const TString& var);
 template bool HelperFunctions::checkListVariable<double>(const std::vector<double>& list, const double& var);
 
 template bool HelperFunctions::checkNonNegative<short>(std::vector<short> const& vars, int ibegin, int iend);

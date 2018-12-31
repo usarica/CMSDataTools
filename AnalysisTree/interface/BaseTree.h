@@ -86,11 +86,13 @@ protected:
 
   BranchType searchBranchType(TString branchname) const;
 
+  void getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& res) const;
+
   template<typename T> bool getBranchCIterator(TString branchname, typename std::unordered_map<TString, T>::iterator& it);
   template<typename T> bool getBranchCIterator(TString branchname, typename std::unordered_map<TString, T>::const_iterator& it) const;
 
   template<BranchType T> void resetBranch();
-  void resetBranches();
+  virtual void resetBranches();
 
   template<BranchType T> void removeBranch(TString branchname);
 
@@ -136,6 +138,8 @@ public:
 
   void fill();
   void writeToFile(TFile* file);
+
+  virtual void print() const;
 
   static void writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecBegin, std::vector<SimpleEntry>::iterator const& vecEnd, BaseTree* const& tree);
 

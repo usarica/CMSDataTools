@@ -273,30 +273,30 @@ template<> void BaseTree::resetBranch<BaseTree::BranchType_vstring_t>(){ for (au
 template<> void BaseTree::resetBranch<BaseTree::BranchType_CMSLorentzVector_t>(){ for (auto& it:valCMSLorentzVectors){ if (it.second){ it.second->first=it.second->second; } } }
 template<> void BaseTree::resetBranch<BaseTree::BranchType_vCMSLorentzVector_t>(){ for (auto& it:valVCMSLorentzVectors){ if (it.second) it.second->clear(); } }
 
-template<> void BaseTree::removeBranch<BaseTree::BranchType_bool_t>(TString branchname){ for (auto& it:valbools){ if (it.first){ delete it.second; it.second=0; } } valbools.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_vbool_t>(TString branchname){ for (auto& it:valVbools){ if (it.first){ delete it.second; it.second=0; } } valVbools.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_short_t>(TString branchname){ for (auto& it:valshorts){ if (it.first){ delete it.second; it.second=0; } } valshorts.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_vshort_t>(TString branchname){ for (auto& it:valVshorts){ if (it.first){ delete it.second; it.second=0; } } valVshorts.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_uint_t>(TString branchname){ for (auto& it:valuints){ if (it.first){ delete it.second; it.second=0; } } valuints.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_vuint_t>(TString branchname){ for (auto& it:valVuints){ if (it.first){ delete it.second; it.second=0; } } valVuints.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_int_t>(TString branchname){ for (auto& it:valints){ if (it.first){ delete it.second; it.second=0; } } valints.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_vint_t>(TString branchname){ for (auto& it:valVints){ if (it.first){ delete it.second; it.second=0; } } valVints.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_ulong_t>(TString branchname){ for (auto& it:valulongs){ if (it.first){ delete it.second; it.second=0; } } valulongs.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_vulong_t>(TString branchname){ for (auto& it:valVulongs){ if (it.first){ delete it.second; it.second=0; } } valVulongs.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_long_t>(TString branchname){ for (auto& it:vallongs){ if (it.first){ delete it.second; it.second=0; } } vallongs.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_vlong_t>(TString branchname){ for (auto& it:valVlongs){ if (it.first){ delete it.second; it.second=0; } } valVlongs.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_ulonglong_t>(TString branchname){ for (auto& it:valulonglongs){ if (it.first){ delete it.second; it.second=0; } } valulonglongs.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_vulonglong_t>(TString branchname){ for (auto& it:valVulonglongs){ if (it.first){ delete it.second; it.second=0; } } valVulonglongs.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_longlong_t>(TString branchname){ for (auto& it:vallonglongs){ if (it.first){ delete it.second; it.second=0; } } vallonglongs.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_vlonglong_t>(TString branchname){ for (auto& it:valVlonglongs){ if (it.first){ delete it.second; it.second=0; } } valVlonglongs.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_float_t>(TString branchname){ for (auto& it:valfloats){ if (it.first){ delete it.second; it.second=0; } } valfloats.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_vfloat_t>(TString branchname){ for (auto& it:valVfloats){ if (it.first){ delete it.second; it.second=0; } } valVfloats.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_double_t>(TString branchname){ for (auto& it:valdoubles){ if (it.first){ delete it.second; it.second=0; } } valdoubles.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_vdouble_t>(TString branchname){ for (auto& it:valVdoubles){ if (it.first){ delete it.second; it.second=0; } } valVdoubles.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_string_t>(TString branchname){ for (auto& it:valstrings){ if (it.first){ delete it.second; it.second=0; } } valstrings.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_vstring_t>(TString branchname){ for (auto& it:valVstrings){ if (it.first){ delete it.second; it.second=0; } } valVstrings.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_CMSLorentzVector_t>(TString branchname){ for (auto& it:valCMSLorentzVectors){ if (it.first){ delete it.second; it.second=0; } } valCMSLorentzVectors.erase(branchname); }
-template<> void BaseTree::removeBranch<BaseTree::BranchType_vCMSLorentzVector_t>(TString branchname){ for (auto& it:valVCMSLorentzVectors){ if (it.first){ delete it.second; it.second=0; } } valVCMSLorentzVectors.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_bool_t>(TString branchname){ for (auto& it:valbools){ if (it.first==branchname){ delete it.second; it.second=0; } } valbools.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vbool_t>(TString branchname){ for (auto& it:valVbools){ if (it.first==branchname){ delete it.second; it.second=0; } } valVbools.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_short_t>(TString branchname){ for (auto& it:valshorts){ if (it.first==branchname){ delete it.second; it.second=0; } } valshorts.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vshort_t>(TString branchname){ for (auto& it:valVshorts){ if (it.first==branchname){ delete it.second; it.second=0; } } valVshorts.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_uint_t>(TString branchname){ for (auto& it:valuints){ if (it.first==branchname){ delete it.second; it.second=0; } } valuints.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vuint_t>(TString branchname){ for (auto& it:valVuints){ if (it.first==branchname){ delete it.second; it.second=0; } } valVuints.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_int_t>(TString branchname){ for (auto& it:valints){ if (it.first==branchname){ delete it.second; it.second=0; } } valints.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vint_t>(TString branchname){ for (auto& it:valVints){ if (it.first==branchname){ delete it.second; it.second=0; } } valVints.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_ulong_t>(TString branchname){ for (auto& it:valulongs){ if (it.first==branchname){ delete it.second; it.second=0; } } valulongs.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vulong_t>(TString branchname){ for (auto& it:valVulongs){ if (it.first==branchname){ delete it.second; it.second=0; } } valVulongs.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_long_t>(TString branchname){ for (auto& it:vallongs){ if (it.first==branchname){ delete it.second; it.second=0; } } vallongs.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vlong_t>(TString branchname){ for (auto& it:valVlongs){ if (it.first==branchname){ delete it.second; it.second=0; } } valVlongs.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_ulonglong_t>(TString branchname){ for (auto& it:valulonglongs){ if (it.first==branchname){ delete it.second; it.second=0; } } valulonglongs.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vulonglong_t>(TString branchname){ for (auto& it:valVulonglongs){ if (it.first==branchname){ delete it.second; it.second=0; } } valVulonglongs.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_longlong_t>(TString branchname){ for (auto& it:vallonglongs){ if (it.first==branchname){ delete it.second; it.second=0; } } vallonglongs.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vlonglong_t>(TString branchname){ for (auto& it:valVlonglongs){ if (it.first==branchname){ delete it.second; it.second=0; } } valVlonglongs.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_float_t>(TString branchname){ for (auto& it:valfloats){ if (it.first==branchname){ delete it.second; it.second=0; } } valfloats.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vfloat_t>(TString branchname){ for (auto& it:valVfloats){ if (it.first==branchname){ delete it.second; it.second=0; } } valVfloats.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_double_t>(TString branchname){ for (auto& it:valdoubles){ if (it.first==branchname){ delete it.second; it.second=0; } } valdoubles.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vdouble_t>(TString branchname){ for (auto& it:valVdoubles){ if (it.first==branchname){ delete it.second; it.second=0; } } valVdoubles.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_string_t>(TString branchname){ for (auto& it:valstrings){ if (it.first==branchname){ delete it.second; it.second=0; } } valstrings.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vstring_t>(TString branchname){ for (auto& it:valVstrings){ if (it.first==branchname){ delete it.second; it.second=0; } } valVstrings.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_CMSLorentzVector_t>(TString branchname){ for (auto& it:valCMSLorentzVectors){ if (it.first==branchname){ delete it.second; it.second=0; } } valCMSLorentzVectors.erase(branchname); }
+template<> void BaseTree::removeBranch<BaseTree::BranchType_vCMSLorentzVector_t>(TString branchname){ for (auto& it:valVCMSLorentzVectors){ if (it.first==branchname){ delete it.second; it.second=0; } } valVCMSLorentzVectors.erase(branchname); }
 
 template<> bool BaseTree::bookBranch<bool>(TString branchname, bool valdef){
   if (valbools.find(branchname)==valbools.end()) valbools[branchname] = new std::pair<bool, bool>(valdef, valdef);

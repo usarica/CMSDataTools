@@ -6,29 +6,6 @@
 #include "MELAStreamHelpers.hh"
 
 
-/*
-template<typename T, typename U> struct type_comparison{
-  static const bool is_same = false;
-  static const bool U_is_Tstar = false;
-  static const bool T_is_Ustar = false;
-};
-template<typename T> struct type_comparison<T, T>{
-  static const bool is_same = true;
-  static const bool U_is_Tstar = false;
-  static const bool T_is_Ustar = false;
-};
-template<typename T> struct type_comparison<T, T*>{
-  static const bool is_same = false;
-  static const bool U_is_Tstar = true;
-  static const bool T_is_Ustar = false;
-};
-template<typename T> struct type_comparison<T*, T>{
-  static const bool is_same = false;
-  static const bool U_is_Tstar = false;
-  static const bool T_is_Ustar = true;
-};
-*/
-
 template<typename T, typename U=T> class CMSEDMWrapperLinker{
 protected:
   typedef T Wrapped_t;
@@ -43,7 +20,7 @@ protected:
 public:
   CMSEDMWrapperLinker();
   CMSEDMWrapperLinker(Val_t* targetVal_);
-  CMSEDMWrapperLinker(CMSEDMWrapperLinker<T, U> const& other);
+  CMSEDMWrapperLinker(CMSEDMWrapperLinker<T, U> const&) = delete;
 
   void synchronize();
   void reset();
@@ -65,10 +42,6 @@ template<typename T, typename U> CMSEDMWrapperLinker<T, U>::CMSEDMWrapperLinker(
 template<typename T, typename U> CMSEDMWrapperLinker<T, U>::CMSEDMWrapperLinker(Val_t* targetVal_) :
   var(nullptr),
   targetVal(targetVal_)
-{}
-template<typename T, typename U> CMSEDMWrapperLinker<T, U>::CMSEDMWrapperLinker(CMSEDMWrapperLinker<T, U> const& other) :
-  var(other.var),
-  targetVal(other.targetVal)
 {}
 
 template<typename T, typename U> void CMSEDMWrapperLinker<T, U>::synchronize(){

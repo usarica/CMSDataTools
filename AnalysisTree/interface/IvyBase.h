@@ -27,18 +27,18 @@ protected:
   std::unordered_map<TString, std::string*> valstrings;
   std::unordered_map<TString, CMSLorentzVector*> valCMSLorentzVectors;
 
-  std::unordered_map<TString, std::vector<bool>*> valVbools;
-  std::unordered_map<TString, std::vector<short>*> valVshorts;
-  std::unordered_map<TString, std::vector<unsigned int>*> valVuints;
-  std::unordered_map<TString, std::vector<int>*> valVints;
-  std::unordered_map<TString, std::vector<unsigned long>*> valVulongs;
-  std::unordered_map<TString, std::vector<long>*> valVlongs;
-  std::unordered_map<TString, std::vector<unsigned long long>*> valVulonglongs;
-  std::unordered_map<TString, std::vector<long long>*> valVlonglongs;
-  std::unordered_map<TString, std::vector<float>*> valVfloats;
-  std::unordered_map<TString, std::vector<double>*> valVdoubles;
-  std::unordered_map<TString, std::vector<std::string>*> valVstrings;
-  std::unordered_map<TString, std::vector<CMSLorentzVector>*> valVCMSLorentzVectors;
+  std::unordered_map<TString, std::vector<bool>* const*> valVbools;
+  std::unordered_map<TString, std::vector<short>* const*> valVshorts;
+  std::unordered_map<TString, std::vector<unsigned int>* const*> valVuints;
+  std::unordered_map<TString, std::vector<int>* const*> valVints;
+  std::unordered_map<TString, std::vector<unsigned long>* const*> valVulongs;
+  std::unordered_map<TString, std::vector<long>* const*> valVlongs;
+  std::unordered_map<TString, std::vector<unsigned long long>* const*> valVulonglongs;
+  std::unordered_map<TString, std::vector<long long>* const*> valVlonglongs;
+  std::unordered_map<TString, std::vector<float>* const*> valVfloats;
+  std::unordered_map<TString, std::vector<double>* const*> valVdoubles;
+  std::unordered_map<TString, std::vector<std::string>* const*> valVstrings;
+  std::unordered_map<TString, std::vector<CMSLorentzVector>* const*> valVCMSLorentzVectors;
 
   template<typename T> bool linkConsumed(BaseTree* tree);
   bool linkConsumes(BaseTree* tree);
@@ -49,6 +49,7 @@ protected:
 
   // Get consumed
   template<typename T> bool getConsumed(TString name, T const*& val) const;
+  template<typename T> bool getConsumed(TString name, T*& val) const;
 
 public:
   // Constructors

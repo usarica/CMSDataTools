@@ -296,7 +296,7 @@ template<> void CMSEDMWrapperLinker<std::vector<bool>, std::vector<bool>*>::prin
   using MELAStreamHelpers::MELAout;
   Wrapped_t const* product = nullptr; if (var) product = var->product();
   MELAout << "\t\t- edm product: "; if (product) MELAout << *product; else MELAout << "null"; MELAout << " (address: " << product << ")" << std::endl;
-  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
+  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null"; MELAout << " (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
 }
 template<> void CMSEDMWrapperLinker<short, short>::print() const{
   using MELAStreamHelpers::MELAout;
@@ -308,7 +308,7 @@ template<> void CMSEDMWrapperLinker<std::vector<short>, std::vector<short>*>::pr
   using MELAStreamHelpers::MELAout;
   Wrapped_t const* product = nullptr; if (var) product = var->product();
   MELAout << "\t\t- edm product: "; if (product) MELAout << *product; else MELAout << "null"; MELAout << " (address: " << product << ")" << std::endl;
-  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
+  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null"; MELAout << " (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
 }
 template<> void CMSEDMWrapperLinker<unsigned int, unsigned int>::print() const{
   using MELAStreamHelpers::MELAout;
@@ -320,7 +320,7 @@ template<> void CMSEDMWrapperLinker<std::vector<unsigned int>, std::vector<unsig
   using MELAStreamHelpers::MELAout;
   Wrapped_t const* product = nullptr; if (var) product = var->product();
   MELAout << "\t\t- edm product: "; if (product) MELAout << *product; else MELAout << "null"; MELAout << " (address: " << product << ")" << std::endl;
-  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
+  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null"; MELAout << " (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
 }
 template<> void CMSEDMWrapperLinker<int, int>::print() const{
   using MELAStreamHelpers::MELAout;
@@ -332,7 +332,7 @@ template<> void CMSEDMWrapperLinker<std::vector<int>, std::vector<int>*>::print(
   using MELAStreamHelpers::MELAout;
   Wrapped_t const* product = nullptr; if (var) product = var->product();
   MELAout << "\t\t- edm product: "; if (product) MELAout << *product; else MELAout << "null"; MELAout << " (address: " << product << ")" << std::endl;
-  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
+  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null"; MELAout << " (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
 }
 template<> void CMSEDMWrapperLinker<unsigned long, unsigned long>::print() const{
   using MELAStreamHelpers::MELAout;
@@ -344,7 +344,7 @@ template<> void CMSEDMWrapperLinker<std::vector<unsigned long>, std::vector<unsi
   using MELAStreamHelpers::MELAout;
   Wrapped_t const* product = nullptr; if (var) product = var->product();
   MELAout << "\t\t- edm product: "; if (product) MELAout << *product; else MELAout << "null"; MELAout << " (address: " << product << ")" << std::endl;
-  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
+  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null"; MELAout << " (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
 }
 template<> void CMSEDMWrapperLinker<long, long>::print() const{
   using MELAStreamHelpers::MELAout;
@@ -356,7 +356,7 @@ template<> void CMSEDMWrapperLinker<std::vector<long>, std::vector<long>*>::prin
   using MELAStreamHelpers::MELAout;
   Wrapped_t const* product = nullptr; if (var) product = var->product();
   MELAout << "\t\t- edm product: "; if (product) MELAout << *product; else MELAout << "null"; MELAout << " (address: " << product << ")" << std::endl;
-  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
+  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null"; MELAout << " (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
 }
 template<> void CMSEDMWrapperLinker<unsigned long long, unsigned long long>::print() const{
   using MELAStreamHelpers::MELAout;
@@ -368,7 +368,7 @@ template<> void CMSEDMWrapperLinker<std::vector<unsigned long long>, std::vector
   using MELAStreamHelpers::MELAout;
   Wrapped_t const* product = nullptr; if (var) product = var->product();
   MELAout << "\t\t- edm product: "; if (product) MELAout << *product; else MELAout << "null"; MELAout << " (address: " << product << ")" << std::endl;
-  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
+  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null"; MELAout << " (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
 }
 template<> void CMSEDMWrapperLinker<long long, long long>::print() const{
   using MELAStreamHelpers::MELAout;
@@ -380,7 +380,7 @@ template<> void CMSEDMWrapperLinker<std::vector<long long>, std::vector<long lon
   using MELAStreamHelpers::MELAout;
   Wrapped_t const* product = nullptr; if (var) product = var->product();
   MELAout << "\t\t- edm product: "; if (product) MELAout << *product; else MELAout << "null"; MELAout << " (address: " << product << ")" << std::endl;
-  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
+  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null"; MELAout << " (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
 }
 template<> void CMSEDMWrapperLinker<float, float>::print() const{
   using MELAStreamHelpers::MELAout;
@@ -392,7 +392,7 @@ template<> void CMSEDMWrapperLinker<std::vector<float>, std::vector<float>*>::pr
   using MELAStreamHelpers::MELAout;
   Wrapped_t const* product = nullptr; if (var) product = var->product();
   MELAout << "\t\t- edm product: "; if (product) MELAout << *product; else MELAout << "null"; MELAout << " (address: " << product << ")" << std::endl;
-  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
+  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null"; MELAout << " (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
 }
 template<> void CMSEDMWrapperLinker<double, double>::print() const{
   using MELAStreamHelpers::MELAout;
@@ -404,7 +404,7 @@ template<> void CMSEDMWrapperLinker<std::vector<double>, std::vector<double>*>::
   using MELAStreamHelpers::MELAout;
   Wrapped_t const* product = nullptr; if (var) product = var->product();
   MELAout << "\t\t- edm product: "; if (product) MELAout << *product; else MELAout << "null"; MELAout << " (address: " << product << ")" << std::endl;
-  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
+  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null"; MELAout << " (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
 }
 template<> void CMSEDMWrapperLinker<std::string, std::string>::print() const{
   using MELAStreamHelpers::MELAout;
@@ -416,7 +416,7 @@ template<> void CMSEDMWrapperLinker<std::vector<std::string>, std::vector<std::s
   using MELAStreamHelpers::MELAout;
   Wrapped_t const* product = nullptr; if (var) product = var->product();
   MELAout << "\t\t- edm product: "; if (product) MELAout << *product; else MELAout << "null"; MELAout << " (address: " << product << ")" << std::endl;
-  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
+  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null"; MELAout << " (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
 }
 template<> void CMSEDMWrapperLinker<CMSLorentzVector, CMSLorentzVector>::print() const{
   using MELAStreamHelpers::MELAout;
@@ -428,7 +428,7 @@ template<> void CMSEDMWrapperLinker<std::vector<CMSLorentzVector>, std::vector<C
   using MELAStreamHelpers::MELAout;
   Wrapped_t const* product = nullptr; if (var) product = var->product();
   MELAout << "\t\t- edm product: "; if (product) MELAout << *product; else MELAout << "null"; MELAout << " (address: " << product << ")" << std::endl;
-  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
+  MELAout << "\t\t- Target: "; if (targetVal && *targetVal) MELAout << **targetVal; else MELAout << "null"; MELAout << " (address: "; if (targetVal) MELAout << *targetVal; else MELAout << "null"; MELAout << ")" << std::endl;
 }
 
 

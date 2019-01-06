@@ -27,6 +27,7 @@ public:
     BranchType_float_t,
     BranchType_double_t,
     BranchType_string_t,
+    BranchType_TString_t,
     BranchType_CMSLorentzVector_t,
 
     BranchType_vbool_t,
@@ -40,7 +41,19 @@ public:
     BranchType_vfloat_t,
     BranchType_vdouble_t,
     BranchType_vstring_t,
+    BranchType_vTString_t,
     BranchType_vCMSLorentzVector_t,
+
+    BranchType_vvbool_t,
+    BranchType_vvshort_t,
+    BranchType_vvuint_t,
+    BranchType_vvint_t,
+    BranchType_vvulong_t,
+    BranchType_vvlong_t,
+    BranchType_vvulonglong_t,
+    BranchType_vvlonglong_t,
+    BranchType_vvfloat_t,
+    BranchType_vvdouble_t,
 
     BranchType_unknown_t
   };
@@ -69,6 +82,7 @@ protected:
   std::unordered_map<TString, std::pair<float, float>*> valfloats;
   std::unordered_map<TString, std::pair<double, double>*> valdoubles;
   std::unordered_map<TString, std::pair<std::string, std::string>*> valstrings;
+  std::unordered_map<TString, std::pair<TString, TString>*> valTStrings;
   std::unordered_map<TString, std::pair<CMSLorentzVector, CMSLorentzVector>*> valCMSLorentzVectors;
 
   std::unordered_map<TString, std::vector<bool>*> valVbools;
@@ -82,7 +96,19 @@ protected:
   std::unordered_map<TString, std::vector<float>*> valVfloats;
   std::unordered_map<TString, std::vector<double>*> valVdoubles;
   std::unordered_map<TString, std::vector<std::string>*> valVstrings;
+  std::unordered_map<TString, std::vector<TString>*> valVTStrings;
   std::unordered_map<TString, std::vector<CMSLorentzVector>*> valVCMSLorentzVectors;
+
+  std::unordered_map<TString, std::vector<std::vector<bool>>*> valVVbools;
+  std::unordered_map<TString, std::vector<std::vector<short>>*> valVVshorts;
+  std::unordered_map<TString, std::vector<std::vector<unsigned int>>*> valVVuints;
+  std::unordered_map<TString, std::vector<std::vector<int>>*> valVVints;
+  std::unordered_map<TString, std::vector<std::vector<unsigned long>>*> valVVulongs;
+  std::unordered_map<TString, std::vector<std::vector<long>>*> valVVlongs;
+  std::unordered_map<TString, std::vector<std::vector<unsigned long long>>*> valVVulonglongs;
+  std::unordered_map<TString, std::vector<std::vector<long long>>*> valVVlonglongs;
+  std::unordered_map<TString, std::vector<std::vector<float>>*> valVVfloats;
+  std::unordered_map<TString, std::vector<std::vector<double>>*> valVVdoubles;
 
   BranchType searchBranchType(TString branchname) const;
 

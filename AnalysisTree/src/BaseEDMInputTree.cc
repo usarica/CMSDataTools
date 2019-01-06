@@ -29,6 +29,7 @@ BaseEDMInputTree::~BaseEDMInputTree(){
   HelperFunctions::cleanUnorderedMap(bridgefloats);
   HelperFunctions::cleanUnorderedMap(bridgedoubles);
   HelperFunctions::cleanUnorderedMap(bridgestrings);
+  HelperFunctions::cleanUnorderedMap(bridgeTStrings);
   HelperFunctions::cleanUnorderedMap(bridgeCMSLorentzVectors);
 
   HelperFunctions::cleanUnorderedMap(bridgeVbools);
@@ -42,7 +43,19 @@ BaseEDMInputTree::~BaseEDMInputTree(){
   HelperFunctions::cleanUnorderedMap(bridgeVfloats);
   HelperFunctions::cleanUnorderedMap(bridgeVdoubles);
   HelperFunctions::cleanUnorderedMap(bridgeVstrings);
+  HelperFunctions::cleanUnorderedMap(bridgeVTStrings);
   HelperFunctions::cleanUnorderedMap(bridgeVCMSLorentzVectors);
+
+  HelperFunctions::cleanUnorderedMap(bridgeVVbools);
+  HelperFunctions::cleanUnorderedMap(bridgeVVshorts);
+  HelperFunctions::cleanUnorderedMap(bridgeVVuints);
+  HelperFunctions::cleanUnorderedMap(bridgeVVints);
+  HelperFunctions::cleanUnorderedMap(bridgeVVulongs);
+  HelperFunctions::cleanUnorderedMap(bridgeVVlongs);
+  HelperFunctions::cleanUnorderedMap(bridgeVVulonglongs);
+  HelperFunctions::cleanUnorderedMap(bridgeVVlonglongs);
+  HelperFunctions::cleanUnorderedMap(bridgeVVfloats);
+  HelperFunctions::cleanUnorderedMap(bridgeVVdoubles);
 }
 
 void BaseEDMInputTree::synchronizeEDMBranches(){
@@ -57,6 +70,7 @@ void BaseEDMInputTree::synchronizeEDMBranches(){
   for (auto& it:bridgefloats){ if (it.second) it.second->synchronize(); }
   for (auto& it:bridgedoubles){ if (it.second) it.second->synchronize(); }
   for (auto& it:bridgestrings){ if (it.second) it.second->synchronize(); }
+  for (auto& it:bridgeTStrings){ if (it.second) it.second->synchronize(); }
   for (auto& it:bridgeCMSLorentzVectors){ if (it.second) it.second->synchronize(); }
 
   for (auto& it:bridgeVbools){ if (it.second) it.second->synchronize(); }
@@ -70,7 +84,19 @@ void BaseEDMInputTree::synchronizeEDMBranches(){
   for (auto& it:bridgeVfloats){ if (it.second) it.second->synchronize(); }
   for (auto& it:bridgeVdoubles){ if (it.second) it.second->synchronize(); }
   for (auto& it:bridgeVstrings){ if (it.second) it.second->synchronize(); }
+  for (auto& it:bridgeVTStrings){ if (it.second) it.second->synchronize(); }
   for (auto& it:bridgeVCMSLorentzVectors){ if (it.second) it.second->synchronize(); }
+
+  for (auto& it:bridgeVVbools){ if (it.second) it.second->synchronize(); }
+  for (auto& it:bridgeVVshorts){ if (it.second) it.second->synchronize(); }
+  for (auto& it:bridgeVVuints){ if (it.second) it.second->synchronize(); }
+  for (auto& it:bridgeVVints){ if (it.second) it.second->synchronize(); }
+  for (auto& it:bridgeVVulongs){ if (it.second) it.second->synchronize(); }
+  for (auto& it:bridgeVVlongs){ if (it.second) it.second->synchronize(); }
+  for (auto& it:bridgeVVulonglongs){ if (it.second) it.second->synchronize(); }
+  for (auto& it:bridgeVVlonglongs){ if (it.second) it.second->synchronize(); }
+  for (auto& it:bridgeVVfloats){ if (it.second) it.second->synchronize(); }
+  for (auto& it:bridgeVVdoubles){ if (it.second) it.second->synchronize(); }
 }
 
 void BaseEDMInputTree::print() const{
@@ -87,6 +113,7 @@ void BaseEDMInputTree::print() const{
   for (auto const& it:bridgefloats){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
   for (auto const& it:bridgedoubles){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
   for (auto const& it:bridgestrings){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
+  for (auto const& it:bridgeTStrings){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
   for (auto const& it:bridgeCMSLorentzVectors){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
 
   for (auto const& it:bridgeVbools){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
@@ -100,7 +127,19 @@ void BaseEDMInputTree::print() const{
   for (auto const& it:bridgeVfloats){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
   for (auto const& it:bridgeVdoubles){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
   for (auto const& it:bridgeVstrings){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
+  for (auto const& it:bridgeVTStrings){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
   for (auto const& it:bridgeVCMSLorentzVectors){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
+
+  for (auto const& it:bridgeVVbools){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
+  for (auto const& it:bridgeVVshorts){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
+  for (auto const& it:bridgeVVuints){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
+  for (auto const& it:bridgeVVints){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
+  for (auto const& it:bridgeVVulongs){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
+  for (auto const& it:bridgeVVlongs){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
+  for (auto const& it:bridgeVVulonglongs){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
+  for (auto const& it:bridgeVVlonglongs){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
+  for (auto const& it:bridgeVVfloats){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
+  for (auto const& it:bridgeVVdoubles){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
 }
 
 
@@ -129,6 +168,7 @@ void BaseEDMInputTree::resetBranches(){
   this->resetEDMBranch<BaseTree::BranchType_float_t>();
   this->resetEDMBranch<BaseTree::BranchType_double_t>();
   this->resetEDMBranch<BaseTree::BranchType_string_t>();
+  this->resetEDMBranch<BaseTree::BranchType_TString_t>();
   this->resetEDMBranch<BaseTree::BranchType_CMSLorentzVector_t>();
 
   this->resetEDMBranch<BaseTree::BranchType_vbool_t>();
@@ -142,5 +182,17 @@ void BaseEDMInputTree::resetBranches(){
   this->resetEDMBranch<BaseTree::BranchType_vfloat_t>();
   this->resetEDMBranch<BaseTree::BranchType_vdouble_t>();
   this->resetEDMBranch<BaseTree::BranchType_vstring_t>();
+  this->resetEDMBranch<BaseTree::BranchType_vTString_t>();
   this->resetEDMBranch<BaseTree::BranchType_vCMSLorentzVector_t>();
+
+  this->resetEDMBranch<BaseTree::BranchType_vvbool_t>();
+  this->resetEDMBranch<BaseTree::BranchType_vvshort_t>();
+  this->resetEDMBranch<BaseTree::BranchType_vvuint_t>();
+  this->resetEDMBranch<BaseTree::BranchType_vvint_t>();
+  this->resetEDMBranch<BaseTree::BranchType_vvulong_t>();
+  this->resetEDMBranch<BaseTree::BranchType_vvlong_t>();
+  this->resetEDMBranch<BaseTree::BranchType_vvulonglong_t>();
+  this->resetEDMBranch<BaseTree::BranchType_vvlonglong_t>();
+  this->resetEDMBranch<BaseTree::BranchType_vvfloat_t>();
+  this->resetEDMBranch<BaseTree::BranchType_vvdouble_t>();
 }

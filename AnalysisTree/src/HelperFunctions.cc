@@ -50,8 +50,6 @@ void HelperFunctions::progressbar(unsigned int val, unsigned int tot){
   }
 }
 
-bool HelperFunctions::test_bit(int mask, unsigned int iBit){ return (mask >> iBit) & 1; }
-
 void HelperFunctions::splitOption(const std::string rawoption, std::string& wish, std::string& value, char delimiter){
   size_t posEq = rawoption.find(delimiter);
   if (posEq!=string::npos){

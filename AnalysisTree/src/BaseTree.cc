@@ -79,6 +79,7 @@ BaseTree::~BaseTree(){
   HelperFunctions::cleanUnorderedMap(valfloats);
   HelperFunctions::cleanUnorderedMap(valdoubles);
   HelperFunctions::cleanUnorderedMap(valstrings);
+  HelperFunctions::cleanUnorderedMap(valTStrings);
   HelperFunctions::cleanUnorderedMap(valCMSLorentzVectors);
   if (!receiver){
     HelperFunctions::cleanUnorderedMap(valVbools);
@@ -92,7 +93,19 @@ BaseTree::~BaseTree(){
     HelperFunctions::cleanUnorderedMap(valVfloats);
     HelperFunctions::cleanUnorderedMap(valVdoubles);
     HelperFunctions::cleanUnorderedMap(valVstrings);
+    HelperFunctions::cleanUnorderedMap(valVTStrings);
     HelperFunctions::cleanUnorderedMap(valVCMSLorentzVectors);
+
+    HelperFunctions::cleanUnorderedMap(valVVbools);
+    HelperFunctions::cleanUnorderedMap(valVVshorts);
+    HelperFunctions::cleanUnorderedMap(valVVuints);
+    HelperFunctions::cleanUnorderedMap(valVVints);
+    HelperFunctions::cleanUnorderedMap(valVVulongs);
+    HelperFunctions::cleanUnorderedMap(valVVlongs);
+    HelperFunctions::cleanUnorderedMap(valVVulonglongs);
+    HelperFunctions::cleanUnorderedMap(valVVlonglongs);
+    HelperFunctions::cleanUnorderedMap(valVVfloats);
+    HelperFunctions::cleanUnorderedMap(valVVdoubles);
 
     delete hCounters;
     delete failedtree;
@@ -112,6 +125,7 @@ BaseTree::BranchType BaseTree::searchBranchType(TString branchname) const{
   else if (valfloats.find(branchname)!=valfloats.cend()) return BranchType_float_t;
   else if (valdoubles.find(branchname)!=valdoubles.cend()) return BranchType_double_t;
   else if (valstrings.find(branchname)!=valstrings.cend()) return BranchType_string_t;
+  else if (valTStrings.find(branchname)!=valTStrings.cend()) return BranchType_TString_t;
   else if (valCMSLorentzVectors.find(branchname)!=valCMSLorentzVectors.cend()) return BranchType_CMSLorentzVector_t;
 
   else if (valVbools.find(branchname)!=valVbools.cend()) return BranchType_vbool_t;
@@ -125,7 +139,19 @@ BaseTree::BranchType BaseTree::searchBranchType(TString branchname) const{
   else if (valVfloats.find(branchname)!=valVfloats.cend()) return BranchType_vfloat_t;
   else if (valVdoubles.find(branchname)!=valVdoubles.cend()) return BranchType_vdouble_t;
   else if (valVstrings.find(branchname)!=valVstrings.cend()) return BranchType_vstring_t;
+  else if (valVTStrings.find(branchname)!=valVTStrings.cend()) return BranchType_vTString_t;
   else if (valVCMSLorentzVectors.find(branchname)!=valVCMSLorentzVectors.cend()) return BranchType_vCMSLorentzVector_t;
+
+  else if (valVVbools.find(branchname)!=valVVbools.cend()) return BranchType_vvbool_t;
+  else if (valVVshorts.find(branchname)!=valVVshorts.cend()) return BranchType_vvshort_t;
+  else if (valVVuints.find(branchname)!=valVVuints.cend()) return BranchType_vvuint_t;
+  else if (valVVints.find(branchname)!=valVVints.cend()) return BranchType_vvint_t;
+  else if (valVVulongs.find(branchname)!=valVVulongs.cend()) return BranchType_vvulong_t;
+  else if (valVVlongs.find(branchname)!=valVVlongs.cend()) return BranchType_vvlong_t;
+  else if (valVVulonglongs.find(branchname)!=valVVulonglongs.cend()) return BranchType_vvulonglong_t;
+  else if (valVVlonglongs.find(branchname)!=valVVlonglongs.cend()) return BranchType_vvlonglong_t;
+  else if (valVVfloats.find(branchname)!=valVVfloats.cend()) return BranchType_vvfloat_t;
+  else if (valVVdoubles.find(branchname)!=valVVdoubles.cend()) return BranchType_vvdouble_t;
 
   else return BranchType_unknown_t;
 }
@@ -195,6 +221,7 @@ void BaseTree::print() const{
   for (auto const& it:valfloats){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
   for (auto const& it:valdoubles){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
   for (auto const& it:valstrings){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
+  for (auto const& it:valTStrings){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
   for (auto const& it:valCMSLorentzVectors){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
 
   for (auto const& it:valVbools){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
@@ -208,7 +235,19 @@ void BaseTree::print() const{
   for (auto const& it:valVfloats){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
   for (auto const& it:valVdoubles){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
   for (auto const& it:valVstrings){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVTStrings){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
   for (auto const& it:valVCMSLorentzVectors){ MELAout << "\t- " << it.first << " value: "; if (it.second) MELAout << *(it.second); else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+
+  for (auto const& it:valVVbools){ MELAout << "\t- " << it.first << " value: "; if (it.second){ for (auto const& v:*(it.second)){ MELAout << "{ " << v << " }"; } } else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVVshorts){ MELAout << "\t- " << it.first << " value: "; if (it.second){ for (auto const& v:*(it.second)){ MELAout << "{ " << v << " }"; } } else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVVuints){ MELAout << "\t- " << it.first << " value: "; if (it.second){ for (auto const& v:*(it.second)){ MELAout << "{ " << v << " }"; } } else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVVints){ MELAout << "\t- " << it.first << " value: "; if (it.second){ for (auto const& v:*(it.second)){ MELAout << "{ " << v << " }"; } } else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVVulongs){ MELAout << "\t- " << it.first << " value: "; if (it.second){ for (auto const& v:*(it.second)){ MELAout << "{ " << v << " }"; } } else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVVlongs){ MELAout << "\t- " << it.first << " value: "; if (it.second){ for (auto const& v:*(it.second)){ MELAout << "{ " << v << " }"; } } else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVVulonglongs){ MELAout << "\t- " << it.first << " value: "; if (it.second){ for (auto const& v:*(it.second)){ MELAout << "{ " << v << " }"; } } else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVVlonglongs){ MELAout << "\t- " << it.first << " value: "; if (it.second){ for (auto const& v:*(it.second)){ MELAout << "{ " << v << " }"; } } else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVVfloats){ MELAout << "\t- " << it.first << " value: "; if (it.second){ for (auto const& v:*(it.second)){ MELAout << "{ " << v << " }"; } } else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
+  for (auto const& it:valVVdoubles){ MELAout << "\t- " << it.first << " value: "; if (it.second){ for (auto const& v:*(it.second)){ MELAout << "{ " << v << " }"; } } else MELAout << "null"; MELAout << " (address: " << it.second << ")" << endl; }
 }
 
 void BaseTree::resetBranches(){
@@ -226,6 +265,7 @@ void BaseTree::resetBranches(){
   this->resetBranch<BaseTree::BranchType_float_t>();
   this->resetBranch<BaseTree::BranchType_double_t>();
   this->resetBranch<BaseTree::BranchType_string_t>();
+  this->resetBranch<BaseTree::BranchType_TString_t>();
   this->resetBranch<BaseTree::BranchType_CMSLorentzVector_t>();
   if (!receiver){
     this->resetBranch<BaseTree::BranchType_vbool_t>();
@@ -239,7 +279,19 @@ void BaseTree::resetBranches(){
     this->resetBranch<BaseTree::BranchType_vfloat_t>();
     this->resetBranch<BaseTree::BranchType_vdouble_t>();
     this->resetBranch<BaseTree::BranchType_vstring_t>();
+    this->resetBranch<BaseTree::BranchType_vTString_t>();
     this->resetBranch<BaseTree::BranchType_vCMSLorentzVector_t>();
+
+    this->resetBranch<BaseTree::BranchType_vvbool_t>();
+    this->resetBranch<BaseTree::BranchType_vvshort_t>();
+    this->resetBranch<BaseTree::BranchType_vvuint_t>();
+    this->resetBranch<BaseTree::BranchType_vvint_t>();
+    this->resetBranch<BaseTree::BranchType_vvulong_t>();
+    this->resetBranch<BaseTree::BranchType_vvlong_t>();
+    this->resetBranch<BaseTree::BranchType_vvulonglong_t>();
+    this->resetBranch<BaseTree::BranchType_vvlonglong_t>();
+    this->resetBranch<BaseTree::BranchType_vvfloat_t>();
+    this->resetBranch<BaseTree::BranchType_vvdouble_t>();
   }
 }
 
@@ -361,6 +413,9 @@ void BaseTree::releaseBranch(TString branchname){
   case BranchType_string_t:
     this->removeBranch<BranchType_string_t>(branchname);
     break;
+  case BranchType_TString_t:
+    this->removeBranch<BranchType_TString_t>(branchname);
+    break;
   case BranchType_CMSLorentzVector_t:
     this->removeBranch<BranchType_CMSLorentzVector_t>(branchname);
     break;
@@ -398,9 +453,44 @@ void BaseTree::releaseBranch(TString branchname){
   case BranchType_vstring_t:
     this->removeBranch<BranchType_vstring_t>(branchname);
     break;
+  case BranchType_vTString_t:
+    this->removeBranch<BranchType_vTString_t>(branchname);
+    break;
   case BranchType_vCMSLorentzVector_t:
     this->removeBranch<BranchType_vCMSLorentzVector_t>(branchname);
     break;
+
+  case BranchType_vvbool_t:
+    this->removeBranch<BranchType_vvbool_t>(branchname);
+    break;
+  case BranchType_vvshort_t:
+    this->removeBranch<BranchType_vvshort_t>(branchname);
+    break;
+  case BranchType_vvuint_t:
+    this->removeBranch<BranchType_vvuint_t>(branchname);
+    break;
+  case BranchType_vvint_t:
+    this->removeBranch<BranchType_vvint_t>(branchname);
+    break;
+  case BranchType_vvulong_t:
+    this->removeBranch<BranchType_vvulong_t>(branchname);
+    break;
+  case BranchType_vvlong_t:
+    this->removeBranch<BranchType_vvlong_t>(branchname);
+    break;
+  case BranchType_vvulonglong_t:
+    this->removeBranch<BranchType_vvulonglong_t>(branchname);
+    break;
+  case BranchType_vvlonglong_t:
+    this->removeBranch<BranchType_vvlonglong_t>(branchname);
+    break;
+  case BranchType_vvfloat_t:
+    this->removeBranch<BranchType_vvfloat_t>(branchname);
+    break;
+  case BranchType_vvdouble_t:
+    this->removeBranch<BranchType_vvdouble_t>(branchname);
+    break;
+
   default:
     break;
   }

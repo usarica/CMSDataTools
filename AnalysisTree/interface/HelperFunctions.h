@@ -68,6 +68,10 @@ namespace HelperFunctions{
   template<> bool checkVarNonNegative<TH2F>(TH2F const& val);
   template<> bool checkVarNonNegative<TH3F>(TH3F const& val);
 
+  // Bit set and test
+  template<typename T> void set_bit(T& mask, unsigned int iBit);
+  template<typename T> bool test_bit(T mask, unsigned int iBit);
+
   // TGraph functions
   template<typename T> TGraph* makeGraphFromPair(std::vector<std::pair<T, T>> points, TString name);
   template<typename T> TGraphErrors* makeGraphSymErrFromPair(std::vector<std::pair<T, T>> points, std::vector<std::pair<T, T>> errors, TString name);
@@ -179,8 +183,6 @@ namespace HelperFunctions{
   TString todaysdate();
 
   void progressbar(unsigned int val, unsigned int tot);
-
-  bool test_bit(int mask, unsigned int iBit);
 
   void splitOption(const std::string rawoption, std::string& wish, std::string& value, char delimiter);
   void splitOption(const TString rawoption, TString& wish, TString& value, char delimiter);
@@ -505,6 +507,10 @@ template<typename T> bool HelperFunctions::checkNanInf(std::vector<T> const& var
   return true;
 }
 
+// Bit set and test
+template<typename T> void HelperFunctions::set_bit(T& mask, unsigned int iBit){ mask |= (1<<iBit); }
+template<typename T> bool HelperFunctions::test_bit(T mask, unsigned int iBit){ return (mask >> iBit) & 1; }
+
 // Histogram functions
 template <typename T> double HelperFunctions::getHistogramIntegralAndError(T const* histo, int ix, int jx, bool useWidth, double* error){
   double res=0;
@@ -781,6 +787,17 @@ template bool HelperFunctions::checkNanInf<unsigned int>(std::vector<unsigned in
 template bool HelperFunctions::checkNanInf<int>(std::vector<int> const& vars);
 template bool HelperFunctions::checkNanInf<float>(std::vector<float> const& vars);
 template bool HelperFunctions::checkNanInf<double>(std::vector<double> const& vars);
+
+template void HelperFunctions::set_bit<char>(char& mask, unsigned int iBit);
+template bool HelperFunctions::test_bit<char>(char mask, unsigned int iBit);
+template void HelperFunctions::set_bit<short>(short& mask, unsigned int iBit);
+template bool HelperFunctions::test_bit<short>(short mask, unsigned int iBit);
+template void HelperFunctions::set_bit<int>(int& mask, unsigned int iBit);
+template bool HelperFunctions::test_bit<int>(int mask, unsigned int iBit);
+template void HelperFunctions::set_bit<long>(long& mask, unsigned int iBit);
+template bool HelperFunctions::test_bit<long>(long mask, unsigned int iBit);
+template void HelperFunctions::set_bit<long long>(long long& mask, unsigned int iBit);
+template bool HelperFunctions::test_bit<long long>(long long mask, unsigned int iBit);
 
 template void HelperFunctions::cleanUnorderedMap<TString, short*>(std::unordered_map<TString, short*> um);
 template void HelperFunctions::cleanUnorderedMap<TString, unsigned int*>(std::unordered_map<TString, unsigned int*> um);

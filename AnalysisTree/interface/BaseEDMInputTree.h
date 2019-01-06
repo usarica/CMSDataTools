@@ -67,6 +67,7 @@ protected:
   std::unordered_map<TString, CMSEDMWrapperLinker<float>*> bridgefloats;
   std::unordered_map<TString, CMSEDMWrapperLinker<double>*> bridgedoubles;
   std::unordered_map<TString, CMSEDMWrapperLinker<std::string>*> bridgestrings;
+  std::unordered_map<TString, CMSEDMWrapperLinker<TString>*> bridgeTStrings;
   std::unordered_map<TString, CMSEDMWrapperLinker<CMSLorentzVector>*> bridgeCMSLorentzVectors;
 
   std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<bool>, std::vector<bool>*>*> bridgeVbools;
@@ -80,7 +81,19 @@ protected:
   std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<float>, std::vector<float>*>*> bridgeVfloats;
   std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<double>, std::vector<double>*>*> bridgeVdoubles;
   std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::string>, std::vector<std::string>*>*> bridgeVstrings;
+  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<TString>, std::vector<TString>*>*> bridgeVTStrings;
   std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<CMSLorentzVector>, std::vector<CMSLorentzVector>*>*> bridgeVCMSLorentzVectors;
+
+  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<bool>>, std::vector<std::vector<bool>>*>*> bridgeVVbools;
+  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<short>>, std::vector<std::vector<short>>*>*> bridgeVVshorts;
+  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<unsigned int>>, std::vector<std::vector<unsigned int>>*>*> bridgeVVuints;
+  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<int>>, std::vector<std::vector<int>>*>*> bridgeVVints;
+  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<unsigned long>>, std::vector<std::vector<unsigned long>>*>*> bridgeVVulongs;
+  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<long>>, std::vector<std::vector<long>>*>*> bridgeVVlongs;
+  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<unsigned long long>>, std::vector<std::vector<unsigned long long>>*>*> bridgeVVulonglongs;
+  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<long long>>, std::vector<std::vector<long long>>*>*> bridgeVVlonglongs;
+  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<float>>, std::vector<std::vector<float>>*>*> bridgeVVfloats;
+  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<double>>, std::vector<std::vector<double>>*>*> bridgeVVdoubles;
 
   template<BranchType T> void resetEDMBranch();
   void resetBranches();

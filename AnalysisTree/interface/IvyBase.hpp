@@ -20,6 +20,7 @@ template<> void IvyBase::getConsumedMap<long long>(std::unordered_map<TString, l
 template<> void IvyBase::getConsumedMap<float>(std::unordered_map<TString, float*>*& theMap){ theMap = &valfloats; }
 template<> void IvyBase::getConsumedMap<double>(std::unordered_map<TString, double*>*& theMap){ theMap = &valdoubles; }
 template<> void IvyBase::getConsumedMap<std::string>(std::unordered_map<TString, std::string*>*& theMap){ theMap = &valstrings; }
+template<> void IvyBase::getConsumedMap<TString>(std::unordered_map<TString, TString*>*& theMap){ theMap = &valTStrings; }
 template<> void IvyBase::getConsumedMap<CMSLorentzVector>(std::unordered_map<TString, CMSLorentzVector*>*& theMap){ theMap = &valCMSLorentzVectors; }
 template<> void IvyBase::getConsumedMap<std::vector<bool>*>(std::unordered_map<TString, std::vector<bool>**>*& theMap){ theMap = &valVbools; }
 template<> void IvyBase::getConsumedMap<std::vector<short>*>(std::unordered_map<TString, std::vector<short>**>*& theMap){ theMap = &valVshorts; }
@@ -32,7 +33,18 @@ template<> void IvyBase::getConsumedMap<std::vector<long long>*>(std::unordered_
 template<> void IvyBase::getConsumedMap<std::vector<float>*>(std::unordered_map<TString, std::vector<float>**>*& theMap){ theMap = &valVfloats; }
 template<> void IvyBase::getConsumedMap<std::vector<double>*>(std::unordered_map<TString, std::vector<double>**>*& theMap){ theMap = &valVdoubles; }
 template<> void IvyBase::getConsumedMap<std::vector<std::string>*>(std::unordered_map<TString, std::vector<std::string>**>*& theMap){ theMap = &valVstrings; }
+template<> void IvyBase::getConsumedMap<std::vector<TString>*>(std::unordered_map<TString, std::vector<TString>**>*& theMap){ theMap = &valVTStrings; }
 template<> void IvyBase::getConsumedMap<std::vector<CMSLorentzVector>*>(std::unordered_map<TString, std::vector<CMSLorentzVector>**>*& theMap){ theMap = &valVCMSLorentzVectors; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<bool>>*>(std::unordered_map<TString, std::vector<std::vector<bool>>**>*& theMap){ theMap = &valVVbools; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<short>>*>(std::unordered_map<TString, std::vector<std::vector<short>>**>*& theMap){ theMap = &valVVshorts; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<unsigned int>>*>(std::unordered_map<TString, std::vector<std::vector<unsigned int>>**>*& theMap){ theMap = &valVVuints; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<int>>*>(std::unordered_map<TString, std::vector<std::vector<int>>**>*& theMap){ theMap = &valVVints; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<unsigned long>>*>(std::unordered_map<TString, std::vector<std::vector<unsigned long>>**>*& theMap){ theMap = &valVVulongs; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<long>>*>(std::unordered_map<TString, std::vector<std::vector<long>>**>*& theMap){ theMap = &valVVlongs; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<unsigned long long>>*>(std::unordered_map<TString, std::vector<std::vector<unsigned long long>>**>*& theMap){ theMap = &valVVulonglongs; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<long long>>*>(std::unordered_map<TString, std::vector<std::vector<long long>>**>*& theMap){ theMap = &valVVlonglongs; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<float>>*>(std::unordered_map<TString, std::vector<std::vector<float>>**>*& theMap){ theMap = &valVVfloats; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<double>>*>(std::unordered_map<TString, std::vector<std::vector<double>>**>*& theMap){ theMap = &valVVdoubles; }
 
 template<> void IvyBase::getConsumedMap<bool>(std::unordered_map<TString, bool*> const*& theMap) const{ theMap = &valbools; }
 template<> void IvyBase::getConsumedMap<short>(std::unordered_map<TString, short*> const*& theMap) const{ theMap = &valshorts; }
@@ -45,6 +57,7 @@ template<> void IvyBase::getConsumedMap<long long>(std::unordered_map<TString, l
 template<> void IvyBase::getConsumedMap<float>(std::unordered_map<TString, float*> const*& theMap) const{ theMap = &valfloats; }
 template<> void IvyBase::getConsumedMap<double>(std::unordered_map<TString, double*> const*& theMap) const{ theMap = &valdoubles; }
 template<> void IvyBase::getConsumedMap<std::string>(std::unordered_map<TString, std::string*> const*& theMap) const{ theMap = &valstrings; }
+template<> void IvyBase::getConsumedMap<TString>(std::unordered_map<TString, TString*> const*& theMap) const{ theMap = &valTStrings; }
 template<> void IvyBase::getConsumedMap<CMSLorentzVector>(std::unordered_map<TString, CMSLorentzVector*> const*& theMap) const{ theMap = &valCMSLorentzVectors; }
 template<> void IvyBase::getConsumedMap<std::vector<bool>*>(std::unordered_map<TString, std::vector<bool>**> const*& theMap) const{ theMap = &valVbools; }
 template<> void IvyBase::getConsumedMap<std::vector<short>*>(std::unordered_map<TString, std::vector<short>**> const*& theMap) const{ theMap = &valVshorts; }
@@ -57,7 +70,18 @@ template<> void IvyBase::getConsumedMap<std::vector<long long>*>(std::unordered_
 template<> void IvyBase::getConsumedMap<std::vector<float>*>(std::unordered_map<TString, std::vector<float>**> const*& theMap) const{ theMap = &valVfloats; }
 template<> void IvyBase::getConsumedMap<std::vector<double>*>(std::unordered_map<TString, std::vector<double>**> const*& theMap) const{ theMap = &valVdoubles; }
 template<> void IvyBase::getConsumedMap<std::vector<std::string>*>(std::unordered_map<TString, std::vector<std::string>**> const*& theMap) const{ theMap = &valVstrings; }
+template<> void IvyBase::getConsumedMap<std::vector<TString>*>(std::unordered_map<TString, std::vector<TString>**> const*& theMap) const{ theMap = &valVTStrings; }
 template<> void IvyBase::getConsumedMap<std::vector<CMSLorentzVector>*>(std::unordered_map<TString, std::vector<CMSLorentzVector>**> const*& theMap) const{ theMap = &valVCMSLorentzVectors; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<bool>>*>(std::unordered_map<TString, std::vector<std::vector<bool>>**> const*& theMap) const{ theMap = &valVVbools; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<short>>*>(std::unordered_map<TString, std::vector<std::vector<short>>**> const*& theMap) const{ theMap = &valVVshorts; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<unsigned int>>*>(std::unordered_map<TString, std::vector<std::vector<unsigned int>>**> const*& theMap) const{ theMap = &valVVuints; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<int>>*>(std::unordered_map<TString, std::vector<std::vector<int>>**> const*& theMap) const{ theMap = &valVVints; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<unsigned long>>*>(std::unordered_map<TString, std::vector<std::vector<unsigned long>>**> const*& theMap) const{ theMap = &valVVulongs; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<long>>*>(std::unordered_map<TString, std::vector<std::vector<long>>**> const*& theMap) const{ theMap = &valVVlongs; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<unsigned long long>>*>(std::unordered_map<TString, std::vector<std::vector<unsigned long long>>**> const*& theMap) const{ theMap = &valVVulonglongs; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<long long>>*>(std::unordered_map<TString, std::vector<std::vector<long long>>**> const*& theMap) const{ theMap = &valVVlonglongs; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<float>>*>(std::unordered_map<TString, std::vector<std::vector<float>>**> const*& theMap) const{ theMap = &valVVfloats; }
+template<> void IvyBase::getConsumedMap<std::vector<std::vector<double>>*>(std::unordered_map<TString, std::vector<std::vector<double>>**> const*& theMap) const{ theMap = &valVVdoubles; }
 
 
 template<typename T> void IvyBase::addConsumed(TString name){
@@ -77,6 +101,7 @@ template void IvyBase::addConsumed<long long>(TString name);
 template void IvyBase::addConsumed<float>(TString name);
 template void IvyBase::addConsumed<double>(TString name);
 template void IvyBase::addConsumed<std::string>(TString name);
+template void IvyBase::addConsumed<TString>(TString name);
 template void IvyBase::addConsumed<CMSLorentzVector>(TString name);
 template void IvyBase::addConsumed<std::vector<bool>*>(TString name);
 template void IvyBase::addConsumed<std::vector<short>*>(TString name);
@@ -89,7 +114,18 @@ template void IvyBase::addConsumed<std::vector<long long>*>(TString name);
 template void IvyBase::addConsumed<std::vector<float>*>(TString name);
 template void IvyBase::addConsumed<std::vector<double>*>(TString name);
 template void IvyBase::addConsumed<std::vector<std::string>*>(TString name);
+template void IvyBase::addConsumed<std::vector<TString>*>(TString name);
 template void IvyBase::addConsumed<std::vector<CMSLorentzVector>*>(TString name);
+template void IvyBase::addConsumed<std::vector<std::vector<bool>>*>(TString name);
+template void IvyBase::addConsumed<std::vector<std::vector<short>>*>(TString name);
+template void IvyBase::addConsumed<std::vector<std::vector<unsigned int>>*>(TString name);
+template void IvyBase::addConsumed<std::vector<std::vector<int>>*>(TString name);
+template void IvyBase::addConsumed<std::vector<std::vector<unsigned long>>*>(TString name);
+template void IvyBase::addConsumed<std::vector<std::vector<long>>*>(TString name);
+template void IvyBase::addConsumed<std::vector<std::vector<unsigned long long>>*>(TString name);
+template void IvyBase::addConsumed<std::vector<std::vector<long long>>*>(TString name);
+template void IvyBase::addConsumed<std::vector<std::vector<float>>*>(TString name);
+template void IvyBase::addConsumed<std::vector<std::vector<double>>*>(TString name);
 
 template<typename T> bool IvyBase::linkConsumed(BaseTree* tree){
   bool result=true;
@@ -130,6 +166,7 @@ template bool IvyBase::linkConsumed<long long>(BaseTree* tree);
 template bool IvyBase::linkConsumed<float>(BaseTree* tree);
 template bool IvyBase::linkConsumed<double>(BaseTree* tree);
 template bool IvyBase::linkConsumed<std::string>(BaseTree* tree);
+template bool IvyBase::linkConsumed<TString>(BaseTree* tree);
 template bool IvyBase::linkConsumed<CMSLorentzVector>(BaseTree* tree);
 template bool IvyBase::linkConsumed<std::vector<bool>*>(BaseTree* tree);
 template bool IvyBase::linkConsumed<std::vector<short>*>(BaseTree* tree);
@@ -142,7 +179,18 @@ template bool IvyBase::linkConsumed<std::vector<long long>*>(BaseTree* tree);
 template bool IvyBase::linkConsumed<std::vector<float>*>(BaseTree* tree);
 template bool IvyBase::linkConsumed<std::vector<double>*>(BaseTree* tree);
 template bool IvyBase::linkConsumed<std::vector<std::string>*>(BaseTree* tree);
+template bool IvyBase::linkConsumed<std::vector<TString>*>(BaseTree* tree);
 template bool IvyBase::linkConsumed<std::vector<CMSLorentzVector>*>(BaseTree* tree);
+template bool IvyBase::linkConsumed<std::vector<std::vector<bool>>*>(BaseTree* tree);
+template bool IvyBase::linkConsumed<std::vector<std::vector<short>>*>(BaseTree* tree);
+template bool IvyBase::linkConsumed<std::vector<std::vector<unsigned int>>*>(BaseTree* tree);
+template bool IvyBase::linkConsumed<std::vector<std::vector<int>>*>(BaseTree* tree);
+template bool IvyBase::linkConsumed<std::vector<std::vector<unsigned long>>*>(BaseTree* tree);
+template bool IvyBase::linkConsumed<std::vector<std::vector<long>>*>(BaseTree* tree);
+template bool IvyBase::linkConsumed<std::vector<std::vector<unsigned long long>>*>(BaseTree* tree);
+template bool IvyBase::linkConsumed<std::vector<std::vector<long long>>*>(BaseTree* tree);
+template bool IvyBase::linkConsumed<std::vector<std::vector<float>>*>(BaseTree* tree);
+template bool IvyBase::linkConsumed<std::vector<std::vector<double>>*>(BaseTree* tree);
 
 
 template<typename T> bool IvyBase::getConsumed(TString name, T*& val) const{
@@ -172,6 +220,7 @@ template bool IvyBase::getConsumed<long long>(TString name, long long*& val) con
 template bool IvyBase::getConsumed<float>(TString name, float*& val) const;
 template bool IvyBase::getConsumed<double>(TString name, double*& val) const;
 template bool IvyBase::getConsumed<std::string>(TString name, std::string*& val) const;
+template bool IvyBase::getConsumed<TString>(TString name, TString*& val) const;
 template bool IvyBase::getConsumed<CMSLorentzVector>(TString name, CMSLorentzVector*& val) const;
 template bool IvyBase::getConsumed<std::vector<bool>*>(TString name, std::vector<bool>**& val) const;
 template bool IvyBase::getConsumed<std::vector<short>*>(TString name, std::vector<short>**& val) const;
@@ -184,7 +233,18 @@ template bool IvyBase::getConsumed<std::vector<long long>*>(TString name, std::v
 template bool IvyBase::getConsumed<std::vector<float>*>(TString name, std::vector<float>**& val) const;
 template bool IvyBase::getConsumed<std::vector<double>*>(TString name, std::vector<double>**& val) const;
 template bool IvyBase::getConsumed<std::vector<std::string>*>(TString name, std::vector<std::string>**& val) const;
+template bool IvyBase::getConsumed<std::vector<TString>*>(TString name, std::vector<TString>**& val) const;
 template bool IvyBase::getConsumed<std::vector<CMSLorentzVector>*>(TString name, std::vector<CMSLorentzVector>**& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<bool>>*>(TString name, std::vector<std::vector<bool>>**& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<short>>*>(TString name, std::vector<std::vector<short>>**& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<unsigned int>>*>(TString name, std::vector<std::vector<unsigned int>>**& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<int>>*>(TString name, std::vector<std::vector<int>>**& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<unsigned long>>*>(TString name, std::vector<std::vector<unsigned long>>**& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<long>>*>(TString name, std::vector<std::vector<long>>**& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<unsigned long long>>*>(TString name, std::vector<std::vector<unsigned long long>>**& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<long long>>*>(TString name, std::vector<std::vector<long long>>**& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<float>>*>(TString name, std::vector<std::vector<float>>**& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<double>>*>(TString name, std::vector<std::vector<double>>**& val) const;
 
 template<typename T> bool IvyBase::getConsumed(TString name, T const*& val) const{
   val = nullptr; // Reset value
@@ -213,6 +273,7 @@ template bool IvyBase::getConsumed<long long>(TString name, long long const*& va
 template bool IvyBase::getConsumed<float>(TString name, float const*& val) const;
 template bool IvyBase::getConsumed<double>(TString name, double const*& val) const;
 template bool IvyBase::getConsumed<std::string>(TString name, std::string const*& val) const;
+template bool IvyBase::getConsumed<TString>(TString name, TString const*& val) const;
 template bool IvyBase::getConsumed<CMSLorentzVector>(TString name, CMSLorentzVector const*& val) const;
 template bool IvyBase::getConsumed<std::vector<bool>*>(TString name, std::vector<bool>* const*& val) const;
 template bool IvyBase::getConsumed<std::vector<short>*>(TString name, std::vector<short>* const*& val) const;
@@ -225,6 +286,17 @@ template bool IvyBase::getConsumed<std::vector<long long>*>(TString name, std::v
 template bool IvyBase::getConsumed<std::vector<float>*>(TString name, std::vector<float>* const*& val) const;
 template bool IvyBase::getConsumed<std::vector<double>*>(TString name, std::vector<double>* const*& val) const;
 template bool IvyBase::getConsumed<std::vector<std::string>*>(TString name, std::vector<std::string>* const*& val) const;
+template bool IvyBase::getConsumed<std::vector<TString>*>(TString name, std::vector<TString>* const*& val) const;
 template bool IvyBase::getConsumed<std::vector<CMSLorentzVector>*>(TString name, std::vector<CMSLorentzVector>* const*& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<bool>>*>(TString name, std::vector<std::vector<bool>>* const*& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<short>>*>(TString name, std::vector<std::vector<short>>* const*& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<unsigned int>>*>(TString name, std::vector<std::vector<unsigned int>>* const*& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<int>>*>(TString name, std::vector<std::vector<int>>* const*& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<unsigned long>>*>(TString name, std::vector<std::vector<unsigned long>>* const*& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<long>>*>(TString name, std::vector<std::vector<long>>* const*& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<unsigned long long>>*>(TString name, std::vector<std::vector<unsigned long long>>* const*& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<long long>>*>(TString name, std::vector<std::vector<long long>>* const*& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<float>>*>(TString name, std::vector<std::vector<float>>* const*& val) const;
+template bool IvyBase::getConsumed<std::vector<std::vector<double>>*>(TString name, std::vector<std::vector<double>>* const*& val) const;
 
 #endif

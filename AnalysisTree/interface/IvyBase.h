@@ -25,6 +25,7 @@ protected:
   std::unordered_map<TString, float*> valfloats;
   std::unordered_map<TString, double*> valdoubles;
   std::unordered_map<TString, std::string*> valstrings;
+  std::unordered_map<TString, TString*> valTStrings;
   std::unordered_map<TString, CMSLorentzVector*> valCMSLorentzVectors;
 
   std::unordered_map<TString, std::vector<bool>**> valVbools;
@@ -38,7 +39,20 @@ protected:
   std::unordered_map<TString, std::vector<float>**> valVfloats;
   std::unordered_map<TString, std::vector<double>**> valVdoubles;
   std::unordered_map<TString, std::vector<std::string>**> valVstrings;
+  std::unordered_map<TString, std::vector<TString>**> valVTStrings;
   std::unordered_map<TString, std::vector<CMSLorentzVector>**> valVCMSLorentzVectors;
+
+  std::unordered_map<TString, std::vector<std::vector<bool>>**> valVVbools;
+  std::unordered_map<TString, std::vector<std::vector<short>>**> valVVshorts;
+  std::unordered_map<TString, std::vector<std::vector<unsigned int>>**> valVVuints;
+  std::unordered_map<TString, std::vector<std::vector<int>>**> valVVints;
+  std::unordered_map<TString, std::vector<std::vector<unsigned long>>**> valVVulongs;
+  std::unordered_map<TString, std::vector<std::vector<long>>**> valVVlongs;
+  std::unordered_map<TString, std::vector<std::vector<unsigned long long>>**> valVVulonglongs;
+  std::unordered_map<TString, std::vector<std::vector<long long>>**> valVVlonglongs;
+  std::unordered_map<TString, std::vector<std::vector<float>>**> valVVfloats;
+  std::unordered_map<TString, std::vector<std::vector<double>>**> valVVdoubles;
+
 
   template<typename T> bool linkConsumed(BaseTree* tree);
   bool linkConsumes(BaseTree* tree);

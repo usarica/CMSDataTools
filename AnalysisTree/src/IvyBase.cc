@@ -34,6 +34,7 @@ bool IvyBase::linkConsumes(BaseTree* tree){
     process &= this->linkConsumed<float>(tree);
     process &= this->linkConsumed<double>(tree);
     process &= this->linkConsumed<std::string>(tree);
+    process &= this->linkConsumed<TString>(tree);
     process &= this->linkConsumed<CMSLorentzVector>(tree);
     process &= this->linkConsumed<std::vector<bool>*>(tree);
     process &= this->linkConsumed<std::vector<short>*>(tree);
@@ -46,7 +47,18 @@ bool IvyBase::linkConsumes(BaseTree* tree){
     process &= this->linkConsumed<std::vector<float>*>(tree);
     process &= this->linkConsumed<std::vector<double>*>(tree);
     process &= this->linkConsumed<std::vector<std::string>*>(tree);
+    process &= this->linkConsumed<std::vector<TString>*>(tree);
     process &= this->linkConsumed<std::vector<CMSLorentzVector>*>(tree);
+    process &= this->linkConsumed<std::vector<std::vector<bool>>*>(tree);
+    process &= this->linkConsumed<std::vector<std::vector<short>>*>(tree);
+    process &= this->linkConsumed<std::vector<std::vector<unsigned int>>*>(tree);
+    process &= this->linkConsumed<std::vector<std::vector<int>>*>(tree);
+    process &= this->linkConsumed<std::vector<std::vector<unsigned long>>*>(tree);
+    process &= this->linkConsumed<std::vector<std::vector<long>>*>(tree);
+    process &= this->linkConsumed<std::vector<std::vector<unsigned long long>>*>(tree);
+    process &= this->linkConsumed<std::vector<std::vector<long long>>*>(tree);
+    process &= this->linkConsumed<std::vector<std::vector<float>>*>(tree);
+    process &= this->linkConsumed<std::vector<std::vector<double>>*>(tree);
     // Silence unused branches
     tree->silenceUnused();
   }

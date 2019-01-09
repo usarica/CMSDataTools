@@ -14,6 +14,10 @@ bool HostHelpers::DirectoryExists(const char* dirname){
   struct stat sb;
   return (stat(dirname, &sb) == 0 && S_ISDIR(sb.st_mode));
 }
+bool HostHelpers::FileExists(const char* fname){
+  struct stat sb;
+  return (stat(fname, &sb) == 0 && S_ISREG(sb.st_mode));
+}
 
 time_t HostHelpers::GetTimestamp(const char* fname){
   struct stat st;

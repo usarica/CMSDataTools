@@ -20,6 +20,7 @@ namespace HostHelpers{
 
   Hosts GetHostLocation();
   bool DirectoryExists(const char* dirname);
+  bool FileExists(const char* fname);
 
   time_t GetTimestamp(const char* fname);
   TString GetTimestampConverted(const char* fname);

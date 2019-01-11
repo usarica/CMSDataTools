@@ -5,6 +5,7 @@
 #include "BaseEDMInputTree.h"
 
 
+template<> void BaseEDMInputTree::resetEDMBranch<BaseTree::BranchType_TBits_t>(){ BaseTree::resetBranch<BaseTree::BranchType_TBits_t>(); for (auto& it:bridgeTBitss){ if (it.second) it.second->reset(); } }
 template<> void BaseEDMInputTree::resetEDMBranch<BaseTree::BranchType_bool_t>(){ BaseTree::resetBranch<BaseTree::BranchType_bool_t>(); for (auto& it:bridgebools){ if (it.second) it.second->reset(); } }
 template<> void BaseEDMInputTree::resetEDMBranch<BaseTree::BranchType_short_t>(){ BaseTree::resetBranch<BaseTree::BranchType_short_t>(); for (auto& it:bridgeshorts){ if (it.second) it.second->reset(); } }
 template<> void BaseEDMInputTree::resetEDMBranch<BaseTree::BranchType_uint_t>(){ BaseTree::resetBranch<BaseTree::BranchType_uint_t>(); for (auto& it:bridgeuints){ if (it.second) it.second->reset(); } }
@@ -45,6 +46,7 @@ template<> void BaseEDMInputTree::resetEDMBranch<BaseTree::BranchType_vvfloat_t>
 template<> void BaseEDMInputTree::resetEDMBranch<BaseTree::BranchType_vvdouble_t>(){ BaseTree::resetBranch<BaseTree::BranchType_vvdouble_t>(); for (auto& it:bridgeVVdoubles){ if (it.second) it.second->reset(); } }
 
 
+template<> void BaseEDMInputTree::removeEDMBranch<BaseTree::BranchType_TBits_t>(TString branchname){ BaseTree::removeBranch<BaseTree::BranchType_TBits_t>(branchname); for (auto& it:bridgeTBitss){ if (it.first==branchname){ delete it.second; it.second=0; } } bridgeTBitss.erase(branchname); }
 template<> void BaseEDMInputTree::removeEDMBranch<BaseTree::BranchType_bool_t>(TString branchname){ BaseTree::removeBranch<BaseTree::BranchType_bool_t>(branchname); for (auto& it:bridgebools){ if (it.first==branchname){ delete it.second; it.second=0; } } bridgebools.erase(branchname); }
 template<> void BaseEDMInputTree::removeEDMBranch<BaseTree::BranchType_short_t>(TString branchname){ BaseTree::removeBranch<BaseTree::BranchType_short_t>(branchname); for (auto& it:bridgeshorts){ if (it.first==branchname){ delete it.second; it.second=0; } } bridgeshorts.erase(branchname); }
 template<> void BaseEDMInputTree::removeEDMBranch<BaseTree::BranchType_uint_t>(TString branchname){ BaseTree::removeBranch<BaseTree::BranchType_uint_t>(branchname); for (auto& it:bridgeuints){ if (it.first==branchname){ delete it.second; it.second=0; } } bridgeuints.erase(branchname); }
@@ -85,6 +87,14 @@ template<> void BaseEDMInputTree::removeEDMBranch<BaseTree::BranchType_vvfloat_t
 template<> void BaseEDMInputTree::removeEDMBranch<BaseTree::BranchType_vvdouble_t>(TString branchname){ BaseTree::removeBranch<BaseTree::BranchType_vvdouble_t>(branchname); for (auto& it:bridgeVVdoubles){ if (it.first==branchname){ delete it.second; it.second=0; } } bridgeVVdoubles.erase(branchname); }
 
 
+template<> bool BaseEDMInputTree::bookEDMBranch<TBits>(TString branchname, TBits valdef){
+  if (valTBitss.find(branchname)==valTBitss.end()) valTBitss[branchname] = new std::pair<TBits, TBits>(valdef, valdef);
+  else{ valTBitss[branchname]->first=valdef; valTBitss[branchname]->second=valdef; }
+  if (bridgeTBitss.find(branchname)==bridgeTBitss.end()) bridgeTBitss[branchname] = new CMSEDMWrapperLinker<TBits>(&(valTBitss[branchname]->first));
+  SampleHelpers::bookEDMBranch(tree, branchname, &(bridgeTBitss[branchname]->getWrapperRef()));
+  SampleHelpers::bookEDMBranch(failedtree, branchname, &(bridgeTBitss[branchname]->getWrapperRef()));
+  return true;
+}
 template<> bool BaseEDMInputTree::bookEDMBranch<bool>(TString branchname, bool valdef){
   if (valbools.find(branchname)==valbools.end()) valbools[branchname] = new std::pair<bool, bool>(valdef, valdef);
   else{ valbools[branchname]->first=valdef; valbools[branchname]->second=valdef; }
@@ -354,6 +364,7 @@ template<> bool BaseEDMInputTree::bookEDMBranch<std::vector<std::vector<double>>
 }
 
 
+template<> bool BaseEDMInputTree::bookEDMBranch<BaseTree::BranchType_TBits_t>(TString branchname){ return this->bookEDMBranch<TBits>(branchname, 0); }
 template<> bool BaseEDMInputTree::bookEDMBranch<BaseTree::BranchType_bool_t>(TString branchname){ return this->bookEDMBranch<bool>(branchname, 0); }
 template<> bool BaseEDMInputTree::bookEDMBranch<BaseTree::BranchType_short_t>(TString branchname){ return this->bookEDMBranch<short>(branchname, 0); }
 template<> bool BaseEDMInputTree::bookEDMBranch<BaseTree::BranchType_uint_t>(TString branchname){ return this->bookEDMBranch<unsigned int>(branchname, 0); }
@@ -394,6 +405,7 @@ template<> bool BaseEDMInputTree::bookEDMBranch<BaseTree::BranchType_vvfloat_t>(
 template<> bool BaseEDMInputTree::bookEDMBranch<BaseTree::BranchType_vvdouble_t>(TString branchname){ return this->bookEDMBranch<std::vector<std::vector<double>>*>(branchname, 0); }
 
 
+template<> void CMSEDMWrapperLinker<TBits>::assignProductToTarget(CMSEDMWrapperLinker<TBits>::Wrapped_t& product){ *targetVal = product; }
 template<> void CMSEDMWrapperLinker<bool>::assignProductToTarget(CMSEDMWrapperLinker<bool>::Wrapped_t& product){ *targetVal = product; }
 template<> void CMSEDMWrapperLinker<short>::assignProductToTarget(CMSEDMWrapperLinker<short>::Wrapped_t& product){ *targetVal = product; }
 template<> void CMSEDMWrapperLinker<unsigned int>::assignProductToTarget(CMSEDMWrapperLinker<unsigned int>::Wrapped_t& product){ *targetVal = product; }
@@ -434,6 +446,15 @@ template<> void CMSEDMWrapperLinker<std::vector<std::vector<float>>, std::vector
 template<> void CMSEDMWrapperLinker<std::vector<std::vector<double>>, std::vector<std::vector<double>>*>::assignProductToTarget(CMSEDMWrapperLinker<std::vector<std::vector<double>>, std::vector<std::vector<double>>*>::Wrapped_t& product){ *targetVal = &product; }
 
 
+template<> void CMSEDMWrapperLinker<TBits, TBits>::print() const{
+  using MELAStreamHelpers::MELAout;
+  Wrapped_t const* product = nullptr; if (var) product = var->product();
+  MELAout << "\t\t- edm product: "; if (product) MELAout << *product; else MELAout << "null"; MELAout << " (address: " << product << ")" << std::endl;
+  MELAout << "\t\t- Target: ";
+  if (targetVal){ for (unsigned int ibit=0; ibit<targetVal->GetNbits(); ibit++) MELAout << targetVal->TestBitNumber(ibit); }
+  else MELAout << "null";
+  MELAout << " (address: " << targetVal << ")" << std::endl;
+}
 template<> void CMSEDMWrapperLinker<bool, bool>::print() const{
   using MELAStreamHelpers::MELAout;
   Wrapped_t const* product = nullptr; if (var) product = var->product();

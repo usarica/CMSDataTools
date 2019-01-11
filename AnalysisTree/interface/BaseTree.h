@@ -8,6 +8,7 @@
 #include "StdExtensions.h"
 #include "SimpleEntry.h"
 #include "TFile.h"
+#include "TBits.h"
 #include "TTree.h"
 #include "TH1F.h"
 #include "CMSLorentzVector.h"
@@ -16,6 +17,8 @@
 class BaseTree{
 public:
   enum BranchType{
+    BranchType_TBits_t,
+
     BranchType_bool_t,
     BranchType_short_t,
     BranchType_uint_t,
@@ -71,6 +74,7 @@ protected:
   int currentEvent;
   TTree* currentTree;
 
+  std::unordered_map<TString, std::pair<TBits, TBits>*> valTBitss;
   std::unordered_map<TString, std::pair<bool, bool>*> valbools;
   std::unordered_map<TString, std::pair<short, short>*> valshorts;
   std::unordered_map<TString, std::pair<unsigned int, unsigned int>*> valuints;

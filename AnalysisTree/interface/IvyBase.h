@@ -4,6 +4,7 @@
 #include "TVar.hh"
 #include "BaseTree.h"
 #include "HelperFunctionsCore.h"
+#include "MELAStreamHelpers.hh"
 
 
 class IvyBase{
@@ -14,6 +15,7 @@ protected:
   // Consumes
   std::vector<TString> sloppyConsumes; // In case some variables are known to be absent in some trees
 
+  std::unordered_map<TString, TBits*> valTBitss;
   std::unordered_map<TString, bool*> valbools;
   std::unordered_map<TString, short*> valshorts;
   std::unordered_map<TString, unsigned int*> valuints;
@@ -66,7 +68,7 @@ protected:
   template<typename T> bool getConsumed(TString name, T const*& val) const;
 
   // Get consumed value
-  template<typename T> bool getConsumedValue(TString name, T& val) const{ T const* ref; bool res = this->getConsumed<T>(name, ref); if (res && ref!=nullptr){ val=*ref; return true; } else return res; }
+  template<typename T> bool getConsumedValue(TString name, T& val) const;
 
 public:
   // Constructors
@@ -88,6 +90,19 @@ public:
   BaseTree* getWrappedTree(){ return currentTree; }
 
 };
+
+template<typename T> bool IvyBase::getConsumedValue(TString name, T& val) const{
+  T const* ref;
+  bool res = this->getConsumed<T>(name, ref);
+  if (res && ref!=nullptr){
+    val=*ref;
+    return true;
+  }
+  else{
+    if (!res && verbosity>=TVar::ERROR) MELAStreamHelpers::MELAerr << "IvyBase::getConsumedValue: Cannot consume " << name << std::endl;
+    return res;
+  }
+}
 
 
 #endif

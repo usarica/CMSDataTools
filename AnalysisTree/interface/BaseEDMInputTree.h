@@ -56,6 +56,7 @@ template<typename T, typename U> void CMSEDMWrapperLinker<T, U>::reset(){ var = 
 
 class BaseEDMInputTree : public BaseTree{
 protected:
+  std::unordered_map<TString, CMSEDMWrapperLinker<TBits>*> bridgeTBitss;
   std::unordered_map<TString, CMSEDMWrapperLinker<bool>*> bridgebools;
   std::unordered_map<TString, CMSEDMWrapperLinker<short>*> bridgeshorts;
   std::unordered_map<TString, CMSEDMWrapperLinker<unsigned int>*> bridgeuints;

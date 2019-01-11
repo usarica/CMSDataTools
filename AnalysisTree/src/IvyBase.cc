@@ -23,6 +23,7 @@ void IvyBase::defineConsumedSloppy(TString name){
 bool IvyBase::linkConsumes(BaseTree* tree){
   bool process = tree->isValid();
   if (process){
+    process &= this->linkConsumed<TBits>(tree);
     process &= this->linkConsumed<bool>(tree);
     process &= this->linkConsumed<short>(tree);
     process &= this->linkConsumed<unsigned int>(tree);

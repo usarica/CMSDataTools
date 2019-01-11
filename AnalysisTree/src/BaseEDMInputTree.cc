@@ -18,6 +18,7 @@ BaseEDMInputTree::BaseEDMInputTree(const TString cinput, const TString treename,
   BaseTree(cinput, treename, failedtreename, countersname)
 {}
 BaseEDMInputTree::~BaseEDMInputTree(){
+  HelperFunctions::cleanUnorderedMap(bridgeTBitss);
   HelperFunctions::cleanUnorderedMap(bridgebools);
   HelperFunctions::cleanUnorderedMap(bridgeshorts);
   HelperFunctions::cleanUnorderedMap(bridgeuints);
@@ -59,6 +60,7 @@ BaseEDMInputTree::~BaseEDMInputTree(){
 }
 
 void BaseEDMInputTree::synchronizeEDMBranches(){
+  for (auto& it:bridgeTBitss){ if (it.second) it.second->synchronize(); }
   for (auto& it:bridgebools){ if (it.second) it.second->synchronize(); }
   for (auto& it:bridgeshorts){ if (it.second) it.second->synchronize(); }
   for (auto& it:bridgeuints){ if (it.second) it.second->synchronize(); }
@@ -102,6 +104,7 @@ void BaseEDMInputTree::synchronizeEDMBranches(){
 void BaseEDMInputTree::print() const{
   BaseTree::print();
 
+  for (auto const& it:bridgeTBitss){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
   for (auto const& it:bridgebools){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
   for (auto const& it:bridgeshorts){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
   for (auto const& it:bridgeuints){ if (it.second){ MELAout << "\t- " << it.first << " details:" << endl; it.second->print(); } }
@@ -157,6 +160,7 @@ bool BaseEDMInputTree::getFailedEvent(int ev){
 void BaseEDMInputTree::resetBranches(){
   BaseTree::resetBranches();
 
+  this->resetEDMBranch<BaseTree::BranchType_TBits_t>();
   this->resetEDMBranch<BaseTree::BranchType_bool_t>();
   this->resetEDMBranch<BaseTree::BranchType_short_t>();
   this->resetEDMBranch<BaseTree::BranchType_uint_t>();

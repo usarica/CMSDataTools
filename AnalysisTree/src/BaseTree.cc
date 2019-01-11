@@ -68,6 +68,7 @@ BaseTree::BaseTree(const TString treename) :
 {}
 
 BaseTree::~BaseTree(){
+  HelperFunctions::cleanUnorderedMap(valTBitss);
   HelperFunctions::cleanUnorderedMap(valbools);
   HelperFunctions::cleanUnorderedMap(valshorts);
   HelperFunctions::cleanUnorderedMap(valuints);
@@ -114,7 +115,8 @@ BaseTree::~BaseTree(){
 }
 
 BaseTree::BranchType BaseTree::searchBranchType(TString branchname) const{
-  if (valbools.find(branchname)!=valbools.cend()) return BranchType_bool_t;
+  if (valTBitss.find(branchname)!=valTBitss.cend()) return BranchType_TBits_t;
+  else if (valbools.find(branchname)!=valbools.cend()) return BranchType_bool_t;
   else if (valshorts.find(branchname)!=valshorts.cend()) return BranchType_short_t;
   else if (valuints.find(branchname)!=valuints.cend()) return BranchType_uint_t;
   else if (valints.find(branchname)!=valints.cend()) return BranchType_int_t;
@@ -210,6 +212,7 @@ bool BaseTree::branchExists(TString branchname, BranchType* type){
 }
 
 void BaseTree::print() const{
+  for (auto const& it:valTBitss){ if (it.second){ MELAout << "\t- " << it.first << " value: "; for (unsigned int ibit=0; ibit<it.second->first.GetNbits(); ibit++){ MELAout << it.second->first.TestBitNumber(ibit); } MELAout << " (address: " << &(it.second->first) << ")" << endl; } }
   for (auto const& it:valbools){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
   for (auto const& it:valshorts){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
   for (auto const& it:valuints){ if (it.second){ MELAout << "\t- " << it.first << " value: " << it.second->first << " (address: " << &(it.second->first) << ")" << endl; } }
@@ -254,6 +257,7 @@ void BaseTree::resetBranches(){
   currentEvent = -1;
   currentTree = nullptr;
 
+  this->resetBranch<BaseTree::BranchType_TBits_t>();
   this->resetBranch<BaseTree::BranchType_bool_t>();
   this->resetBranch<BaseTree::BranchType_short_t>();
   this->resetBranch<BaseTree::BranchType_uint_t>();
@@ -380,6 +384,9 @@ void BaseTree::releaseBranch(TString branchname){
   }
 
   switch (btype){
+  case BranchType_TBits_t:
+    this->removeBranch<BranchType_TBits_t>(branchname);
+    break;
   case BranchType_bool_t:
     this->removeBranch<BranchType_bool_t>(branchname);
     break;

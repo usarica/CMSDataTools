@@ -5,6 +5,11 @@
 #include "BaseTree.h"
 
 
+template<> bool BaseTree::getBranchCIterator<std::pair<TBits, TBits>*>(TString branchname, std::unordered_map<TString, std::pair<TBits, TBits>*>::iterator& it){
+  auto& theMap = valTBitss;
+  it = theMap.find(branchname);
+  return (it!=theMap.end());
+}
 template<> bool BaseTree::getBranchCIterator<std::pair<bool, bool>*>(TString branchname, std::unordered_map<TString, std::pair<bool, bool>*>::iterator& it){
   auto& theMap = valbools;
   it = theMap.find(branchname);
@@ -186,6 +191,11 @@ template<> bool BaseTree::getBranchCIterator<std::vector<CMSLorentzVector>*>(TSt
   return (it!=theMap.end());
 }
 
+template<> bool BaseTree::getBranchCIterator<std::pair<TBits, TBits>*>(TString branchname, std::unordered_map<TString, std::pair<TBits, TBits>*>::const_iterator& it) const{
+  auto const& theMap = valTBitss;
+  it = theMap.find(branchname);
+  return (it!=theMap.cend());
+}
 template<> bool BaseTree::getBranchCIterator<std::pair<bool, bool>*>(TString branchname, std::unordered_map<TString, std::pair<bool, bool>*>::const_iterator& it) const{
   auto const& theMap = valbools;
   it = theMap.find(branchname);
@@ -368,6 +378,7 @@ template<> bool BaseTree::getBranchCIterator<std::vector<CMSLorentzVector>*>(TSt
 }
 
 
+template<> void BaseTree::resetBranch<BaseTree::BranchType_TBits_t>(){ for (auto& it:valTBitss){ if (it.second){ it.second->first=it.second->second; } } }
 template<> void BaseTree::resetBranch<BaseTree::BranchType_bool_t>(){ for (auto& it:valbools){ if (it.second){ it.second->first=it.second->second; } } }
 template<> void BaseTree::resetBranch<BaseTree::BranchType_vbool_t>(){ for (auto& it:valVbools){ if (it.second) it.second->clear(); } }
 template<> void BaseTree::resetBranch<BaseTree::BranchType_vvbool_t>(){ for (auto& it:valVVbools){ if (it.second) it.second->clear(); } }
@@ -406,6 +417,7 @@ template<> void BaseTree::resetBranch<BaseTree::BranchType_CMSLorentzVector_t>()
 template<> void BaseTree::resetBranch<BaseTree::BranchType_vCMSLorentzVector_t>(){ for (auto& it:valVCMSLorentzVectors){ if (it.second) it.second->clear(); } }
 
 
+template<> void BaseTree::removeBranch<BaseTree::BranchType_TBits_t>(TString branchname){ for (auto& it:valTBitss){ if (it.first==branchname){ delete it.second; it.second=0; } } valTBitss.erase(branchname); }
 template<> void BaseTree::removeBranch<BaseTree::BranchType_bool_t>(TString branchname){ for (auto& it:valbools){ if (it.first==branchname){ delete it.second; it.second=0; } } valbools.erase(branchname); }
 template<> void BaseTree::removeBranch<BaseTree::BranchType_vbool_t>(TString branchname){ for (auto& it:valVbools){ if (it.first==branchname){ delete it.second; it.second=0; } } valVbools.erase(branchname); }
 template<> void BaseTree::removeBranch<BaseTree::BranchType_vvbool_t>(TString branchname){ for (auto& it:valVVbools){ if (it.first==branchname){ delete it.second; it.second=0; } } valVVbools.erase(branchname); }
@@ -444,6 +456,13 @@ template<> void BaseTree::removeBranch<BaseTree::BranchType_CMSLorentzVector_t>(
 template<> void BaseTree::removeBranch<BaseTree::BranchType_vCMSLorentzVector_t>(TString branchname){ for (auto& it:valVCMSLorentzVectors){ if (it.first==branchname){ delete it.second; it.second=0; } } valVCMSLorentzVectors.erase(branchname); }
 
 
+template<> bool BaseTree::bookBranch<TBits>(TString branchname, TBits valdef){
+  if (valTBitss.find(branchname)==valTBitss.end()) valTBitss[branchname] = new std::pair<TBits, TBits>(valdef, valdef);
+  else{ valTBitss[branchname]->first=valdef; valTBitss[branchname]->second=valdef; }
+  SampleHelpers::bookBranch(tree, branchname, &(valTBitss[branchname]->first));
+  SampleHelpers::bookBranch(failedtree, branchname, &(valTBitss[branchname]->first));
+  return true;
+}
 template<> bool BaseTree::bookBranch<bool>(TString branchname, bool valdef){
   if (valbools.find(branchname)==valbools.end()) valbools[branchname] = new std::pair<bool, bool>(valdef, valdef);
   else{ valbools[branchname]->first=valdef; valbools[branchname]->second=valdef; }
@@ -675,6 +694,7 @@ template<> bool BaseTree::bookBranch<std::vector<CMSLorentzVector>*>(TString bra
 }
 
 
+template<> bool BaseTree::bookBranch<BaseTree::BranchType_TBits_t>(TString branchname){ return this->bookBranch<TBits>(branchname, TBits()); }
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_bool_t>(TString branchname){ return this->bookBranch<bool>(branchname, 0); }
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_vbool_t>(TString branchname){ return this->bookBranch<std::vector<bool>*>(branchname, 0); }
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_vvbool_t>(TString branchname){ return this->bookBranch<std::vector<std::vector<bool>>*>(branchname, 0); }
@@ -969,6 +989,11 @@ template<> bool BaseTree::putBranch<BaseTree::BranchType_CMSLorentzVector_t>(TSt
 template<> bool BaseTree::putBranch<BaseTree::BranchType_vCMSLorentzVector_t>(TString branchname){ return this->putBranch<std::vector<CMSLorentzVector>*>(branchname, 0); }
 
 
+template<> void BaseTree::getVal<TBits>(TString branchname, TBits& val) const{
+  typedef TBits itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::const_iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=tmp->first; }
+}
 template<> void BaseTree::getVal<bool>(TString branchname, bool& val) const{
   typedef bool itType;
   std::unordered_map<TString, std::pair<itType, itType>*>::const_iterator it;
@@ -1151,6 +1176,11 @@ template<> void BaseTree::getVal<std::vector<CMSLorentzVector> const*>(TString b
 }
 
 
+template<> void BaseTree::setVal<TBits>(TString branchname, TBits const& val){
+  typedef TBits itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) tmp->first=val; }
+}
 template<> void BaseTree::setVal<bool>(TString branchname, bool const& val){
   typedef bool itType;
   std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
@@ -1333,6 +1363,11 @@ template<> void BaseTree::setVal<std::vector<CMSLorentzVector>*>(TString branchn
 }
 
 
+template<> void BaseTree::getValRef<TBits>(TString branchname, TBits*& val) const{
+  typedef TBits itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::const_iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
 template<> void BaseTree::getValRef<bool>(TString branchname, bool*& val) const{
   typedef bool itType;
   std::unordered_map<TString, std::pair<itType, itType>*>::const_iterator it;
@@ -1399,6 +1434,11 @@ template<> void BaseTree::getValRef<CMSLorentzVector>(TString branchname, CMSLor
   if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
 }
 
+template<> void BaseTree::getValRef<TBits>(TString branchname, TBits*& val){
+  typedef TBits itType;
+  std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;
+  if (this->getBranchCIterator<std::pair<itType, itType>*>(branchname, it)){ auto& tmp = it->second; if (tmp) val=&(tmp->first); }
+}
 template<> void BaseTree::getValRef<bool>(TString branchname, bool*& val){
   typedef bool itType;
   std::unordered_map<TString, std::pair<itType, itType>*>::iterator it;

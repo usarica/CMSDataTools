@@ -2,13 +2,13 @@
 #define IVYBASE_HPP
 
 #include "IvyBase.h"
-#include "MELAStreamHelpers.hh"
 
 
-using namespace MELAStreamHelpers;
 using namespace std;
+using namespace MELAStreamHelpers;
 
 
+template<> void IvyBase::getConsumedMap<TBits>(std::unordered_map<TString, TBits*>*& theMap){ theMap = &valTBitss; }
 template<> void IvyBase::getConsumedMap<bool>(std::unordered_map<TString, bool*>*& theMap){ theMap = &valbools; }
 template<> void IvyBase::getConsumedMap<short>(std::unordered_map<TString, short*>*& theMap){ theMap = &valshorts; }
 template<> void IvyBase::getConsumedMap<unsigned int>(std::unordered_map<TString, unsigned int*>*& theMap){ theMap = &valuints; }
@@ -46,6 +46,7 @@ template<> void IvyBase::getConsumedMap<std::vector<std::vector<long long>>*>(st
 template<> void IvyBase::getConsumedMap<std::vector<std::vector<float>>*>(std::unordered_map<TString, std::vector<std::vector<float>>**>*& theMap){ theMap = &valVVfloats; }
 template<> void IvyBase::getConsumedMap<std::vector<std::vector<double>>*>(std::unordered_map<TString, std::vector<std::vector<double>>**>*& theMap){ theMap = &valVVdoubles; }
 
+template<> void IvyBase::getConsumedMap<TBits>(std::unordered_map<TString, TBits*> const*& theMap) const{ theMap = &valTBitss; }
 template<> void IvyBase::getConsumedMap<bool>(std::unordered_map<TString, bool*> const*& theMap) const{ theMap = &valbools; }
 template<> void IvyBase::getConsumedMap<short>(std::unordered_map<TString, short*> const*& theMap) const{ theMap = &valshorts; }
 template<> void IvyBase::getConsumedMap<unsigned int>(std::unordered_map<TString, unsigned int*> const*& theMap) const{ theMap = &valuints; }
@@ -90,6 +91,7 @@ template<typename T> void IvyBase::addConsumed(TString name){
   if (theMap) (*theMap)[name] = nullptr;
   else if (verbosity>=TVar::ERROR) MELAerr << "IvyBase::addConsumed(" << name << "): Map could not be found." << endl;
 }
+template void IvyBase::addConsumed<TBits>(TString name);
 template void IvyBase::addConsumed<bool>(TString name);
 template void IvyBase::addConsumed<short>(TString name);
 template void IvyBase::addConsumed<unsigned int>(TString name);
@@ -155,6 +157,7 @@ template<typename T> bool IvyBase::linkConsumed(BaseTree* tree){
   }
   return result;
 }
+template bool IvyBase::linkConsumed<TBits>(BaseTree* tree);
 template bool IvyBase::linkConsumed<bool>(BaseTree* tree);
 template bool IvyBase::linkConsumed<short>(BaseTree* tree);
 template bool IvyBase::linkConsumed<unsigned int>(BaseTree* tree);
@@ -209,6 +212,7 @@ template<typename T> bool IvyBase::getConsumed(TString name, T*& val) const{
   else if (verbosity>=TVar::ERROR) MELAerr << "IvyBase::getConsumed(" << name << "): Map could not be found." << endl;
   return false;
 }
+template bool IvyBase::getConsumed<TBits>(TString name, TBits*& val) const;
 template bool IvyBase::getConsumed<bool>(TString name, bool*& val) const;
 template bool IvyBase::getConsumed<short>(TString name, short*& val) const;
 template bool IvyBase::getConsumed<unsigned int>(TString name, unsigned int*& val) const;
@@ -262,6 +266,7 @@ template<typename T> bool IvyBase::getConsumed(TString name, T const*& val) cons
   else if (verbosity>=TVar::ERROR) MELAerr << "IvyBase::getConsumed(" << name << "): Map could not be found." << endl;
   return false;
 }
+template bool IvyBase::getConsumed<TBits>(TString name, TBits const*& val) const;
 template bool IvyBase::getConsumed<bool>(TString name, bool const*& val) const;
 template bool IvyBase::getConsumed<short>(TString name, short const*& val) const;
 template bool IvyBase::getConsumed<unsigned int>(TString name, unsigned int const*& val) const;

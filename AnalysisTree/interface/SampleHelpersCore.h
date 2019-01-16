@@ -101,10 +101,6 @@ template<typename T> void SampleHelpers::putBranch(TTree* tree, TString strname,
   if (tree){
     // Do not check for branch alias
     if (!SampleHelpers::branchExists(tree, strname)) tree->Branch(strname, &var);
-    else{
-      tree->SetBranchStatus(strname, 1);
-      tree->SetBranchAddress(strname, &var);
-    }
   }
 }
 

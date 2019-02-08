@@ -2,7 +2,7 @@
 #include "TSystem.h"
 
 
-void FileTransferHelpers::InitiateFileTransfer(TString indir, TString fname, TString outsite, TString outdir, TString renamefile){
+void FileTransferHelpers::InitiateCondorFileTransfer(TString indir, TString fname, TString outsite, TString outdir, TString renamefile){
   if (renamefile=="") renamefile = fname;
   if (indir.EndsWith("/")) indir.Remove(indir.Length()-1);
   if (outdir.EndsWith("/")) outdir.Remove(outdir.Length()-1);

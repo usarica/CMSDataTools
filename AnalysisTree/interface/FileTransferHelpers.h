@@ -4,7 +4,7 @@
 #include "HostHelpersCore.h"
 
 namespace FileTransferHelpers{
-  void InitiateFileTransfer(TString indir, TString fname, TString outsite, TString outdir, TString renamefile="");
+  void InitiateCondorFileTransfer(TString indir, TString fname, TString outsite, TString outdir, TString renamefile="");
 }
 
 

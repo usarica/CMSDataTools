@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <cstdio>
 #include <ctime>
 #include <cassert>
@@ -19,6 +20,8 @@ namespace HostHelpers{
   };
 
   Hosts GetHostLocation();
+  int GetCurrentDirectory(TString& dirname);
+
   bool DirectoryExists(const char* dirname);
   bool FileExists(const char* fname);
 

@@ -10,6 +10,13 @@ HostHelpers::Hosts HostHelpers::GetHostLocation(){
   else if (strhost.Contains("t2.ucsd.edu")) return kUCSDT2;
   else return kUNKNOWN;
 }
+int HostHelpers::GetCurrentDirectory(TString& dirname){
+  char cpath[FILENAME_MAX];
+  if (!getcwd(cpath, FILENAME_MAX)) return errno;
+  dirname=cpath;
+  return 0;
+}
+
 bool HostHelpers::DirectoryExists(const char* dirname){
   struct stat sb;
   return (stat(dirname, &sb) == 0 && S_ISDIR(sb.st_mode));

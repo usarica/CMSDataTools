@@ -11,6 +11,7 @@ import pprint
 import subprocess
 from datetime import date
 from optparse import OptionParser
+from CMSDataTools.AnalysisTree.TranslateStringBetweenPythonAndShell import *
 
 
 class GenericROOTExecutor:
@@ -37,17 +38,19 @@ class GenericROOTExecutor:
 
 
    def run(self):
+      if self.opt.fcncmd is not None:
+         self.opt.fcncmd = translateROOTArgumentFromShellToPython(self.opt.fcncmd)
       jobcmd = r""
-      if self.opt.loadlib is not None: jobcmd += r"gROOT->ProcessLine(\".x {}\");".format(self.opt.loadlib)
+      if self.opt.loadlib is not None: jobcmd += r'gROOT->ProcessLine(".x {}");'.format(self.opt.loadlib)
       if not self.opt.recompile:
-        jobcmd += r"gROOT->ProcessLine(\".L {}+\");".format(self.opt.script)
+         jobcmd += r'gROOT->ProcessLine(".L {}+");'.format(self.opt.script)
       else:
-        jobcmd += r"gROOT->ProcessLine(\".L {}++\");".format(self.opt.script)
-      jobcmd += r"gROOT->ProcessLine(\"{}({})\");".format(self.opt.function, self.opt.fcncmd)
-      jobcmd = "root -l -b -q -e \"{}\"".format(jobcmd)
-      if self.opt.dryRun:
-         jobcmd = "echo " + jobcmd
-      ret = os.system( jobcmd )
+         jobcmd += r'gROOT->ProcessLine(".L {}++");'.format(self.opt.script)
+      jobcmd += r'gROOT->ProcessLine("{}({})");'.format(self.opt.function, self.opt.fcncmd)
+      jobcmd = "root -l -b -q -e '{}'".format(jobcmd)
+      ret = os.system( "echo Running " + jobcmd )
+      if not self.opt.dryRun:
+         ret = os.system( jobcmd )
 
 
 

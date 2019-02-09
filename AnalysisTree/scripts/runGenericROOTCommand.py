@@ -23,6 +23,7 @@ class GenericROOTExecutor:
       self.parser.add_option("--function", dest="function", type="string", help="Name of the function")
       self.parser.add_option("--command", dest="fcncmd", type="string", help="Function arguments", default="")
 
+      self.parser.add_option("--recompile", action="store_true", default=False, help="Force the recompilation of the script")
       self.parser.add_option("--dry", dest="dryRun", action="store_true", default=False, help="Do not submit jobs, just set up the files")
 
       (self.opt,self.args) = self.parser.parse_args()
@@ -38,7 +39,10 @@ class GenericROOTExecutor:
    def run(self):
       jobcmd = r""
       if self.opt.loadlib is not None: jobcmd += r"gROOT->ProcessLine(\".x {}\");".format(self.opt.loadlib)
-      jobcmd += r"gROOT->ProcessLine(\".L {}+\");".format(self.opt.script)
+      if not self.opt.recompile:
+        jobcmd += r"gROOT->ProcessLine(\".L {}+\");".format(self.opt.script)
+      else:
+        jobcmd += r"gROOT->ProcessLine(\".L {}++\");".format(self.opt.script)
       jobcmd += r"gROOT->ProcessLine(\"{}({})\");".format(self.opt.function, self.opt.fcncmd)
       jobcmd = "root -l -b -q -e \"{}\"".format(jobcmd)
       if self.opt.dryRun:

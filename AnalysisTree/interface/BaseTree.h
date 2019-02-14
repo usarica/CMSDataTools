@@ -161,6 +161,7 @@ public:
 
   void silenceUnused();
   void releaseBranch(TString branchname);
+  void setAutoSave(Long64_t fsave);
 
   bool isValid() const;
   bool branchExists(TString branchname, BranchType* type=nullptr);

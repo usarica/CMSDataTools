@@ -502,6 +502,10 @@ void BaseTree::releaseBranch(TString branchname){
     break;
   }
 }
+void BaseTree::setAutoSave(Long64_t fsave){
+  if (receiver || !tree) return;
+  tree->SetAutoSave(fsave);
+}
 
 bool BaseTree::isValidEvent() const{ return BaseTree::isValid(); } // To be overloaded in the daughter tree
 

@@ -23,43 +23,15 @@ void IvyBase::defineConsumedSloppy(TString name){
 bool IvyBase::linkConsumes(BaseTree* tree){
   bool process = tree->isValid();
   if (process){
-    process &= this->linkConsumed<TBits>(tree);
-    process &= this->linkConsumed<bool>(tree);
-    process &= this->linkConsumed<short>(tree);
-    process &= this->linkConsumed<unsigned int>(tree);
-    process &= this->linkConsumed<int>(tree);
-    process &= this->linkConsumed<unsigned long>(tree);
-    process &= this->linkConsumed<long>(tree);
-    process &= this->linkConsumed<unsigned long long>(tree);
-    process &= this->linkConsumed<long long>(tree);
-    process &= this->linkConsumed<float>(tree);
-    process &= this->linkConsumed<double>(tree);
-    process &= this->linkConsumed<std::string>(tree);
-    process &= this->linkConsumed<TString>(tree);
-    process &= this->linkConsumed<CMSLorentzVector>(tree);
-    process &= this->linkConsumed<std::vector<bool>*>(tree);
-    process &= this->linkConsumed<std::vector<short>*>(tree);
-    process &= this->linkConsumed<std::vector<unsigned int>*>(tree);
-    process &= this->linkConsumed<std::vector<int>*>(tree);
-    process &= this->linkConsumed<std::vector<unsigned long>*>(tree);
-    process &= this->linkConsumed<std::vector<long>*>(tree);
-    process &= this->linkConsumed<std::vector<unsigned long long>*>(tree);
-    process &= this->linkConsumed<std::vector<long long>*>(tree);
-    process &= this->linkConsumed<std::vector<float>*>(tree);
-    process &= this->linkConsumed<std::vector<double>*>(tree);
-    process &= this->linkConsumed<std::vector<std::string>*>(tree);
-    process &= this->linkConsumed<std::vector<TString>*>(tree);
-    process &= this->linkConsumed<std::vector<CMSLorentzVector>*>(tree);
-    process &= this->linkConsumed<std::vector<std::vector<bool>>*>(tree);
-    process &= this->linkConsumed<std::vector<std::vector<short>>*>(tree);
-    process &= this->linkConsumed<std::vector<std::vector<unsigned int>>*>(tree);
-    process &= this->linkConsumed<std::vector<std::vector<int>>*>(tree);
-    process &= this->linkConsumed<std::vector<std::vector<unsigned long>>*>(tree);
-    process &= this->linkConsumed<std::vector<std::vector<long>>*>(tree);
-    process &= this->linkConsumed<std::vector<std::vector<unsigned long long>>*>(tree);
-    process &= this->linkConsumed<std::vector<std::vector<long long>>*>(tree);
-    process &= this->linkConsumed<std::vector<std::vector<float>>*>(tree);
-    process &= this->linkConsumed<std::vector<std::vector<double>>*>(tree);
+#define SIMPLE_DATA_INPUT_DIRECTIVE(name, type, default_value) process &= this->linkConsumed<type>(tree);
+#define VECTOR_DATA_INPUT_DIRECTIVE(name, type) process &= this->linkConsumed<type*>(tree);
+#define DOUBLEVECTOR_DATA_INPUT_DIRECTIVE(name, type) process &= this->linkConsumed<type*>(tree);
+    SIMPLE_DATA_INPUT_DIRECTIVES
+    VECTOR_DATA_INPUT_DIRECTIVES
+    DOUBLEVECTOR_DATA_INPUT_DIRECTIVES
+#undef SIMPLE_DATA_INPUT_DIRECTIVE
+#undef VECTOR_DATA_INPUT_DIRECTIVE
+#undef DOUBLEVECTOR_DATA_INPUT_DIRECTIVE
     // Silence unused branches
     tree->silenceUnused();
   }

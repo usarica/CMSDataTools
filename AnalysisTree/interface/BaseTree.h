@@ -18,7 +18,7 @@
 class BaseTree{
 public:
 
-#define SIMPLE_DATA_INPUT_DIRECTIVE(name, type) BranchType_##name##_t,
+#define SIMPLE_DATA_INPUT_DIRECTIVE(name, type, default_value) BranchType_##name##_t,
 #define VECTOR_DATA_INPUT_DIRECTIVE(name, type) BranchType_v##name##_t,
 #define DOUBLEVECTOR_DATA_INPUT_DIRECTIVE(name, type) BranchType_vv##name##_t,
   enum BranchType{
@@ -44,7 +44,7 @@ protected:
   int currentEvent;
   TTree* currentTree;
 
-#define SIMPLE_DATA_INPUT_DIRECTIVE(name, type) std::unordered_map<TString, std::pair<type, type>*> val##name##s;
+#define SIMPLE_DATA_INPUT_DIRECTIVE(name, type, default_value) std::unordered_map<TString, std::pair<type, type>*> val##name##s;
 #define VECTOR_DATA_INPUT_DIRECTIVE(name, type) std::unordered_map<TString, type*> valV##name##s;
 #define DOUBLEVECTOR_DATA_INPUT_DIRECTIVE(name, type) std::unordered_map<TString, type*> valVV##name##s;
 

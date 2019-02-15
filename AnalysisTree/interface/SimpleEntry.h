@@ -3,41 +3,29 @@
 
 #include <vector>
 #include <unordered_map>
+#include "AnalysisDataTypes.hh"
+#include "TBits.h"
 #include "TString.h"
 #include "TTree.h"
 #include "HelperFunctionsCore.h"
 
 
 struct SimpleEntry{
+
+#define SIMPLE_DATA_OUTPUT_DIRECTIVE(name_t, type) std::unordered_map<TString, type> named##name_t##s;
+#define VECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) std::unordered_map<TString, type> namedV##name_t##s;
+#define DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) std::unordered_map<TString, type> namedVV##name_t##s;
+  SIMPLE_DATA_OUTPUT_DIRECTIVES
+  VECTOR_DATA_OUTPUT_DIRECTIVES
+  DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVES
+#undef SIMPLE_DATA_OUTPUT_DIRECTIVE
+#undef VECTOR_DATA_OUTPUT_DIRECTIVE
+#undef DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE
+
   int id;
   float trackingval;
   float weight;
-
   std::vector<float> recoval;
-
-  std::unordered_map<TString, bool> namedbools;
-  std::unordered_map<TString, short> namedshorts;
-  std::unordered_map<TString, unsigned int> nameduints;
-  std::unordered_map<TString, int> namedints;
-  std::unordered_map<TString, unsigned long> namedulongs;
-  std::unordered_map<TString, long> namedlongs;
-  std::unordered_map<TString, unsigned long long> namedulonglongs;
-  std::unordered_map<TString, long long> namedlonglongs;
-  std::unordered_map<TString, float> namedfloats;
-  std::unordered_map<TString, double> nameddoubles;
-  std::unordered_map<TString, CMSLorentzVector> namedCMSLorentzVectors;
-
-  std::unordered_map<TString, std::vector<bool>> namedVbools;
-  std::unordered_map<TString, std::vector<short>> namedVshorts;
-  std::unordered_map<TString, std::vector<unsigned int>> namedVuints;
-  std::unordered_map<TString, std::vector<int>> namedVints;
-  std::unordered_map<TString, std::vector<unsigned long>> namedVulongs;
-  std::unordered_map<TString, std::vector<long>> namedVlongs;
-  std::unordered_map<TString, std::vector<unsigned long long>> namedVulonglongs;
-  std::unordered_map<TString, std::vector<long long>> namedVlonglongs;
-  std::unordered_map<TString, std::vector<float>> namedVfloats;
-  std::unordered_map<TString, std::vector<double>> namedVdoubles;
-  std::unordered_map<TString, std::vector<CMSLorentzVector>> namedVCMSLorentzVectors;
 
   SimpleEntry();
   SimpleEntry(int id_, float trackingval_, float weight_=1);

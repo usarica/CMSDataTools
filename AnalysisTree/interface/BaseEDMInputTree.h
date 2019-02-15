@@ -56,45 +56,15 @@ template<typename T, typename U> void CMSEDMWrapperLinker<T, U>::reset(){ var = 
 
 class BaseEDMInputTree : public BaseTree{
 protected:
-  std::unordered_map<TString, CMSEDMWrapperLinker<TBits>*> bridgeTBitss;
-  std::unordered_map<TString, CMSEDMWrapperLinker<bool>*> bridgebools;
-  std::unordered_map<TString, CMSEDMWrapperLinker<short>*> bridgeshorts;
-  std::unordered_map<TString, CMSEDMWrapperLinker<unsigned int>*> bridgeuints;
-  std::unordered_map<TString, CMSEDMWrapperLinker<int>*> bridgeints;
-  std::unordered_map<TString, CMSEDMWrapperLinker<unsigned long>*> bridgeulongs;
-  std::unordered_map<TString, CMSEDMWrapperLinker<long>*> bridgelongs;
-  std::unordered_map<TString, CMSEDMWrapperLinker<unsigned long long>*> bridgeulonglongs;
-  std::unordered_map<TString, CMSEDMWrapperLinker<long long>*> bridgelonglongs;
-  std::unordered_map<TString, CMSEDMWrapperLinker<float>*> bridgefloats;
-  std::unordered_map<TString, CMSEDMWrapperLinker<double>*> bridgedoubles;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::string>*> bridgestrings;
-  std::unordered_map<TString, CMSEDMWrapperLinker<TString>*> bridgeTStrings;
-  std::unordered_map<TString, CMSEDMWrapperLinker<CMSLorentzVector>*> bridgeCMSLorentzVectors;
-
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<bool>, std::vector<bool>*>*> bridgeVbools;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<short>, std::vector<short>*>*> bridgeVshorts;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<unsigned int>, std::vector<unsigned int>*>*> bridgeVuints;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<int>, std::vector<int>*>*> bridgeVints;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<unsigned long>, std::vector<unsigned long>*>*> bridgeVulongs;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<long>, std::vector<long>*>*> bridgeVlongs;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<unsigned long long>, std::vector<unsigned long long>*>*> bridgeVulonglongs;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<long long>, std::vector<long long>*>*> bridgeVlonglongs;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<float>, std::vector<float>*>*> bridgeVfloats;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<double>, std::vector<double>*>*> bridgeVdoubles;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::string>, std::vector<std::string>*>*> bridgeVstrings;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<TString>, std::vector<TString>*>*> bridgeVTStrings;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<CMSLorentzVector>, std::vector<CMSLorentzVector>*>*> bridgeVCMSLorentzVectors;
-
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<bool>>, std::vector<std::vector<bool>>*>*> bridgeVVbools;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<short>>, std::vector<std::vector<short>>*>*> bridgeVVshorts;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<unsigned int>>, std::vector<std::vector<unsigned int>>*>*> bridgeVVuints;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<int>>, std::vector<std::vector<int>>*>*> bridgeVVints;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<unsigned long>>, std::vector<std::vector<unsigned long>>*>*> bridgeVVulongs;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<long>>, std::vector<std::vector<long>>*>*> bridgeVVlongs;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<unsigned long long>>, std::vector<std::vector<unsigned long long>>*>*> bridgeVVulonglongs;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<long long>>, std::vector<std::vector<long long>>*>*> bridgeVVlonglongs;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<float>>, std::vector<std::vector<float>>*>*> bridgeVVfloats;
-  std::unordered_map<TString, CMSEDMWrapperLinker<std::vector<std::vector<double>>, std::vector<std::vector<double>>*>*> bridgeVVdoubles;
+#define SIMPLE_DATA_INPUT_DIRECTIVE(name, type, default_value) std::unordered_map<TString, CMSEDMWrapperLinker<type>*> bridge##name##s;
+#define VECTOR_DATA_INPUT_DIRECTIVE(name, type) std::unordered_map<TString, CMSEDMWrapperLinker<type, type*>*> bridgeV##name##s;
+#define DOUBLEVECTOR_DATA_INPUT_DIRECTIVE(name, type) std::unordered_map<TString, CMSEDMWrapperLinker<type, type*>*> bridgeVV##name##s;
+  SIMPLE_DATA_INPUT_DIRECTIVES
+  VECTOR_DATA_INPUT_DIRECTIVES
+  DOUBLEVECTOR_DATA_INPUT_DIRECTIVES
+#undef SIMPLE_DATA_INPUT_DIRECTIVE
+#undef VECTOR_DATA_INPUT_DIRECTIVE
+#undef DOUBLEVECTOR_DATA_INPUT_DIRECTIVE
 
   template<BranchType T> void resetEDMBranch();
   void resetBranches();

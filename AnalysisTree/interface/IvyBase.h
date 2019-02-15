@@ -15,46 +15,15 @@ protected:
   // Consumes
   std::vector<TString> sloppyConsumes; // In case some variables are known to be absent in some trees
 
-  std::unordered_map<TString, TBits*> valTBitss;
-  std::unordered_map<TString, bool*> valbools;
-  std::unordered_map<TString, short*> valshorts;
-  std::unordered_map<TString, unsigned int*> valuints;
-  std::unordered_map<TString, int*> valints;
-  std::unordered_map<TString, unsigned long*> valulongs;
-  std::unordered_map<TString, long*> vallongs;
-  std::unordered_map<TString, unsigned long long*> valulonglongs;
-  std::unordered_map<TString, long long*> vallonglongs;
-  std::unordered_map<TString, float*> valfloats;
-  std::unordered_map<TString, double*> valdoubles;
-  std::unordered_map<TString, std::string*> valstrings;
-  std::unordered_map<TString, TString*> valTStrings;
-  std::unordered_map<TString, CMSLorentzVector*> valCMSLorentzVectors;
-
-  std::unordered_map<TString, std::vector<bool>**> valVbools;
-  std::unordered_map<TString, std::vector<short>**> valVshorts;
-  std::unordered_map<TString, std::vector<unsigned int>**> valVuints;
-  std::unordered_map<TString, std::vector<int>**> valVints;
-  std::unordered_map<TString, std::vector<unsigned long>**> valVulongs;
-  std::unordered_map<TString, std::vector<long>**> valVlongs;
-  std::unordered_map<TString, std::vector<unsigned long long>**> valVulonglongs;
-  std::unordered_map<TString, std::vector<long long>**> valVlonglongs;
-  std::unordered_map<TString, std::vector<float>**> valVfloats;
-  std::unordered_map<TString, std::vector<double>**> valVdoubles;
-  std::unordered_map<TString, std::vector<std::string>**> valVstrings;
-  std::unordered_map<TString, std::vector<TString>**> valVTStrings;
-  std::unordered_map<TString, std::vector<CMSLorentzVector>**> valVCMSLorentzVectors;
-
-  std::unordered_map<TString, std::vector<std::vector<bool>>**> valVVbools;
-  std::unordered_map<TString, std::vector<std::vector<short>>**> valVVshorts;
-  std::unordered_map<TString, std::vector<std::vector<unsigned int>>**> valVVuints;
-  std::unordered_map<TString, std::vector<std::vector<int>>**> valVVints;
-  std::unordered_map<TString, std::vector<std::vector<unsigned long>>**> valVVulongs;
-  std::unordered_map<TString, std::vector<std::vector<long>>**> valVVlongs;
-  std::unordered_map<TString, std::vector<std::vector<unsigned long long>>**> valVVulonglongs;
-  std::unordered_map<TString, std::vector<std::vector<long long>>**> valVVlonglongs;
-  std::unordered_map<TString, std::vector<std::vector<float>>**> valVVfloats;
-  std::unordered_map<TString, std::vector<std::vector<double>>**> valVVdoubles;
-
+#define SIMPLE_DATA_INPUT_DIRECTIVE(name, type, default_value) std::unordered_map<TString, type*> val##name##s;
+#define VECTOR_DATA_INPUT_DIRECTIVE(name, type) std::unordered_map<TString, type**> valV##name##s;
+#define DOUBLEVECTOR_DATA_INPUT_DIRECTIVE(name, type) std::unordered_map<TString, type**> valVV##name##s;
+  SIMPLE_DATA_INPUT_DIRECTIVES
+  VECTOR_DATA_INPUT_DIRECTIVES
+  DOUBLEVECTOR_DATA_INPUT_DIRECTIVES
+#undef SIMPLE_DATA_INPUT_DIRECTIVE
+#undef VECTOR_DATA_INPUT_DIRECTIVE
+#undef DOUBLEVECTOR_DATA_INPUT_DIRECTIVE
 
   template<typename T> bool linkConsumed(BaseTree* tree);
   bool linkConsumes(BaseTree* tree);

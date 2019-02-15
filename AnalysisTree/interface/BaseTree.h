@@ -12,54 +12,24 @@
 #include "TTree.h"
 #include "TH1F.h"
 #include "CMSLorentzVector.h"
+#include "AnalysisDataTypes.hh"
 
 
 class BaseTree{
 public:
+
+#define SIMPLE_DATA_INPUT_DIRECTIVE(name, type) BranchType_##name##_t,
+#define VECTOR_DATA_INPUT_DIRECTIVE(name, type) BranchType_v##name##_t,
+#define DOUBLEVECTOR_DATA_INPUT_DIRECTIVE(name, type) BranchType_vv##name##_t,
   enum BranchType{
-    BranchType_TBits_t,
-
-    BranchType_bool_t,
-    BranchType_short_t,
-    BranchType_uint_t,
-    BranchType_int_t,
-    BranchType_ulong_t,
-    BranchType_long_t,
-    BranchType_ulonglong_t,
-    BranchType_longlong_t,
-    BranchType_float_t,
-    BranchType_double_t,
-    BranchType_string_t,
-    BranchType_TString_t,
-    BranchType_CMSLorentzVector_t,
-
-    BranchType_vbool_t,
-    BranchType_vshort_t,
-    BranchType_vuint_t,
-    BranchType_vint_t,
-    BranchType_vulong_t,
-    BranchType_vlong_t,
-    BranchType_vulonglong_t,
-    BranchType_vlonglong_t,
-    BranchType_vfloat_t,
-    BranchType_vdouble_t,
-    BranchType_vstring_t,
-    BranchType_vTString_t,
-    BranchType_vCMSLorentzVector_t,
-
-    BranchType_vvbool_t,
-    BranchType_vvshort_t,
-    BranchType_vvuint_t,
-    BranchType_vvint_t,
-    BranchType_vvulong_t,
-    BranchType_vvlong_t,
-    BranchType_vvulonglong_t,
-    BranchType_vvlonglong_t,
-    BranchType_vvfloat_t,
-    BranchType_vvdouble_t,
-
+    SIMPLE_DATA_INPUT_DIRECTIVES
+    VECTOR_DATA_INPUT_DIRECTIVES
+    DOUBLEVECTOR_DATA_INPUT_DIRECTIVES
     BranchType_unknown_t
   };
+#undef SIMPLE_DATA_INPUT_DIRECTIVE
+#undef VECTOR_DATA_INPUT_DIRECTIVE
+#undef DOUBLEVECTOR_DATA_INPUT_DIRECTIVE
 
   TString sampleIdentifier;
 
@@ -74,45 +44,17 @@ protected:
   int currentEvent;
   TTree* currentTree;
 
-  std::unordered_map<TString, std::pair<TBits, TBits>*> valTBitss;
-  std::unordered_map<TString, std::pair<bool, bool>*> valbools;
-  std::unordered_map<TString, std::pair<short, short>*> valshorts;
-  std::unordered_map<TString, std::pair<unsigned int, unsigned int>*> valuints;
-  std::unordered_map<TString, std::pair<int, int>*> valints;
-  std::unordered_map<TString, std::pair<unsigned long, unsigned long>*> valulongs;
-  std::unordered_map<TString, std::pair<long, long>*> vallongs;
-  std::unordered_map<TString, std::pair<unsigned long long, unsigned long long>*> valulonglongs;
-  std::unordered_map<TString, std::pair<long long, long long>*> vallonglongs;
-  std::unordered_map<TString, std::pair<float, float>*> valfloats;
-  std::unordered_map<TString, std::pair<double, double>*> valdoubles;
-  std::unordered_map<TString, std::pair<std::string, std::string>*> valstrings;
-  std::unordered_map<TString, std::pair<TString, TString>*> valTStrings;
-  std::unordered_map<TString, std::pair<CMSLorentzVector, CMSLorentzVector>*> valCMSLorentzVectors;
+#define SIMPLE_DATA_INPUT_DIRECTIVE(name, type) std::unordered_map<TString, std::pair<type, type>*> val##name##s;
+#define VECTOR_DATA_INPUT_DIRECTIVE(name, type) std::unordered_map<TString, type*> valV##name##s;
+#define DOUBLEVECTOR_DATA_INPUT_DIRECTIVE(name, type) std::unordered_map<TString, type*> valVV##name##s;
 
-  std::unordered_map<TString, std::vector<bool>*> valVbools;
-  std::unordered_map<TString, std::vector<short>*> valVshorts;
-  std::unordered_map<TString, std::vector<unsigned int>*> valVuints;
-  std::unordered_map<TString, std::vector<int>*> valVints;
-  std::unordered_map<TString, std::vector<unsigned long>*> valVulongs;
-  std::unordered_map<TString, std::vector<long>*> valVlongs;
-  std::unordered_map<TString, std::vector<unsigned long long>*> valVulonglongs;
-  std::unordered_map<TString, std::vector<long long>*> valVlonglongs;
-  std::unordered_map<TString, std::vector<float>*> valVfloats;
-  std::unordered_map<TString, std::vector<double>*> valVdoubles;
-  std::unordered_map<TString, std::vector<std::string>*> valVstrings;
-  std::unordered_map<TString, std::vector<TString>*> valVTStrings;
-  std::unordered_map<TString, std::vector<CMSLorentzVector>*> valVCMSLorentzVectors;
+  SIMPLE_DATA_INPUT_DIRECTIVES
+  VECTOR_DATA_INPUT_DIRECTIVES
+  DOUBLEVECTOR_DATA_INPUT_DIRECTIVES
 
-  std::unordered_map<TString, std::vector<std::vector<bool>>*> valVVbools;
-  std::unordered_map<TString, std::vector<std::vector<short>>*> valVVshorts;
-  std::unordered_map<TString, std::vector<std::vector<unsigned int>>*> valVVuints;
-  std::unordered_map<TString, std::vector<std::vector<int>>*> valVVints;
-  std::unordered_map<TString, std::vector<std::vector<unsigned long>>*> valVVulongs;
-  std::unordered_map<TString, std::vector<std::vector<long>>*> valVVlongs;
-  std::unordered_map<TString, std::vector<std::vector<unsigned long long>>*> valVVulonglongs;
-  std::unordered_map<TString, std::vector<std::vector<long long>>*> valVVlonglongs;
-  std::unordered_map<TString, std::vector<std::vector<float>>*> valVVfloats;
-  std::unordered_map<TString, std::vector<std::vector<double>>*> valVVdoubles;
+#undef SIMPLE_DATA_INPUT_DIRECTIVE
+#undef VECTOR_DATA_INPUT_DIRECTIVE
+#undef DOUBLEVECTOR_DATA_INPUT_DIRECTIVE
 
   BranchType searchBranchType(TString branchname) const;
 

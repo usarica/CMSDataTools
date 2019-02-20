@@ -107,6 +107,11 @@ template<> void BaseTree::getValRef<type*>(TString branchname, type**& val){ \
   std::unordered_map<TString, itType*>::iterator it; \
   if (this->getBranchCIterator<itType*>(branchname, it)) val = &(it->second); \
 } \
+template<> void BaseTree::getValRef<type* const>(TString branchname, type* const*& val){ \
+  typedef type itType; \
+  std::unordered_map<TString, itType*>::const_iterator it; \
+  if (this->getBranchCIterator<itType*>(branchname, it)) val = &(it->second); \
+} \
 
 
 #define DOUBLEVECTOR_DATA_INPUT_DIRECTIVE(name, type) \
@@ -159,6 +164,11 @@ template<> void BaseTree::getValRef<type* const>(TString branchname, type* const
 template<> void BaseTree::getValRef<type*>(TString branchname, type**& val){ \
   typedef type itType; \
   std::unordered_map<TString, itType*>::iterator it; \
+  if (this->getBranchCIterator<itType*>(branchname, it)) val = &(it->second); \
+} \
+template<> void BaseTree::getValRef<type* const>(TString branchname, type* const*& val){ \
+  typedef type itType; \
+  std::unordered_map<TString, itType*>::const_iterator it; \
   if (this->getBranchCIterator<itType*>(branchname, it)) val = &(it->second); \
 } \
 

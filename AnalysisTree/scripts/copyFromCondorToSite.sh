@@ -42,7 +42,7 @@ if [ ! -z ${FILENAME} ];then
   COPY_STATUS=$?
   if [[ $COPY_STATUS != 0 ]]; then
     echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
-    env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm --verbose ${COPY_DEST}
+    env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm -t 7200 --verbose ${COPY_DEST}
     REMOVE_STATUS=$?
     if [[ $REMOVE_STATUS != 0 ]]; then
         echo "gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"

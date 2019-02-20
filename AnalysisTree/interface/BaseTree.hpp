@@ -25,6 +25,7 @@ template<> bool BaseTree::bookBranch<type>(TString branchname, type valdef){ \
   SampleHelpers::bookBranch(failedtree, branchname, &(val##name##s[branchname]->first)); \
   return true; \
 } \
+template<> bool BaseTree::bookBranch<BaseTree::BranchType_##name##_t>(TString branchname){ return this->bookBranch<type>(branchname, default_value); } \
 template<> bool BaseTree::putBranch<type>(TString branchname, type valdef){ \
   if (val##name##s.find(branchname)==val##name##s.end()) val##name##s[branchname] = new std::pair<type, type>(valdef, valdef); \
   else{ val##name##s[branchname]->first=valdef; val##name##s[branchname]->second=valdef; } \
@@ -73,6 +74,7 @@ template<> bool BaseTree::bookBranch<type*>(TString branchname, type*/* valdef*/
   SampleHelpers::bookBranch(failedtree, branchname, &(valV##name##s[branchname])); \
   return true; \
 } \
+template<> bool BaseTree::bookBranch<BaseTree::BranchType_v##name##_t>(TString branchname){ return this->bookBranch<type*>(branchname, nullptr); } \
 template<> bool BaseTree::putBranch<type*>(TString branchname, type*/* valdef*/){ \
   if (valV##name##s.find(branchname)==valV##name##s.end()) valV##name##s[branchname] = new type(); \
   else valV##name##s[branchname]->clear(); \
@@ -126,6 +128,7 @@ template<> bool BaseTree::bookBranch<type*>(TString branchname, type*/* valdef*/
   SampleHelpers::bookBranch(failedtree, branchname, &(valVV##name##s[branchname])); \
   return true; \
 } \
+template<> bool BaseTree::bookBranch<BaseTree::BranchType_vv##name##_t>(TString branchname){ return this->bookBranch<type*>(branchname, nullptr); } \
 template<> bool BaseTree::putBranch<type*>(TString branchname, type*/* valdef*/){ \
   if (valVV##name##s.find(branchname)==valVV##name##s.end()) valVV##name##s[branchname] = new type(); \
   else valVV##name##s[branchname]->clear(); \

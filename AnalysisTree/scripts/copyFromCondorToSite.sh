@@ -47,8 +47,11 @@ if [ ! -z ${FILENAME} ];then
     if [[ $REMOVE_STATUS != 0 ]]; then
         echo "gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
         echo "You probably have a corrupt file sitting on ${OUTPUTDIR} now."
-        exit 1
+        exit $REMOVE_STATUS
     fi
+    exit $COPY_STATUS
+  else
+    echo "Copied successfully!"
   fi
 
   echo -e "\n--- end copying output ---\n"

@@ -14,7 +14,7 @@ bs = t.GetListOfBranches()
 
 sizes = []
 for b in bs:
-    sizes.append((b.GetName(), b.GetTotalSize(), b.GetZipBytes(), 1.0*b.GetTotalSize()/b.GetZipBytes()))
+    sizes.append((b.GetName(), b.GetTotalSize(), b.GetZipBytes(), (1.0*b.GetTotalSize()/b.GetZipBytes() if b.GetZipBytes()>0 else 0)))
 
 max_len = len(sorted(sizes, key=lambda x:len(x[0]))[-1][0])
 total_size = sum(s[2] for s in sizes)

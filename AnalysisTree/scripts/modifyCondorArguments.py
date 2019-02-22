@@ -43,7 +43,6 @@ class CondorModifier:
          self.run()
 
 
-
    def getModifiedLine(self,line):
       modline=line
       if 'arguments' in modline:
@@ -55,23 +54,26 @@ class CondorModifier:
                modline = modline.replace(translateFromPythonToShell(" \""),translateFromPythonToShell("\"")) # To account for argument at the end
                modline = modline.replace(translateFromPythonToShell("\" "),translateFromPythonToShell("\"")) # To account for argument at the beginning
          for tmpvar in self.opt.add:
-            tmpvar = translateFromPythonToShell(" "+tmpvar+"\"")
-            modline = tmpvar.join(modline.rsplit(translateFromPythonToShell("\""), 1))
+            tmpvar = translateFromPythonToShell(tmpvar)
+            if tmpvar not in modline:
+               tmpvar = translateFromPythonToShell(" ") + tmpvar + translateFromPythonToShell("\"")
+               modline = tmpvar.join(modline.rsplit(translateFromPythonToShell("\""), 1))
       return modline
 
 
-
    def run(self):
+      theOutputFileName=None
+      if self.theNewFile:
+         theOutputFileName = self.theNewFile
+      else:
+         theOutputFileName = self.theOldFile+".tmp"
       with open(self.theOldFile,'r') as fin:
-         theOutputFileName=None
-         if self.theNewFile:
-            theOutputFileName = self.theNewFile
-         else:
-            theOutputFileName = self.theOldFile+".tmp"
          with open(theOutputFileName,'w') as fout:
             for line in fin:
                modline = self.getModifiedLine(line)
                fout.write(modline)
+      if not self.theNewFile:
+         shutil.move(theOutputFileName, self.theOldFile)
 
 
 

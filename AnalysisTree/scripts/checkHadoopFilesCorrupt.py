@@ -33,7 +33,7 @@ class HadoopChecker:
       indirs = glob.glob(maindir)
 
       for indir in indirs:
-         p = subprocess.Popen("hdfs fsck {0}".format(indir.replace("/hadoop","")).split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+         p = subprocess.Popen("hdfs fsck {}".format(indir.replace("/hadoop","")).split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
          out, err = p.communicate()
          lines = out.split("\n")
 

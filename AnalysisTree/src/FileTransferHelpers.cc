@@ -12,7 +12,9 @@ void FileTransferHelpers::InitiateCondorFileTransfer(TString indir, TString fnam
   if (indir.EndsWith("/")) indir.Remove(indir.Length()-1);
   if (outdir.EndsWith("/")) outdir.Remove(outdir.Length()-1);
 
-  int copy_status = gSystem->Exec(Form("copyFromCondorToSite.sh \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"", indir.Data(), fname.Data(), outsite.Data(), outdir.Data(), renamefile.Data()));
+  TString strcmd = Form("copyFromCondorToSite.sh \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"", indir.Data(), fname.Data(), outsite.Data(), outdir.Data(), renamefile.Data());
+  MELAout << "FileTransferHelpers::InitiateCondorFileTransfer: Running command \"" << strcmd << "\"" << endl;
+  int copy_status = gSystem->Exec(strcmd);
   if (copy_status!=0 && ntries>0){
     MELAerr << "FileTransferHelpers::InitiateCondorFileTransfer: Copy status is " << copy_status << " != 0, so something went wrong! Retrying at most " << ntries << " times." << endl;
     int itry=0;

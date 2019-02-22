@@ -38,6 +38,7 @@ protected:
 
   // Get consumed value
   template<typename T> bool getConsumedValue(TString name, T& val) const;
+  template<typename T> bool getConsumedCIterators(TString name, typename T::const_iterator* it_begin, typename T::const_iterator* it_end=nullptr) const;
 
 public:
   // Constructors
@@ -70,6 +71,22 @@ template<typename T> bool IvyBase::getConsumedValue(TString name, T& val) const{
   else{
     if (!res && verbosity>=TVar::ERROR) MELAStreamHelpers::MELAerr << "IvyBase::getConsumedValue: Cannot consume " << name << std::endl;
     return res;
+  }
+}
+template<typename T> bool IvyBase::getConsumedCIterators(TString name, typename T::const_iterator* it_begin, typename T::const_iterator* it_end) const{
+  T* vec=nullptr;
+  bool res = this->getConsumedValue<T*>(name, vec);
+  if (!res || !vec){
+    if (verbosity>=TVar::ERROR){
+      if (!res) MELAStreamHelpers::MELAerr << "IvyBase::getConsumedCIterators: Cannot consume " << name << std::endl;
+      if (!vec) MELAStreamHelpers::MELAerr << "IvyBase::getConsumedCIterators: Vector of " << name << " is null." << std::endl;
+    }
+    return false;
+  }
+  else{
+    if (it_begin) *it_begin = vec->cbegin();
+    if (it_end) *it_end = vec->cend();
+    return true;
   }
 }
 

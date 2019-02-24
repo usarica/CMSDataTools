@@ -16,6 +16,9 @@
 
 
 class BaseTree{
+protected:
+  static bool robustSaveWrite;
+
 public:
 
 #define SIMPLE_DATA_INPUT_DIRECTIVE(name, type, default_value) BranchType_##name##_t,
@@ -103,7 +106,12 @@ public:
 
   void silenceUnused();
   void releaseBranch(TString branchname);
+
   void setAutoSave(Long64_t fsave);
+  long long doAutoSave(const char* opts="");
+
+  void setAutoFlush(Long64_t fflush);
+  int doFlushBaskets();
 
   bool isValid() const;
   bool branchExists(TString branchname, BranchType* type=nullptr);
@@ -115,6 +123,7 @@ public:
 
   virtual void print() const;
 
+  static void setRobustSaveWrite(bool flag);
   static void writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecBegin, std::vector<SimpleEntry>::iterator const& vecEnd, BaseTree* const& tree);
 
 };

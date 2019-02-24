@@ -1,5 +1,5 @@
-#include "TSystem.h"
 #include "TDirectory.h"
+#include "HostHelpersCore.h"
 #include "BaseTree.h"
 #include "BaseTree.hpp"
 #include "HelperFunctions.h"
@@ -11,6 +11,7 @@ using namespace MELAStreamHelpers;
 using namespace HelperFunctions;
 
 
+bool BaseTree::robustSaveWrite = false;
 BaseTree::BaseTree() :
   sampleIdentifier(""),
   finput(nullptr),
@@ -34,7 +35,7 @@ BaseTree::BaseTree(const TString cinput, const TString treename, const TString f
   currentTree(nullptr)
 {
   TDirectory* curdir = gDirectory; // Save current directory to return back to it later
-  if (!gSystem->AccessPathName(cinput)){
+  if (HostHelpers::FileReadable(cinput.Data())){
     finput = TFile::Open(cinput, "read");
     if (finput){
       if (finput->IsOpen() && !finput->IsZombie()){
@@ -290,9 +291,23 @@ void BaseTree::releaseBranch(TString branchname){
 #undef VECTOR_DATA_INPUT_DIRECTIVE
 #undef DOUBLEVECTOR_DATA_INPUT_DIRECTIVE
 }
+
 void BaseTree::setAutoSave(Long64_t fsave){
   if (receiver || !tree) return;
   tree->SetAutoSave(fsave);
+}
+long long BaseTree::doAutoSave(const char* opts){
+  if (receiver || !tree) return 0;
+  return tree->AutoSave(opts);
+}
+
+void BaseTree::setAutoFlush(Long64_t fflush){
+  if (receiver || !tree) return;
+  tree->SetAutoFlush(fflush);
+}
+int BaseTree::doFlushBaskets(){
+  if (receiver || !tree) return 0;
+  return tree->FlushBaskets();
 }
 
 bool BaseTree::isValidEvent() const{ return BaseTree::isValid(); } // To be overloaded in the daughter tree
@@ -302,10 +317,12 @@ void BaseTree::fill(){
   tree->Fill();
 }
 void BaseTree::writeToFile(TFile* file){
-  if (receiver || !tree || !file || !(file->IsOpen() && !file->IsZombie())) return;
-  file->WriteTObject(tree);
+  if (receiver || !tree || !file || !file->IsOpen() || file->IsZombie()) return;
+  if (robustSaveWrite) file->WriteTObject(tree, nullptr, "WriteDelete");
+  else file->WriteTObject(tree);
 }
 
+void BaseTree::setRobustSaveWrite(bool flag){ BaseTree::robustSaveWrite = flag; }
 void BaseTree::writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecBegin, std::vector<SimpleEntry>::iterator const& vecEnd, BaseTree* const& tree){
   if (!tree) return;
   for (std::vector<SimpleEntry>::iterator it=vecBegin; it!=vecEnd; it++){
@@ -331,5 +348,10 @@ void BaseTree::writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecB
 #undef VECTOR_DATA_OUTPUT_DIRECTIVE
 #undef DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE
     tree->fill();
+  }
+
+  // Save if this flag is specified
+  if (robustSaveWrite){
+    tree->doAutoSave("FlushBaskets");
   }
 }

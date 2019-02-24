@@ -24,6 +24,9 @@ namespace HostHelpers{
 
   bool DirectoryExists(const char* dirname);
   bool FileExists(const char* fname);
+  bool FileReadable(const char* fname);
+  int ExecuteCommand(const char* strCmd);
+  int ExecuteCommand(TString strCmd);
 
   time_t GetTimestamp(const char* fname);
   TString GetTimestampConverted(const char* fname);

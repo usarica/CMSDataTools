@@ -48,7 +48,7 @@ class GenericROOTExecutor:
          jobcmd += r'gROOT->ProcessLine(".L {}++");'.format(self.opt.script)
       jobcmd += r'gROOT->ProcessLine("{}({})");'.format(self.opt.function, self.opt.fcncmd)
       jobcmd = "root -l -b -q -e '{}'".format(jobcmd)
-      ret = os.system( "echo Running " + jobcmd )
+      print "Running {}".format(jobcmd)
       if not self.opt.dryRun:
          ret = os.system( jobcmd )
 

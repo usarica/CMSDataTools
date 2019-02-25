@@ -17,7 +17,7 @@ class HadoopChecker:
 
       (self.opt,self.args) = self.parser.parse_args()
 
-      if not hasattr(self.opt, maindir):
+      if not hasattr(self.opt, "maindir"):
          sys.exit("You must use the --maindir option!")
 
       if self.opt.remove and not self.opt.output:
@@ -33,6 +33,7 @@ class HadoopChecker:
       indirs = glob.glob(maindir)
 
       for indir in indirs:
+         print " - Checking {}".format(indir)
          p = subprocess.Popen("hdfs fsck {}".format(indir.replace("/hadoop","")).split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
          out, err = p.communicate()
          lines = out.split("\n")

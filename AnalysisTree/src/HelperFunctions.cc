@@ -294,7 +294,7 @@ TF1* HelperFunctions::getFcn_EfficiencyAtan(TSpline3* sp, double xmin, double xm
 }
 
 
-TSpline3* HelperFunctions::convertGraphToSpline3(TGraph* tg, bool faithfulFirst, bool faithfulSecond, double* dfirst, double* dlast){
+TSpline3* HelperFunctions::convertGraphToSpline3(TGraph const* tg, bool faithfulFirst, bool faithfulSecond, double* dfirst, double* dlast){
   unsigned int nbins = tg->GetN();
   double* xy[2]={
     tg->GetX(),
@@ -323,7 +323,7 @@ TSpline3* HelperFunctions::convertGraphToSpline3(TGraph* tg, bool faithfulFirst,
   return spline;
 }
 
-void HelperFunctions::convertTGraphErrorsToTH1F(TGraphErrors* tg, TH1F* histo){
+void HelperFunctions::convertTGraphErrorsToTH1F(TGraphErrors const* tg, TH1F*& histo){
   if (tg==0){
     MELAerr << "convertTGraphErrorsToTH1F: TGraph is 0!" << endl;
     histo=0;
@@ -358,7 +358,7 @@ void HelperFunctions::convertTGraphErrorsToTH1F(TGraphErrors* tg, TH1F* histo){
     histo->SetBinError(ix, ey[ix-1]);
   }
 }
-void HelperFunctions::convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F* histo){
+void HelperFunctions::convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors const* tg, TH1F*& histo){
   if (tg==0){
     MELAerr << "convertTGraphAsymmErrorsToTH1F: TGraph is 0!" << endl;
     histo=0;
@@ -390,7 +390,7 @@ void HelperFunctions::convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F
     //histo->SetBinError(ix, ey[ix-1]);
   }
 }
-void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F* histo, TGraphAsymmErrors* tg, bool errorsOnZero){
+void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAsymmErrors*& tg, bool errorsOnZero){
   if (!histo){
     MELAerr << "convertTH1FToTGraphAsymmErrors: Histogram is null!" << endl;
     tg=nullptr;
@@ -427,7 +427,7 @@ void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F* histo, TGraphAsymmErr
 }
 
 
-TGraph* HelperFunctions::createROCFromDistributions(TH1* hA, TH1* hB, TString name){
+TGraph* HelperFunctions::createROCFromDistributions(TH1 const* hA, TH1 const* hB, TString name){
   if (!hA || !hB) return nullptr;
   assert(hA->GetNbinsX()==hB->GetNbinsX());
   const int nbins=hA->GetNbinsX();

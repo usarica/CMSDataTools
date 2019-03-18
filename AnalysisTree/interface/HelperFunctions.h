@@ -190,15 +190,15 @@ namespace HelperFunctions{
   void splitOptionRecursive(const std::string rawoption, std::vector<std::string>& splitoptions, char delimiter, bool uniqueResults=true);
   void splitOptionRecursive(const TString rawoption, std::vector<TString>& splitoptions, char delimiter, bool uniqueResults=true);
 
-  TSpline3* convertGraphToSpline3(TGraph* tg, bool faithfulFirst=false, bool faithfulSecond=false, double* dfirst=nullptr, double* dlast=nullptr);
+  TSpline3* convertGraphToSpline3(TGraph const* tg, bool faithfulFirst=false, bool faithfulSecond=false, double* dfirst=nullptr, double* dlast=nullptr);
 
-  void convertTGraphErrorsToTH1F(TGraphErrors* tg, TH1F* histo);
+  void convertTGraphErrorsToTH1F(TGraphErrors const* tg, TH1F*& histo);
 
-  void convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F* histo);
+  void convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors const* tg, TH1F*& histo);
 
-  void convertTH1FToTGraphAsymmErrors(TH1F* histo, TGraphAsymmErrors* tg, bool errorsOnZero=false);
+  void convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAsymmErrors*& tg, bool errorsOnZero=false);
 
-  TGraph* createROCFromDistributions(TH1* hA, TH1* hB, TString name);
+  TGraph* createROCFromDistributions(TH1 const* hA, TH1 const* hB, TString name);
 
   TGraphErrors* makeGraphFromTH1(TH1 const* hx, TH1 const* hy, TString name);
 

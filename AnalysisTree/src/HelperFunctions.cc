@@ -1,4 +1,5 @@
 #include <cstring>
+#include "QuantFuncMathCore.h"
 #include "HelperFunctions.h"
 #include "MELAStreamHelpers.hh"
 #include "MELANCSplineFactory_1D.h"
@@ -389,6 +390,42 @@ void HelperFunctions::convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F
     //histo->SetBinError(ix, ey[ix-1]);
   }
 }
+void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F* histo, TGraphAsymmErrors* tg, bool errorsOnZero){
+  if (!histo){
+    MELAerr << "convertTH1FToTGraphAsymmErrors: Histogram is null!" << endl;
+    tg=nullptr;
+    return;
+  }
+
+  const int nbins = histo->GetNbinsX();
+  std::vector<double> xx; xx.reserve(nbins);
+  std::vector<double> exl; exl.assign(nbins, 0.);
+  std::vector<double> exh; exh.assign(nbins, 0.);
+  std::vector<double> yy; yy.reserve(nbins);
+  std::vector<double> eyl; eyl.reserve(nbins);
+  std::vector<double> eyh; eyh.reserve(nbins);
+  for (int bin=1; bin<=nbins; bin++){
+    double bincontent = histo->GetBinContent(bin);
+    double binerrorlow, binerrorhigh, binerror;
+    binerrorlow = binerrorhigh = binerror = histo->GetBinError(bin);
+    if (binerror==0. && (errorsOnZero || bincontent!=0.)){
+      constexpr double quant = (1. - 0.6827) / 2.;
+      binerrorhigh = (ROOT::Math::chisquared_quantile_c(quant, 2 * (bincontent + 1)) / 2. - bincontent);
+      binerrorlow = (bincontent - ROOT::Math::chisquared_quantile_c(1 - quant, 2 * bincontent) / 2.);
+    }
+
+    TAxis const* xaxis = histo->GetXaxis();
+    xx.push_back(xaxis->GetBinCenter(bin));
+    yy.push_back(bincontent);
+    eyl.push_back(binerrorlow);
+    eyh.push_back(binerrorhigh);
+  }
+
+  tg = new TGraphAsymmErrors(nbins, xx.data(), yy.data(), exl.data(), exh.data(), eyl.data(), eyh.data());
+  tg->SetName(Form("tg_%s", histo->GetName()));
+  tg->SetTitle(histo->GetTitle());
+}
+
 
 TGraph* HelperFunctions::createROCFromDistributions(TH1* hA, TH1* hB, TString name){
   if (!hA || !hB) return nullptr;

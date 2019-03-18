@@ -196,6 +196,8 @@ namespace HelperFunctions{
 
   void convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors* tg, TH1F* histo);
 
+  void convertTH1FToTGraphAsymmErrors(TH1F* histo, TGraphAsymmErrors* tg, bool errorsOnZero=false);
+
   TGraph* createROCFromDistributions(TH1* hA, TH1* hB, TString name);
 
   TGraphErrors* makeGraphFromTH1(TH1 const* hx, TH1 const* hy, TString name);

@@ -390,7 +390,7 @@ void HelperFunctions::convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors const* tg
     //histo->SetBinError(ix, ey[ix-1]);
   }
 }
-void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAsymmErrors*& tg, bool errorsOnZero){
+void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAsymmErrors*& tg, bool errorsOnZero, bool useAsymError){
   if (!histo){
     MELAerr << "convertTH1FToTGraphAsymmErrors: Histogram is null!" << endl;
     tg=nullptr;
@@ -408,7 +408,7 @@ void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAs
     double bincontent = histo->GetBinContent(bin);
     double binerrorlow, binerrorhigh, binerror;
     binerrorlow = binerrorhigh = binerror = histo->GetBinError(bin);
-    if (binerror==0. && (errorsOnZero || bincontent!=0.)){
+    if ((useAsymError || binerror==0.) && (errorsOnZero || bincontent!=0.)){
       constexpr double quant = (1. - 0.6827) / 2.;
       binerrorhigh = (ROOT::Math::chisquared_quantile_c(quant, 2 * (bincontent + 1)) / 2. - bincontent);
       binerrorlow = (bincontent - ROOT::Math::chisquared_quantile_c(1 - quant, 2 * bincontent) / 2.);

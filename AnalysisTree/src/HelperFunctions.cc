@@ -51,7 +51,7 @@ void HelperFunctions::progressbar(unsigned int val, unsigned int tot){
   }
 }
 
-void HelperFunctions::splitOption(const std::string rawoption, std::string& wish, std::string& value, char delimiter){
+void HelperFunctions::splitOption(const std::string& rawoption, std::string& wish, std::string& value, char delimiter){
   size_t posEq = rawoption.find(delimiter);
   if (posEq!=string::npos){
     wish=rawoption;
@@ -63,25 +63,25 @@ void HelperFunctions::splitOption(const std::string rawoption, std::string& wish
     value=rawoption;
   }
 }
-void HelperFunctions::splitOptionRecursive(const std::string rawoption, std::vector<std::string>& splitoptions, char delimiter, bool uniqueResults){
-  string suboption=rawoption, result=rawoption;
-  string remnant;
+void HelperFunctions::splitOptionRecursive(const std::string& rawoption, std::vector<std::string>& splitoptions, char delimiter, bool uniqueResults){
+  string result = rawoption;
   while (result!=""){
+    string suboption = result;
+    string remnant;
     splitOption(suboption, result, remnant, delimiter);
     if (result!="" && (!uniqueResults || (uniqueResults && !checkListVariable(splitoptions, result)))) splitoptions.push_back(result);
-    suboption = remnant;
+    result = remnant;
   }
-  if (remnant!="") splitoptions.push_back(remnant);
 }
 
-void HelperFunctions::splitOption(const TString rawoption, TString& wish, TString& value, char delimiter){
+void HelperFunctions::splitOption(const TString& rawoption, TString& wish, TString& value, char delimiter){
   std::string const s_rawoption = rawoption.Data();
   std::string s_wish, s_value;
   splitOption(s_rawoption, s_wish, s_value, delimiter);
   wish=s_wish.c_str();
   value=s_value.c_str();
 }
-void HelperFunctions::splitOptionRecursive(const TString rawoption, std::vector<TString>& splitoptions, char delimiter, bool uniqueResults){
+void HelperFunctions::splitOptionRecursive(const TString& rawoption, std::vector<TString>& splitoptions, char delimiter, bool uniqueResults){
   std::string const s_rawoption = rawoption.Data();
   std::vector<std::string> s_splitoptions;
   splitOptionRecursive(s_rawoption, s_splitoptions, delimiter, uniqueResults);

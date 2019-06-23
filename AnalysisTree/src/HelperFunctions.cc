@@ -64,14 +64,15 @@ void HelperFunctions::splitOption(const std::string& rawoption, std::string& wis
   }
 }
 void HelperFunctions::splitOptionRecursive(const std::string& rawoption, std::vector<std::string>& splitoptions, char delimiter, bool uniqueResults){
-  string result = rawoption;
+  string suboption=rawoption, result=rawoption;
+  string remnant;
   while (result!=""){
-    string suboption = result;
-    string remnant;
     splitOption(suboption, result, remnant, delimiter);
     if (result!="" && (!uniqueResults || (uniqueResults && !checkListVariable(splitoptions, result)))) splitoptions.push_back(result);
-    result = remnant;
+    suboption = remnant;
+    if (result=="" && suboption.find(delimiter)!=std::string::npos) result=suboption; // This can happen if the string starts with the delimiter.
   }
+  if (remnant!="" && (!uniqueResults || (uniqueResults && !checkListVariable(splitoptions, remnant)))) splitoptions.push_back(remnant);
 }
 
 void HelperFunctions::splitOption(const TString& rawoption, TString& wish, TString& value, char delimiter){

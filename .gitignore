@@ -15,6 +15,7 @@ __init__.py
 **/*.so
 **/*.d
 **/*.pcm
+**/*.lhe
 Analysis/**/getKDConstant*.c
 Analysis/**/make*.c
 Analysis/**/plot*.c

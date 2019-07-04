@@ -1009,6 +1009,48 @@ template<> bool HelperFunctions::replaceString<std::string, const char*>(std::st
   else return false;
 }
 
+template<> void HelperFunctions::lstrip<std::string>(std::string& str, const char* chars){
+  str.erase(
+    str.begin(),
+    std::find_if(
+      str.begin(), str.end(),
+      [&chars] (int ch){
+        if (!chars) return !std::isspace(ch);
+        else{
+          bool found = false;
+          for (size_t ic=0; ic<strlen(chars); ic++) found |= (ch == static_cast<const int>(chars[ic]));
+          return !found;
+        }
+      }
+    )
+  );
+}
+template<> void HelperFunctions::rstrip<std::string>(std::string& str, const char* chars){
+  str.erase(
+    std::find_if(
+      str.rbegin(), str.rend(),
+      [&chars] (int ch){
+        if (!chars) return !std::isspace(ch);
+        else{
+          bool found = false;
+          for (size_t ic=0; ic<strlen(chars); ic++) found |= (ch == static_cast<const int>(chars[ic]));
+          return !found;
+        }
+      }
+    ).base(), str.end()
+        );
+}
+template<> void HelperFunctions::lstrip<TString>(TString& str, const char* chars){
+  std::string strtmp = str.Data();
+  HelperFunctions::lstrip<std::string>(strtmp, chars);
+  str=strtmp.c_str();
+}
+template<> void HelperFunctions::rstrip<TString>(TString& str, const char* chars){
+  std::string strtmp = str.Data();
+  HelperFunctions::rstrip<std::string>(strtmp, chars);
+  str=strtmp.c_str();
+}
+
 template<> void HelperFunctions::addPointsBetween<TGraph>(TGraph*& tgOriginal, double xmin, double xmax, unsigned int nadd){
   const unsigned int np = tgOriginal->GetN();
   double* xy[2]={

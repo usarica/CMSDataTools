@@ -23,6 +23,13 @@ namespace HelperFunctions{
   template<> bool replaceString<std::string, const std::string>(std::string& strinput, const std::string strTakeOut, const std::string strPutIn);
   template<> bool replaceString<std::string, const char*>(std::string& strinput, const char* strTakeOut, const char* strPutIn);
 
+  template<typename T> void lstrip(T& str, const char* chars=nullptr);
+  template<typename T> void rstrip(T& str, const char* chars=nullptr);
+  template<> void lstrip<std::string>(std::string& str, const char* chars);
+  template<> void lstrip<TString>(TString& str, const char* chars);
+  template<> void rstrip<std::string>(std::string& str, const char* chars);
+  template<> void rstrip<TString>(TString& str, const char* chars);
+
   template<typename T> void castStringToValue(std::string const name, T& val);
   template<> void castStringToValue(std::string const name, bool& val);
   template<typename T> void castStringToValue(TString const name, T& val);

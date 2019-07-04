@@ -11,7 +11,7 @@ using namespace std;
 using namespace MELAStreamHelpers;
 
 
-template<> void HelperFunctions::castStringToValue(std::string const name, bool& val){
+template<> void HelperFunctions::castStringToValue(std::string const& name, bool& val){
   std::string namelower=name;
   std::transform(namelower.begin(), namelower.end(), namelower.begin(), ::tolower);
   if (namelower=="true" || namelower=="t") val=1;

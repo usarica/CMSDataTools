@@ -30,9 +30,9 @@ namespace HelperFunctions{
   template<> void rstrip<std::string>(std::string& str, const char* chars);
   template<> void rstrip<TString>(TString& str, const char* chars);
 
-  template<typename T> void castStringToValue(std::string const name, T& val);
-  template<> void castStringToValue(std::string const name, bool& val);
-  template<typename T> void castStringToValue(TString const name, T& val);
+  template<typename T> void castStringToValue(std::string const& name, T& val);
+  template<> void castStringToValue(std::string const& name, bool& val);
+  template<typename T> void castStringToValue(TString const& name, T& val);
   template<typename T> void castStringToValue(const char* name, T& val);
 
 }
@@ -185,25 +185,25 @@ template bool HelperFunctions::getUnorderedMapIterator<std::pair<CMSLorentzVecto
 template bool HelperFunctions::getUnorderedMapIterator<std::pair<CMSLorentzVector, CMSLorentzVector>*>(TString name, std::unordered_map<TString, std::pair<CMSLorentzVector, CMSLorentzVector>*>& theMap, std::unordered_map<TString, std::pair<CMSLorentzVector, CMSLorentzVector>*>::iterator& it);
 
 
-template<typename T> void HelperFunctions::castStringToValue(std::string const name, T& val){ std::stringstream ss(name); ss >> val; }
-template<typename T> void HelperFunctions::castStringToValue(TString const name, T& val){ std::string s(name.Data()); HelperFunctions::castStringToValue(s, val); }
+template<typename T> void HelperFunctions::castStringToValue(std::string const& name, T& val){ std::stringstream ss(name); ss >> val; }
+template<typename T> void HelperFunctions::castStringToValue(TString const& name, T& val){ std::string s(name.Data()); HelperFunctions::castStringToValue(s, val); }
 template<typename T> void HelperFunctions::castStringToValue(const char* name, T& val){ std::string s(name); HelperFunctions::castStringToValue(s, val); }
-template void HelperFunctions::castStringToValue(TString const name, bool& val);
+template void HelperFunctions::castStringToValue(TString const& name, bool& val);
 template void HelperFunctions::castStringToValue(const char* name, bool& val);
-template void HelperFunctions::castStringToValue(std::string const name, short& val);
-template void HelperFunctions::castStringToValue(TString const name, short& val);
+template void HelperFunctions::castStringToValue(std::string const& name, short& val);
+template void HelperFunctions::castStringToValue(TString const& name, short& val);
 template void HelperFunctions::castStringToValue(const char* name, short& val);
-template void HelperFunctions::castStringToValue(std::string const name, unsigned int& val);
-template void HelperFunctions::castStringToValue(TString const name, unsigned int& val);
+template void HelperFunctions::castStringToValue(std::string const& name, unsigned int& val);
+template void HelperFunctions::castStringToValue(TString const& name, unsigned int& val);
 template void HelperFunctions::castStringToValue(const char* name, unsigned int& val);
-template void HelperFunctions::castStringToValue(std::string const name, int& val);
-template void HelperFunctions::castStringToValue(TString const name, int& val);
+template void HelperFunctions::castStringToValue(std::string const& name, int& val);
+template void HelperFunctions::castStringToValue(TString const& name, int& val);
 template void HelperFunctions::castStringToValue(const char* name, int& val);
-template void HelperFunctions::castStringToValue(std::string const name, float& val);
-template void HelperFunctions::castStringToValue(TString const name, float& val);
+template void HelperFunctions::castStringToValue(std::string const& name, float& val);
+template void HelperFunctions::castStringToValue(TString const& name, float& val);
 template void HelperFunctions::castStringToValue(const char* name, float& val);
-template void HelperFunctions::castStringToValue(std::string const name, double& val);
-template void HelperFunctions::castStringToValue(TString const name, double& val);
+template void HelperFunctions::castStringToValue(std::string const& name, double& val);
+template void HelperFunctions::castStringToValue(TString const& name, double& val);
 template void HelperFunctions::castStringToValue(const char* name, double& val);
 
 #endif

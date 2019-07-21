@@ -48,14 +48,16 @@ template<typename T> void SampleHelpers::bookBranch(TTree* tree, TString strname
     TString strbname = strname;
     // First search in aliases and replace strbname
     const TList* aliasList = (const TList*) tree->GetListOfAliases();
-    for (int ia=0; ia<aliasList->GetSize(); ia++){
-      TObject* alias = aliasList->At(ia);
-      if (!alias) continue;
-      TString aname = alias->GetName();
-      if (aname==strbname){
-        strbname = alias->GetTitle();
-        MELAStreamHelpers::MELAout << "SampleHelpers::bookBranch: Using branch name " << strbname << " instead of the alias " << strname << "." << std::endl;
-        break;
+    if (aliasList){
+      for (int ia=0; ia<aliasList->GetSize(); ia++){
+        TObject* alias = aliasList->At(ia);
+        if (!alias) continue;
+        TString aname = alias->GetName();
+        if (aname==strbname){
+          strbname = alias->GetTitle();
+          MELAStreamHelpers::MELAout << "SampleHelpers::bookBranch: Using branch name " << strbname << " instead of the alias " << strname << "." << std::endl;
+          break;
+        }
       }
     }
     if (SampleHelpers::branchExists(tree, strbname)){
@@ -79,13 +81,15 @@ template<typename T> void SampleHelpers::bookEDMBranch(TTree* tree, TString strn
     TString strbname = strname;
     // First search in aliases and replace strbname
     const TList* aliasList = (const TList*) tree->GetListOfAliases();
-    for (int ia=0; ia<aliasList->GetSize(); ia++){
-      TObject* alias = aliasList->At(ia);
-      if (!alias) continue;
-      TString aname = alias->GetName();
-      if (aname==strbname){
-        strbname = alias->GetTitle();
-        break;
+    if (aliasList){
+      for (int ia=0; ia<aliasList->GetSize(); ia++){
+        TObject* alias = aliasList->At(ia);
+        if (!alias) continue;
+        TString aname = alias->GetName();
+        if (aname==strbname){
+          strbname = alias->GetTitle();
+          break;
+        }
       }
     }
     // Ensure that the branch name is "edm_product_name."

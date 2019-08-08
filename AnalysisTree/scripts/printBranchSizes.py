@@ -25,6 +25,9 @@ fmt_string =  "{{0:{0}s}} {{1:>12s}} {{2:>12s}} {{3:>12s}} {{4:>9s}}".format(max
 print fmt_string.format("Branch","Raw Size", "Zip Size", "Compression", "% Total")
 fmt_string =  "{{0:{0}s}} {{1:12d}} {{2:12d}} {{3:12.3f}} {{4:8.2f}}%".format(max_len)
 for s in sizes:
-   print fmt_string.format(s[0], s[1], s[2], s[3], 100.0*s[2]/total_size)
+   percent_size = 0.0
+   if total_size > 0.0:
+      percent_size = 100.0*s[2]/total_size
+   print fmt_string.format(s[0], s[1], s[2], s[3], percent_size)
 
-
+fin.Close()

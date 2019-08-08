@@ -96,53 +96,65 @@ def runDBS(dataset, instance = 'prod/global'):
     return runner.runCommand(run_command)
 
 
-def listFiles(sample, path, rec = False, full_info = False):
+def listFiles(sample, path, rec = False, full_info = False, other_options=None):
     """Provides a list of files with different methods according to path. Valid paths: 'list', 'dbs', 'dbs-USER', a local filesystem path, an eos path
+    other_options is a string that contains special directives. Currently, the following are supported:
+      path='dbs':
+       - prepend_cms_xrd: Prepends 'root://cms-xrd-global.cern.ch//' to the file path
+    Example usage:
+      listFiles('/ZZTo4L_13TeV_powheg_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM','dbs',True,other_options='prepend_cms_xrd')
     """
     result = []
+
+    if other_options is not None:
+       try: # check whether python knows about 'basestring'
+           basestring
+       except NameError: # no, it doesn't (it's Python3); use 'str' instead
+           basestring=str
+       if not isinstance(other_options, basestring):
+          raise RuntimeError("listFiles: other_options has to be a string.")
 
     # -- list from a local file --
     if path=="list" :
         with open(sample) as f:
             result = f.readlines()
-        return result
 
     # -- listing from dbs --
     elif path=="dbs" :
         files, _, _ =runDBS(sample)
         for line in files.split('\n'):
+            if not line: continue
+            if other_options is not None:
+                if 'prepend_cms_xrd' in other_options.lower():
+                    line = "root://cms-xrd-global.cern.ch//" + line
 #            print line
-#            result.append("root://cms-xrd-global.cern.ch//"+line)
             result.append(line)
-        return result
 
     # -- listing from user dbs --
     elif path=="dbs-USER" :
-	print 'Querying USER db'
-	files, _, _ =runDBS(sample, 'prod/phys03')
+        print 'Querying USER db'
+        files, _, _ =runDBS(sample, 'prod/phys03')
         for line in files.split('\n'):
             result.append(line)
-        return result
 
 
     # -- listing from path=local dir -- untested!
     elif path=="local" :
         if os.path.isdir(sample):
-           if not rec:
-             # not recursive
-             return [ '/'.join([path,file]) for file in os.listdir(sample)]
-           else:
-             # recursive, directories are put in the list first,
-             # followed by the list of all files in the directory tree
-             allFiles = []
-             for root,dirs,files in os.walk(sample):
-                 result.extend( [ '/'.join([root,dir]) for dir in dirs] )
-                 allFiles.extend( [ '/'.join([root,file]) for file in files] )
-             result.extend(allFiles)
-             return result
+            if not rec:
+                # not recursive
+                result = [ '/'.join([path,file]) for file in os.listdir(sample)]
+            else:
+                # recursive, directories are put in the list first,
+                # followed by the list of all files in the directory tree
+                allFiles = []
+                for root,dirs,files in os.walk(sample):
+                    result.extend( [ '/'.join([root,dir]) for dir in dirs] )
+                    allFiles.extend( [ '/'.join([root,file]) for file in files] )
+                result.extend(allFiles)
 
     # -- listing from EOS (path = eos path prefix, normally "/eos/cms/")
-    else  :
+    else:
         cmd = 'dirlist'
         if rec:
             cmd = 'dirlistrec'
@@ -153,20 +165,30 @@ def listFiles(sample, path, rec = False, full_info = False):
         for line in files.split('\n'):
             tokens = [t for t in line.split() if t]
             if tokens:
-               #convert to an LFN
-               if full_info:
-                   result.append( tokens)
-               else:
-                   result.append( eosToLFN(tokens[4]) )
-        return result
+                #convert to an LFN
+                if full_info:
+                    result.append( tokens)
+                else:
+                    result.append( eosToLFN(tokens[4]) )
+    result = [ s for s in result if s ]
+    return result
 
 
-def datasetToSource( prefix, dataset, pattern='', readCache=False):
+def datasetToSource( prefix, dataset, pattern='', readCache=False, other_opts=None):
+    """
+    Example usage:
+      src = datasetToSource('dbs','/ZZTo4L_13TeV_powheg_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM',other_opts='prepend_cms_xrd')
+    """
 
 #    print user, dataset, pattern
     recursive=True #FIXME: this is needed for central production, but care is needed if other stuff is present in the EOS path
 
-    data=listFiles(dataset, prefix, recursive)
+    data=listFiles(
+        sample = dataset,
+        path = prefix,
+        rec = recursive,
+        other_options = other_opts
+        )
 
     rootre = re.compile('.*root')
     files = [f for f in data if rootre.match(f)]
@@ -174,10 +196,10 @@ def datasetToSource( prefix, dataset, pattern='', readCache=False):
 #    print files
 
     source = cms.Source(
-	"PoolSource",
-	noEventSort = cms.untracked.bool(True),
-	duplicateCheckMode = cms.untracked.string("noDuplicateCheck"),
-	fileNames = cms.untracked.vstring(),
+        "PoolSource",
+        noEventSort = cms.untracked.bool(True),
+        duplicateCheckMode = cms.untracked.string("noDuplicateCheck"),
+        fileNames = cms.untracked.vstring(),
         secondaryFileNames = cms.untracked.vstring(),
         )
 

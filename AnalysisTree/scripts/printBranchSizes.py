@@ -7,7 +7,7 @@ if len(sys.argv) < 2:
    print "  usage: {0} <input root file> <tree name>".format(sys.argv[0])
    exit(0)
 
-fin = ROOT.TFile(sys.argv[1])
+fin = ROOT.TFile.Open(sys.argv[1],"read")
 t = fin.Get(sys.argv[2])
 
 bs = t.GetListOfBranches()

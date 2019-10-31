@@ -75,6 +75,7 @@ public:
   BaseTree();
   BaseTree(const TString cinput, const TString treename, const TString failedtreename, const TString countersname);
   BaseTree(const TString treename); // Output constructor
+  BaseTree(TFile* finput_, TTree* tree_, TTree* failedtree_, TH1F* hCounters_, bool receiver_override); // Mixed definition constructor
   virtual ~BaseTree();
 
   template<typename T> bool bookBranch(TString branchname, T valdef);

@@ -67,6 +67,28 @@ BaseTree::BaseTree(const TString treename) :
   currentEvent(-1),
   currentTree(nullptr)
 {}
+BaseTree::BaseTree(TFile* finput_, TTree* tree_, TTree* failedtree_, TH1F* hCounters_, bool receiver_override) :
+  sampleIdentifier(""),
+  finput(finput_),
+  tree(tree_),
+  failedtree(failedtree_),
+  hCounters(hCounters_),
+  valid(false),
+  receiver(receiver_override || finput!=nullptr),
+  currentEvent(-1),
+  currentTree(nullptr)
+{
+  if (finput){
+    if (finput->IsOpen() && !finput->IsZombie()){
+      if (tree || failedtree) valid = true;
+    }
+    else if (finput->IsOpen()){ finput->Close(); finput=nullptr; tree=nullptr; failedtree=nullptr; }
+  }
+  else{
+    if (tree || failedtree) valid = true;
+  }
+}
+
 
 BaseTree::~BaseTree(){
 #define SIMPLE_DATA_INPUT_DIRECTIVE(name, type, default_value) HelperFunctions::cleanUnorderedMap(val##name##s);

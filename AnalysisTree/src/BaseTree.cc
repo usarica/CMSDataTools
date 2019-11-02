@@ -20,6 +20,7 @@ BaseTree::BaseTree() :
   hCounters(nullptr),
   valid(false),
   receiver(true),
+  acquireTreePossession(!receiver),
   currentEvent(-1),
   currentTree(nullptr)
 {}
@@ -31,6 +32,7 @@ BaseTree::BaseTree(const TString cinput, const TString treename, const TString f
   hCounters(nullptr),
   valid(false),
   receiver(true),
+  acquireTreePossession(!receiver),
   currentEvent(-1),
   currentTree(nullptr)
 {
@@ -64,6 +66,7 @@ BaseTree::BaseTree(const TString treename) :
   hCounters(nullptr),
   valid(true),
   receiver(false),
+  acquireTreePossession(!receiver),
   currentEvent(-1),
   currentTree(nullptr)
 {}
@@ -75,6 +78,7 @@ BaseTree::BaseTree(TFile* finput_, TTree* tree_, TTree* failedtree_, TH1F* hCoun
   hCounters(hCounters_),
   valid(false),
   receiver(receiver_override || finput!=nullptr),
+  acquireTreePossession(!receiver),
   currentEvent(-1),
   currentTree(nullptr)
 {
@@ -89,7 +93,6 @@ BaseTree::BaseTree(TFile* finput_, TTree* tree_, TTree* failedtree_, TH1F* hCoun
   }
 }
 
-
 BaseTree::~BaseTree(){
 #define SIMPLE_DATA_INPUT_DIRECTIVE(name, type, default_value) HelperFunctions::cleanUnorderedMap(val##name##s);
 #define VECTOR_DATA_INPUT_DIRECTIVE(name, type) HelperFunctions::cleanUnorderedMap(valV##name##s);
@@ -98,9 +101,11 @@ BaseTree::~BaseTree(){
   if (!receiver){
     VECTOR_DATA_INPUT_DIRECTIVES
     DOUBLEVECTOR_DATA_INPUT_DIRECTIVES
-    delete hCounters;
-    delete failedtree;
-    delete tree;
+    if (acquireTreePossession){
+      delete hCounters;
+      delete failedtree;
+      delete tree;
+    }
   }
 #undef SIMPLE_DATA_INPUT_DIRECTIVE
 #undef VECTOR_DATA_INPUT_DIRECTIVE
@@ -313,6 +318,8 @@ void BaseTree::releaseBranch(TString branchname){
 #undef VECTOR_DATA_INPUT_DIRECTIVE
 #undef DOUBLEVECTOR_DATA_INPUT_DIRECTIVE
 }
+
+void BaseTree::setAcquireTreePossession(bool flag){ acquireTreePossession = flag; }
 
 void BaseTree::setAutoSave(Long64_t fsave){
   if (receiver || !tree) return;

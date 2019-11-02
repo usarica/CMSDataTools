@@ -43,6 +43,7 @@ protected:
   TH1F* hCounters;
   bool valid;
   const bool receiver;
+  bool acquireTreePossession; // If true, deletes trees and histograms upon destruction.
 
   int currentEvent;
   TTree* currentTree;
@@ -107,6 +108,8 @@ public:
 
   void silenceUnused();
   void releaseBranch(TString branchname);
+
+  void setAcquireTreePossession(bool);
 
   void setAutoSave(Long64_t fsave);
   long long doAutoSave(const char* opts="");

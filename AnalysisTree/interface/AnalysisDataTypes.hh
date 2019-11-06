@@ -75,6 +75,8 @@ SIMPLE_DATA_OUTPUT_DIRECTIVE(ulonglong, unsigned long long) \
 SIMPLE_DATA_OUTPUT_DIRECTIVE(longlong, long long) \
 SIMPLE_DATA_OUTPUT_DIRECTIVE(float, float) \
 SIMPLE_DATA_OUTPUT_DIRECTIVE(double, double) \
+SIMPLE_DATA_OUTPUT_DIRECTIVE(string, std::string) \
+SIMPLE_DATA_OUTPUT_DIRECTIVE(TString, TString) \
 /*SIMPLE_DATA_OUTPUT_DIRECTIVE(CMSLorentzVector, CMSLorentzVector)*/
 
 #define VECTOR_DATA_OUTPUT_DIRECTIVES \
@@ -91,6 +93,8 @@ VECTOR_DATA_OUTPUT_DIRECTIVE(ulonglong, std::vector<unsigned long long>) \
 VECTOR_DATA_OUTPUT_DIRECTIVE(longlong, std::vector<long long>) \
 VECTOR_DATA_OUTPUT_DIRECTIVE(float, std::vector<float>) \
 VECTOR_DATA_OUTPUT_DIRECTIVE(double, std::vector<double>) \
+VECTOR_DATA_OUTPUT_DIRECTIVE(string, std::vector<std::string>) \
+VECTOR_DATA_OUTPUT_DIRECTIVE(TString, std::vector<TString>) \
 /*VECTOR_DATA_OUTPUT_DIRECTIVE(CMSLorentzVector, std::vector<CMSLorentzVector>)*/
 
 #define DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVES \
@@ -107,6 +111,8 @@ VECTOR_DATA_OUTPUT_DIRECTIVE(double, std::vector<double>) \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(longlong, std::vector<std::vector<long long>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(float, std::vector<std::vector<float>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(double, std::vector<std::vector<double>>)*/ \
+/*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(string, std::vector<std::vector<std::string>>)*/ \
+/*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(TString, std::vector<std::vector<TString>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(CMSLorentzVector, std::vector<std::vector<CMSLorentzVector>>)*/
 
 

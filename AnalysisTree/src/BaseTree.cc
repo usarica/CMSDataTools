@@ -172,6 +172,10 @@ int BaseTree::getSelectedNEvents() const{ return (tree ? tree->GetEntries() : 0)
 int BaseTree::getFailedNEvents() const{ return (failedtree ? failedtree->GetEntries() : 0); }
 int BaseTree::getNEvents() const{ return (this->getSelectedNEvents() + this->getFailedNEvents()); }
 
+// Overloads of getNEvents
+unsigned int BaseTree::getNGenNoPU(){ int res = this->getNEvents(); return std::max(res, 0); }
+float BaseTree::getNGenWithPU(){ return this->getNEvents(); }
+
 bool BaseTree::isValid() const{ return valid; }
 bool BaseTree::branchExists(TString branchname, BranchType* type){
   BranchType theType = searchBranchType(branchname);

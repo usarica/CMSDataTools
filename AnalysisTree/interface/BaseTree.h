@@ -101,6 +101,10 @@ public:
   int getFailedNEvents() const;
   int getNEvents() const;
 
+  // Overloads of getNEvents
+  virtual unsigned int getNGenNoPU();
+  virtual float getNGenWithPU();
+
   template<typename T> void getVal(TString branchname, T& val) const;
   template<typename T> void setVal(TString branchname, T const& val);
   template<typename T> void getValRef(TString branchname, T*& val) const;

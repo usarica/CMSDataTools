@@ -9,6 +9,7 @@
 #include <utility>
 #include <algorithm>
 #include <unordered_map>
+#include <iterator>
 #include <ctime>
 #include <cmath>
 #include <cassert>
@@ -50,9 +51,9 @@ namespace HelperFunctions{
   template<typename T, typename U> void addByHighest(std::vector<std::pair<T, U>>& valArray, T val, U index);
   template<typename T, typename U> void addByHighest(std::vector<std::pair<T, U>>& valArray, std::vector<std::pair<T, U>>& inArray, bool consecutive=false, bool inputordered=false);
 
-  template<typename T> bool checkListVariable(const std::vector<T>& list, const T& var);
+  template<typename T> bool checkListVariable(std::vector<T> const& list, T const& var);
 
-  template<typename T, typename U> void cleanUnorderedMap(std::unordered_map<T, U> um);
+  template<typename T, typename U> void cleanUnorderedMap(std::unordered_map<T, U>& um);
 
   // Non-zero and NaN/Inf checkers
   template<typename T> bool checkVarNonNegative(T const& val);
@@ -69,7 +70,7 @@ namespace HelperFunctions{
   template<> bool checkVarNonNegative<TH3F>(TH3F const& val);
 
   // Bit set and test
-  template<typename T> void set_bit(T& mask, unsigned int iBit);
+  template<typename T> void set_bit(T& mask, unsigned int iBit, bool val=true);
   template<typename T> bool test_bit(T mask, unsigned int iBit);
 
   // TGraph functions
@@ -461,14 +462,12 @@ template<typename T, typename U> void HelperFunctions::addByHighest(std::vector<
   }
 }
 
-template<typename T> bool HelperFunctions::checkListVariable(const std::vector<T>& list, const T& var){
-  for (unsigned int v=0; v<list.size(); v++){
-    if (list.at(v)==var) return true; // Look for exact match
-  }
-  return false;
+template<typename T> bool HelperFunctions::checkListVariable(std::vector<T> const& list, T const& var){
+  auto it = std::find(std::begin(list), std::end(list), var);
+  return (it!=std::end(list));
 }
 
-template<typename T, typename U> void HelperFunctions::cleanUnorderedMap(std::unordered_map<T, U> um){ for (auto& it:um){ delete it.second; it.second=0; } }
+template<typename T, typename U> void HelperFunctions::cleanUnorderedMap(std::unordered_map<T, U>& um){ for (auto& it:um){ delete it.second; it.second=nullptr; } }
 
 // Non-negative, non-zero, positive-definite and NaN/Inf checkers
 template<typename T> bool HelperFunctions::checkVarNonNegative(T const& val){ return (val>=0.); }
@@ -510,7 +509,13 @@ template<typename T> bool HelperFunctions::checkNanInf(std::vector<T> const& var
 }
 
 // Bit set and test
-template<typename T> void HelperFunctions::set_bit(T& mask, unsigned int iBit){ mask |= (1<<iBit); }
+template<typename T> void HelperFunctions::set_bit(T& mask, unsigned int iBit, bool val){
+  if (val) mask |= (1<<iBit);
+  else if (test_bit(mask, iBit)){
+    T tmp_mask = (1<<iBit);
+    mask = mask ^ tmp_mask;
+  }
+}
 template<typename T> bool HelperFunctions::test_bit(T mask, unsigned int iBit){ return (mask >> iBit) & 1; }
 
 // Histogram functions
@@ -789,33 +794,6 @@ template bool HelperFunctions::checkNanInf<unsigned int>(std::vector<unsigned in
 template bool HelperFunctions::checkNanInf<int>(std::vector<int> const& vars);
 template bool HelperFunctions::checkNanInf<float>(std::vector<float> const& vars);
 template bool HelperFunctions::checkNanInf<double>(std::vector<double> const& vars);
-
-template void HelperFunctions::set_bit<char>(char& mask, unsigned int iBit);
-template bool HelperFunctions::test_bit<char>(char mask, unsigned int iBit);
-template void HelperFunctions::set_bit<short>(short& mask, unsigned int iBit);
-template bool HelperFunctions::test_bit<short>(short mask, unsigned int iBit);
-template void HelperFunctions::set_bit<int>(int& mask, unsigned int iBit);
-template bool HelperFunctions::test_bit<int>(int mask, unsigned int iBit);
-template void HelperFunctions::set_bit<long>(long& mask, unsigned int iBit);
-template bool HelperFunctions::test_bit<long>(long mask, unsigned int iBit);
-template void HelperFunctions::set_bit<long long>(long long& mask, unsigned int iBit);
-template bool HelperFunctions::test_bit<long long>(long long mask, unsigned int iBit);
-
-template void HelperFunctions::cleanUnorderedMap<TString, short*>(std::unordered_map<TString, short*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, unsigned int*>(std::unordered_map<TString, unsigned int*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, int*>(std::unordered_map<TString, int*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, float*>(std::unordered_map<TString, float*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, double*>(std::unordered_map<TString, double*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, std::pair<short, short>*>(std::unordered_map<TString, std::pair<short, short>*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, std::pair<unsigned int, unsigned int>*>(std::unordered_map<TString, std::pair<unsigned int, unsigned int>*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, std::pair<int, int>*>(std::unordered_map<TString, std::pair<int, int>*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, std::pair<float, float>*>(std::unordered_map<TString, std::pair<float, float>*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, std::pair<double, double>*>(std::unordered_map<TString, std::pair<double, double>*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, std::vector<short>*>(std::unordered_map<TString, std::vector<short>*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, std::vector<unsigned int>*>(std::unordered_map<TString, std::vector<unsigned int>*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, std::vector<int>*>(std::unordered_map<TString, std::vector<int>*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, std::vector<float>*>(std::unordered_map<TString, std::vector<float>*> um);
-template void HelperFunctions::cleanUnorderedMap<TString, std::vector<double>*>(std::unordered_map<TString, std::vector<double>*> um);
 
 template double HelperFunctions::getHistogramIntegralAndError<TH1F>(TH1F const* histo, int ix, int jx, bool useWidth, double* error);
 template double HelperFunctions::getHistogramIntegralAndError<TH1D>(TH1D const* histo, int ix, int jx, bool useWidth, double* error);

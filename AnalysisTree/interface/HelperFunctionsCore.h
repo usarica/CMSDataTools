@@ -6,6 +6,7 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
+#include <cctype>
 #include <unordered_map>
 #include "StdExtensions.h"
 #include "TUtilHelpers.hh"
@@ -34,6 +35,11 @@ namespace HelperFunctions{
   template<> void castStringToValue(std::string const& name, bool& val);
   template<typename T> void castStringToValue(TString const& name, T& val);
   template<typename T> void castStringToValue(const char* name, T& val);
+
+  template<typename T> void lowercase(T const& name, T& val);
+  template<> void lowercase(std::string const& name, std::string& val);
+  template<> void lowercase(TString const& name, TString& val);
+  template<> void lowercase(const char* const& name, const char*& val);
 
 }
 
@@ -205,5 +211,6 @@ template void HelperFunctions::castStringToValue(const char* name, float& val);
 template void HelperFunctions::castStringToValue(std::string const& name, double& val);
 template void HelperFunctions::castStringToValue(TString const& name, double& val);
 template void HelperFunctions::castStringToValue(const char* name, double& val);
+
 
 #endif

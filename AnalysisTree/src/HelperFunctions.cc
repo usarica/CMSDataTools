@@ -1051,6 +1051,21 @@ template<> void HelperFunctions::rstrip<TString>(TString& str, const char* chars
   str=strtmp.c_str();
 }
 
+template<> void HelperFunctions::lowercase(std::string const& name, std::string& val){
+  val = name;
+  std::transform(val.begin(), val.end(), val.begin(), [] (unsigned char c){ return std::tolower(c); });
+}
+template<> void HelperFunctions::lowercase(TString const& name, TString& val){
+  val = name;
+  val.ToLower();
+}
+template<> void HelperFunctions::lowercase(const char* const& name, const char*& val){
+  std::string strname = name;
+  std::string strval;
+  HelperFunctions::lowercase(strname, strval);
+  val = strval.data();
+}
+
 template<> void HelperFunctions::addPointsBetween<TGraph>(TGraph*& tgOriginal, double xmin, double xmax, unsigned int nadd){
   const unsigned int np = tgOriginal->GetN();
   double* xy[2]={

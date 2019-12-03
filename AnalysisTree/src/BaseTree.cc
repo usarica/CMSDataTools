@@ -219,46 +219,52 @@ void BaseTree::getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& r
   const TList* llist = (const TList*) t->GetListOfLeaves();
   const TList* blist = (const TList*) t->GetListOfBranches();
   // First check all aliases and record the proper names
-  for (int ib=0; ib<alist->GetSize(); ib++){
-    TString bname = alist->At(ib)->GetName();
-    TString bnameproper = t->GetAlias(bname);
-    TString bnamegen="";
-    if (bnameproper.Contains(".")){
-      std::vector<TString> tmplist;
-      splitOptionRecursive(bnameproper, tmplist, '.');
-      if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
-    }
-    if (searchBranchType(bname)!=BranchType_unknown_t){
-      if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
-      else if (!checkListVariable(res, bnameproper)) res.push_back(bnameproper);
+  if (alist){
+    for (int ib=0; ib<alist->GetSize(); ib++){
+      TString bname = alist->At(ib)->GetName();
+      TString bnameproper = t->GetAlias(bname);
+      TString bnamegen="";
+      if (bnameproper.Contains(".")){
+        std::vector<TString> tmplist;
+        splitOptionRecursive(bnameproper, tmplist, '.');
+        if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
+      }
+      if (searchBranchType(bname)!=BranchType_unknown_t){
+        if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
+        else if (!checkListVariable(res, bnameproper)) res.push_back(bnameproper);
+      }
     }
   }
   // Then check all leaves
-  for (int ib=0; ib<llist->GetSize(); ib++){
-    TString bname = llist->At(ib)->GetName();
-    TString bnamegen="";
-    if (bname.Contains(".")){
-      std::vector<TString> tmplist;
-      splitOptionRecursive(bname, tmplist, '.');
-      if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
-    }
-    if (searchBranchType(bname)!=BranchType_unknown_t){
-      if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
-      else if (!checkListVariable(res, bname)) res.push_back(bname);
+  if (llist){
+    for (int ib=0; ib<llist->GetSize(); ib++){
+      TString bname = llist->At(ib)->GetName();
+      TString bnamegen="";
+      if (bname.Contains(".")){
+        std::vector<TString> tmplist;
+        splitOptionRecursive(bname, tmplist, '.');
+        if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
+      }
+      if (searchBranchType(bname)!=BranchType_unknown_t){
+        if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
+        else if (!checkListVariable(res, bname)) res.push_back(bname);
+      }
     }
   }
-  // Then check all branches
-  for (int ib=0; ib<blist->GetSize(); ib++){
-    TString bname = blist->At(ib)->GetName();
-    TString bnamegen="";
-    if (bname.Contains(".")){
-      std::vector<TString> tmplist;
-      splitOptionRecursive(bname, tmplist, '.');
-      if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
-    }
-    if (searchBranchType(bname)!=BranchType_unknown_t){
-      if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
-      else if (!checkListVariable(res, bname)) res.push_back(bname);
+  if (blist){
+    // Then check all branches
+    for (int ib=0; ib<blist->GetSize(); ib++){
+      TString bname = blist->At(ib)->GetName();
+      TString bnamegen="";
+      if (bname.Contains(".")){
+        std::vector<TString> tmplist;
+        splitOptionRecursive(bname, tmplist, '.');
+        if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
+      }
+      if (searchBranchType(bname)!=BranchType_unknown_t){
+        if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
+        else if (!checkListVariable(res, bname)) res.push_back(bname);
+      }
     }
   }
 }

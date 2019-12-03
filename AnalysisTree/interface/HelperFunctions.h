@@ -52,6 +52,7 @@ namespace HelperFunctions{
   template<typename T, typename U> void addByHighest(std::vector<std::pair<T, U>>& valArray, std::vector<std::pair<T, U>>& inArray, bool consecutive=false, bool inputordered=false);
 
   template<typename T> bool checkListVariable(std::vector<T> const& list, T const& var);
+  template<typename T> bool hasCommonElements(std::vector<T> const& list1, std::vector<T> const& list2);
 
   template<typename T, typename U> void cleanUnorderedMap(std::unordered_map<T, U>& um);
 
@@ -465,6 +466,14 @@ template<typename T, typename U> void HelperFunctions::addByHighest(std::vector<
 template<typename T> bool HelperFunctions::checkListVariable(std::vector<T> const& list, T const& var){
   auto it = std::find(std::begin(list), std::end(list), var);
   return (it!=std::end(list));
+}
+template<typename T> bool HelperFunctions::hasCommonElements(std::vector<T> const& list1, std::vector<T> const& list2){
+  for (T const& el1:list1){
+    for (T const& el2:list2){
+      if (el1==el2) return true;
+    }
+  }
+  return false;
 }
 
 template<typename T, typename U> void HelperFunctions::cleanUnorderedMap(std::unordered_map<T, U>& um){ for (auto& it:um){ delete it.second; it.second=nullptr; } }

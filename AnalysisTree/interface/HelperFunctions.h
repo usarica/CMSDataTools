@@ -75,9 +75,9 @@ namespace HelperFunctions{
   template<typename T> bool test_bit(T mask, unsigned int iBit);
 
   // Vector helpers
-  template<typename T> bool deltaR(T const& e1, T const& p1, T const& e2, T const& p2);
-  template<typename T> bool deltaEta(T const& v1, T const& v2);
-  template<typename T> bool deltaPhi(T const& v1, T const& v2);
+  template<typename T> void deltaR(T const& e1, T const& p1, T const& e2, T const& p2, T& res);
+  template<typename T> void deltaEta(T const& v1, T const& v2, T& res);
+  template<typename T> void deltaPhi(T const& v1, T const& v2, T& res);
 
   // TGraph functions
   template<typename T> TGraph* makeGraphFromPair(std::vector<std::pair<T, T>> points, TString name);
@@ -533,17 +533,20 @@ template<typename T> void HelperFunctions::set_bit(T& mask, unsigned int iBit, b
 template<typename T> bool HelperFunctions::test_bit(T mask, unsigned int iBit){ return (mask >> iBit) & 1; }
 
 // Vector functions
-template<typename T> bool HelperFunctions::deltaR(T const& e1, T const& p1, T const& e2, T const& p2){
-  return std::sqrt(std::pow(deltaEta(e1, e2), 2) + std::pow(deltaPhi(p1, p2), 2));
+template<typename T> void HelperFunctions::deltaR(T const& e1, T const& p1, T const& e2, T const& p2, T& res){
+  T deta = deltaEta(e1, e2, res);
+  T dphi = deltaEta(p1, p2, res);
+  res = std::sqrt(std::pow(deta, 2) + std::pow(dphi, 2));
 }
-template<typename T> bool HelperFunctions::deltaEta(T const& v1, T const& v2){
-  return v1 - v2;
+template<typename T> void HelperFunctions::deltaEta(T const& v1, T const& v2, T& res){
+  res = v1 - v2;
 }
-template<typename T> bool HelperFunctions::deltaPhi(T const& v1, T const& v2){
-  T diff = v1 - v2;
-  if (diff>TMath::Pi()){ while (diff>TMath::Pi()) diff -= T(2) * TMath::Pi(); }
-  else if (diff<-TMath::Pi()){ while (diff<-TMath::Pi()) diff += T(2) * TMath::Pi(); }
-  return diff;
+template<typename T> void HelperFunctions::deltaPhi(T const& v1, T const& v2, T& res){
+  res = v1 - v2;
+  T const pi_val = TMath::Pi();
+  T const twopi_val = TMath::Pi()*T(2);
+  if (res>pi_val){ while (res>pi_val) res -= twopi_val; }
+  else if (res<-pi_val){ while (res<-pi_val) res += twopi_val; }
 }
 
 // Histogram functions

@@ -74,6 +74,11 @@ namespace HelperFunctions{
   template<typename T> void set_bit(T& mask, unsigned int iBit, bool val=true);
   template<typename T> bool test_bit(T mask, unsigned int iBit);
 
+  // Vector helpers
+  template<typename T> bool deltaR(T const& e1, T const& p1, T const& e2, T const& p2);
+  template<typename T> bool deltaEta(T const& v1, T const& v2);
+  template<typename T> bool deltaPhi(T const& v1, T const& v2);
+
   // TGraph functions
   template<typename T> TGraph* makeGraphFromPair(std::vector<std::pair<T, T>> points, TString name);
   template<typename T> TGraphErrors* makeGraphSymErrFromPair(std::vector<std::pair<T, T>> points, std::vector<std::pair<T, T>> errors, TString name);
@@ -526,6 +531,20 @@ template<typename T> void HelperFunctions::set_bit(T& mask, unsigned int iBit, b
   }
 }
 template<typename T> bool HelperFunctions::test_bit(T mask, unsigned int iBit){ return (mask >> iBit) & 1; }
+
+// Vector functions
+template<typename T> bool HelperFunctions::deltaR(T const& e1, T const& p1, T const& e2, T const& p2){
+  return std::sqrt(std::pow(deltaEta(e1, e2), 2) + std::pow(deltaPhi(p1, p2), 2));
+}
+template<typename T> bool HelperFunctions::deltaEta(T const& v1, T const& v2){
+  return v1 - v2;
+}
+template<typename T> bool HelperFunctions::deltaPhi(T const& v1, T const& v2){
+  T diff = v1 - v2;
+  if (diff>TMath::Pi()){ while (diff>TMath::Pi()) diff -= T(2) * TMath::Pi(); }
+  else if (diff<-TMath::Pi()){ while (diff<-TMath::Pi()) diff += T(2) * TMath::Pi(); }
+  return diff;
+}
 
 // Histogram functions
 template <typename T> double HelperFunctions::getHistogramIntegralAndError(T const* histo, int ix, int jx, bool useWidth, double* error){

@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <ctime>
 #include <cassert>
+#include <string>
 #include "TString.h"
 
 namespace HostHelpers{
@@ -27,6 +28,8 @@ namespace HostHelpers{
   bool FileReadable(const char* fname);
   int ExecuteCommand(const char* strCmd);
   int ExecuteCommand(TString strCmd);
+  void ExpandEnvironmentVariables(TString& str);
+  void ExpandEnvironmentVariables(std::string& str);
 
   time_t GetTimestamp(const char* fname);
   TString GetTimestampConverted(const char* fname);

@@ -1,3 +1,4 @@
+#include <regex>
 #include "HostHelpersCore.h"
 #include "TFile.h"
 #include "TSystem.h"
@@ -71,6 +72,21 @@ int HostHelpers::ExecuteCommand(const char* strCmd){
   }
 }
 int HostHelpers::ExecuteCommand(TString strCmd){ return ExecuteCommand(strCmd.Data()); }
+void HostHelpers::ExpandEnvironmentVariables(TString& str){
+  std::string ss = str.Data();
+  ExpandEnvironmentVariables(ss);
+  str = ss.data();
+}
+void HostHelpers::ExpandEnvironmentVariables(std::string& str){
+  static std::regex env("\\$\\{([^}]+)\\}");
+  std::smatch match;
+  while (std::regex_search(str, match, env)){
+    const char* s = getenv(match[1].str().c_str());
+    const std::string var(s == NULL ? "" : s);
+    str.replace(match[0].first, match[0].second, var);
+  }
+}
+
 
 time_t HostHelpers::GetTimestamp(const char* fname){
   struct stat sb;

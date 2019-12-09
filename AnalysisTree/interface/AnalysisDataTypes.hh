@@ -103,7 +103,7 @@ VECTOR_DATA_OUTPUT_DIRECTIVE(TString, std::vector<TString>) \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(char, std::vector<std::vector<char>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(ushort, std::vector<std::vector<unsigned short>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(short, std::vector<std::vector<short>>)*/ \
-/*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(uint, std::vector<std::vector<unsigned int>>)*/ \
+DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(uint, std::vector<std::vector<unsigned int>>) \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(int, std::vector<std::vector<int>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(ulong, std::vector<std::vector<unsigned long>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(long, std::vector<std::vector<long>>)*/ \

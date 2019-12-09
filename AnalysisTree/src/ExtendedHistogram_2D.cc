@@ -22,11 +22,7 @@ ExtendedHistogram_2D::ExtendedHistogram_2D(ExtendedHistogram_2D const& other) : 
   if (other.prof_x) prof_x = new TProfile(*(other.prof_x));
   if (other.prof_y) prof_y = new TProfile(*(other.prof_y));
 }
-ExtendedHistogram_2D::~ExtendedHistogram_2D(){
-  delete histo;
-  delete prof_x;
-  delete prof_y;
-}
+ExtendedHistogram_2D::~ExtendedHistogram_2D(){ reset(); }
 
 void ExtendedHistogram_2D::swap(ExtendedHistogram_2D& other){
   std::swap(name, other.name);
@@ -76,9 +72,9 @@ void ExtendedHistogram_2D::build(){
   }
 }
 void ExtendedHistogram_2D::reset(){
-  delete histo;
-  delete prof_x;
-  delete prof_y;
+  resetPointer(histo);
+  resetPointer(prof_x);
+  resetPointer(prof_y);
 }
 
 void ExtendedHistogram_2D::fill(double x, double y, double wgt){

@@ -24,12 +24,7 @@ ExtendedHistogram_3D::ExtendedHistogram_3D(ExtendedHistogram_3D const& other) : 
   if (other.prof_y) prof_y = new TProfile(*(other.prof_y));
   if (other.prof_z) prof_z = new TProfile(*(other.prof_z));
 }
-ExtendedHistogram_3D::~ExtendedHistogram_3D(){
-  delete histo;
-  delete prof_x;
-  delete prof_y;
-  delete prof_z;
-}
+ExtendedHistogram_3D::~ExtendedHistogram_3D(){ reset(); }
 
 void ExtendedHistogram_3D::swap(ExtendedHistogram_3D& other){
   std::swap(name, other.name);
@@ -90,10 +85,10 @@ void ExtendedHistogram_3D::build(){
   }
 }
 void ExtendedHistogram_3D::reset(){
-  delete histo;
-  delete prof_x;
-  delete prof_y;
-  delete prof_z;
+  resetPointer(histo);
+  resetPointer(prof_x);
+  resetPointer(prof_y);
+  resetPointer(prof_z);
 }
 
 void ExtendedHistogram_3D::fill(double x, double y, double z, double wgt){

@@ -468,10 +468,7 @@ template<typename T, typename U> void HelperFunctions::addByHighest(std::vector<
   }
 }
 
-template<typename T> bool HelperFunctions::checkListVariable(std::vector<T> const& list, T const& var){
-  auto it = std::find(std::begin(list), std::end(list), var);
-  return (it!=std::end(list));
-}
+template<typename T> bool HelperFunctions::checkListVariable(std::vector<T> const& list, T const& var){ return (std::find(std::begin(list), std::end(list), var)!=std::end(list)); }
 template<typename T> bool HelperFunctions::hasCommonElements(std::vector<T> const& list1, std::vector<T> const& list2){
   for (T const& el1:list1){
     for (T const& el2:list2){

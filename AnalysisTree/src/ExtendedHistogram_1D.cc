@@ -20,10 +20,7 @@ ExtendedHistogram_1D::ExtendedHistogram_1D(ExtendedHistogram_1D const& other) : 
   if (other.histo) histo = new TH1F(*(other.histo));
   if (other.prof_x) prof_x = new TProfile(*(other.prof_x));
 }
-ExtendedHistogram_1D::~ExtendedHistogram_1D(){
-  delete histo;
-  delete prof_x;
-}
+ExtendedHistogram_1D::~ExtendedHistogram_1D(){ reset(); }
 
 void ExtendedHistogram_1D::swap(ExtendedHistogram_1D& other){
   std::swap(name, other.name);
@@ -60,8 +57,8 @@ void ExtendedHistogram_1D::build(){
   }
 }
 void ExtendedHistogram_1D::reset(){
-  delete histo;
-  delete prof_x;
+  resetPointer(histo);
+  resetPointer(prof_x);
 }
 
 void ExtendedHistogram_1D::fill(double x, double wgt){

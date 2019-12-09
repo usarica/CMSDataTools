@@ -13,10 +13,27 @@
 #include "CMSLorentzVector.h"
 
 
+// Behold the power of the member checker!
+// From https://stackoverflow.com/questions/1005476/how-to-detect-whether-there-is-a-specific-member-variable-in-class
+// You need to use the first one to construct the structs and the second one in the if-statement
+#define CONSTRUCT_MEMBER_CHECKER(member_type, member) \
+template<typename class_type, typename = void> struct has_##member : std::false_type {}; \
+template<typename class_type> struct has_##member<class_type, decltype((void)class_type::member, member_type()) > : std::true_type {};
+#define HAS_MEMBER(class_type, member_type, member) has_##member<class_type, member_type>::value
+// Usage example:
+// [Outside of function definitions]
+// CONSTRUCT_MEMBER_CHECKER(int, id)
+// [Inside the function]
+// HAS_MEMBER(SimpleEntry, int, id) -> returns true
+// HAS_MEMBER(int, int, id) -> returns false
+
+
 namespace HelperFunctions{
 
   template<typename T> bool getUnorderedMapIterator(TString name, const std::unordered_map<TString, T>& theMap, typename std::unordered_map<TString, T>::const_iterator& it);
   template<typename T> bool getUnorderedMapIterator(TString name, std::unordered_map<TString, T>& theMap, typename std::unordered_map<TString, T>::iterator& it);
+
+  template<typename T> void resetPointer(T*& ptr);
 
   template<typename T, typename U> bool replaceString(T& strinput, U strTakeOut, U strPutIn);
   template<> bool replaceString<TString, const TString>(TString& strinput, const TString strTakeOut, const TString strPutIn);
@@ -42,6 +59,8 @@ namespace HelperFunctions{
   template<> void lowercase(const char* const& name, const char*& val);
 
 }
+
+template<typename T> void HelperFunctions::resetPointer(T*& ptr){ delete ptr; ptr=nullptr; }
 
 template<typename T> bool HelperFunctions::getUnorderedMapIterator(TString name, const std::unordered_map<TString, T>& theMap, typename std::unordered_map<TString, T>::const_iterator& it){
   it = theMap.find(name);

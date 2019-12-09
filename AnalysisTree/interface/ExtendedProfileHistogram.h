@@ -15,8 +15,8 @@ class ExtendedProfileHistogram{
 
   std::vector<std::vector<std::vector<double>>> sumW;
   std::vector<std::vector<std::vector<double>>> sumWsq;
-  std::vector<std::vector<std::vector<double>>>* sumWQ;
-  std::vector<std::vector<std::vector<double>>>* sumWQsq;
+  std::vector< std::vector<std::vector<std::vector<double>>> > sumWQ;
+  std::vector< std::vector<std::vector<std::vector<double>>> > sumWQsq;
 
 public:
   ExtendedProfileHistogram(ExtendedBinning bX, unsigned int fillAverageQ_);

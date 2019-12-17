@@ -110,6 +110,8 @@ BaseTree::~BaseTree(){
 #undef SIMPLE_DATA_INPUT_DIRECTIVE
 #undef VECTOR_DATA_INPUT_DIRECTIVE
 #undef DOUBLEVECTOR_DATA_INPUT_DIRECTIVE
+
+  if (finput && finput->IsOpen()) finput->Close();
 }
 
 BaseTree::BranchType BaseTree::searchBranchType(TString branchname) const{
@@ -212,7 +214,7 @@ void BaseTree::resetBranches(){
 #undef DOUBLEVECTOR_DATA_INPUT_DIRECTIVE
 }
 
-void BaseTree::getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& res) const{
+void BaseTree::getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& res, bool check_linked) const{
   if (!t) return;
 
   const TList* alist = (const TList*) t->GetListOfAliases();
@@ -229,7 +231,7 @@ void BaseTree::getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& r
         splitOptionRecursive(bnameproper, tmplist, '.');
         if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
       }
-      if (searchBranchType(bname)!=BranchType_unknown_t){
+      if (searchBranchType(bname)!=BranchType_unknown_t || !check_linked){
         if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
         else if (!checkListVariable(res, bnameproper)) res.push_back(bnameproper);
       }
@@ -245,7 +247,7 @@ void BaseTree::getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& r
         splitOptionRecursive(bname, tmplist, '.');
         if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
       }
-      if (searchBranchType(bname)!=BranchType_unknown_t){
+      if (searchBranchType(bname)!=BranchType_unknown_t || !check_linked){
         if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
         else if (!checkListVariable(res, bname)) res.push_back(bname);
       }
@@ -261,13 +263,23 @@ void BaseTree::getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& r
         splitOptionRecursive(bname, tmplist, '.');
         if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
       }
-      if (searchBranchType(bname)!=BranchType_unknown_t){
+      if (searchBranchType(bname)!=BranchType_unknown_t || !check_linked){
         if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
         else if (!checkListVariable(res, bname)) res.push_back(bname);
       }
     }
   }
 }
+
+void BaseTree::getValidBranchNamesWithoutAlias(std::vector<TString>& res, bool check_linked) const{
+  constexpr unsigned int ntrees = 2;
+  TTree* trees[ntrees]={
+    tree,
+    failedtree
+  };
+  for (unsigned int it=0; it<ntrees; it++) this->getValidBranchNamesWithoutAlias(trees[it], res, check_linked);
+}
+
 void BaseTree::silenceUnused(){
   constexpr unsigned int ntrees = 2;
   TTree* trees[ntrees]={
@@ -279,7 +291,7 @@ void BaseTree::silenceUnused(){
     trees[it]->SetBranchStatus("*", 0);
 
     std::vector<TString> currentBranchList;
-    this->getValidBranchNamesWithoutAlias(trees[it], currentBranchList);
+    this->getValidBranchNamesWithoutAlias(trees[it], currentBranchList, true);
 
     for (TString const& bname:currentBranchList){
       trees[it]->SetBranchStatus(bname, 1);

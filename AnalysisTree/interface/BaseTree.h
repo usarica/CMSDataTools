@@ -62,7 +62,7 @@ protected:
 
   BranchType searchBranchType(TString branchname) const;
 
-  void getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& res) const;
+  void getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& res, bool check_linked) const;
 
   template<typename T> bool getBranchCIterator(TString branchname, typename std::unordered_map<TString, T>::iterator& it);
   template<typename T> bool getBranchCIterator(TString branchname, typename std::unordered_map<TString, T>::const_iterator& it) const;
@@ -123,6 +123,7 @@ public:
 
   bool isValid() const;
   bool branchExists(TString branchname, BranchType* type=nullptr);
+  void getValidBranchNamesWithoutAlias(std::vector<TString>& res, bool check_linked) const;
 
   virtual bool isValidEvent() const;
 

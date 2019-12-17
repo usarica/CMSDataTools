@@ -53,8 +53,8 @@ template<typename T> bool IvyBase::getConsumed(TString name, T*& val) const{
       val = it_val->second;
       return true;
     }
+    else if (isSloppy) return true;
   }
-  else if (isSloppy) return true;
   else if (verbosity>=TVar::ERROR) MELAerr << "IvyBase::getConsumed(" << name << "): Map could not be found." << endl;
   return false;
 }
@@ -69,8 +69,8 @@ template<typename T> bool IvyBase::getConsumed(TString name, T const*& val) cons
       val = it_val->second;
       return true;
     }
+    else if (isSloppy) return true;
   }
-  else if (isSloppy) return true;
   else if (verbosity>=TVar::ERROR) MELAerr << "IvyBase::getConsumed(" << name << "): Map could not be found." << endl;
   return false;
 }

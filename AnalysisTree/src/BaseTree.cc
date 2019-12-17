@@ -299,6 +299,17 @@ void BaseTree::silenceUnused(){
     }
   }
 }
+void BaseTree::unmuteAllBranches(){
+  constexpr unsigned int ntrees = 2;
+  TTree* trees[ntrees]={
+    tree,
+    failedtree
+  };
+  for (unsigned int it=0; it<ntrees; it++){
+    if (!trees[it]) continue;
+    trees[it]->SetBranchStatus("*", 1);
+  }
+}
 void BaseTree::releaseBranch(TString branchname){
   const BranchType btype = searchBranchType(branchname);
   if (btype!=BranchType_unknown_t){

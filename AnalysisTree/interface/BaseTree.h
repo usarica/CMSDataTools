@@ -111,6 +111,7 @@ public:
   template<typename T> void getValRef(TString branchname, T*& val);
 
   void silenceUnused();
+  void unmuteAllBranches();
   void releaseBranch(TString branchname);
 
   void setAcquireTreePossession(bool);

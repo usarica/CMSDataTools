@@ -42,20 +42,22 @@ BaseTree::BaseTree(const TString cinput, const TString treename, const TString f
   if (cinput.Contains("*")){ // Use a TChain
     isTChain=true;
     if (treename!=""){
-      tree = new TChain(treename);
-      valid = (tree->Add(cinput) != 0);
+      TChain* tc = new TChain(treename);
+      valid = (tc->Add(cinput) != 0);
       if (!valid){
-        delete tree;
-        tree=nullptr;
+        delete tc;
+        tc = nullptr;
       }
+      tree = tc;
     }
     if (failedtreename!=""){
-      failedtree = new TChain(failedtreename);
-      valid = (failedtree->Add(cinput) != 0);
+      TChain* tc = new TChain(failedtreename);
+      valid = (tc->Add(cinput) != 0);
       if (!valid){
-        delete failedtree;
-        failedtree=nullptr;
+        delete tc;
+        tc = nullptr;
       }
+      failedtree = tc;
     }
     if (countersname!=""){
       MELAerr << "BaseTree::BaseTree: Cannot add histograms in chain mode." << endl;

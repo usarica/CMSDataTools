@@ -21,6 +21,7 @@ BaseTree::BaseTree() :
   valid(false),
   receiver(true),
   acquireTreePossession(!receiver),
+  isTChain(false),
   currentEvent(-1),
   currentTree(nullptr)
 {}
@@ -33,11 +34,35 @@ BaseTree::BaseTree(const TString cinput, const TString treename, const TString f
   valid(false),
   receiver(true),
   acquireTreePossession(!receiver),
+  isTChain(false),
   currentEvent(-1),
   currentTree(nullptr)
 {
   TDirectory* curdir = gDirectory; // Save current directory to return back to it later
-  if (HostHelpers::FileReadable(cinput.Data())){
+  if (cinput.Contains("*")){ // Use a TChain
+    isTChain=true;
+    if (treename!=""){
+      tree = new TChain(treename);
+      valid = (tree->Add(cinput) != 0);
+      if (!valid){
+        delete tree;
+        tree=nullptr;
+      }
+    }
+    if (failedtreename!=""){
+      failedtree = new TChain(failedtreename);
+      valid = (failedtree->Add(cinput) != 0);
+      if (!valid){
+        delete failedtree;
+        failedtree=nullptr;
+      }
+    }
+    if (countersname!=""){
+      MELAerr << "BaseTree::BaseTree: Cannot add histograms in chain mode." << endl;
+      assert(0);
+    }
+  }
+  else if (HostHelpers::FileReadable(cinput.Data())){
     finput = TFile::Open(cinput, "read");
     if (finput){
       if (finput->IsOpen() && !finput->IsZombie()){
@@ -67,6 +92,7 @@ BaseTree::BaseTree(const TString treename) :
   valid(true),
   receiver(false),
   acquireTreePossession(!receiver),
+  isTChain(false),
   currentEvent(-1),
   currentTree(nullptr)
 {}
@@ -79,6 +105,7 @@ BaseTree::BaseTree(TFile* finput_, TTree* tree_, TTree* failedtree_, TH1F* hCoun
   valid(false),
   receiver(receiver_override || finput!=nullptr),
   acquireTreePossession(!receiver),
+  isTChain(false),
   currentEvent(-1),
   currentTree(nullptr)
 {
@@ -106,6 +133,11 @@ BaseTree::~BaseTree(){
       delete failedtree;
       delete tree;
     }
+  }
+  else if (isTChain){
+    delete hCounters;
+    delete failedtree;
+    delete tree;
   }
 #undef SIMPLE_DATA_INPUT_DIRECTIVE
 #undef VECTOR_DATA_INPUT_DIRECTIVE

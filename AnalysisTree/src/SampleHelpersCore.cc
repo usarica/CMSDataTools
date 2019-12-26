@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <dirent.h>
+#include <regex>
 #include "SampleHelpersCore.h"
 #include "MELAStreamHelpers.hh"
 
@@ -20,10 +21,14 @@ std::vector<TString> SampleHelpers::lsdir(TString indir){
   struct dirent* ep;
   DIR* dp = opendir(indir.Data());
   if (dp != NULL){
-    while ((ep = readdir(dp))) res.push_back(ep->d_name);
+    while ((ep = readdir(dp))){
+      TString strdir = ep->d_name;
+      if (strdir == "." || strdir == "..") continue;
+      res.push_back(strdir);
+    }
     closedir(dp);
   }
-  else MELAerr << "Couldn't open the directory" << endl;
+  else MELAerr << "SampleHelpers::lsdir: Could not open the directory " << indir << "." << endl;
 
   return res;
 }
@@ -32,9 +37,23 @@ std::vector<TString> SampleHelpers::lsdir(TString indir){
 float SampleHelpers::findPoleMass(const TString samplename){
   float mass = -1;
   if (samplename=="") return mass;
-  else if (samplename.Contains("_M125")) return 125; // JHUGen samples
-  else if (samplename.Contains("_M125p6")) return 125.6; // JHUGen samples
-  else if (samplename.Contains("_M126")) return 126; // JHUGen samples
+
+  std::string strSampleName = samplename.Data();
+  std::regex strMatch(".*_M([0-9]*p*[0-9]*)_.*");
+  std::smatch matches_MXYZ;
+  std::regex_match(strSampleName, matches_MXYZ, strMatch);
+  if (matches_MXYZ.size()==2){
+    std::string strmass = matches_MXYZ[1].str();
+    HelperFunctions::replaceString(strmass, "p", ".");
+    try{
+      mass = std::stof(strmass);
+    }
+    catch (std::invalid_argument& e){
+      MELAerr << "SampleHelpers::findPoleMass: Sample '" << samplename << "' contains the mass string '" << strmass << "', but parsing of this mass string failed!" << endl;
+      assert(0);
+    }
+    return mass;
+  }
   std::string strtmp = samplename.Data();
   std::size_t extpos = strtmp.find(".root");
   if (extpos!=std::string::npos) strtmp.erase(extpos, 5);

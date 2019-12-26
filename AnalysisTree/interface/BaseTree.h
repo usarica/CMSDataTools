@@ -44,6 +44,7 @@ protected:
   bool valid;
   const bool receiver;
   bool acquireTreePossession; // If true, deletes trees and histograms upon destruction.
+  bool isTChain;
 
   int currentEvent;
   TTree* currentTree;

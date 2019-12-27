@@ -11,6 +11,7 @@ using namespace MELAStreamHelpers;
 
 namespace SampleHelpers{
   shared_ptr<Mela> GlobalMELA;
+  TDirectory* const rootTDirectory = gDirectory;
 }
 
 void SampleHelpers::makeGlobalMELA(int CoM, TVar::VerbosityLevel verbosity){ if (!GlobalMELA) GlobalMELA.reset(new Mela(CoM, 125, verbosity)); }

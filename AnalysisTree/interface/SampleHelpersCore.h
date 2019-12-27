@@ -26,6 +26,7 @@
 
 namespace SampleHelpers{
   extern std::shared_ptr<Mela> GlobalMELA;
+  extern TDirectory* const rootTDirectory;
 
   void makeGlobalMELA(int CoM, TVar::VerbosityLevel verbosity=TVar::ERROR);
 

@@ -182,6 +182,14 @@ namespace HelperFunctions{
   template void combineHistogramsByWeightedAverage<TH2F>(TH2F const* h1, TH2F const* h2, TH2F*& hAssign, bool useNeff);
   template void combineHistogramsByWeightedAverage<TH3F>(TH3F const* h1, TH3F const* h2, TH3F*& hAssign, bool useNeff);
 
+  template <typename T> void findBinContentRange(T const* h, float& bcmin, float& bcmax, bool includeBinErrors, bool includeOverUnderflows, bool onlyPositiveBins);
+  template <> void findBinContentRange<TProfile>(TProfile const* h, float& bcmin, float& bcmax, bool includeBinErrors, bool includeOverUnderflows, bool onlyPositiveBins);
+  template <> void findBinContentRange<TH1F>(TH1F const* h, float& bcmin, float& bcmax, bool includeBinErrors, bool includeOverUnderflows, bool onlyPositiveBins);
+  template <> void findBinContentRange<TH2F>(TH2F const* h, float& bcmin, float& bcmax, bool includeBinErrors, bool includeOverUnderflows, bool onlyPositiveBins);
+  template <> void findBinContentRange<TH3F>(TH3F const* h, float& bcmin, float& bcmax, bool includeBinErrors, bool includeOverUnderflows, bool onlyPositiveBins);
+
+  template <typename T> void findBinContentRange(std::vector<T*> hlist, float& bcmin, float& bcmax, bool includeBinErrors, bool includeOverUnderflows, bool onlyPositiveBins);
+
   // Spline functions
   template<int N> TF1* getFcn_a0plusa1overXN(TSpline3* sp, double xmin, double xmax, bool useLowBound);
   template<int N> TF1* getFcn_a0plusa1timesXN(TSpline3* sp, double xmin, double xmax, bool useLowBound);
@@ -636,6 +644,22 @@ template <typename T> void HelperFunctions::combineHistogramsByWeightedAverage(T
   hlist.push_back(h1);
   hlist.push_back(h2);
   HelperFunctions::combineHistogramListByWeightedAverage<T>(hlist, hAssign, useNeff);
+}
+template <typename T> void HelperFunctions::findBinContentRange(std::vector<T*> hlist, float& bcmin, float& bcmax, bool includeBinErrors, bool includeOverUnderflows, bool onlyPositiveBins){
+  bool firstHistogram = true;
+  for (auto*& h:hlist){
+    float tmpbcmin=0, tmpbcmax=0;
+    findBinContentRange(h, tmpbcmin, tmpbcmax, includeBinErrors, includeOverUnderflows, onlyPositiveBins);
+    if (firstHistogram){
+      bcmin=tmpbcmin;
+      bcmax=tmpbcmax;
+      firstHistogram=false;
+    }
+    else{
+      bcmin=std::min(bcmin, tmpbcmin);
+      bcmax=std::max(bcmax, tmpbcmax);
+    }
+  }
 }
 
 

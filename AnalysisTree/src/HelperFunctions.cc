@@ -2735,6 +2735,97 @@ template <> void HelperFunctions::combineHistogramListByWeightedAverage<TH3F>(st
   }
 }
 
+template <> void HelperFunctions::findBinContentRange<TProfile>(TProfile const* h, float& bcmin, float& bcmax, bool includeBinErrors, bool includeOverUnderflows, bool onlyPositiveBins){
+  const int nbinsx = h->GetNbinsX();
+  bool firstBin = true;
+  for (int binx=(includeOverUnderflows ? 0 : 1); binx<=nbinsx+(includeOverUnderflows ? 1 : 0); binx++){
+    float bc = h->GetBinContent(binx);
+    float be = h->GetBinError(binx);
+    if (onlyPositiveBins && bc<=0.f) continue;
+    float tmpbcmin = (includeBinErrors && !(onlyPositiveBins && bc<=be) ? bc-be : bc);
+    float tmpbcmax = (includeBinErrors ? bc+be : bc);
+    if (firstBin){
+      bcmin=tmpbcmin;
+      bcmax=tmpbcmax;
+      firstBin=false;
+    }
+    else{
+      bcmin=std::min(bcmin, tmpbcmin);
+      bcmax=std::max(bcmax, tmpbcmax);
+    }
+  }
+}
+template <> void HelperFunctions::findBinContentRange<TH1F>(TH1F const* h, float& bcmin, float& bcmax, bool includeBinErrors, bool includeOverUnderflows, bool onlyPositiveBins){
+  const int nbinsx = h->GetNbinsX();
+  bool firstBin = true;
+  for (int binx=(includeOverUnderflows ? 0 : 1); binx<=nbinsx+(includeOverUnderflows ? 1 : 0); binx++){
+    float bc = h->GetBinContent(binx);
+    float be = h->GetBinError(binx);
+    if (onlyPositiveBins && bc<=0.f) continue;
+    float tmpbcmin = (includeBinErrors && !(onlyPositiveBins && bc<=be) ? bc-be : bc);
+    float tmpbcmax = (includeBinErrors ? bc+be : bc);
+    if (firstBin){
+      bcmin=tmpbcmin;
+      bcmax=tmpbcmax;
+      firstBin=false;
+    }
+    else{
+      bcmin=std::min(bcmin, tmpbcmin);
+      bcmax=std::max(bcmax, tmpbcmax);
+    }
+  }
+}
+template <> void HelperFunctions::findBinContentRange<TH2F>(TH2F const* h, float& bcmin, float& bcmax, bool includeBinErrors, bool includeOverUnderflows, bool onlyPositiveBins){
+  const int nbinsx = h->GetNbinsX();
+  const int nbinsy = h->GetNbinsY();
+  bool firstBin = true;
+  for (int binx=(includeOverUnderflows ? 0 : 1); binx<=nbinsx+(includeOverUnderflows ? 1 : 0); binx++){
+    for (int biny=(includeOverUnderflows ? 0 : 1); biny<=nbinsy+(includeOverUnderflows ? 1 : 0); biny++){
+      float bc = h->GetBinContent(binx, biny);
+      float be = h->GetBinError(binx, biny);
+      if (onlyPositiveBins && bc<=0.f) continue;
+      float tmpbcmin = (includeBinErrors && !(onlyPositiveBins && bc<=be) ? bc-be : bc);
+      float tmpbcmax = (includeBinErrors ? bc+be : bc);
+      if (firstBin){
+        bcmin=tmpbcmin;
+        bcmax=tmpbcmax;
+        firstBin=false;
+      }
+      else{
+        bcmin=std::min(bcmin, tmpbcmin);
+        bcmax=std::max(bcmax, tmpbcmax);
+      }
+    }
+  }
+}
+template <> void HelperFunctions::findBinContentRange<TH3F>(TH3F const* h, float& bcmin, float& bcmax, bool includeBinErrors, bool includeOverUnderflows, bool onlyPositiveBins){
+  const int nbinsx = h->GetNbinsX();
+  const int nbinsy = h->GetNbinsY();
+  const int nbinsz = h->GetNbinsZ();
+  bool firstBin = true;
+  for (int binx=(includeOverUnderflows ? 0 : 1); binx<=nbinsx+(includeOverUnderflows ? 1 : 0); binx++){
+    for (int biny=(includeOverUnderflows ? 0 : 1); biny<=nbinsy+(includeOverUnderflows ? 1 : 0); biny++){
+      for (int binz=(includeOverUnderflows ? 0 : 1); binz<=nbinsz+(includeOverUnderflows ? 1 : 0); binz++){
+        float bc = h->GetBinContent(binx, biny, binz);
+        float be = h->GetBinError(binx, biny, binz);
+        if (onlyPositiveBins && bc<=0.f) continue;
+        float tmpbcmin = (includeBinErrors && !(onlyPositiveBins && bc<=be) ? bc-be : bc);
+        float tmpbcmax = (includeBinErrors ? bc+be : bc);
+        if (firstBin){
+          bcmin=tmpbcmin;
+          bcmax=tmpbcmax;
+          firstBin=false;
+        }
+        else{
+          bcmin=std::min(bcmin, tmpbcmin);
+          bcmax=std::max(bcmax, tmpbcmax);
+        }
+      }
+    }
+  }
+}
+
+
 void HelperFunctions::rebinProfile(TProfile*& prof, const ExtendedBinning& binningX){
   if (!prof) return;
   if (!binningX.isValid()) MELAerr << "HelperFunctions::rebinProfile: New binning is not valid!" << endl;

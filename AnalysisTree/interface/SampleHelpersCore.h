@@ -115,6 +115,7 @@ template void SampleHelpers::bookBranch<unsigned int>(TTree* tree, TString strna
 template void SampleHelpers::bookBranch<int>(TTree* tree, TString strname, int* var);
 template void SampleHelpers::bookBranch<unsigned long>(TTree* tree, TString strname, unsigned long* var);
 template void SampleHelpers::bookBranch<long>(TTree* tree, TString strname, long* var);
+template void SampleHelpers::bookBranch<unsigned long long>(TTree* tree, TString strname, unsigned long long* var);
 template void SampleHelpers::bookBranch<long long>(TTree* tree, TString strname, long long* var);
 template void SampleHelpers::bookBranch<float>(TTree* tree, TString strname, float* var);
 template void SampleHelpers::bookBranch<double>(TTree* tree, TString strname, double* var);
@@ -125,6 +126,7 @@ template void SampleHelpers::bookBranch<std::vector<unsigned int>*>(TTree* tree,
 template void SampleHelpers::bookBranch<std::vector<int>*>(TTree* tree, TString strname, std::vector<int>** var);
 template void SampleHelpers::bookBranch<std::vector<unsigned long>*>(TTree* tree, TString strname, std::vector<unsigned long>** var);
 template void SampleHelpers::bookBranch<std::vector<long>*>(TTree* tree, TString strname, std::vector<long>** var);
+template void SampleHelpers::bookBranch<std::vector<unsigned long long>*>(TTree* tree, TString strname, std::vector<unsigned long long>** var);
 template void SampleHelpers::bookBranch<std::vector<long long>*>(TTree* tree, TString strname, std::vector<long long>** var);
 template void SampleHelpers::bookBranch<std::vector<float>*>(TTree* tree, TString strname, std::vector<float>** var);
 template void SampleHelpers::bookBranch<std::vector<double>*>(TTree* tree, TString strname, std::vector<double>** var);
@@ -136,6 +138,7 @@ template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<unsigned int>*>(TTree* 
 template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<int>*>(TTree* tree, TString strname, CMSEDMWrapper<int>** var);
 template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<unsigned long>*>(TTree* tree, TString strname, CMSEDMWrapper<unsigned long>** var);
 template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<long>*>(TTree* tree, TString strname, CMSEDMWrapper<long>** var);
+template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<unsigned long long>*>(TTree* tree, TString strname, CMSEDMWrapper<unsigned long long>** var);
 template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<long long>*>(TTree* tree, TString strname, CMSEDMWrapper<long long>** var);
 template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<float>*>(TTree* tree, TString strname, CMSEDMWrapper<float>** var);
 template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<double>*>(TTree* tree, TString strname, CMSEDMWrapper<double>** var);
@@ -146,6 +149,7 @@ template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<std::vector<unsigned in
 template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<std::vector<int>>*>(TTree* tree, TString strname, CMSEDMWrapper<std::vector<int>>** var);
 template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<std::vector<unsigned long>>*>(TTree* tree, TString strname, CMSEDMWrapper<std::vector<unsigned long>>** var);
 template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<std::vector<long>>*>(TTree* tree, TString strname, CMSEDMWrapper<std::vector<long>>** var);
+template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<std::vector<unsigned long long>>*>(TTree* tree, TString strname, CMSEDMWrapper<std::vector<unsigned long long>>** var);
 template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<std::vector<long long>>*>(TTree* tree, TString strname, CMSEDMWrapper<std::vector<long long>>** var);
 template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<std::vector<float>>*>(TTree* tree, TString strname, CMSEDMWrapper<std::vector<float>>** var);
 template void SampleHelpers::bookEDMBranch<CMSEDMWrapper<std::vector<double>>*>(TTree* tree, TString strname, CMSEDMWrapper<std::vector<double>>** var);
@@ -158,6 +162,7 @@ template void SampleHelpers::putBranch<unsigned int>(TTree* tree, TString strnam
 template void SampleHelpers::putBranch<int>(TTree* tree, TString strname, int& var);
 template void SampleHelpers::putBranch<unsigned long>(TTree* tree, TString strname, unsigned long& var);
 template void SampleHelpers::putBranch<long>(TTree* tree, TString strname, long& var);
+template void SampleHelpers::putBranch<unsigned long long>(TTree* tree, TString strname, unsigned long long& var);
 template void SampleHelpers::putBranch<long long>(TTree* tree, TString strname, long long& var);
 template void SampleHelpers::putBranch<float>(TTree* tree, TString strname, float& var);
 template void SampleHelpers::putBranch<double>(TTree* tree, TString strname, double& var);
@@ -168,6 +173,7 @@ template void SampleHelpers::putBranch<std::vector<unsigned int>>(TTree* tree, T
 template void SampleHelpers::putBranch<std::vector<int>>(TTree* tree, TString strname, std::vector<int>& var);
 template void SampleHelpers::putBranch<std::vector<unsigned long>>(TTree* tree, TString strname, std::vector<unsigned long>& var);
 template void SampleHelpers::putBranch<std::vector<long>>(TTree* tree, TString strname, std::vector<long>& var);
+template void SampleHelpers::putBranch<std::vector<unsigned long long>>(TTree* tree, TString strname, std::vector<unsigned long long>& var);
 template void SampleHelpers::putBranch<std::vector<long long>>(TTree* tree, TString strname, std::vector<long long>& var);
 template void SampleHelpers::putBranch<std::vector<float>>(TTree* tree, TString strname, std::vector<float>& var);
 template void SampleHelpers::putBranch<std::vector<double>>(TTree* tree, TString strname, std::vector<double>& var);

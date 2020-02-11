@@ -1565,14 +1565,16 @@ template<> void HelperFunctions::wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool resc
     if (binx>=1 && binx<=hwipe->GetNbinsX()) continue;
     if (addToLastBin){
       int binx_last = std::min(std::max(binx, 1), hwipe->GetNbinsX());
-      double bincontent = hwipe->GetBinContent(binx);
-      double binerror = hwipe->GetBinError(binx);
-      double bincontent_last = hwipe->GetBinContent(binx_last);
-      double binerror_last = hwipe->GetBinError(binx_last);
-      bincontent += bincontent_last;
-      binerror = sqrt(pow(binerror, 2) + pow(binerror_last, 2));
-      hwipe->SetBinContent(binx, bincontent);
-      hwipe->SetBinError(binx, binerror);
+      if (binx!=binx_last){
+        double bincontent = hwipe->GetBinContent(binx);
+        double binerror = hwipe->GetBinError(binx);
+        double bincontent_last = hwipe->GetBinContent(binx_last);
+        double binerror_last = hwipe->GetBinError(binx_last);
+        bincontent += bincontent_last;
+        binerror = sqrt(pow(binerror, 2) + pow(binerror_last, 2));
+        hwipe->SetBinContent(binx_last, bincontent);
+        hwipe->SetBinError(binx_last, binerror);
+      }
     }
     hwipe->SetBinContent(binx, 0);
     hwipe->SetBinError(binx, 0);
@@ -1593,14 +1595,16 @@ template<> void HelperFunctions::wipeOverUnderFlows<TH2F>(TH2F* hwipe, bool resc
       if (addToLastBin){
         int binx_last = std::min(std::max(binx, 1), hwipe->GetNbinsX());
         int biny_last = std::min(std::max(biny, 1), hwipe->GetNbinsY());
-        double bincontent = hwipe->GetBinContent(binx, biny);
-        double binerror = hwipe->GetBinError(binx, biny);
-        double bincontent_last = hwipe->GetBinContent(binx_last, biny_last);
-        double binerror_last = hwipe->GetBinError(binx_last, biny_last);
-        bincontent += bincontent_last;
-        binerror = sqrt(pow(binerror, 2) + pow(binerror_last, 2));
-        hwipe->SetBinContent(binx, biny, bincontent);
-        hwipe->SetBinError(binx, biny, binerror);
+        if (binx!=binx_last || biny!=biny_last){
+          double bincontent = hwipe->GetBinContent(binx, biny);
+          double binerror = hwipe->GetBinError(binx, biny);
+          double bincontent_last = hwipe->GetBinContent(binx_last, biny_last);
+          double binerror_last = hwipe->GetBinError(binx_last, biny_last);
+          bincontent += bincontent_last;
+          binerror = sqrt(pow(binerror, 2) + pow(binerror_last, 2));
+          hwipe->SetBinContent(binx_last, biny_last, bincontent);
+          hwipe->SetBinError(binx_last, biny_last, binerror);
+        }
       }
       hwipe->SetBinContent(binx, biny, 0);
       hwipe->SetBinError(binx, biny, 0);
@@ -1626,14 +1630,16 @@ template<> void HelperFunctions::wipeOverUnderFlows<TH3F>(TH3F* hwipe, bool resc
           int binx_last = std::min(std::max(binx, 1), hwipe->GetNbinsX());
           int biny_last = std::min(std::max(biny, 1), hwipe->GetNbinsY());
           int binz_last = std::min(std::max(binz, 1), hwipe->GetNbinsZ());
-          double bincontent = hwipe->GetBinContent(binx, biny, binz);
-          double binerror = hwipe->GetBinError(binx, biny, binz);
-          double bincontent_last = hwipe->GetBinContent(binx_last, biny_last, binz_last);
-          double binerror_last = hwipe->GetBinError(binx_last, biny_last, binz_last);
-          bincontent += bincontent_last;
-          binerror = sqrt(pow(binerror, 2) + pow(binerror_last, 2));
-          hwipe->SetBinContent(binx, biny, binz, bincontent);
-          hwipe->SetBinError(binx, biny, binz, binerror);
+          if (binx!=binx_last || biny!=biny_last || binz!=binz_last){
+            double bincontent = hwipe->GetBinContent(binx, biny, binz);
+            double binerror = hwipe->GetBinError(binx, biny, binz);
+            double bincontent_last = hwipe->GetBinContent(binx_last, biny_last, binz_last);
+            double binerror_last = hwipe->GetBinError(binx_last, biny_last, binz_last);
+            bincontent += bincontent_last;
+            binerror = sqrt(pow(binerror, 2) + pow(binerror_last, 2));
+            hwipe->SetBinContent(binx_last, biny_last, binz_last, bincontent);
+            hwipe->SetBinError(binx_last, biny_last, binz_last, binerror);
+          }
         }
         hwipe->SetBinContent(binx, biny, binz, 0);
         hwipe->SetBinError(binx, biny, binz, 0);

@@ -35,6 +35,7 @@ public:
   virtual ExtendedBinning const& getBinning(const int xyz=0);
   virtual void build();
   virtual void reset();
+  virtual void resetProfiles();
 
   TH3F*& getHistogram(){ return histo; }
   const TH3F* getHistogram() const{ return histo; }

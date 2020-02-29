@@ -76,6 +76,10 @@ void ExtendedHistogram_2D::reset(){
   resetPointer(prof_x);
   resetPointer(prof_y);
 }
+void ExtendedHistogram_2D::resetProfiles(){
+  resetPointer(prof_x);
+  resetPointer(prof_y);
+}
 
 void ExtendedHistogram_2D::fill(double x, double y, double wgt){
   if (histo) histo->Fill(x, y, wgt);

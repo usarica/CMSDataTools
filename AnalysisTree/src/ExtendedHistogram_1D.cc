@@ -60,6 +60,9 @@ void ExtendedHistogram_1D::reset(){
   resetPointer(histo);
   resetPointer(prof_x);
 }
+void ExtendedHistogram_1D::resetProfiles(){
+  resetPointer(prof_x);
+}
 
 void ExtendedHistogram_1D::fill(double x, double wgt){
   if (histo) histo->Fill(x, wgt);

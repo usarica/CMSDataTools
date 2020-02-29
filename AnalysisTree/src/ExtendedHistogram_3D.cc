@@ -90,6 +90,11 @@ void ExtendedHistogram_3D::reset(){
   resetPointer(prof_y);
   resetPointer(prof_z);
 }
+void ExtendedHistogram_3D::resetProfiles(){
+  resetPointer(prof_x);
+  resetPointer(prof_y);
+  resetPointer(prof_z);
+}
 
 void ExtendedHistogram_3D::fill(double x, double y, double z, double wgt){
   if (histo) histo->Fill(x, y, z, wgt);

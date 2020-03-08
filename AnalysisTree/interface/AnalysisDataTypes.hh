@@ -63,9 +63,9 @@ DOUBLEVECTOR_DATA_INPUT_DIRECTIVE(CMSLorentzVector, std::vector<std::vector<CMSL
 
 #define SIMPLE_DATA_OUTPUT_DIRECTIVES \
 SIMPLE_DATA_OUTPUT_DIRECTIVE(bool, bool) \
-/*SIMPLE_DATA_OUTPUT_DIRECTIVE(uchar, unsigned char)*/ \
-/*SIMPLE_DATA_OUTPUT_DIRECTIVE(char, char)*/ \
-/*SIMPLE_DATA_OUTPUT_DIRECTIVE(ushort, unsigned short)*/ \
+SIMPLE_DATA_OUTPUT_DIRECTIVE(uchar, unsigned char) \
+SIMPLE_DATA_OUTPUT_DIRECTIVE(char, char) \
+SIMPLE_DATA_OUTPUT_DIRECTIVE(ushort, unsigned short) \
 SIMPLE_DATA_OUTPUT_DIRECTIVE(short, short) \
 SIMPLE_DATA_OUTPUT_DIRECTIVE(uint, unsigned int) \
 SIMPLE_DATA_OUTPUT_DIRECTIVE(int, int) \
@@ -81,9 +81,9 @@ SIMPLE_DATA_OUTPUT_DIRECTIVE(TString, TString) \
 
 #define VECTOR_DATA_OUTPUT_DIRECTIVES \
 VECTOR_DATA_OUTPUT_DIRECTIVE(bool, std::vector<bool>) \
-/*VECTOR_DATA_OUTPUT_DIRECTIVE(uchar, std::vector<unsigned char>)*/ \
-/*VECTOR_DATA_OUTPUT_DIRECTIVE(char, std::vector<char>)*/ \
-/*VECTOR_DATA_OUTPUT_DIRECTIVE(ushort, std::vector<unsigned short>)*/ \
+VECTOR_DATA_OUTPUT_DIRECTIVE(uchar, std::vector<unsigned char>) \
+VECTOR_DATA_OUTPUT_DIRECTIVE(char, std::vector<char>) \
+VECTOR_DATA_OUTPUT_DIRECTIVE(ushort, std::vector<unsigned short>) \
 VECTOR_DATA_OUTPUT_DIRECTIVE(short, std::vector<short>) \
 VECTOR_DATA_OUTPUT_DIRECTIVE(uint, std::vector<unsigned int>) \
 VECTOR_DATA_OUTPUT_DIRECTIVE(int, std::vector<int>) \

@@ -22,6 +22,7 @@ void IvyBase::defineConsumedSloppy(TString name){
 
 bool IvyBase::linkConsumes(BaseTree* tree){
   bool process = tree->isValid();
+  if (!process && verbosity>=TVar::ERROR) MELAerr << "IvyBase::linkConsumes: Tree " << tree->sampleIdentifier << " is already invalid." << endl;
   if (process){
 #define SIMPLE_DATA_INPUT_DIRECTIVE(name, type, default_value) process &= this->linkConsumed<type>(tree);
 #define VECTOR_DATA_INPUT_DIRECTIVE(name, type) process &= this->linkConsumed<type*>(tree);

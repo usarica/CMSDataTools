@@ -69,16 +69,22 @@ BaseTree::BaseTree(const TString cinput, const TString treename, const TString f
     if (finput){
       if (finput->IsOpen() && !finput->IsZombie()){
         finput->cd();
-        tree = (TTree*) finput->Get(treename);
-        valid = (tree!=nullptr);
-        if (!valid){ finput->Close(); finput=nullptr; }
-        else{
-          if (failedtreename!=""){
-            failedtree = (TTree*) finput->Get(failedtreename);
-            if (!failedtree) cout << "BaseTree::BaseTree(" << cinput << ") does not contain " << failedtreename << endl;
-          }
-          if (countersname!="") hCounters = (TH1F*) finput->Get(countersname);
+        if (treename!=""){
+          tree = (TTree*) finput->Get(treename);
+          if (!tree) cout << "BaseTree::BaseTree(" << cinput << ") does not contain " << treename << endl;
+          valid = (tree!=nullptr);
         }
+        if (failedtreename!=""){
+          failedtree = (TTree*) finput->Get(failedtreename);
+          if (!failedtree) cout << "BaseTree::BaseTree(" << cinput << ") does not contain " << failedtreename << endl;
+          valid = (failedtree!=nullptr);
+        }
+        if (countersname!=""){
+          hCounters = (TH1F*) finput->Get(countersname);
+          if (!hCounters) cout << "BaseTree::BaseTree(" << cinput << ") does not contain " << countersname << endl;
+          valid = (hCounters!=nullptr);
+        }
+        if (!valid){ finput->Close(); finput=nullptr; }
       }
       else if (finput->IsOpen()){ finput->Close(); finput=nullptr; }
     }

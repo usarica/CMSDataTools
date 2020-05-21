@@ -539,8 +539,10 @@ template<typename T> bool HelperFunctions::test_bit(T mask, unsigned int iBit){ 
 
 // Vector functions
 template<typename T> void HelperFunctions::deltaR(T const& e1, T const& p1, T const& e2, T const& p2, T& res){
-  T deta = deltaEta(e1, e2, res);
-  T dphi = deltaEta(p1, p2, res);
+  T deta;
+  deltaEta(e1, e2, deta);
+  T dphi;
+  deltaPhi(p1, p2, dphi);
   res = std::sqrt(std::pow(deta, 2) + std::pow(dphi, 2));
 }
 template<typename T> void HelperFunctions::deltaEta(T const& v1, T const& v2, T& res){

@@ -21,15 +21,14 @@ template<> void BaseTree::removeBranch<BaseTree::BranchType_##name##_t>(TString 
 template<> bool BaseTree::bookBranch<type>(TString branchname, type valdef){ \
   if (val##name##s.find(branchname)==val##name##s.end()) val##name##s[branchname] = new std::pair<type, type>(valdef, valdef); \
   else{ val##name##s[branchname]->first=valdef; val##name##s[branchname]->second=valdef; } \
-  SampleHelpers::bookBranch(tree, branchname, &(val##name##s[branchname]->first)); \
-  SampleHelpers::bookBranch(failedtree, branchname, &(val##name##s[branchname]->first)); \
+  for (auto& tt:treelist) SampleHelpers::bookBranch(tt, branchname, &(val##name##s[branchname]->first)); \
   return true; \
 } \
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_##name##_t>(TString branchname){ return this->bookBranch<type>(branchname, default_value); } \
 template<> bool BaseTree::putBranch<type>(TString branchname, type valdef){ \
   if (val##name##s.find(branchname)==val##name##s.end()) val##name##s[branchname] = new std::pair<type, type>(valdef, valdef); \
   else{ val##name##s[branchname]->first=valdef; val##name##s[branchname]->second=valdef; } \
-  SampleHelpers::putBranch(tree, branchname, val##name##s[branchname]->first); \
+  for (auto& tt:treelist) SampleHelpers::putBranch(tt, branchname, val##name##s[branchname]->first); \
   return true; \
 } \
 template<> bool BaseTree::putBranch<BaseTree::BranchType_##name##_t>(TString branchname){ return this->putBranch<type>(branchname, default_value); } \
@@ -70,15 +69,14 @@ template<> void BaseTree::resetBranch<BaseTree::BranchType_v##name##_t>(){ for (
 template<> void BaseTree::removeBranch<BaseTree::BranchType_v##name##_t>(TString branchname){ for (auto& it:valV##name##s){ if (it.first==branchname){ delete it.second; it.second=0; } } valV##name##s.erase(branchname); } \
 template<> bool BaseTree::bookBranch<type*>(TString branchname, type*/* valdef*/){ \
   valV##name##s[branchname] = nullptr; \
-  SampleHelpers::bookBranch(tree, branchname, &(valV##name##s[branchname])); \
-  SampleHelpers::bookBranch(failedtree, branchname, &(valV##name##s[branchname])); \
+  for (auto& tt:treelist) SampleHelpers::bookBranch(tt, branchname, &(valV##name##s[branchname])); \
   return true; \
 } \
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_v##name##_t>(TString branchname){ return this->bookBranch<type*>(branchname, nullptr); } \
 template<> bool BaseTree::putBranch<type*>(TString branchname, type*/* valdef*/){ \
   if (valV##name##s.find(branchname)==valV##name##s.end()) valV##name##s[branchname] = new type(); \
   else valV##name##s[branchname]->clear(); \
-  SampleHelpers::putBranch(tree, branchname, *(valV##name##s[branchname])); \
+  for (auto& tt:treelist) SampleHelpers::putBranch(tt, branchname, *(valV##name##s[branchname])); \
   return true; \
 } \
 template<> bool BaseTree::putBranch<BaseTree::BranchType_v##name##_t>(TString branchname){ return this->putBranch<type*>(branchname, nullptr); } \
@@ -129,15 +127,14 @@ template<> void BaseTree::resetBranch<BaseTree::BranchType_vv##name##_t>(){ for 
 template<> void BaseTree::removeBranch<BaseTree::BranchType_vv##name##_t>(TString branchname){ for (auto& it:valVV##name##s){ if (it.first==branchname){ delete it.second; it.second=0; } } valVV##name##s.erase(branchname); } \
 template<> bool BaseTree::bookBranch<type*>(TString branchname, type*/* valdef*/){ \
   valVV##name##s[branchname] = nullptr; \
-  SampleHelpers::bookBranch(tree, branchname, &(valVV##name##s[branchname])); \
-  SampleHelpers::bookBranch(failedtree, branchname, &(valVV##name##s[branchname])); \
+  for (auto& tt:treelist) SampleHelpers::bookBranch(tt, branchname, &(valVV##name##s[branchname])); \
   return true; \
 } \
 template<> bool BaseTree::bookBranch<BaseTree::BranchType_vv##name##_t>(TString branchname){ return this->bookBranch<type*>(branchname, nullptr); } \
 template<> bool BaseTree::putBranch<type*>(TString branchname, type*/* valdef*/){ \
   if (valVV##name##s.find(branchname)==valVV##name##s.end()) valVV##name##s[branchname] = new type(); \
   else valVV##name##s[branchname]->clear(); \
-  SampleHelpers::putBranch(tree, branchname, *(valVV##name##s[branchname])); \
+  for (auto& tt:treelist) SampleHelpers::putBranch(tt, branchname, *(valVV##name##s[branchname])); \
   return true; \
 } \
 template<> bool BaseTree::putBranch<BaseTree::BranchType_vv##name##_t>(TString branchname){ return this->putBranch<type*>(branchname, nullptr); } \

@@ -38,6 +38,7 @@ public:
 
 protected:
   TFile* finput;
+  std::vector<TTree*> treelist;
   TTree* tree;
   TTree* failedtree;
   TH1F* hCounters;
@@ -76,8 +77,10 @@ protected:
 public:
   BaseTree();
   BaseTree(const TString cinput, const TString treename, const TString failedtreename, const TString countersname);
+  BaseTree(const TString cinput, std::vector<TString> const& treenames, const TString countersname);
   BaseTree(const TString treename); // Output constructor
   BaseTree(TFile* finput_, TTree* tree_, TTree* failedtree_, TH1F* hCounters_, bool receiver_override); // Mixed definition constructor
+  BaseTree(TFile* finput_, std::vector<TTree*> const& treelist_, TH1F* hCounters_, bool receiver_override); // Mixed definition constructor
   virtual ~BaseTree();
 
   template<typename T> bool bookBranch(TString branchname, T valdef);
@@ -89,9 +92,11 @@ public:
   TFile* getInputFile();
   TTree* getSelectedTree();
   TTree* getFailedTree();
+  std::vector<TTree*>& getValidTrees();
   TFile const* getInputFile() const;
   TTree const* getSelectedTree() const;
   TTree const* getFailedTree() const;
+  std::vector<TTree*> const& getValidTrees() const;
 
   bool getSelectedEvent(int ev);
   bool getFailedEvent(int ev);
@@ -135,7 +140,7 @@ public:
   virtual void print() const;
 
   static void setRobustSaveWrite(bool flag);
-  static void writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecBegin, std::vector<SimpleEntry>::iterator const& vecEnd, BaseTree* const& tree);
+  static void writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecBegin, std::vector<SimpleEntry>::iterator const& vecEnd, BaseTree* const& tree_);
 
 };
 

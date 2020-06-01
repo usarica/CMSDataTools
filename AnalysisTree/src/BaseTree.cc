@@ -41,23 +41,28 @@ BaseTree::BaseTree(const TString cinput, const TString treename, const TString f
   TDirectory* curdir = gDirectory; // Save current directory to return back to it later
   if (cinput.Contains("*")){ // Use a TChain
     isTChain=true;
+    valid = true;
     if (treename!=""){
       TChain* tc = new TChain(treename);
-      valid = (tc->Add(cinput) != 0);
-      if (!valid){
+      if (tc->Add(cinput) == 0){
         delete tc;
         tc = nullptr;
       }
       tree = tc;
+      valid &= (tree != nullptr);
     }
     if (failedtreename!=""){
       TChain* tc = new TChain(failedtreename);
-      valid = (tc->Add(cinput) != 0);
-      if (!valid){
+      if (tc->Add(cinput) == 0){
         delete tc;
         tc = nullptr;
       }
       failedtree = tc;
+      valid &= (failedtree != nullptr);
+    }
+    if (!valid){
+      delete tree; tree = nullptr;
+      delete failedtree; failedtree = nullptr;
     }
     if (countersname!=""){
       MELAerr << "BaseTree::BaseTree: Cannot add histograms in chain mode." << endl;
@@ -68,27 +73,122 @@ BaseTree::BaseTree(const TString cinput, const TString treename, const TString f
     finput = TFile::Open(cinput, "read");
     if (finput){
       if (finput->IsOpen() && !finput->IsZombie()){
+        valid = true;
         finput->cd();
         if (treename!=""){
           tree = (TTree*) finput->Get(treename);
           if (!tree) cout << "BaseTree::BaseTree(" << cinput << ") does not contain " << treename << endl;
-          valid = (tree!=nullptr);
+          valid &= (tree!=nullptr);
         }
         if (failedtreename!=""){
           failedtree = (TTree*) finput->Get(failedtreename);
           if (!failedtree) cout << "BaseTree::BaseTree(" << cinput << ") does not contain " << failedtreename << endl;
-          valid = (failedtree!=nullptr);
+          valid &= (failedtree!=nullptr);
         }
         if (countersname!=""){
           hCounters = (TH1F*) finput->Get(countersname);
           if (!hCounters) cout << "BaseTree::BaseTree(" << cinput << ") does not contain " << countersname << endl;
-          valid = (hCounters!=nullptr);
+          valid &= (hCounters!=nullptr);
         }
-        if (!valid){ finput->Close(); finput=nullptr; }
+        if (!valid){
+          tree = nullptr;
+          failedtree = nullptr;
+          hCounters = nullptr;
+          finput->Close();
+          finput = nullptr;
+        }
       }
-      else if (finput->IsOpen()){ finput->Close(); finput=nullptr; }
+      else{
+        if (finput->IsOpen()) finput->Close();
+        else delete finput;
+        finput=nullptr;
+      }
     }
   }
+
+  treelist.reserve(2);
+  if (tree) treelist.push_back(tree);
+  if (failedtree) treelist.push_back(failedtree);
+
+  curdir->cd(); // Return back to the directory before opening the input file
+}
+BaseTree::BaseTree(const TString cinput, std::vector<TString> const& treenames, const TString countersname) :
+  sampleIdentifier(""), // Sample identifier is supposed to be overwritten by the daughter class
+  finput(nullptr),
+  tree(nullptr),
+  failedtree(nullptr),
+  hCounters(nullptr),
+  valid(false),
+  receiver(true),
+  acquireTreePossession(!receiver),
+  isTChain(false),
+  currentEvent(-1),
+  currentTree(nullptr)
+{
+  TDirectory* curdir = gDirectory; // Save current directory to return back to it later
+  if (cinput.Contains("*")){ // Use a TChain
+    isTChain=true;
+    valid = true;
+    treelist.reserve(treenames.size());
+    for (auto const& treename:treenames){
+      if (treename!=""){
+        TChain* tc = new TChain(treename);
+        if (tc->Add(cinput) == 0){
+          delete tc;
+          tc = nullptr;
+        }
+        else treelist.push_back(tc);
+        valid &= (tc != nullptr);
+      }
+    }
+    if (!valid){
+      for (auto& tt:treelist) delete tt;
+      treelist.clear();
+    }
+    if (countersname!=""){
+      MELAerr << "BaseTree::BaseTree: Cannot add histograms in chain mode." << endl;
+      assert(0);
+    }
+  }
+  else if (HostHelpers::FileReadable(cinput.Data())){
+    finput = TFile::Open(cinput, "read");
+    if (finput){
+      if (finput->IsOpen() && !finput->IsZombie()){
+        valid = true;
+        finput->cd();
+        treelist.reserve(treenames.size());
+        for (auto const& treename:treenames){
+          if (treename!=""){
+            TTree* tt = (TTree*) finput->Get(treename);
+            if (!tt) cout << "BaseTree::BaseTree(" << cinput << ") does not contain " << treename << endl;
+            else treelist.push_back(tt);
+            valid &= (tt!=nullptr);
+          }
+        }
+        if (countersname!=""){
+          hCounters = (TH1F*) finput->Get(countersname);
+          if (!hCounters) cout << "BaseTree::BaseTree(" << cinput << ") does not contain " << countersname << endl;
+          valid &= (hCounters!=nullptr);
+        }
+        if (!valid){
+          for (auto& tt:treelist) delete tt;
+          treelist.clear();
+          hCounters = nullptr;
+          finput->Close();
+          finput = nullptr;
+        }
+      }
+      else{
+        if (finput->IsOpen()) finput->Close();
+        else delete finput;
+        finput=nullptr;
+      }
+    }
+  }
+
+  if (!treelist.empty()) tree = treelist.front();
+  if (treelist.size()>1) failedtree = treelist.back();
+
   curdir->cd(); // Return back to the directory before opening the input file
 }
 BaseTree::BaseTree(const TString treename) :
@@ -103,7 +203,10 @@ BaseTree::BaseTree(const TString treename) :
   isTChain(false),
   currentEvent(-1),
   currentTree(nullptr)
-{}
+{
+  treelist.reserve(1);
+  treelist.push_back(tree);
+}
 BaseTree::BaseTree(TFile* finput_, TTree* tree_, TTree* failedtree_, TH1F* hCounters_, bool receiver_override) :
   sampleIdentifier(""),
   finput(finput_),
@@ -121,11 +224,64 @@ BaseTree::BaseTree(TFile* finput_, TTree* tree_, TTree* failedtree_, TH1F* hCoun
     if (finput->IsOpen() && !finput->IsZombie()){
       if (tree || failedtree) valid = true;
     }
-    else if (finput->IsOpen()){ finput->Close(); finput=nullptr; tree=nullptr; failedtree=nullptr; }
+    else{
+      if (finput->IsOpen()) finput->Close();
+      else delete finput;
+      finput=nullptr;
+      tree=nullptr;
+      failedtree=nullptr;
+      hCounters=nullptr;
+    }
   }
   else{
     if (tree || failedtree) valid = true;
   }
+
+  treelist.reserve(2);
+  if (tree) treelist.push_back(tree);
+  if (failedtree) treelist.push_back(failedtree);
+}
+BaseTree::BaseTree(TFile* finput_, std::vector<TTree*> const& treelist_, TH1F* hCounters_, bool receiver_override) :
+  sampleIdentifier(""),
+  finput(finput_),
+  tree(nullptr),
+  failedtree(nullptr),
+  hCounters(hCounters_),
+  valid(false),
+  receiver(receiver_override || finput!=nullptr),
+  acquireTreePossession(!receiver),
+  isTChain(false),
+  currentEvent(-1),
+  currentTree(nullptr)
+{
+  treelist.reserve(treelist_.size());
+  if (finput){
+    if (finput->IsOpen() && !finput->IsZombie()){
+      for (auto const& tt:treelist_){
+        if (tt) treelist.push_back(tt);
+      }
+    }
+  }
+  else{
+    for (auto const& tt:treelist_){
+      if (tt) treelist.push_back(tt);
+    }
+  }
+
+  valid = (!treelist.empty() && treelist.size()==treelist_.size());
+  if (!valid){
+    tree=nullptr;
+    failedtree=nullptr;
+    hCounters=nullptr;
+    if (finput){
+      if (finput->IsOpen()) finput->Close();
+      else delete finput;
+      finput=nullptr;
+    }
+  }
+
+  if (!treelist.empty()) tree = treelist.front();
+  if (treelist.size()>1) failedtree = treelist.back();
 }
 
 BaseTree::~BaseTree(){
@@ -138,14 +294,12 @@ BaseTree::~BaseTree(){
     DOUBLEVECTOR_DATA_INPUT_DIRECTIVES
     if (acquireTreePossession){
       delete hCounters;
-      delete failedtree;
-      delete tree;
+      for (auto& tt:treelist) delete tt;
     }
   }
   else if (isTChain){
     delete hCounters;
-    delete failedtree;
-    delete tree;
+    for (auto& tt:treelist) delete tt;
   }
 #undef SIMPLE_DATA_INPUT_DIRECTIVE
 #undef VECTOR_DATA_INPUT_DIRECTIVE
@@ -171,9 +325,11 @@ BaseTree::BranchType BaseTree::searchBranchType(TString branchname) const{
 TFile* BaseTree::getInputFile(){ return finput; }
 TTree* BaseTree::getSelectedTree(){ return tree; }
 TTree* BaseTree::getFailedTree(){ return failedtree; }
+std::vector<TTree*>& BaseTree::getValidTrees(){ return treelist; }
 TFile const* BaseTree::getInputFile() const{ return finput; }
 TTree const* BaseTree::getSelectedTree() const{ return tree; }
 TTree const* BaseTree::getFailedTree() const{ return failedtree; }
+std::vector<TTree*> const& BaseTree::getValidTrees() const{ return treelist; }
 
 bool BaseTree::getSelectedEvent(int ev){
   this->resetBranches();
@@ -196,8 +352,21 @@ bool BaseTree::getFailedEvent(int ev){
   return result;
 }
 bool BaseTree::getEvent(int ev){
-  if (ev<this->getSelectedNEvents()) return this->getSelectedEvent(ev);
-  else return this->getFailedEvent(ev-this->getSelectedNEvents());
+  int n_acc=0;
+  for (auto& tt:treelist){
+    int nEntries = tt->GetEntries();
+    if (ev<n_acc+nEntries){
+      this->resetBranches();
+      bool result = (tt->GetEntry(ev-n_acc)>0);
+      if (result){
+        currentEvent = ev-n_acc;
+        currentTree = tt;
+      }
+      return result;
+    }
+    n_acc += nEntries;
+  }
+  return false;
 }
 void BaseTree::refreshCurrentEvent(){
   TTree* tmpTree = currentTree;
@@ -212,7 +381,11 @@ void BaseTree::refreshCurrentEvent(){
 
 int BaseTree::getSelectedNEvents() const{ return (tree ? tree->GetEntries() : 0); }
 int BaseTree::getFailedNEvents() const{ return (failedtree ? failedtree->GetEntries() : 0); }
-int BaseTree::getNEvents() const{ return (this->getSelectedNEvents() + this->getFailedNEvents()); }
+int BaseTree::getNEvents() const{
+  int n_acc=0;
+  for (auto const& tt:treelist) n_acc += tt->GetEntries();
+  return n_acc;
+}
 
 // Overloads of getNEvents
 unsigned int BaseTree::getNGenNoPU(){ int res = this->getNEvents(); return std::max(res, 0); }
@@ -312,56 +485,31 @@ void BaseTree::getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& r
 }
 
 void BaseTree::getValidBranchNamesWithoutAlias(std::vector<TString>& res, bool check_linked) const{
-  constexpr unsigned int ntrees = 2;
-  TTree* trees[ntrees]={
-    tree,
-    failedtree
-  };
-  for (unsigned int it=0; it<ntrees; it++) this->getValidBranchNamesWithoutAlias(trees[it], res, check_linked);
+  for (auto const& tt:treelist) this->getValidBranchNamesWithoutAlias(tt, res, check_linked);
 }
 
 void BaseTree::silenceUnused(){
-  constexpr unsigned int ntrees = 2;
-  TTree* trees[ntrees]={
-    tree,
-    failedtree
-  };
-  for (unsigned int it=0; it<ntrees; it++){
-    if (!trees[it]) continue;
-    trees[it]->SetBranchStatus("*", 0);
+  for (auto const& tt:treelist){
+    tt->SetBranchStatus("*", 0);
 
     std::vector<TString> currentBranchList;
-    this->getValidBranchNamesWithoutAlias(trees[it], currentBranchList, true);
+    this->getValidBranchNamesWithoutAlias(tt, currentBranchList, true);
 
     for (TString const& bname:currentBranchList){
-      trees[it]->SetBranchStatus(bname, 1);
+      tt->SetBranchStatus(bname, 1);
       //cout << "Unmuting branch " << bname << endl;
     }
   }
 }
 void BaseTree::unmuteAllBranches(){
-  constexpr unsigned int ntrees = 2;
-  TTree* trees[ntrees]={
-    tree,
-    failedtree
-  };
-  for (unsigned int it=0; it<ntrees; it++){
-    if (!trees[it]) continue;
-    trees[it]->SetBranchStatus("*", 1);
-  }
+  for (auto const& tt:treelist) tt->SetBranchStatus("*", 1);
 }
 void BaseTree::releaseBranch(TString branchname){
   const BranchType btype = searchBranchType(branchname);
   if (btype!=BranchType_unknown_t){
-    constexpr unsigned int ntrees = 2;
-    TTree* trees[ntrees]={
-      tree,
-      failedtree
-    };
-    for (unsigned int it=0; it<ntrees; it++){
-      if (!trees[it]) continue;
-      trees[it]->ResetBranchAddress(trees[it]->GetBranch(branchname));
-      trees[it]->SetBranchStatus(branchname, 0);
+    for (auto& tt:treelist){
+      tt->ResetBranchAddress(tt->GetBranch(branchname));
+      tt->SetBranchStatus(branchname, 0);
     }
   }
 
@@ -425,14 +573,14 @@ void BaseTree::writeToFile(TFile* file){
 }
 
 void BaseTree::setRobustSaveWrite(bool flag){ BaseTree::robustSaveWrite = flag; }
-void BaseTree::writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecBegin, std::vector<SimpleEntry>::iterator const& vecEnd, BaseTree* const& tree){
-  if (!tree) return;
+void BaseTree::writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecBegin, std::vector<SimpleEntry>::iterator const& vecEnd, BaseTree* const& tree_){
+  if (!tree_) return;
   for (std::vector<SimpleEntry>::iterator it=vecBegin; it!=vecEnd; it++){
     SimpleEntry& entry = *it;
     if (it==vecBegin){
-#define SIMPLE_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.named##name_t##s.begin(); itb!=entry.named##name_t##s.end(); itb++) tree->putBranch(itb->first, itb->second);
-#define VECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedV##name_t##s.begin(); itb!=entry.namedV##name_t##s.end(); itb++) tree->putBranch(itb->first, &(itb->second));
-#define DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedVV##name_t##s.begin(); itb!=entry.namedVV##name_t##s.end(); itb++) tree->putBranch(itb->first, &(itb->second));
+#define SIMPLE_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.named##name_t##s.begin(); itb!=entry.named##name_t##s.end(); itb++) tree_->putBranch(itb->first, itb->second);
+#define VECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedV##name_t##s.begin(); itb!=entry.namedV##name_t##s.end(); itb++) tree_->putBranch(itb->first, &(itb->second));
+#define DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedVV##name_t##s.begin(); itb!=entry.namedVV##name_t##s.end(); itb++) tree_->putBranch(itb->first, &(itb->second));
       SIMPLE_DATA_OUTPUT_DIRECTIVES
       VECTOR_DATA_OUTPUT_DIRECTIVES
       DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVES
@@ -440,20 +588,20 @@ void BaseTree::writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecB
 #undef VECTOR_DATA_OUTPUT_DIRECTIVE
 #undef DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE
     }
-#define SIMPLE_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.named##name_t##s.begin(); itb!=entry.named##name_t##s.end(); itb++) tree->setVal(itb->first, itb->second);
-#define VECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedV##name_t##s.begin(); itb!=entry.namedV##name_t##s.end(); itb++) tree->setVal(itb->first, &(itb->second));
-#define DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedVV##name_t##s.begin(); itb!=entry.namedVV##name_t##s.end(); itb++) tree->setVal(itb->first, &(itb->second));
+#define SIMPLE_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.named##name_t##s.begin(); itb!=entry.named##name_t##s.end(); itb++) tree_->setVal(itb->first, itb->second);
+#define VECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedV##name_t##s.begin(); itb!=entry.namedV##name_t##s.end(); itb++) tree_->setVal(itb->first, &(itb->second));
+#define DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedVV##name_t##s.begin(); itb!=entry.namedVV##name_t##s.end(); itb++) tree_->setVal(itb->first, &(itb->second));
     SIMPLE_DATA_OUTPUT_DIRECTIVES
     VECTOR_DATA_OUTPUT_DIRECTIVES
     DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVES
 #undef SIMPLE_DATA_OUTPUT_DIRECTIVE
 #undef VECTOR_DATA_OUTPUT_DIRECTIVE
 #undef DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE
-    tree->fill();
+    tree_->fill();
   }
 
   // Save if this flag is specified
   if (robustSaveWrite){
-    tree->doAutoSave("FlushBaskets");
+    tree_->doAutoSave("FlushBaskets");
   }
 }

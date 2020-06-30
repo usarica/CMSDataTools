@@ -302,7 +302,8 @@ namespace HelperFunctions{
   void extractTreesFromDirectory(TDirectory* source, std::vector<TTree*>& res, bool doClone=false);
 
   // Function to extract all histograms from file
-  template<typename T> void extractHistogramsFromDirectory(TDirectory* source, std::vector<T*>& histolist);
+  template<typename T> void extractObjectsFromDirectory(TDirectory* source, std::vector<T*>& objlist, TVar::VerbosityLevel verbosity = TVar::ERROR);
+  template<typename T> void extractHistogramsFromDirectory(TDirectory* source, std::vector<T*>& histolist, TVar::VerbosityLevel verbosity = TVar::ERROR){ extractObjectsFromDirectory<T>(source, histolist, verbosity); } // Legacy call
 
 }
 
@@ -741,10 +742,10 @@ template<int N> TF1* HelperFunctions::getFcn_a0plusa1overXN(TSpline3* sp, double
 template<int N> TF1* HelperFunctions::getFcn_a0plusa1timesXN(TSpline3* sp, double xmin, double xmax, bool useLowBound){ return getFcn_a0plusa1overXN<-N>(sp, xmin, xmax, useLowBound); }
 
 // Function to extract all histograms from file
-template<typename T> void HelperFunctions::extractHistogramsFromDirectory(TDirectory* source, std::vector<T*>& histolist){
+template<typename T> void HelperFunctions::extractObjectsFromDirectory(TDirectory* source, std::vector<T*>& objlist, TVar::VerbosityLevel verbosity){
   // Copy all objects and subdirs of directory source as a subdir of the current directory
   TDirectory* target = gDirectory;
-  source->ls();
+  if (verbosity>=TVar::INFO) source->ls();
   source->cd();
   // Loop on all entries of this directory
   TKey* key;
@@ -758,44 +759,37 @@ template<typename T> void HelperFunctions::extractHistogramsFromDirectory(TDirec
       source->cd(key->GetName());
       TDirectory* subdir = gDirectory;
       source->cd();
-      extractHistogramsFromDirectory<T>(subdir, histolist);
+      extractObjectsFromDirectory<T>(subdir, objlist, verbosity);
     }
     else if (cl->InheritsFrom(T::Class())){
-      T* hist = (T*)source->Get(key->GetName());
-      TString histname=hist->GetName();
-      if ((histname=="Graph" && TString(key->GetName())!="Graph") || histname=="") histname=key->GetName(); // Holy jumping monkeys for fake rates
-      hist->SetName(histname);
-      bool alreadyCopied=false;
-      for (auto& k:copiedKeys){
-        if (k==key->GetName()){
-          alreadyCopied=true;
-          break;
-        }
-      }
-      if (!alreadyCopied){
-        if (hist){
-          copiedKeys.push_back(key->GetName());
-          histolist.push_back(hist);
-        }
+      T* obj = (T*) source->Get(key->GetName());
+      if (!obj) continue;
+      TString objname = obj->GetName();
+      TString keyname = key->GetName();
+      if ((objname=="Graph" && keyname!="Graph") || objname=="") objname = keyname; // Holy jumping monkeys for fake rates
+      obj->SetName(objname);
+      if (!HelperFunctions::checkListVariable(copiedKeys, keyname)){
+        copiedKeys.push_back(keyname);
+        objlist.push_back(obj);
       }
     }
   }
   target->cd();
 }
-template void HelperFunctions::extractHistogramsFromDirectory<TH1F>(TDirectory* source, std::vector<TH1F*>& histolist);
-template void HelperFunctions::extractHistogramsFromDirectory<TH2F>(TDirectory* source, std::vector<TH2F*>& histolist);
-template void HelperFunctions::extractHistogramsFromDirectory<TH3F>(TDirectory* source, std::vector<TH3F*>& histolist);
-template void HelperFunctions::extractHistogramsFromDirectory<TH1D>(TDirectory* source, std::vector<TH1D*>& histolist);
-template void HelperFunctions::extractHistogramsFromDirectory<TH2D>(TDirectory* source, std::vector<TH2D*>& histolist);
-template void HelperFunctions::extractHistogramsFromDirectory<TH3D>(TDirectory* source, std::vector<TH3D*>& histolist);
+template void HelperFunctions::extractObjectsFromDirectory<TH1F>(TDirectory* source, std::vector<TH1F*>& objlist, TVar::VerbosityLevel verbosity);
+template void HelperFunctions::extractObjectsFromDirectory<TH2F>(TDirectory* source, std::vector<TH2F*>& objlist, TVar::VerbosityLevel verbosity);
+template void HelperFunctions::extractObjectsFromDirectory<TH3F>(TDirectory* source, std::vector<TH3F*>& objlist, TVar::VerbosityLevel verbosity);
+template void HelperFunctions::extractObjectsFromDirectory<TH1D>(TDirectory* source, std::vector<TH1D*>& objlist, TVar::VerbosityLevel verbosity);
+template void HelperFunctions::extractObjectsFromDirectory<TH2D>(TDirectory* source, std::vector<TH2D*>& objlist, TVar::VerbosityLevel verbosity);
+template void HelperFunctions::extractObjectsFromDirectory<TH3D>(TDirectory* source, std::vector<TH3D*>& objlist, TVar::VerbosityLevel verbosity);
 // Overloads for TGraph that can be used just like histograms
-template void HelperFunctions::extractHistogramsFromDirectory<TGraphAsymmErrors>(TDirectory* source, std::vector<TGraphAsymmErrors*>& histolist);
-template void HelperFunctions::extractHistogramsFromDirectory<TGraphErrors>(TDirectory* source, std::vector<TGraphErrors*>& histolist);
-template void HelperFunctions::extractHistogramsFromDirectory<TGraph>(TDirectory* source, std::vector<TGraph*>& histolist);
+template void HelperFunctions::extractObjectsFromDirectory<TGraphAsymmErrors>(TDirectory* source, std::vector<TGraphAsymmErrors*>& objlist, TVar::VerbosityLevel verbosity);
+template void HelperFunctions::extractObjectsFromDirectory<TGraphErrors>(TDirectory* source, std::vector<TGraphErrors*>& objlist, TVar::VerbosityLevel verbosity);
+template void HelperFunctions::extractObjectsFromDirectory<TGraph>(TDirectory* source, std::vector<TGraph*>& objlist, TVar::VerbosityLevel verbosity);
 // Overloads for TSpline that can be used just like histograms
-template void HelperFunctions::extractHistogramsFromDirectory<TSpline3>(TDirectory* source, std::vector<TSpline3*>& histolist);
+template void HelperFunctions::extractObjectsFromDirectory<TSpline3>(TDirectory* source, std::vector<TSpline3*>& objlist, TVar::VerbosityLevel verbosity);
 // Overloads for TCanvas that can be used just like histograms
-template void HelperFunctions::extractHistogramsFromDirectory<TCanvas>(TDirectory* source, std::vector<TCanvas*>& histolist);
+template void HelperFunctions::extractObjectsFromDirectory<TCanvas>(TDirectory* source, std::vector<TCanvas*>& objlist, TVar::VerbosityLevel verbosity);
 
 /****************************************************************/
 // Explicit instantiations

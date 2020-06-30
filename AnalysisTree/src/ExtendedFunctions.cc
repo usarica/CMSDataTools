@@ -1,3 +1,5 @@
+#include <utility>
+#include <algorithm>
 #include "TMath.h"
 #include "TMatrixD.h"
 #include "TVectorD.h"
@@ -18,9 +20,17 @@ ExtendedFunctions::SimpleGaussian::SimpleGaussian(double mean_, double sigma_, S
 double ExtendedFunctions::SimpleGaussian::eval(double x){
   if (sigma==0.){
     if (x==mean) return 1;
-    else return 0;
   }
-  else return TMath::Gaus(x, mean, sigma, false);
+  else if (
+    rangeset==kHasInfRange
+    ||
+    (rangeset==kHasLowHighRange && min<=x && x<=max)
+    ||
+    (rangeset==kHasLowRange && min<=x)
+    ||
+    (rangeset==kHasHighRange && x<=max)
+    ) return TMath::Gaus(x, mean, sigma, false);
+  return 0;
 }
 double ExtendedFunctions::SimpleGaussian::norm(){
   if (sigma==0.){
@@ -29,7 +39,7 @@ double ExtendedFunctions::SimpleGaussian::norm(){
       ||
       (rangeset==kHasLowHighRange && min<=mean && mean<=max)
       ||
-      (rangeset==kHasLowRange && min<mean)
+      (rangeset==kHasLowRange && min<=mean)
       ||
       (rangeset==kHasHighRange && mean<=max)
       ) return 1;
@@ -52,6 +62,18 @@ double ExtendedFunctions::SimpleGaussian::norm(){
   }
 }
 double ExtendedFunctions::SimpleGaussian::integral(double xmin, double xmax){
+  double multiplier = 1;
+  if (xmin>xmax){
+    std::swap(xmin, xmax);
+    multiplier = -1;
+  }
+
+  if (
+    ((rangeset==kHasLowHighRange || rangeset==kHasLowRange) && xmax<min)
+    ||
+    ((rangeset==kHasLowHighRange || rangeset==kHasHighRange) && xmin>max)
+    ) return 0;
+
   if (rangeset==kHasLowHighRange || rangeset==kHasLowRange) xmin=std::max(xmin, min);
   if (rangeset==kHasLowHighRange || rangeset==kHasHighRange) xmax=std::min(xmax, max);
   if (sigma==0.){
@@ -60,27 +82,27 @@ double ExtendedFunctions::SimpleGaussian::integral(double xmin, double xmax){
       ||
       (rangeset==kHasLowHighRange && xmin<=mean && mean<=xmax)
       ||
-      (rangeset==kHasLowRange && xmin<mean)
+      (rangeset==kHasLowRange && xmin<=mean)
       ||
       (rangeset==kHasHighRange && mean<=xmax)
-      ) return 1;
+      ) return 1.*multiplier;
     else return 0;
   }
   else{
     double sigmasq=pow(sigma, 2);
     double norm=sqrt(2.*TMath::Pi())*sigma;
-    return 0.5*norm*(TMath::Erfc(-(xmax-mean)/sqrt(2.*sigmasq))-TMath::Erfc(-(xmin-mean)/sqrt(2.*sigmasq)));
+    return 0.5*norm*multiplier*(TMath::Erfc(-(xmax-mean)/sqrt(2.*sigmasq))-TMath::Erfc(-(xmin-mean)/sqrt(2.*sigmasq)));
   }
 }
 double ExtendedFunctions::SimpleGaussian::evalNorm(double x){
-  double val = eval(x);
+  double val=eval(x);
   double n=norm();
   double res=0;
   if (n>0.) res=val/n;
   return res;
 }
 double ExtendedFunctions::SimpleGaussian::integralNorm(double xmin, double xmax){
-  double val = integral(xmin, xmax);
+  double val=integral(xmin, xmax);
   double n=norm();
   double res=0;
   if (n>0.) res=val/n;

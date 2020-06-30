@@ -47,7 +47,7 @@ class HadoopChecker:
                   print "    => REMOVING THE FILE!"
                   subprocess.call("hdfs dfs -rm " + theFile, shell=True)
                if outfile is not None:
-                  outfile.write(badfile)
+                  outfile.write(badfile+'\n')
 
       if outfile is not None:
          outfile.close()

@@ -1,7 +1,6 @@
 #include <cstring>
 #include "QuantFuncMathCore.h"
 #include "HelperFunctions.h"
-#include "MELAStreamHelpers.hh"
 #include "MELANCSplineFactory_1D.h"
 #include "MELANCSplineFactory_2D.h"
 #include "MELANCSplineFactory_3D.h"
@@ -3469,140 +3468,18 @@ void HelperFunctions::rebinHistogram_NoCumulant(TH3F*& histo, const ExtendedBinn
 }
 
 TH1F* HelperFunctions::getHistogramSlice(TH2F const* histo, unsigned char XDirection, int iy, int jy, TString newname){
-  if (!histo || XDirection>=2) return nullptr;
-  if (newname=="") newname=Form("Slice_%s_%i_%i_%s", (XDirection==0 ? "X" : "Y"), iy, jy, histo->GetName());
-
-  const TAxis* xaxis=histo->GetXaxis();
-  const TAxis* yaxis=histo->GetYaxis();
-  vector<float> bins;
-  if (XDirection==0){
-    for (int i=1; i<=xaxis->GetNbins()+1; i++) bins.push_back(xaxis->GetBinLowEdge(i));
-    iy = std::max(0, iy); jy = std::min(yaxis->GetNbins()+1, jy);
-  }
-  else{
-    for (int i=1; i<=yaxis->GetNbins()+1; i++) bins.push_back(yaxis->GetBinLowEdge(i));
-    iy = std::max(0, iy); jy = std::min(xaxis->GetNbins()+1, jy);
-  }
-  if (iy>jy) MELAerr << "HelperFunctions::getHistogramSlice: iy>jy!" << endl;
-  TH1F* res = new TH1F(newname, "", bins.size()-1, bins.data());
-
-  if (XDirection==0){
-    for (int ii=0; ii<=xaxis->GetNbins()+1; ii++){
-      double integral=0, integralerror=0;
-      integral = getHistogramIntegralAndError(histo, ii, ii, iy, jy, false, &integralerror);
-      res->SetBinContent(ii, integral);
-      res->SetBinError(ii, integralerror);
-    }
-  }
-  else{
-    for (int ii=0; ii<=yaxis->GetNbins()+1; ii++){
-      double integral=0, integralerror=0;
-      integral = getHistogramIntegralAndError(histo, iy, jy, ii, ii, false, &integralerror);
-      res->SetBinContent(ii, integral);
-      res->SetBinError(ii, integralerror);
-    }
-  }
-
+  TH1F* res = nullptr;
+  getGenericHistogramSlice(res, histo, XDirection, iy, jy, newname);
   return res;
 }
 TH1F* HelperFunctions::getHistogramSlice(TH3F const* histo, unsigned char XDirection, int iy, int jy, int iz, int jz, TString newname){
-  if (!histo || XDirection>=3) return nullptr;
-  if (newname=="") newname=Form("Slice_%s_%i_%i_%i_%i_%s", (XDirection==0 ? "X" : (XDirection==1 ? "Y" : "Z")), iy, jy, iz, jz, histo->GetName());
-
-  const TAxis* xaxis;
-  const TAxis* yaxis;
-  const TAxis* zaxis;
-  vector<float> bins;
-  if (XDirection==0){
-    xaxis=histo->GetXaxis();
-    yaxis=histo->GetYaxis();
-    zaxis=histo->GetZaxis();
-  }
-  else if (XDirection==1){
-    xaxis=histo->GetYaxis();
-    yaxis=histo->GetZaxis();
-    zaxis=histo->GetXaxis();
-  }
-  else{
-    xaxis=histo->GetZaxis();
-    yaxis=histo->GetXaxis();
-    zaxis=histo->GetYaxis();
-  }
-  for (int i=1; i<=xaxis->GetNbins()+1; i++) bins.push_back(xaxis->GetBinLowEdge(i));
-  iy = std::max(0, iy); jy = std::min(yaxis->GetNbins()+1, jy);
-  iz = std::max(0, iz); jz = std::min(zaxis->GetNbins()+1, jz);
-  if (iy>jy) MELAerr << "HelperFunctions::getHistogramSlice: iy>jy!" << endl;
-  if (iz>jz) MELAerr << "HelperFunctions::getHistogramSlice: iz>jz!" << endl;
-  TH1F* res = new TH1F(newname, "", bins.size()-1, bins.data());
-
-  for (int ii=0; ii<=xaxis->GetNbins()+1; ii++){
-    double integral=0, integralerror=0;
-    int IX, JX, IY, JY, IZ, JZ;
-    if (XDirection==0){
-      IX=ii; JX=ii;
-      IY=iy; JY=jy;
-      IZ=iz; JZ=jz;
-    }
-    else if (XDirection==1){
-      IX=iz; JX=jz;
-      IY=ii; JY=ii;
-      IZ=iy; JZ=jy;
-    }
-    else{
-      IX=iy; JX=jy;
-      IY=iz; JY=jz;
-      IZ=ii; JZ=ii;
-    }
-    integral = getHistogramIntegralAndError(histo, IX, JX, IY, JY, IZ, JZ, false, &integralerror);
-    res->SetBinContent(ii, integral);
-    res->SetBinError(ii, integralerror);
-  }
-
+  TH1F* res = nullptr;
+  getGenericHistogramSlice(res, histo, XDirection, iy, jy, iz, jz, newname);
   return res;
 }
 TH2F* HelperFunctions::getHistogramSlice(TH3F const* histo, unsigned char XDirection, unsigned char YDirection, int iz, int jz, TString newname){
-  if (!histo || XDirection==YDirection || XDirection>=3 || YDirection>=3) return nullptr;
-  if (newname=="") newname=Form("Slice_%s%s_%i_%i_%s", (XDirection==0 ? "X" : (XDirection==1 ? "Y" : "Z")), (YDirection==0 ? "X" : (YDirection==1 ? "Y" : "Z")), iz, jz, histo->GetName());
-
-  unsigned char ZDirection=3-XDirection-YDirection; // 0+1+2=3
-  const TAxis* xaxis;
-  const TAxis* yaxis;
-  const TAxis* zaxis;
-  vector<float> xbins, ybins;
-  if (XDirection==0) xaxis=histo->GetXaxis();
-  else if (XDirection==1) xaxis=histo->GetYaxis();
-  else xaxis=histo->GetZaxis();
-  if (YDirection==0) yaxis=histo->GetXaxis();
-  else if (YDirection==1) yaxis=histo->GetYaxis();
-  else yaxis=histo->GetZaxis();
-  if (ZDirection==0) zaxis=histo->GetXaxis();
-  else if (ZDirection==1) zaxis=histo->GetYaxis();
-  else zaxis=histo->GetZaxis();
-
-  for (int i=1; i<=xaxis->GetNbins()+1; i++) xbins.push_back(xaxis->GetBinLowEdge(i));
-  for (int i=1; i<=yaxis->GetNbins()+1; i++) ybins.push_back(yaxis->GetBinLowEdge(i));
-  iz = std::max(0, iz); std::min(zaxis->GetNbins()+1, jz);
-  TH2F* res = new TH2F(newname, "", xbins.size()-1, xbins.data(), ybins.size()-1, ybins.data());
-
-  for (int ii=0; ii<=xaxis->GetNbins()+1; ii++){
-    for (int jj=0; jj<=yaxis->GetNbins()+1; jj++){
-      double integral=0, integralerror=0;
-      int IX=0, JX=0, IY=0, JY=0, IZ=0, JZ=0;
-      if (XDirection==0){ IX=ii; JX=ii; }
-      else if (XDirection==1){ IY=ii; JY=ii; }
-      else{ IZ=ii; JZ=ii; }
-      if (YDirection==0){ IX=jj; JX=jj; }
-      else if (YDirection==1){ IY=jj; JY=jj; }
-      else{ IZ=jj; JZ=jj; }
-      if (ZDirection==0){ IX=iz; JX=jz; }
-      else if (ZDirection==1){ IY=iz; JY=jz; }
-      else{ IZ=iz; JZ=jz; }
-      integral = getHistogramIntegralAndError(histo, IX, JX, IY, JY, IZ, JZ, false, &integralerror);
-      res->SetBinContent(ii, jj, integral);
-      res->SetBinError(ii, jj, integralerror);
-    }
-  }
-
+  TH2F* res = nullptr;
+  getGenericHistogramSlice(res, histo, XDirection, YDirection, iz, jz, newname);
   return res;
 }
 

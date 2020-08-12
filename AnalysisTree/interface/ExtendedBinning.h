@@ -26,8 +26,8 @@ public:
 
   double* getBinning();
   const double* getBinning() const;
-  std::vector<double> getBinningVector();
-  const std::vector<double>& getBinningVector() const;
+  std::vector<double> const& getBinningVector();
+  std::vector<double> const& getBinningVector() const;
   template<typename T> std::vector<std::pair<T,T>> getBoundaryPairsList() const;
   unsigned int getNbins() const;
 
@@ -41,6 +41,7 @@ public:
   double getMax() const;
 
   void addBinBoundary(double boundary);
+  void setBinBoundary(const int bin, double boundary);
   void removeBinLowEdge(const int bin);
 
   // Static functions

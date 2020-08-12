@@ -28,8 +28,8 @@ TString ExtendedBinning::getLabel() const{ return label; }
 
 double* ExtendedBinning::getBinning(){ return vbinlow.data(); }
 const double* ExtendedBinning::getBinning() const{ return vbinlow.data(); }
-std::vector<double> ExtendedBinning::getBinningVector(){ return vbinlow; }
-const std::vector<double>& ExtendedBinning::getBinningVector() const{ return vbinlow; }
+std::vector<double> const& ExtendedBinning::getBinningVector(){ return vbinlow; }
+std::vector<double> const& ExtendedBinning::getBinningVector() const{ return vbinlow; }
 
 unsigned int ExtendedBinning::getNbins() const{
   return (this->isValid() ? vbinlow.size()-1 : 0);
@@ -66,6 +66,9 @@ double ExtendedBinning::getMax() const{ unsigned int nbins = getNbins(); return 
 
 void ExtendedBinning::addBinBoundary(double boundary){
   HelperFunctions::addByLowest<double>(vbinlow, boundary, true);
+}
+void ExtendedBinning::setBinBoundary(const int bin, double boundary){
+  if (bin>=0 && bin<(int) vbinlow.size()) vbinlow.at(bin) = boundary;
 }
 void ExtendedBinning::removeBinLowEdge(const int bin){
   if (bin>=0 && bin<(int) vbinlow.size()) vbinlow.erase(vbinlow.begin()+bin);

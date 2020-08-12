@@ -206,6 +206,9 @@ namespace HelperFunctions{
   void splitOptionRecursive(const std::string& rawoption, std::vector<std::string>& splitoptions, char delimiter, bool uniqueResults=true);
   void splitOptionRecursive(const TString& rawoption, std::vector<TString>& splitoptions, char delimiter, bool uniqueResults=true);
 
+  ExtendedBinning getExtendedBinning(TAxis const* theAxis);
+  ExtendedBinning getExtendedBinning(TH1 const* histo, unsigned int iaxis);
+
   TSpline3* convertGraphToSpline3(TGraph const* tg, bool faithfulFirst=false, bool faithfulSecond=false, double* dfirst=nullptr, double* dlast=nullptr);
 
   void convertTGraphErrorsToTH1F(TGraphErrors const* tg, TH1F*& histo);

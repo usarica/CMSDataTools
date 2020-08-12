@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cstring>
 #include "QuantFuncMathCore.h"
 #include "HelperFunctions.h"
@@ -86,6 +87,35 @@ void HelperFunctions::splitOptionRecursive(const TString& rawoption, std::vector
   std::vector<std::string> s_splitoptions;
   splitOptionRecursive(s_rawoption, s_splitoptions, delimiter, uniqueResults);
   for (std::string const& s:s_splitoptions) splitoptions.push_back(s.c_str());
+}
+
+ExtendedBinning HelperFunctions::getExtendedBinning(TAxis const* theAxis){
+  ExtendedBinning res;
+  if (theAxis){
+    int nbins = theAxis->GetNbins();
+    for (int ix=1; ix<=nbins+1; ix++) res.addBinBoundary(theAxis->GetBinLowEdge(ix));
+    res.setLabel(theAxis->GetTitle());
+  }
+  return res;
+}
+ExtendedBinning HelperFunctions::getExtendedBinning(TH1 const* histo, unsigned int iaxis){
+  TAxis const* theAxis = nullptr;
+  switch (iaxis){
+  case 0:
+    theAxis = histo->GetXaxis();
+    break;
+  case 1:
+    theAxis = histo->GetYaxis();
+    break;
+  case 2:
+    theAxis = histo->GetZaxis();
+    break;
+  default:
+    MELAerr << "HelperFunctions::getExtendedBinning: Axis index can only be <3" << endl;
+    assert(0);
+    break;
+  }
+  return getExtendedBinning(theAxis);
 }
 
 /* SPECIFIC COMMENT: Get a1 and a2 as well as a TF1 object for the formula a0+a1*exp(x) */

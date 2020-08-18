@@ -79,6 +79,12 @@ template<> bool BaseTree::putBranch<type*>(TString branchname, type*/* valdef*/)
   for (auto& tt:treelist) SampleHelpers::putBranch(tt, branchname, *(valV##name##s[branchname])); \
   return true; \
 } \
+template<> bool BaseTree::putBranch<type const*>(TString branchname, type const*/* valdef*/){ \
+  if (valV##name##s.find(branchname)==valV##name##s.end()) valV##name##s[branchname] = new type(); \
+  else valV##name##s[branchname]->clear(); \
+  for (auto& tt:treelist) SampleHelpers::putBranch(tt, branchname, *(valV##name##s[branchname])); \
+  return true; \
+} \
 template<> bool BaseTree::putBranch<BaseTree::BranchType_v##name##_t>(TString branchname){ return this->putBranch<type*>(branchname, nullptr); } \
 template<> void BaseTree::getVal<type const*>(TString branchname, type const*& val) const{ \
   typedef type itType; \
@@ -89,6 +95,11 @@ template<> void BaseTree::setVal<type*>(TString branchname, type* const& val){ \
   typedef type itType; \
   std::unordered_map<TString, itType*>::iterator it; \
   if (this->getBranchCIterator<itType*>(branchname, it) && it->second && val) it->second->assign(val->begin(), val->end()); \
+} \
+template<> void BaseTree::setVal<type const*>(TString branchname, type const* const& val){ \
+  typedef type itType; \
+  std::unordered_map<TString, itType*>::iterator it; \
+  if (this->getBranchCIterator<itType*>(branchname, it) && it->second && val) it->second->assign(val->cbegin(), val->cend()); \
 } \
 template<> void BaseTree::getValRef<type>(TString branchname, type*& val) const{ \
   typedef type itType; \
@@ -137,6 +148,12 @@ template<> bool BaseTree::putBranch<type*>(TString branchname, type*/* valdef*/)
   for (auto& tt:treelist) SampleHelpers::putBranch(tt, branchname, *(valVV##name##s[branchname])); \
   return true; \
 } \
+template<> bool BaseTree::putBranch<type const*>(TString branchname, type const*/* valdef*/){ \
+  if (valVV##name##s.find(branchname)==valVV##name##s.end()) valVV##name##s[branchname] = new type(); \
+  else valVV##name##s[branchname]->clear(); \
+  for (auto& tt:treelist) SampleHelpers::putBranch(tt, branchname, *(valVV##name##s[branchname])); \
+  return true; \
+} \
 template<> bool BaseTree::putBranch<BaseTree::BranchType_vv##name##_t>(TString branchname){ return this->putBranch<type*>(branchname, nullptr); } \
 template<> void BaseTree::getVal<type const*>(TString branchname, type const*& val) const{ \
   typedef type itType; \
@@ -147,6 +164,11 @@ template<> void BaseTree::setVal<type*>(TString branchname, type* const& val){ \
   typedef type itType; \
   std::unordered_map<TString, itType*>::iterator it; \
   if (this->getBranchCIterator<itType*>(branchname, it) && it->second && val) it->second->assign(val->begin(), val->end()); \
+} \
+template<> void BaseTree::setVal<type const*>(TString branchname, type const* const& val){ \
+  typedef type itType; \
+  std::unordered_map<TString, itType*>::iterator it; \
+  if (this->getBranchCIterator<itType*>(branchname, it) && it->second && val) it->second->assign(val->cbegin(), val->cend()); \
 } \
 template<> void BaseTree::getValRef<type>(TString branchname, type*& val) const{ \
   typedef type itType; \

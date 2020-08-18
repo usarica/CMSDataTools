@@ -140,7 +140,7 @@ public:
   virtual void print() const;
 
   static void setRobustSaveWrite(bool flag);
-  static void writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecBegin, std::vector<SimpleEntry>::iterator const& vecEnd, BaseTree* const& tree_);
+  static void writeSimpleEntries(std::vector<SimpleEntry>::const_iterator const& vecBegin, std::vector<SimpleEntry>::const_iterator const& vecEnd, BaseTree* const& tree_, bool createBranches=true);
 
 };
 

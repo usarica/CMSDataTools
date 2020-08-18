@@ -573,14 +573,14 @@ void BaseTree::writeToFile(TFile* file){
 }
 
 void BaseTree::setRobustSaveWrite(bool flag){ BaseTree::robustSaveWrite = flag; }
-void BaseTree::writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecBegin, std::vector<SimpleEntry>::iterator const& vecEnd, BaseTree* const& tree_){
+void BaseTree::writeSimpleEntries(std::vector<SimpleEntry>::const_iterator const& vecBegin, std::vector<SimpleEntry>::const_iterator const& vecEnd, BaseTree* const& tree_, bool createBranches){
   if (!tree_) return;
-  for (std::vector<SimpleEntry>::iterator it=vecBegin; it!=vecEnd; it++){
-    SimpleEntry& entry = *it;
-    if (it==vecBegin){
-#define SIMPLE_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.named##name_t##s.begin(); itb!=entry.named##name_t##s.end(); itb++) tree_->putBranch(itb->first, itb->second);
-#define VECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedV##name_t##s.begin(); itb!=entry.namedV##name_t##s.end(); itb++) tree_->putBranch(itb->first, &(itb->second));
-#define DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedVV##name_t##s.begin(); itb!=entry.namedVV##name_t##s.end(); itb++) tree_->putBranch(itb->first, &(itb->second));
+  for (std::vector<SimpleEntry>::const_iterator it=vecBegin; it!=vecEnd; it++){
+    SimpleEntry const& entry = *it;
+    if (createBranches && it==vecBegin){
+#define SIMPLE_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.named##name_t##s.cbegin(); itb!=entry.named##name_t##s.cend(); itb++) tree_->putBranch(itb->first, itb->second);
+#define VECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedV##name_t##s.cbegin(); itb!=entry.namedV##name_t##s.cend(); itb++) tree_->putBranch(itb->first, &(itb->second));
+#define DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedVV##name_t##s.cbegin(); itb!=entry.namedVV##name_t##s.cend(); itb++) tree_->putBranch(itb->first, &(itb->second));
       SIMPLE_DATA_OUTPUT_DIRECTIVES
       VECTOR_DATA_OUTPUT_DIRECTIVES
       DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVES
@@ -588,9 +588,9 @@ void BaseTree::writeSimpleEntries(std::vector<SimpleEntry>::iterator const& vecB
 #undef VECTOR_DATA_OUTPUT_DIRECTIVE
 #undef DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE
     }
-#define SIMPLE_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.named##name_t##s.begin(); itb!=entry.named##name_t##s.end(); itb++) tree_->setVal(itb->first, itb->second);
-#define VECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedV##name_t##s.begin(); itb!=entry.namedV##name_t##s.end(); itb++) tree_->setVal(itb->first, &(itb->second));
-#define DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedVV##name_t##s.begin(); itb!=entry.namedVV##name_t##s.end(); itb++) tree_->setVal(itb->first, &(itb->second));
+#define SIMPLE_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.named##name_t##s.cbegin(); itb!=entry.named##name_t##s.cend(); itb++) tree_->setVal(itb->first, itb->second);
+#define VECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedV##name_t##s.cbegin(); itb!=entry.namedV##name_t##s.cend(); itb++) tree_->setVal(itb->first, &(itb->second));
+#define DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(name_t, type) for (auto itb=entry.namedVV##name_t##s.cbegin(); itb!=entry.namedVV##name_t##s.cend(); itb++) tree_->setVal(itb->first, &(itb->second));
     SIMPLE_DATA_OUTPUT_DIRECTIVES
     VECTOR_DATA_OUTPUT_DIRECTIVES
     DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVES

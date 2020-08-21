@@ -1,6 +1,6 @@
 <flags ADD_SUBDIR="1" />
 
-<flags CPPFLAGS="-Wall -Wextra -Wpedantic -I$(CMSSW_BASE)/src/CMSDataTools/AnalysisTree/interface/ -I$(CMSSW_BASE)/src/ZZMatrixElement/MELA/interface/" />
+<flags CPPFLAGS="-Wall -Wextra -Wpedantic -I$(CMSSW_BASE)/src/CMSDataTools/AnalysisTree/interface/ -I$(CMSSW_BASE)/src/JHUGenMELA/MELA/interface/" />
 
 <use name="root"/>
 <use name="rootmath"/>
@@ -8,7 +8,7 @@
 <use name="roofitcore"/>
 <use name="DataFormats/Math"/>
 <use name="DataFormats/Common"/>
-<use name="ZZMatrixElement/MELA"/>
+<use name="JHUGenMELA/MELA"/>
 #<use name="HiggsAnalysis/CombinedLimit"/>
 
 <export>

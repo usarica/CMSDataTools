@@ -101,7 +101,7 @@ VECTOR_DATA_OUTPUT_DIRECTIVE(TString, std::vector<TString>) \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(bool, std::vector<std::vector<bool>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(uchar, std::vector<std::vector<unsigned char>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(char, std::vector<std::vector<char>>)*/ \
-/*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(ushort, std::vector<std::vector<unsigned short>>)*/ \
+DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(ushort, std::vector<std::vector<unsigned short>>) \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(short, std::vector<std::vector<short>>)*/ \
 DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(uint, std::vector<std::vector<unsigned int>>) \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(int, std::vector<std::vector<int>>)*/ \
@@ -109,7 +109,7 @@ DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(uint, std::vector<std::vector<unsigned int>>)
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(long, std::vector<std::vector<long>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(ulonglong, std::vector<std::vector<unsigned long long>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(longlong, std::vector<std::vector<long long>>)*/ \
-/*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(float, std::vector<std::vector<float>>)*/ \
+DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(float, std::vector<std::vector<float>>) \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(double, std::vector<std::vector<double>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(string, std::vector<std::vector<std::string>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(TString, std::vector<std::vector<TString>>)*/ \

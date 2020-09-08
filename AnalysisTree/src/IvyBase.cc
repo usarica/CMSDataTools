@@ -9,7 +9,12 @@
 using namespace std;
 
 
-IvyBase::IvyBase() : verbosity(TVar::ERROR), currentTree(nullptr) {}
+IvyBase::IvyBase() :
+  verbosity(TVar::ERROR),
+  currentTree(nullptr),
+  eventCache_currentTTree(nullptr),
+  eventCache_currentEvent(-1)
+{}
 IvyBase::~IvyBase(){}
 
 
@@ -40,8 +45,29 @@ bool IvyBase::linkConsumes(BaseTree* tree){
   return process;
 }
 
+bool IvyBase::cacheEvent(){
+  return (
+    this->currentTree
+    &&
+    this->currentTree->getCurrentEventInfo(this->eventCache_currentTTree, this->eventCache_currentEvent)
+    );
+}
+bool IvyBase::isAlreadyCached() const{
+  return (
+    this->currentTree
+    &&
+    this->currentTree->isSameEvent(this->eventCache_currentTTree, this->eventCache_currentEvent)
+    );
+}
+void IvyBase::resetCache(){
+  this->eventCache_currentTTree = nullptr;
+  this->eventCache_currentEvent = -1;
+}
+
 bool IvyBase::wrapTree(BaseTree* tree){
   this->currentTree = tree;
+  this->eventCache_currentTTree = nullptr;
+  this->eventCache_currentEvent = -1;
   if (!(this->currentTree)){
     if (this->verbosity>=TVar::ERROR) MELAerr << "IvyBase::wrapTree: The input tree is null!" << endl;
     return false;

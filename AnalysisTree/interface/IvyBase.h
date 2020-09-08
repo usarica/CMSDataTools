@@ -12,6 +12,9 @@ protected:
   TVar::VerbosityLevel verbosity;
   BaseTree* currentTree;
 
+  TTree* eventCache_currentTTree;
+  int eventCache_currentEvent;
+
   // Consumes
   std::vector<TString> sloppyConsumes; // In case some variables are known to be absent in some trees
 
@@ -39,6 +42,14 @@ protected:
   // Get consumed value
   template<typename T> bool getConsumedValue(TString name, T& val) const;
   template<typename T> bool getConsumedCIterators(TString name, typename T::const_iterator* it_begin, typename T::const_iterator* it_end=nullptr) const;
+
+  // Cache the event if the daughter supports checking caches
+  // Returns true if the event is valid.
+  bool cacheEvent();
+  // Check if cache info is the same as current event.
+  bool isAlreadyCached() const;
+  // Reset the cache
+  void resetCache();
 
 public:
   // Constructors

@@ -378,6 +378,20 @@ void BaseTree::refreshCurrentEvent(){
     currentTree = tmpTree;
   }
 }
+bool BaseTree::getCurrentEventInfo(TTree*& currentTree_, int& currentEvent_) const{
+  currentTree_ = this->currentTree;
+  currentEvent_ = this->currentEvent;
+  return (currentTree_!=nullptr && currentEvent_>=0);
+}
+bool BaseTree::isSameEvent(TTree* const& currentTree_, int const& currentEvent_) const{
+  return (
+    currentTree_ && currentEvent_>=0
+    &&
+    this->currentTree == currentTree_
+    &&
+    this->currentEvent == currentEvent_
+    );
+}
 
 int BaseTree::getSelectedNEvents() const{ return (tree ? tree->GetEntries() : 0); }
 int BaseTree::getFailedNEvents() const{ return (failedtree ? failedtree->GetEntries() : 0); }

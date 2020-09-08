@@ -103,6 +103,10 @@ public:
   bool getEvent(int ev);
   void refreshCurrentEvent();
 
+  // For caching purposes
+  bool getCurrentEventInfo(TTree*& currentTree_, int& currentEvent_) const;
+  bool isSameEvent(TTree* const& currentTree_, int const& currentEvent_) const;
+
   int getSelectedNEvents() const;
   int getFailedNEvents() const;
   int getNEvents() const;

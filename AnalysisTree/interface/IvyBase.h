@@ -48,8 +48,6 @@ protected:
   bool cacheEvent();
   // Check if cache info is the same as current event.
   bool isAlreadyCached() const;
-  // Reset the cache
-  void resetCache();
 
 public:
   // Constructors
@@ -69,6 +67,9 @@ public:
   // Tree
   virtual bool wrapTree(BaseTree* tree);
   BaseTree* getWrappedTree(){ return currentTree; }
+
+  // Reset the cache
+  void resetCache();
 
 };
 

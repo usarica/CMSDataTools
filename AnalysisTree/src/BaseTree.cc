@@ -1,4 +1,5 @@
 #include "TDirectory.h"
+#include "TRegexp.h"
 #include "HostHelpersCore.h"
 #include "BaseTree.h"
 #include "BaseTree.hpp"
@@ -40,29 +41,27 @@ BaseTree::BaseTree(const TString cinput, const TString treename, const TString f
 {
   TDirectory* curdir = gDirectory; // Save current directory to return back to it later
   if (cinput.Contains("*")){ // Use a TChain
-    isTChain=true;
+    isTChain = true;
     valid = true;
-    if (treename!=""){
-      TChain* tc = new TChain(treename);
-      if (tc->Add(cinput) == 0){
-        delete tc;
-        tc = nullptr;
+
+    std::vector<TString> treenamelist; treenamelist.reserve(2);
+    if (treename!="") treenamelist.push_back(treename);
+    if (failedtreename!="") treenamelist.push_back(failedtreename);
+    std::vector< std::vector<TString> > valid_files;
+    valid = getValidFilesForTreeList(cinput, treenamelist, valid_files);
+
+    if (valid){
+      if (treename!=""){
+        TChain* tc = new TChain(treename);
+        for (auto const& fname:valid_files.front()) tc->Add(fname);
+        tree = tc;
       }
-      tree = tc;
-      valid &= (tree != nullptr);
-    }
-    if (failedtreename!=""){
-      TChain* tc = new TChain(failedtreename);
-      if (tc->Add(cinput) == 0){
-        delete tc;
-        tc = nullptr;
+      if (failedtreename!=""){
+        TChain* tc = new TChain(failedtreename);
+        auto const& vfiles = (treename!="" ? valid_files.back() : valid_files.front());
+        for (auto const& fname:vfiles) tc->Add(fname);
+        failedtree = tc;
       }
-      failedtree = tc;
-      valid &= (failedtree != nullptr);
-    }
-    if (!valid){
-      delete tree; tree = nullptr;
-      delete failedtree; failedtree = nullptr;
     }
     if (countersname!=""){
       MELAerr << "BaseTree::BaseTree: Cannot add histograms in chain mode." << endl;
@@ -127,18 +126,20 @@ BaseTree::BaseTree(const TString cinput, std::vector<TString> const& treenames, 
 {
   TDirectory* curdir = gDirectory; // Save current directory to return back to it later
   if (cinput.Contains("*")){ // Use a TChain
-    isTChain=true;
+    isTChain = true;
     valid = true;
     treelist.reserve(treenames.size());
-    for (auto const& treename:treenames){
-      if (treename!=""){
-        TChain* tc = new TChain(treename);
-        if (tc->Add(cinput) == 0){
-          delete tc;
-          tc = nullptr;
+    std::vector< std::vector<TString> > valid_files;
+    valid = getValidFilesForTreeList(cinput, treenames, valid_files);
+    if (valid){
+      unsigned int itree=0;
+      for (auto const& treename:treenames){
+        if (treename!=""){
+          TChain* tc = new TChain(treename);
+          for (auto const& fname:valid_files.at(itree)) tc->Add(fname);
+          treelist.push_back(tc);
         }
-        else treelist.push_back(tc);
-        valid &= (tc != nullptr);
+        itree++;
       }
     }
     if (!valid){
@@ -450,7 +451,9 @@ void BaseTree::getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& r
   // First check all aliases and record the proper names
   if (alist){
     for (int ib=0; ib<alist->GetSize(); ib++){
-      TString bname = alist->At(ib)->GetName();
+      auto const& bmem = alist->At(ib);
+      if (!bmem) continue;
+      TString bname = bmem->GetName();
       TString bnameproper = t->GetAlias(bname);
       TString bnamegen="";
       if (bnameproper.Contains(".")){
@@ -458,7 +461,7 @@ void BaseTree::getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& r
         splitOptionRecursive(bnameproper, tmplist, '.');
         if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
       }
-      if (searchBranchType(bname)!=BranchType_unknown_t || !check_linked){
+      if (!check_linked || searchBranchType(bname)!=BranchType_unknown_t){
         if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
         else if (!checkListVariable(res, bnameproper)) res.push_back(bnameproper);
       }
@@ -467,30 +470,34 @@ void BaseTree::getValidBranchNamesWithoutAlias(TTree* t, std::vector<TString>& r
   // Then check all leaves
   if (llist){
     for (int ib=0; ib<llist->GetSize(); ib++){
-      TString bname = llist->At(ib)->GetName();
+      auto const& bmem = llist->At(ib);
+      if (!bmem) continue;
+      TString bname = bmem->GetName();
       TString bnamegen="";
       if (bname.Contains(".")){
         std::vector<TString> tmplist;
         splitOptionRecursive(bname, tmplist, '.');
         if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
       }
-      if (searchBranchType(bname)!=BranchType_unknown_t || !check_linked){
+      if (!check_linked || searchBranchType(bname)!=BranchType_unknown_t){
         if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
         else if (!checkListVariable(res, bname)) res.push_back(bname);
       }
     }
   }
+  // Then check all branches
   if (blist){
-    // Then check all branches
     for (int ib=0; ib<blist->GetSize(); ib++){
-      TString bname = blist->At(ib)->GetName();
+      auto const& bmem = blist->At(ib);
+      if (!bmem) continue;
+      TString bname = bmem->GetName();
       TString bnamegen="";
       if (bname.Contains(".")){
         std::vector<TString> tmplist;
         splitOptionRecursive(bname, tmplist, '.');
         if (!tmplist.empty()) bnamegen = tmplist.front() + "*";
       }
-      if (searchBranchType(bname)!=BranchType_unknown_t || !check_linked){
+      if (!check_linked || searchBranchType(bname)!=BranchType_unknown_t){
         if (bnamegen!="" && !checkListVariable(res, bnamegen)) res.push_back(bnamegen);
         else if (!checkListVariable(res, bname)) res.push_back(bname);
       }
@@ -584,6 +591,83 @@ void BaseTree::writeToFile(TFile* file){
   if (receiver || !tree || !file || !file->IsOpen() || file->IsZombie()) return;
   if (robustSaveWrite) file->WriteTObject(tree, nullptr, "WriteDelete");
   else file->WriteTObject(tree);
+}
+
+bool BaseTree::getValidFilesForTreeList(TString const& cinput, std::vector<TString> const& treenames, std::vector< std::vector<TString> >& res) const{
+  TDirectory* curdir = gDirectory; // Save current directory to return back to it later
+
+  std::vector<TString> fnames;
+  if (cinput.Contains("*")){
+    TString cinputcore, fpattern;
+    size_t ipos = cinput.Last('/');
+    if (ipos>0){
+      cinputcore = cinput(0, ipos+1);
+      fpattern = cinput(ipos+1, cinput.Length());
+    }
+    else if (ipos==0){
+      MELAerr << "BaseTree::getValidFilesForTreeList: Invalid pattern " << cinput << endl;
+      return false;
+    }
+    else{
+      fpattern = cinput;
+      cinputcore = "./";
+    }
+    std::vector<TString> fnames_all = SampleHelpers::lsdir(cinputcore);
+    for (auto const& fname:fnames_all){
+      if (fname.Index(TRegexp(fpattern.Data(), true))>=0) fnames.push_back(cinputcore + fname);
+    }
+  }
+  else fnames.push_back(cinput);
+
+  res.assign(treenames.size(), std::vector<TString>()); for (auto& vv:res) vv.reserve(fnames.size());
+  for (auto& fname:fnames){
+    if (!HostHelpers::FileReadable(fname.Data())){
+      MELAerr << "BaseTree::getValidFilesForTreeList: File " << fname << " is not readable! Aborting operation..." << endl;
+      return false;
+    }
+    TFile* ftmp = TFile::Open(fname, "read");
+    if (ftmp){
+      if (ftmp->IsOpen() && !ftmp->IsZombie()){
+        ftmp->cd();
+        unsigned int it=0;
+        for (auto const& treename:treenames){
+          if (treename!=""){
+            TTree* tt = (TTree*) ftmp->Get(treename);
+            if (!tt){
+              MELAerr << "BaseTree::getValidFilesForTreeList: " << fname << " does not contain " << treename << endl;
+              continue;
+            }
+            else if (tt->GetEntries()==0){
+              std::vector<TString> bnames;
+              BaseTree::getValidBranchNamesWithoutAlias(tt, bnames, false);
+              if (bnames.empty()){
+                MELAerr << "BaseTree::getValidFilesForTreeList: " << fname << " contains " << treename << ", but the tree has no branches." << endl;
+                continue;
+              }
+            }
+            res.at(it).push_back(fname);
+          }
+          it++;
+        }
+        ftmp->Close();
+      }
+      else{
+        if (ftmp->IsOpen()) ftmp->Close();
+        else delete ftmp;
+
+        curdir->cd();
+        return false;
+      }
+    }
+    else{
+      curdir->cd();
+      return false;
+    }
+
+    curdir->cd();
+  }
+
+  return true;
 }
 
 void BaseTree::setRobustSaveWrite(bool flag){ BaseTree::robustSaveWrite = flag; }

@@ -667,6 +667,16 @@ bool BaseTree::getValidFilesForTreeList(TString const& cinput, std::vector<TStri
     curdir->cd();
   }
 
+  {
+    unsigned int it=0;
+    for (auto const& vv:res){
+      if (treenames.at(it)!=""){
+        if (vv.empty()) return false;
+      }
+      it++;
+    }
+  }
+
   return true;
 }
 

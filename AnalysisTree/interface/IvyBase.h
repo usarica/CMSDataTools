@@ -46,8 +46,6 @@ protected:
   // Cache the event if the daughter supports checking caches
   // Returns true if the event is valid.
   bool cacheEvent();
-  // Check if cache info is the same as current event.
-  bool isAlreadyCached() const;
 
 public:
   // Constructors
@@ -70,6 +68,9 @@ public:
 
   // Reset the cache
   void resetCache();
+
+  // Check if cache info is the same as current event.
+  bool isAlreadyCached() const;
 
 };
 

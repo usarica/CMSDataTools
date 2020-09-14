@@ -46,13 +46,22 @@ if [[ ! -z ${FILENAME} ]];then
   COPY_SRC="file://${INPUTDIR}/${FILENAME}"
   COPY_DEST="gsiftp://gftp.${OUTPUTSITE}${OUTPUTDIR}/${RENAMEFILE}"
   echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 14400 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
-  env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 14400 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
-  COPY_STATUS=$?
-  if [[ $COPY_STATUS != 0 ]]; then
+  declare -i itry=0
+  declare -i COPY_STATUS=-1
+  declare -i REMOVE_STATUS=-1
+  while [[ $itry -lt 5 ]]; do
+    env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 14400 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
+    COPY_STATUS=$?
+    if [[ $COPY_STATUS -eq 0 ]]; then
+      break
+    fi
+    (( itry += 1 ))
+  done
+  if [[ $COPY_STATUS -ne 0 ]]; then
     echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
     env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm -t 14400 --verbose ${COPY_DEST}
     REMOVE_STATUS=$?
-    if [[ $REMOVE_STATUS != 0 ]]; then
+    if [[ $REMOVE_STATUS -ne 0 ]]; then
         echo "gfal-copy crashed and then the gfal-rm also crashed with code $REMOVE_STATUS"
         echo "You probably have a corrupt file sitting on ${OUTPUTDIR} now."
         exit $REMOVE_STATUS

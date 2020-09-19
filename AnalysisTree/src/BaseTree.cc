@@ -593,8 +593,10 @@ void BaseTree::writeToFile(TFile* file){
   else file->WriteTObject(tree);
 }
 
-bool BaseTree::getValidFilesForTreeList(TString const& cinput, std::vector<TString> const& treenames, std::vector< std::vector<TString> >& res) const{
+bool BaseTree::getValidFilesForTreeList(TString cinput, std::vector<TString> const& treenames, std::vector< std::vector<TString> >& res) const{
   TDirectory* curdir = gDirectory; // Save current directory to return back to it later
+
+  HostHelpers::ExpandEnvironmentVariables(cinput);
 
   std::vector<TString> fnames;
   if (cinput.Contains("*")){
@@ -669,9 +671,13 @@ bool BaseTree::getValidFilesForTreeList(TString const& cinput, std::vector<TStri
 
   {
     unsigned int it=0;
-    for (auto const& vv:res){
+    for (auto& vv:res){
       if (treenames.at(it)!=""){
         if (vv.empty()) return false;
+        else if (vv.size() == fnames.size()){
+          vv.clear();
+          vv.push_back(cinput);
+        }
       }
       it++;
     }

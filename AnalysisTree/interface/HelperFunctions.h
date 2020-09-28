@@ -12,6 +12,7 @@
 #include <iterator>
 #include <ctime>
 #include <cmath>
+#include <limits>
 #include <cassert>
 #include <cstdlib>
 #include "TROOT.h"
@@ -528,8 +529,9 @@ template<typename T> bool HelperFunctions::checkPositiveDef(std::vector<T> const
   }
   return true;
 }
+// Following https://stackoverflow.com/a/42138465
 template<typename T> bool HelperFunctions::checkVarNanInf(T const& val){
-  return !(std::isnan(val) || std::isinf(val));
+  return !(std::isnan(val) || std::isinf(val) || (std::numeric_limits<T>::has_quiet_NaN && val==std::numeric_limits<T>::quiet_NaN()));
 }
 template<typename T> bool HelperFunctions::checkNanInf(std::vector<T> const& vars){
   for (T const& v:vars){ if (!checkVarNanInf<T>(v)) return false; }

@@ -44,9 +44,12 @@ std::vector<TString> SampleHelpers::lsdir(TString indir, HostHelpers::Hosts cons
       if (pathToStore!="" && indir_eff.Contains(pathToStore)) HelperFunctions::replaceString<TString, const TString>(indir_eff, pathToStore, "");
       while (indir_eff.Contains("//")) HelperFunctions::replaceString(indir_eff, "//", "/");
 
+      TString x509_proxy = "/tmp/x509up_u$(id -u)";
+      if (getenv("X509_USER_PROXY")!=nullptr) x509_proxy = getenv("X509_USER_PROXY");
+
       TString strcmd;
-      if (*target_host == HostHelpers::kUCSDT2) strcmd = Form("env -i X509_USER_PROXY=/tmp/x509up_u$(id -u) gfal-ls root://%s/%s", localredirector.Data(), indir_eff.Data());
-      else strcmd = Form("xrdfs %s ls %s", localredirector.Data(), indir_eff.Data());
+      if (*target_host == HostHelpers::kUCSDT2) strcmd = Form("env -i X509_USER_PROXY=%s gfal-ls root://%s/%s", x509_proxy.Data(), localredirector.Data(), indir_eff.Data());
+      else strcmd = Form("env -i X509_USER_PROXY=%s xrdfs %s ls %s", x509_proxy.Data(), localredirector.Data(), indir_eff.Data());
       strcmd = strcmd + " > " + tmpfname;
       int status_cmd = HostHelpers::ExecuteCommand(strcmd);
       if (status_cmd==0){

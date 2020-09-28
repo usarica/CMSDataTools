@@ -34,18 +34,23 @@ std::vector<TString> SampleHelpers::lsdir(TString indir, HostHelpers::Hosts cons
   }
   else{
     TString localredirector = HostHelpers::GetHostLocalRedirector(*target_host, true);
+    TString pathToStore = HostHelpers::GetHostPathToStore(*target_host);
     if (localredirector=="") MELAerr << "SampleHelpers::lsdir: Could not locate the site local director to run ls." << endl;
     else{
       TString tmpfname = Form("tmpfile_SampleHelpers_lsdir_%s_%i.tmp", indir.Data(), *target_host);
       while (tmpfname.Contains("/")) HelperFunctions::replaceString(tmpfname, "/", "_");
+
+      TString indir_eff = indir;
+      if (pathToStore!="" && indir_eff.Contains(pathToStore)) HelperFunctions::replaceString<TString, const TString>(indir_eff, pathToStore, "");
+      while (indir_eff.Contains("//")) HelperFunctions::replaceString(indir_eff, "//", "/");
+
       TString strcmd;
-      if (*target_host == HostHelpers::kUCSDT2) strcmd = Form("env -i X509_USER_PROXY=/tmp/x509up_u`id -u` gfal-ls gsiftp://gftp.t2.ucsd.edu%s", indir.Data());
-      else strcmd = Form("xrdfs %s ls %s", localredirector.Data(), indir.Data());
+      if (*target_host == HostHelpers::kUCSDT2) strcmd = Form("env -i X509_USER_PROXY=/tmp/x509up_u$(id -u) gfal-ls root://%s/%s", localredirector.Data(), indir_eff.Data());
+      else strcmd = Form("xrdfs %s ls %s", localredirector.Data(), indir_eff.Data());
       strcmd = strcmd + " > " + tmpfname;
       int status_cmd = HostHelpers::ExecuteCommand(strcmd);
       if (status_cmd==0){
-        TString strRemove = indir;
-        while (strRemove.Contains("//")) HelperFunctions::replaceString(strRemove, "//", "/");
+        TString strRemove = indir_eff;
         if (!strRemove.EndsWith("/")) strRemove = strRemove + '/';
 
         ifstream fin;
@@ -56,7 +61,7 @@ std::vector<TString> SampleHelpers::lsdir(TString indir, HostHelpers::Hosts cons
             getline(fin, str_in);
             if (str_in!=""){
               HelperFunctions::replaceString<std::string, const char*>(str_in, strRemove.Data(), "");
-              while (str_in.find("/")==0) HelperFunctions::replaceString<std::string, const char*>(str_in, "/", "");
+              while (str_in.find("/")==0) str_in = str_in.substr(1);
               res.push_back(str_in.data());
             }
           }

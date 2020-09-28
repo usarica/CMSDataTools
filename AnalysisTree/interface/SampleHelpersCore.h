@@ -18,6 +18,7 @@
 #include "TTree.h"
 #include "TChain.h"
 #include "TList.h"
+#include "HostHelpersCore.h"
 #include "HelperFunctions.h"
 #include "MELAStreamHelpers.hh"
 #include "CMSEDMWrapper.h"
@@ -30,7 +31,7 @@ namespace SampleHelpers{
 
   void makeGlobalMELA(int CoM, TVar::VerbosityLevel verbosity=TVar::ERROR);
 
-  std::vector<TString> lsdir(TString indir);
+  std::vector<TString> lsdir(TString indir, HostHelpers::Hosts const* target_host=nullptr);
 
   float findPoleMass(const TString samplename);
   TTree* findTree(std::vector<TTree*> const& treeList, int evid);

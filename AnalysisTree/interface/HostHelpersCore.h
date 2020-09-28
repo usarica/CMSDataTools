@@ -17,10 +17,14 @@ namespace HostHelpers{
     kLXPLUS,
     kMARCC,
     kUCSDT2,
+    kEOSCMS,
     kUNKNOWN
   };
 
   Hosts GetHostLocation();
+  TString GetHostLocalRedirector(Hosts const& host, bool isForFileOps);
+  TString GetHostPathToStore(Hosts const& host);
+
   int GetCurrentDirectory(TString& dirname);
 
   bool DirectoryExists(const char* dirname);

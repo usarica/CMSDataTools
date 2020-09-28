@@ -19,8 +19,33 @@ HostHelpers::Hosts HostHelpers::GetHostLocation(){
   if (strhost.Contains("lxplus") || strhost.Contains("cern")) return kLXPLUS;
   else if (strhost.Contains("login-node") || strhost.Contains("bc-login") || strhost.Contains("gateway") || strhost.Contains("compute") || strhost.Contains("bigmem")) return kMARCC;
   else if (strhost.Contains("t2.ucsd.edu")) return kUCSDT2;
+  else if (strhost.Contains("eos.cms")) return kEOSCMS; // Wouldn't really happen, but anyway...
   else return kUNKNOWN;
 }
+
+TString HostHelpers::GetHostLocalRedirector(Hosts const& host, bool isForFileOps){
+  switch (host){
+  case kUCSDT2:
+    return "redirector.t2.ucsd.edu";
+  case kEOSCMS:
+    return "eoscms.cern.ch";
+  default:
+    MELAStreamHelpers::MELAerr << "HostHelpers::GetHostRemoteConnectionSpecifier: Host " << host << " might not support remote connection to read files. Returning the widest and slowest possible option." << std::endl;
+    return (isForFileOps ? "" : "cms-xrd-global.cern.ch");
+  }
+}
+TString HostHelpers::GetHostPathToStore(Hosts const& host){
+  switch (host){
+  case kUCSDT2:
+    return "/hadoop/cms";
+  case kEOSCMS:
+    return "/eos/cms";
+  default:
+    MELAStreamHelpers::MELAerr << "HostHelpers::GetHostPathToStore: Host " << host << " is not supported. Returning empty string..." << std::endl;
+    return "";
+  }
+}
+
 int HostHelpers::GetCurrentDirectory(TString& dirname){
   char cpath[FILENAME_MAX];
   if (!getcwd(cpath, FILENAME_MAX)) return errno;

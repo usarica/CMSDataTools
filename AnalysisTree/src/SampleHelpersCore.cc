@@ -16,20 +16,60 @@ namespace SampleHelpers{
 
 void SampleHelpers::makeGlobalMELA(int CoM, TVar::VerbosityLevel verbosity){ if (!GlobalMELA) GlobalMELA.reset(new Mela(CoM, 125, verbosity)); }
 
-std::vector<TString> SampleHelpers::lsdir(TString indir){
+std::vector<TString> SampleHelpers::lsdir(TString indir, HostHelpers::Hosts const* target_host){
   std::vector<TString> res;
 
-  struct dirent* ep;
-  DIR* dp = opendir(indir.Data());
-  if (dp != NULL){
-    while ((ep = readdir(dp))){
-      TString strdir = ep->d_name;
-      if (strdir == "." || strdir == "..") continue;
-      res.push_back(strdir);
+  if (!target_host || *target_host == HostHelpers::GetHostLocation()){
+    struct dirent* ep;
+    DIR* dp = opendir(indir.Data());
+    if (dp != NULL){
+      while ((ep = readdir(dp))){
+        TString strdir = ep->d_name;
+        if (strdir == "." || strdir == "..") continue;
+        res.push_back(strdir);
+      }
+      closedir(dp);
     }
-    closedir(dp);
+    else MELAerr << "SampleHelpers::lsdir: Could not open the directory " << indir << "." << endl;
   }
-  else MELAerr << "SampleHelpers::lsdir: Could not open the directory " << indir << "." << endl;
+  else{
+    TString localredirector = HostHelpers::GetHostLocalRedirector(*target_host, true);
+    if (localredirector=="") MELAerr << "SampleHelpers::lsdir: Could not locate the site local director to run ls." << endl;
+    else{
+      TString tmpfname = Form("tmpfile_SampleHelpers_lsdir_%s_%i.tmp", indir.Data(), *target_host);
+      while (tmpfname.Contains("/")) HelperFunctions::replaceString(tmpfname, "/", "_");
+      TString strcmd;
+      if (*target_host == HostHelpers::kUCSDT2) strcmd = Form("env -i X509_USER_PROXY=/tmp/x509up_u`id -u` gfal-ls gsiftp://gftp.t2.ucsd.edu%s", indir.Data());
+      else strcmd = Form("xrdfs %s ls %s", localredirector.Data(), indir.Data());
+      strcmd = strcmd + " > " + tmpfname;
+      int status_cmd = HostHelpers::ExecuteCommand(strcmd);
+      if (status_cmd==0){
+        TString strRemove = indir;
+        while (strRemove.Contains("//")) HelperFunctions::replaceString(strRemove, "//", "/");
+        if (!strRemove.EndsWith("/")) strRemove = strRemove + '/';
+
+        ifstream fin;
+        fin.open(tmpfname.Data(), std::ios_base::in);
+        if (fin.good()){
+          std::string str_in;
+          while (!fin.eof()){
+            getline(fin, str_in);
+            if (str_in!=""){
+              HelperFunctions::replaceString<std::string, const char*>(str_in, strRemove.Data(), "");
+              while (str_in.find("/")==0) HelperFunctions::replaceString<std::string, const char*>(str_in, "/", "");
+              res.push_back(str_in.data());
+            }
+          }
+        }
+        fin.close();
+        std::remove(tmpfname.Data());
+      }
+      else{
+        MELAerr << "SampleHelpers::lsdir: Command '" << strcmd << "' returned exit status " << status_cmd << "." << endl;
+        assert(0);
+      }
+    }
+  }
 
   return res;
 }

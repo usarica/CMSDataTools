@@ -96,9 +96,15 @@ namespace HelperFunctions{
   template<> double evaluateTObject<TSpline3>(TSpline3* obj, float val);
 
   template<typename T> bool checkHistogramIntegrity(T const* histo);
+  template<> bool checkHistogramIntegrity<TH1>(TH1 const* histo);
+  template<> bool checkHistogramIntegrity<TH2>(TH2 const* histo);
+  template<> bool checkHistogramIntegrity<TH3>(TH3 const* histo);
   template<> bool checkHistogramIntegrity<TH1F>(TH1F const* histo);
   template<> bool checkHistogramIntegrity<TH2F>(TH2F const* histo);
   template<> bool checkHistogramIntegrity<TH3F>(TH3F const* histo);
+  template<> bool checkHistogramIntegrity<TH1D>(TH1D const* histo);
+  template<> bool checkHistogramIntegrity<TH2D>(TH2D const* histo);
+  template<> bool checkHistogramIntegrity<TH3D>(TH3D const* histo);
 
   template <typename T> void regularizeHistogram(T*& histo, int nIter_, double threshold_, double acceleration_);
   template<> void regularizeHistogram<TH1F>(TH1F*& histo, int nIter_, double threshold_, double acceleration_);

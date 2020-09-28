@@ -1214,8 +1214,12 @@ template<> bool HelperFunctions::checkVarNonNegative<TH3F>(TH3F const& val){
   return res;
 }
 
-template<> bool HelperFunctions::checkHistogramIntegrity<TH1F>(TH1F const* histo){
+template<> bool HelperFunctions::checkHistogramIntegrity<TH1>(TH1 const* histo){
   if (!histo) return false;
+  TH2 const* h2d = dynamic_cast<TH2 const*>(histo);
+  if (h2d) return HelperFunctions::checkHistogramIntegrity<TH2>(h2d);
+  TH3 const* h3d = dynamic_cast<TH3 const*>(histo);
+  if (h3d) return HelperFunctions::checkHistogramIntegrity<TH3>(h3d);
   for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
     double val=histo->GetBinContent(ix);
     double err=histo->GetBinError(ix);
@@ -1229,7 +1233,7 @@ template<> bool HelperFunctions::checkHistogramIntegrity<TH1F>(TH1F const* histo
   }
   return true;
 }
-template<> bool HelperFunctions::checkHistogramIntegrity<TH2F>(TH2F const* histo){
+template<> bool HelperFunctions::checkHistogramIntegrity<TH2>(TH2 const* histo){
   if (!histo) return false;
   for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
     for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
@@ -1247,7 +1251,7 @@ template<> bool HelperFunctions::checkHistogramIntegrity<TH2F>(TH2F const* histo
   }
   return true;
 }
-template<> bool HelperFunctions::checkHistogramIntegrity<TH3F>(TH3F const* histo){
+template<> bool HelperFunctions::checkHistogramIntegrity<TH3>(TH3 const* histo){
   if (!histo) return false;
   for (int ix=0; ix<=histo->GetNbinsX()+1; ix++){
     for (int iy=0; iy<=histo->GetNbinsY()+1; iy++){
@@ -1267,6 +1271,13 @@ template<> bool HelperFunctions::checkHistogramIntegrity<TH3F>(TH3F const* histo
   }
   return true;
 }
+template<> bool HelperFunctions::checkHistogramIntegrity<TH1F>(TH1F const* histo){ return checkHistogramIntegrity<TH1>(histo); }
+template<> bool HelperFunctions::checkHistogramIntegrity<TH2F>(TH2F const* histo){ return checkHistogramIntegrity<TH2>(histo); }
+template<> bool HelperFunctions::checkHistogramIntegrity<TH3F>(TH3F const* histo){ return checkHistogramIntegrity<TH3>(histo); }
+template<> bool HelperFunctions::checkHistogramIntegrity<TH1D>(TH1D const* histo){ return checkHistogramIntegrity<TH1>(histo); }
+template<> bool HelperFunctions::checkHistogramIntegrity<TH2D>(TH2D const* histo){ return checkHistogramIntegrity<TH2>(histo); }
+template<> bool HelperFunctions::checkHistogramIntegrity<TH3D>(TH3D const* histo){ return checkHistogramIntegrity<TH3>(histo); }
+
 
 template<> void HelperFunctions::regularizeHistogram<TH1F>(TH1F*& histo, int nIter_, double threshold_, double acceleration_){
   if (!histo) return;

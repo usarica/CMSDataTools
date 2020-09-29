@@ -14,6 +14,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <unordered_map>
+#include <csignal>
 #include "TFile.h"
 #include "TTree.h"
 #include "TChain.h"
@@ -28,8 +29,11 @@
 namespace SampleHelpers{
   extern std::shared_ptr<Mela> GlobalMELA;
   extern TDirectory* const rootTDirectory;
+  extern volatile sig_atomic_t doSignalInterrupt;
 
   void makeGlobalMELA(int CoM, TVar::VerbosityLevel verbosity=TVar::ERROR);
+
+  void setSignalInterrupt(int snum);
 
   std::vector<TString> lsdir(TString indir, HostHelpers::Hosts const* target_host=nullptr);
 

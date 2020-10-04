@@ -38,9 +38,9 @@ class ListerClass:
             foutput.write(line+'\n')
          foutput.close()
       else:
-         #print "File list for {}:".format(self.opt.dataset)
+         #print("File list for {}:".format(self.opt.dataset))
          for line in filelist:
-            print line
+            print(line)
 
 
 

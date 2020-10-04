@@ -4,7 +4,7 @@ import sys
 import ROOT
 
 if len(sys.argv) < 2:
-   print "  usage: {0} <input root file> <tree name>".format(sys.argv[0])
+   print("  usage: {0} <input root file> <tree name>".format(sys.argv[0]))
    exit(0)
 
 fin = ROOT.TFile.Open(sys.argv[1],"read")
@@ -22,12 +22,12 @@ total_size = sum(s[2] for s in sizes)
 sizes = sorted(sizes, key=lambda x:x[2], reverse=True)
 
 fmt_string =  "{{0:{0}s}} {{1:>12s}} {{2:>12s}} {{3:>12s}} {{4:>9s}}".format(max_len)
-print fmt_string.format("Branch","Raw Size", "Zip Size", "Compression", "% Total")
+print(fmt_string.format("Branch","Raw Size", "Zip Size", "Compression", "% Total"))
 fmt_string =  "{{0:{0}s}} {{1:12d}} {{2:12d}} {{3:12.3f}} {{4:8.2f}}%".format(max_len)
 for s in sizes:
    percent_size = 0.0
    if total_size > 0.0:
       percent_size = 100.0*s[2]/total_size
-   print fmt_string.format(s[0], s[1], s[2], s[3], percent_size)
+   print(fmt_string.format(s[0], s[1], s[2], s[3], percent_size))
 
 fin.Close()

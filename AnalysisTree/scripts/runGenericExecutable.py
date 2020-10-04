@@ -36,7 +36,7 @@ class GenericExecutor:
          self.opt.fcncmd = translateFromShellToPython(self.opt.fcncmd)
       jobcmd = r""
       jobcmd += r'{} {}'.format(self.opt.executable, self.opt.fcncmd)
-      print "Running {}".format(jobcmd)
+      print("Running {}".format(jobcmd))
       if not self.opt.dryRun:
          ret = os.system( jobcmd )
 

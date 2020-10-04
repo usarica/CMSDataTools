@@ -29,11 +29,11 @@ class HadoopChecker:
 
       # Start iterating over the files
       maindir=self.opt.maindir
-      print "Checking the expression {} for corruptions".format(maindir)
+      print("Checking the expression {} for corruptions".format(maindir))
       indirs = glob.glob(maindir)
 
       for indir in indirs:
-         print " - Checking {}".format(indir)
+         print(" - Checking {}".format(indir))
          p = subprocess.Popen("hdfs fsck {}".format(indir.replace("/hadoop","")).split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
          out, err = p.communicate()
          lines = out.split("\n")
@@ -42,9 +42,9 @@ class HadoopChecker:
             if "CORRUPT blockpool" in line:
                theFile = line.split(":")[0]
                badfile = "/hadoop" + theFile
-               print "    BAD FILE:",badfile
+               print("    BAD FILE:",badfile)
                if self.opt.remove:
-                  print "    => REMOVING THE FILE!"
+                  print("    => REMOVING THE FILE!")
                   subprocess.call("hdfs dfs -rm " + theFile, shell=True)
                if outfile is not None:
                   outfile.write(badfile+'\n')

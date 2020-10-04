@@ -110,7 +110,9 @@ template<typename T> void SampleHelpers::bookEDMBranch(TTree* tree, TString strn
 template<typename T> void SampleHelpers::putBranch(TTree* tree, TString strname, T& var){
   if (tree){
     // Do not check for branch alias
-    if (!SampleHelpers::branchExists(tree, strname)) tree->Branch(strname, &var);
+    if (!SampleHelpers::branchExists(tree, strname)){
+      if (!tree->Branch(strname, &var)) MELAStreamHelpers::MELAerr << "SampleHelpers::putBranch: Did not succeed in creating a new branch for " << strname << " in tree " << tree->GetName() << std::endl;
+    }
   }
 }
 

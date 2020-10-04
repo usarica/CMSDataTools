@@ -106,20 +106,6 @@ float SampleHelpers::findPoleMass(const TString samplename){
       MELAerr << "SampleHelpers::findPoleMass: Sample '" << samplename << "' contains the mass string '" << strmass << "', but parsing of this mass string failed!" << endl;
       assert(0);
     }
-    return mass;
-  }
-  std::string strtmp = samplename.Data();
-  std::size_t extpos = strtmp.find(".root");
-  if (extpos!=std::string::npos) strtmp.erase(extpos, 5);
-  std::vector<std::string> strsplit;
-  HelperFunctions::splitOptionRecursive(strtmp, strsplit, 'H');
-  if (strsplit.size()>1){
-    std::string strmass = strsplit.at(1);
-    if (strmass=="f05ph0" || strmass=="f05ph90") strmass = strsplit.at(2);
-    strsplit.clear();
-    HelperFunctions::splitOptionRecursive(strmass, strsplit, '_');
-    strmass = strsplit.at(0);
-    mass = std::stod(strmass);
   }
   return mass;
 }

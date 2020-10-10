@@ -133,23 +133,22 @@ int ReweightingFunctions::getSimpleVariableBin(BaseTree* tree, ExtendedBinning c
   return binning.getBin(getSimpleVariable(tree, vals));
 }
 
-std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
+
+std::vector<double> ReweightingFunctions::getSimpleNeffPerBin(
   BaseTree* tree,
-  std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,
   ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
   double thr_Neff,
   TVar::VerbosityLevel verbosity
 ){
-  unsigned int nbins = std::min(static_cast<unsigned int>(1), binning.getNbins());
+  unsigned int const nbins = std::min(static_cast<unsigned int>(1), binning.getNbins());
 
-  std::vector<float> res(nbins, -1);
+  std::vector<double> res(nbins, 0);
 
   int nEntries = tree->getNEvents();
-  thr_Neff = std::min(thr_Neff, double(nEntries)/3.*2.);
-  if (verbosity>=TVar::ERROR) MELAout << "ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff: Determining the weight thresholds (Neff threshold = " << thr_Neff << ", number of events = " << nEntries << ")..." << endl;
   if (nEntries==0) return res;
+  thr_Neff = std::min(thr_Neff, double(nEntries)/3.*2.);
+  if (verbosity>=TVar::ERROR) MELAout << "ReweightingFunctions::getSimpleNeffPerBin: Determining the distribution of Neff over the bins..." << endl;
 
-  // First determine how events are distributed without weights
   std::vector<unsigned int> nEntries_per_bin(nbins, 0);
   for (int ev=0; ev<nEntries; ev++){
     tree->getEvent(ev);
@@ -162,9 +161,25 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
   }
 
   // Determine the actual Neff thresholds per bin based on the raw event distribution
-  std::vector<double> thr_Neff_per_bin(nbins, 0);
-  for (unsigned int ibin=0; ibin<nbins; ibin++) thr_Neff_per_bin.at(ibin) = thr_Neff * ((double) nEntries_per_bin.at(ibin)) / ((double) nEntries);
-  if (verbosity>=TVar::ERROR) MELAout << "\t- Neff thresholds = " << thr_Neff_per_bin << endl;
+  for (unsigned int ibin=0; ibin<nbins; ibin++) res.at(ibin) = thr_Neff * ((double) nEntries_per_bin.at(ibin)) / ((double) nEntries);
+  if (verbosity>=TVar::ERROR) MELAout << "\t- Neff thresholds = " << res << endl;
+
+  return res;
+}
+std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
+  BaseTree* tree,
+  std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,
+  ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
+  std::vector<double> const& thr_Neff_per_bin,
+  TVar::VerbosityLevel verbosity
+){
+  unsigned int const nbins = std::min(static_cast<unsigned int>(1), binning.getNbins());
+
+  std::vector<float> res(nbins, -1);
+
+  int nEntries = tree->getNEvents();
+  if (verbosity>=TVar::ERROR) MELAout << "ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff: Determining the weight thresholds (number of events = " << nEntries << ")..." << endl;
+  if (nEntries==0) return res;
 
   // Calculate the weight thresholds based on the Neff thresholds per bin
   std::vector<unsigned int> npos(nbins, 0);
@@ -229,4 +244,29 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
 
   return res;
 }
+std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
+  BaseTree* tree,
+  std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,
+  ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
+  double thr_Neff,
+  TVar::VerbosityLevel verbosity
+){
+  unsigned int const nbins = std::min(static_cast<unsigned int>(1), binning.getNbins());
 
+  std::vector<float> res(nbins, -1);
+
+  // Determine the actual Neff thresholds per bin based on the raw event distribution
+  std::vector<double> thr_Neff_per_bin = getSimpleNeffPerBin(tree, binning, var_vals, varbin_rule, thr_Neff, verbosity);
+
+  int nEntries = tree->getNEvents();
+  if (verbosity>=TVar::ERROR) MELAout << "ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff: Determining the weight thresholds (number of events = " << nEntries << ")..." << endl;
+  if (nEntries==0) return std::vector<float>(nbins, -1);
+
+  // Calculate the weight thresholds based on the Neff thresholds per bin
+  return getAbsWeightThresholdsPerBinByNeff(
+    tree,
+    wgt_vals, wgt_rule,
+    binning, var_vals, varbin_rule,
+    thr_Neff_per_bin, verbosity
+  );
+}

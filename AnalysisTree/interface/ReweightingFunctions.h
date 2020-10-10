@@ -30,6 +30,19 @@ namespace ReweightingFunctions{
   float getSimpleVariable(BaseTree* tree, std::vector<float*> const& vals); // A single variable
   int getSimpleVariableBin(BaseTree* tree, ExtendedBinning const& binning, std::vector<float*> const& vals); // Binning for a single variable
 
+  std::vector<double> getSimpleNeffPerBin(
+    BaseTree* tree,
+    ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
+    double thr_Neff,
+    TVar::VerbosityLevel verbosity=TVar::ERROR
+  );
+  std::vector<float> getAbsWeightThresholdsPerBinByNeff(
+    BaseTree* tree,
+    std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,
+    ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
+    std::vector<double> const& thr_Neff_per_bin,
+    TVar::VerbosityLevel verbosity=TVar::ERROR
+  );
   std::vector<float> getAbsWeightThresholdsPerBinByNeff(
     BaseTree* tree,
     std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,

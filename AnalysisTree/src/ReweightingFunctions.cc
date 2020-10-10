@@ -124,10 +124,19 @@ float ReweightingFunctions::getAbsWeightThresholdByNeff(BaseTree* tree, std::vec
 
   return res;
 }
+
+float ReweightingFunctions::getSimpleVariable(BaseTree* tree, std::vector<float*> const& vals){
+  assert(tree && vals.size()==1 && vals.front());
+  return *(vals.front());
+}
+int ReweightingFunctions::getSimpleVariableBin(BaseTree* tree, ExtendedBinning const& binning, std::vector<float*> const& vals){
+  return binning.getBin(getSimpleVariable(tree, vals));
+}
+
 std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
   BaseTree* tree,
   std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,
-  ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingFunction_t var_rule,
+  ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
   double thr_Neff,
   TVar::VerbosityLevel verbosity
 ){
@@ -146,8 +155,7 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
     tree->getEvent(ev);
     HelperFunctions::progressbar(ev, nEntries);
 
-    float xvar = var_rule(tree, var_vals);
-    int ibin = (binning.isValid() ? binning.getBin(xvar) : 0);
+    int ibin = varbin_rule(tree, binning, var_vals);
     if (ibin<0) ibin=0;
     else if (ibin>=(int) nbins) ibin = nbins-1;
     nEntries_per_bin.at(ibin)++;
@@ -169,8 +177,7 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
 
     {
       float wgt_combined = std::abs(wgt_rule(tree, wgt_vals));
-      float xvar = var_rule(tree, var_vals);
-      int ibin = (binning.isValid() ? binning.getBin(xvar) : 0);
+      int ibin = varbin_rule(tree, binning, var_vals);
       if (ibin<0) ibin=0;
       else if (ibin>=(int) nbins) ibin = nbins-1;
       HelperFunctions::addByLowest(smallest_weights.at(ibin), wgt_combined, false);

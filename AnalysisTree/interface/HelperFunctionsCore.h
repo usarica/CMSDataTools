@@ -58,6 +58,9 @@ namespace HelperFunctions{
   template<> void lowercase(TString const& name, TString& val);
   template<> void lowercase(const char* const& name, const char*& val);
 
+  // Value-to-string casts
+  template<typename T> std::string castValueToString(T const& val, unsigned short max_decimals=4);
+
 }
 
 template<typename T> void HelperFunctions::resetPointer(T*& ptr){ delete ptr; ptr=nullptr; }
@@ -231,5 +234,18 @@ template void HelperFunctions::castStringToValue(std::string const& name, double
 template void HelperFunctions::castStringToValue(TString const& name, double& val);
 template void HelperFunctions::castStringToValue(const char* name, double& val);
 
+template<typename T> std::string HelperFunctions::castValueToString(T const& val, unsigned short max_decimals){
+  double decimals = std::abs(val - T((int) val));
+  if (decimals == 0.) return Form("%.0f", double(val));
+  decimals += 1e-10; // Machine precision correction...
+  unsigned short base10exponent = std::ceil(std::abs(std::log10(decimals)));
+  unsigned short iprec = std::min(max_decimals, static_cast<unsigned short>(base10exponent+4));
+  TString strprintf = Form("%s%u%s", "%.", iprec, "f");
+  unsigned int remainder_prevtoLastDigit = static_cast<int>(decimals*std::pow(10., iprec+1)) % 5;
+  double addval = (remainder_prevtoLastDigit==0 ? std::pow(10., -(iprec+1)) : 0.); // Form is smart enough to round 0.00006 to 0.0001, but 0.00005 becomes 0.0000.
+  std::string res = Form(strprintf.Data(), static_cast<double>(val)+addval);
+  while (res.back()=='0') res.pop_back();
+  return res;
+}
 
 #endif

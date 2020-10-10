@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "BaseTree.h"
+#include "ExtendedBinning.h"
 #include "HelperFunctions.h"
 #include "TVar.hh"
 
@@ -21,6 +22,13 @@ namespace ReweightingFunctions{
   float getA1OverB1Weight(BaseTree* tree, std::vector<float*> const& vals); // wgt = wA/wB
 
   float getAbsWeightThresholdByNeff(BaseTree* tree, std::vector<float*> const& vals, ReweightingFunction_t rule, double thr_Neff, TVar::VerbosityLevel verbosity=TVar::ERROR);
+  std::vector<float> getAbsWeightThresholdsPerBinByNeff(
+    BaseTree* tree,
+    std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,
+    ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingFunction_t var_rule,
+    double thr_Neff,
+    TVar::VerbosityLevel verbosity=TVar::ERROR
+  );
 
 }
 

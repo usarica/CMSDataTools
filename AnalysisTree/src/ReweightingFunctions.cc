@@ -134,7 +134,7 @@ int ReweightingFunctions::getSimpleVariableBin(BaseTree* tree, ExtendedBinning c
 }
 
 
-std::vector<double> ReweightingFunctions::getSimpleNeffPerBin(
+std::vector<double> ReweightingFunctions::getSimpleNeffThrsPerBin(
   BaseTree* tree,
   ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
   double thr_Neff,
@@ -146,8 +146,8 @@ std::vector<double> ReweightingFunctions::getSimpleNeffPerBin(
 
   int nEntries = tree->getNEvents();
   if (nEntries==0) return res;
-  thr_Neff = std::min(thr_Neff, double(nEntries)/3.*2.);
-  if (verbosity>=TVar::ERROR) MELAout << "ReweightingFunctions::getSimpleNeffPerBin: Determining the distribution of Neff over the bins..." << endl;
+  thr_Neff = (thr_Neff>0. ? std::min(thr_Neff, double(nEntries)/3.*2.) : static_cast<double>(nEntries));
+  if (verbosity>=TVar::ERROR) MELAout << "ReweightingFunctions::getSimpleNeffThrsPerBin: Determining the distribution of Neff over the bins..." << endl;
 
   std::vector<unsigned int> nEntries_per_bin(nbins, 0);
   for (int ev=0; ev<nEntries; ev++){
@@ -256,7 +256,7 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
   std::vector<float> res(nbins, -1);
 
   // Determine the actual Neff thresholds per bin based on the raw event distribution
-  std::vector<double> thr_Neff_per_bin = getSimpleNeffPerBin(tree, binning, var_vals, varbin_rule, thr_Neff, verbosity);
+  std::vector<double> thr_Neff_per_bin = getSimpleNeffThrsPerBin(tree, binning, var_vals, varbin_rule, thr_Neff, verbosity);
 
   int nEntries = tree->getNEvents();
   if (verbosity>=TVar::ERROR) MELAout << "ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff: Determining the weight thresholds (number of events = " << nEntries << ")..." << endl;

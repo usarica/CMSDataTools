@@ -30,7 +30,7 @@ namespace ReweightingFunctions{
   float getSimpleVariable(BaseTree* tree, std::vector<float*> const& vals); // A single variable
   int getSimpleVariableBin(BaseTree* tree, ExtendedBinning const& binning, std::vector<float*> const& vals); // Binning for a single variable
 
-  std::vector<double> getSimpleNeffPerBin(
+  std::vector<double> getSimpleNeffThrsPerBin(
     BaseTree* tree,
     ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
     double thr_Neff,

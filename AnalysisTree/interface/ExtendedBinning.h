@@ -28,7 +28,7 @@ public:
   const double* getBinning() const;
   std::vector<double> const& getBinningVector();
   std::vector<double> const& getBinningVector() const;
-  template<typename T> std::vector<std::pair<T,T>> getBoundaryPairsList() const;
+  template<typename T> std::vector<std::pair<T, T>> getBoundaryPairsList() const;
   unsigned int getNbins() const;
 
   int getBin(double val) const; // = [ -1,0,...,vbinlow.size() ]

@@ -140,7 +140,7 @@ std::vector<double> ReweightingFunctions::getSimpleNeffThrsPerBin(
   double thr_Neff,
   TVar::VerbosityLevel verbosity
 ){
-  unsigned int const nbins = std::min(static_cast<unsigned int>(1), binning.getNbins());
+  unsigned int const nbins = (!binning.isValid() ? static_cast<unsigned int>(1) : binning.getNbins());
 
   std::vector<double> res(nbins, 0);
 
@@ -173,7 +173,7 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
   std::vector<double> const& thr_Neff_per_bin,
   TVar::VerbosityLevel verbosity
 ){
-  unsigned int const nbins = std::min(static_cast<unsigned int>(1), binning.getNbins());
+  unsigned int const nbins = (!binning.isValid() ? static_cast<unsigned int>(1) : binning.getNbins());
 
   std::vector<float> res(nbins, -1);
 
@@ -230,12 +230,20 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
 
     if (verbosity>=TVar::ERROR) MELAout << "\t- Bin " << ibin << ":" << endl;
     if (!smallest_weights_bin.empty()){
-      res.at(ibin) = (sum_wgts_bin.first + std::sqrt(sum_wgts_bin.second*Neff_bin)) / (Neff_bin-1.);
-      if (verbosity>=TVar::ERROR) MELAout
-        << "\t\t- " << res.at(ibin)
-        << " is the default weight threshold calculated from sN=" << sum_wgts_bin.first << ", vN=" << sum_wgts_bin.second << ", nN=" << Neff_bin
-        << " (N=" << npos_bin << " / " << smallest_weights_bin.size() << ", wN=" << smallest_weights_bin.at(npos_bin-1) << ", wLast=" << smallest_weights_bin.back() << ")."
-        << endl;
+      if (Neff_bin>1.) res.at(ibin) = (sum_wgts_bin.first + std::sqrt(sum_wgts_bin.second*Neff_bin)) / (Neff_bin-1.);
+      if (verbosity>=TVar::ERROR){
+        unsigned int nVeto = 0;
+        for (auto const& wgt:smallest_weights_bin){
+          if (wgt<res.at(ibin)) continue;
+          nVeto++;
+        }
+        MELAout
+          << "\t\t- " << res.at(ibin)
+          << " is the default weight threshold calculated from sN=" << sum_wgts_bin.first << ", vN=" << sum_wgts_bin.second << ", nN=" << Neff_bin
+          << " (N=" << npos_bin << " / " << smallest_weights_bin.size() << ", wN=" << smallest_weights_bin.at(npos_bin-1) << ", wLast=" << smallest_weights_bin.back()
+          << "). Expected fraction of vetos: " << ((double) nVeto) / ((double) smallest_weights_bin.size())
+          << endl;
+      }
     }
     else{
       if (verbosity>=TVar::INFO) MELAout << "\t\t- No weight threshold is found." << endl;
@@ -251,7 +259,7 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
   double thr_Neff,
   TVar::VerbosityLevel verbosity
 ){
-  unsigned int const nbins = std::min(static_cast<unsigned int>(1), binning.getNbins());
+  unsigned int const nbins = (!binning.isValid() ? static_cast<unsigned int>(1) : binning.getNbins());
 
   std::vector<float> res(nbins, -1);
 

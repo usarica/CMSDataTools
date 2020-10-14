@@ -82,7 +82,7 @@ float ReweightingFunctions::getAbsWeightThresholdByNeff(BaseTree* tree, std::vec
   float res = -1;
 
   int nEntries = tree->getNEvents();
-  thr_Neff = std::min(thr_Neff, double(nEntries)/3.*2.);
+  thr_Neff = (thr_Neff>0. ? std::min(thr_Neff, double(nEntries)/3.*2.) : static_cast<double>(nEntries));
   unsigned int npos = 0;
   double Neff = 0;
   double sum_wgts[2]={ 0 }; // [0]: w, [1]: w^2

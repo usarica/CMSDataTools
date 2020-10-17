@@ -9,3 +9,6 @@
 
 <bin file="MergeLHEFiles.cc" name="MergeLHEFiles">
 </bin>
+
+<bin file="CheckFileIntegrity.cc" name="CheckFileIntegrity">
+</bin>

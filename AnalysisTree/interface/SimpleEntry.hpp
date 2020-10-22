@@ -10,7 +10,7 @@ template<typename T> void SimpleEntry::setNamedVal(TString strname, T const& val
 }
 template<typename T> void SimpleEntry::getNamedVal(TString strname, T& val) const{
   typename std::unordered_map<TString, T>::const_iterator it;
-  if (HelperFunctions::getUnorderedMapIterator<T>(strname, this->getNamedMap<T>(), it)) val = it->second;
+  if (HelperFunctions::getUnorderedMapIterator(strname, this->getNamedMap<T>(), it)) val = it->second;
 }
 
 

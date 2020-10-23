@@ -137,6 +137,7 @@ int ReweightingFunctions::getSimpleVariableBin(BaseTree* tree, ExtendedBinning c
 std::vector<double> ReweightingFunctions::getSimpleNeffThrsPerBin(
   BaseTree* tree,
   ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
+  std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,
   double thr_Neff,
   TVar::VerbosityLevel verbosity
 ){
@@ -153,6 +154,9 @@ std::vector<double> ReweightingFunctions::getSimpleNeffThrsPerBin(
   for (int ev=0; ev<nEntries; ev++){
     tree->getEvent(ev);
     HelperFunctions::progressbar(ev, nEntries);
+
+    float wgt_combined = std::abs(wgt_rule(tree, wgt_vals));
+    if (wgt_combined==0.f) continue;
 
     int ibin = varbin_rule(tree, binning, var_vals);
     if (ibin<0) ibin=0;
@@ -205,21 +209,29 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
       for (unsigned int ibin=0; ibin<nbins; ibin++){
         auto const& smallest_weights_bin = smallest_weights.at(ibin);
         auto& Neff_bin = Neff.at(ibin);
+        double const Neff_prev = Neff_bin;
         auto& npos_bin = npos.at(ibin);
         auto& sum_wgts_bin = sum_wgts.at(ibin);
+        auto sum_wgts_bin_prev = sum_wgts_bin;
 
         for (auto const& wgt:smallest_weights_bin){
           sum_wgts_bin.first += wgt;
           sum_wgts_bin.second += wgt*wgt;
-          Neff_bin = std::pow(sum_wgts_bin.first, 2) / sum_wgts_bin.second;
+          if (sum_wgts_bin.second>0.) Neff_bin = std::pow(sum_wgts_bin.first, 2) / sum_wgts_bin.second;
+          else Neff_bin = 0;
           npos_bin++;
-          if (Neff_bin>=thr_Neff_per_bin.at(ibin)) break;
+          if (npos_bin>=thr_Neff_per_bin.at(ibin) && Neff_prev>Neff_bin){
+            sum_wgts_bin = sum_wgts_bin_prev;
+            Neff_bin = Neff_prev;
+            npos_bin--;
+            break;
+          }
         }
       }
       if (verbosity>=TVar::ERROR) MELAout << "\t- Current Neff = " << Neff << " over " << ev+1 << " events..." << endl;
     }
     bool endEventLoop = true;
-    for (unsigned int ibin=0; ibin<nbins; ibin++) endEventLoop &= (Neff.at(ibin)>=thr_Neff_per_bin.at(ibin));
+    for (unsigned int ibin=0; ibin<nbins; ibin++) endEventLoop &= (npos.at(ibin)>=thr_Neff_per_bin.at(ibin));
     if (endEventLoop) break;
   }
   for (unsigned int ibin=0; ibin<nbins; ibin++){
@@ -250,6 +262,44 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
     }
   }
 
+  // For comparisons to brute-force procedure
+  {
+    std::vector< std::vector<float> > weights_all(nbins, std::vector<float>());
+    for (int ev=0; ev<nEntries; ev++){
+      tree->getEvent(ev);
+      HelperFunctions::progressbar(ev, nEntries);
+
+      float wgt_combined = std::abs(wgt_rule(tree, wgt_vals));
+      if (wgt_combined==0.f) continue;
+      int ibin = varbin_rule(tree, binning, var_vals);
+      if (ibin<0) ibin=0;
+      else if (ibin>=(int) nbins) ibin = nbins-1;
+      HelperFunctions::addByLowest(weights_all.at(ibin), wgt_combined, false);
+    }
+    for (unsigned int ibin=0; ibin<nbins; ibin++){
+      auto const& weights_bin=weights_all.at(ibin);
+      double Neff=0;
+      std::pair<double, double> sumW(0, 0);
+      unsigned int ipos=0;
+      for (auto const& wgt:weights_bin){
+        auto sumW_new = sumW;
+        sumW_new.first += wgt;
+        sumW_new.second += std::pow(wgt, 2);
+        double Neff_new = std::pow(sumW_new.first, 2)/sumW_new.second;
+        if (ipos>=weights_bin.size()*2./3. && Neff_new<Neff) break;
+        Neff = Neff_new;
+        sumW = sumW_new;
+        ipos++;
+      }
+      MELAout
+        << "\t\t- " << (ipos>1 ? (weights_bin.at(ipos-1)+weights_bin.at(ipos-2))/2. : -1.)
+        << " is the brute-force weight threshold calculated from sN=" << sumW.first << ", vN=" << sumW.second << ", nN=" << Neff
+        << " (N=" << ipos << " / " << weights_bin.size() << ", wN=" << weights_bin.at(ipos-1) << ", wLast=" << weights_bin.back()
+        << "). Expected fraction of accept: " << ((double) ipos) / ((double) weights_bin.size())
+        << endl;
+    }
+  }
+
   return res;
 }
 std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
@@ -264,7 +314,7 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
   std::vector<float> res(nbins, -1);
 
   // Determine the actual Neff thresholds per bin based on the raw event distribution
-  std::vector<double> thr_Neff_per_bin = getSimpleNeffThrsPerBin(tree, binning, var_vals, varbin_rule, thr_Neff, verbosity);
+  std::vector<double> thr_Neff_per_bin = getSimpleNeffThrsPerBin(tree, binning, var_vals, varbin_rule, wgt_vals, wgt_rule, thr_Neff, verbosity);
 
   int nEntries = tree->getNEvents();
   if (verbosity>=TVar::ERROR) MELAout << "ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff: Determining the weight thresholds (number of events = " << nEntries << ")..." << endl;

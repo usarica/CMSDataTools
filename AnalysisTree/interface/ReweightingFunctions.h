@@ -33,6 +33,7 @@ namespace ReweightingFunctions{
   std::vector<double> getSimpleNeffThrsPerBin(
     BaseTree* tree,
     ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
+    std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,
     double thr_Neff,
     TVar::VerbosityLevel verbosity=TVar::ERROR
   );

@@ -174,9 +174,10 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
   BaseTree* tree,
   std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,
   ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
-  std::vector<double> const& thr_Neff_per_bin,
+  double tolerance,
   TVar::VerbosityLevel verbosity
 ){
+  if (tolerance>1.) tolerance = 1.;
   unsigned int const nbins = (!binning.isValid() ? static_cast<unsigned int>(1) : binning.getNbins());
 
   std::vector<float> res(nbins, -1);
@@ -185,84 +186,7 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
   if (verbosity>=TVar::ERROR) MELAout << "ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff: Determining the weight thresholds (number of events = " << nEntries << ")..." << endl;
   if (nEntries==0) return res;
 
-  // Calculate the weight thresholds based on the Neff thresholds per bin
-  std::vector<unsigned int> npos(nbins, 0);
-  std::vector<double> Neff(nbins, 0);
-  std::vector< std::pair<double, double> > sum_wgts(nbins, std::pair<double, double>(0, 0)); // first: w, second: w^2
-  std::vector< std::vector<float> > smallest_weights(nbins, std::vector<float>());
-  for (int ev=0; ev<nEntries; ev++){
-    tree->getEvent(ev);
-    HelperFunctions::progressbar(ev, nEntries);
-
-    {
-      float wgt_combined = std::abs(wgt_rule(tree, wgt_vals));
-      int ibin = varbin_rule(tree, binning, var_vals);
-      if (ibin<0) ibin=0;
-      else if (ibin>=(int) nbins) ibin = nbins-1;
-      HelperFunctions::addByLowest(smallest_weights.at(ibin), wgt_combined, false);
-    }
-
-    if (ev%100000 == 0 || ev == nEntries-1){
-      // Reset sum_wgts and npos, and recalculate
-      for (auto& sw:sum_wgts){ sw.first = sw.second = 0; }
-      for (auto& nn:npos) nn = 0;
-      for (unsigned int ibin=0; ibin<nbins; ibin++){
-        auto const& smallest_weights_bin = smallest_weights.at(ibin);
-        auto& Neff_bin = Neff.at(ibin);
-        double const Neff_prev = Neff_bin;
-        auto& npos_bin = npos.at(ibin);
-        auto& sum_wgts_bin = sum_wgts.at(ibin);
-        auto sum_wgts_bin_prev = sum_wgts_bin;
-
-        for (auto const& wgt:smallest_weights_bin){
-          sum_wgts_bin.first += wgt;
-          sum_wgts_bin.second += wgt*wgt;
-          if (sum_wgts_bin.second>0.) Neff_bin = std::pow(sum_wgts_bin.first, 2) / sum_wgts_bin.second;
-          else Neff_bin = 0;
-          npos_bin++;
-          if (npos_bin>=thr_Neff_per_bin.at(ibin) && Neff_prev>Neff_bin){
-            sum_wgts_bin = sum_wgts_bin_prev;
-            Neff_bin = Neff_prev;
-            npos_bin--;
-            break;
-          }
-        }
-      }
-      if (verbosity>=TVar::ERROR) MELAout << "\t- Current Neff = " << Neff << " over " << ev+1 << " events..." << endl;
-    }
-    bool endEventLoop = true;
-    for (unsigned int ibin=0; ibin<nbins; ibin++) endEventLoop &= (npos.at(ibin)>=thr_Neff_per_bin.at(ibin));
-    if (endEventLoop) break;
-  }
-  for (unsigned int ibin=0; ibin<nbins; ibin++){
-    auto const& smallest_weights_bin = smallest_weights.at(ibin);
-    auto const& Neff_bin = Neff.at(ibin);
-    auto const& npos_bin = npos.at(ibin);
-    auto const& sum_wgts_bin = sum_wgts.at(ibin);
-
-    if (verbosity>=TVar::ERROR) MELAout << "\t- Bin " << ibin << ":" << endl;
-    if (!smallest_weights_bin.empty()){
-      if (Neff_bin>1.) res.at(ibin) = (sum_wgts_bin.first + std::sqrt(sum_wgts_bin.second*Neff_bin)) / (Neff_bin-1.);
-      if (verbosity>=TVar::ERROR){
-        unsigned int nVeto = 0;
-        for (auto const& wgt:smallest_weights_bin){
-          if (wgt<res.at(ibin)) continue;
-          nVeto++;
-        }
-        MELAout
-          << "\t\t- " << res.at(ibin)
-          << " is the default weight threshold calculated from sN=" << sum_wgts_bin.first << ", vN=" << sum_wgts_bin.second << ", nN=" << Neff_bin
-          << " (N=" << npos_bin << " / " << smallest_weights_bin.size() << ", wN=" << smallest_weights_bin.at(npos_bin-1) << ", wLast=" << smallest_weights_bin.back()
-          << "). Expected fraction of vetos: " << ((double) nVeto) / ((double) smallest_weights_bin.size())
-          << endl;
-      }
-    }
-    else{
-      if (verbosity>=TVar::INFO) MELAout << "\t\t- No weight threshold is found." << endl;
-    }
-  }
-
-  // For comparisons to brute-force procedure
+  // A bit brute-force, but best to do this way...
   {
     std::vector< std::vector<float> > weights_all(nbins, std::vector<float>());
     for (int ev=0; ev<nEntries; ev++){
@@ -277,8 +201,12 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
       HelperFunctions::addByLowest(weights_all.at(ibin), wgt_combined, false);
     }
     for (unsigned int ibin=0; ibin<nbins; ibin++){
-      auto const& weights_bin=weights_all.at(ibin);
-      double Neff=0;
+      auto const& weights_bin = weights_all.at(ibin);
+      unsigned int const nevts_bin = weights_bin.size();
+      if (nevts_bin<=1) continue;
+      unsigned int nevts_Neff = (tolerance>0. ? (static_cast<double>(nevts_bin)*tolerance + 0.5) : (static_cast<double>(nevts_bin)-std::sqrt(static_cast<double>(nevts_bin))+0.5));
+      double last_smallest_weight = -1;
+      double Neff = 0;
       std::pair<double, double> sumW(0, 0);
       unsigned int ipos=0;
       for (auto const& wgt:weights_bin){
@@ -286,45 +214,28 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
         sumW_new.first += wgt;
         sumW_new.second += std::pow(wgt, 2);
         double Neff_new = std::pow(sumW_new.first, 2)/sumW_new.second;
-        if (ipos>=weights_bin.size()*2./3. && Neff_new<Neff) break;
+        if (ipos>=nevts_Neff-1 && (Neff_new<Neff || (last_smallest_weight>0. && wgt>10.*last_smallest_weight))) break;
         Neff = Neff_new;
         sumW = sumW_new;
+        last_smallest_weight = wgt;
         ipos++;
       }
+      if (ipos==nevts_bin){
+        if (verbosity>=TVar::ERROR) MELAout << "\t\t- Threshold for bin " << ibin << " is kept at " << res.at(ibin) << endl;
+        continue;
+      }
+      auto const& last_good_wgt = weights_bin.at(ipos-1);
+      auto const& first_bad_wgt = weights_bin.at(ipos);
+      res.at(ibin) = (last_good_wgt + first_bad_wgt) / 2.;
       MELAout
-        << "\t\t- " << (ipos>1 ? (weights_bin.at(ipos-1)+weights_bin.at(ipos-2))/2. : -1.)
-        << " is the brute-force weight threshold calculated from sN=" << sumW.first << ", vN=" << sumW.second << ", nN=" << Neff
+        << "\t\t- " << res.at(ibin)
+        << " is the weight threshold found from iterating over the sample. The calculated threshold would be " << (Neff>1. ? (sumW.first + std::sqrt(sumW.second*Neff)) / (Neff-1.) : -1.)
+        << " from sN=" << sumW.first << ", vN=" << sumW.second << ", nN=" << Neff
         << " (N=" << ipos << " / " << weights_bin.size() << ", wN=" << weights_bin.at(ipos-1) << ", wLast=" << weights_bin.back()
-        << "). Expected fraction of accept: " << ((double) ipos) / ((double) weights_bin.size())
+        << "). Expected fraction to accept events: " << ((double) ipos) / ((double) weights_bin.size())
         << endl;
     }
   }
 
   return res;
-}
-std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
-  BaseTree* tree,
-  std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,
-  ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
-  double thr_Neff,
-  TVar::VerbosityLevel verbosity
-){
-  unsigned int const nbins = (!binning.isValid() ? static_cast<unsigned int>(1) : binning.getNbins());
-
-  std::vector<float> res(nbins, -1);
-
-  // Determine the actual Neff thresholds per bin based on the raw event distribution
-  std::vector<double> thr_Neff_per_bin = getSimpleNeffThrsPerBin(tree, binning, var_vals, varbin_rule, wgt_vals, wgt_rule, thr_Neff, verbosity);
-
-  int nEntries = tree->getNEvents();
-  if (verbosity>=TVar::ERROR) MELAout << "ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff: Determining the weight thresholds (number of events = " << nEntries << ")..." << endl;
-  if (nEntries==0) return std::vector<float>(nbins, -1);
-
-  // Calculate the weight thresholds based on the Neff thresholds per bin
-  return getAbsWeightThresholdsPerBinByNeff(
-    tree,
-    wgt_vals, wgt_rule,
-    binning, var_vals, varbin_rule,
-    thr_Neff_per_bin, verbosity
-  );
 }

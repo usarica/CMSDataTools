@@ -74,7 +74,7 @@ namespace HelperFunctions{
 
   // Bit set and test
   template<typename T> void set_bit(T& mask, unsigned int iBit, bool val=true);
-  template<typename T> bool test_bit(T mask, unsigned int iBit);
+  template<typename T> bool test_bit(T const& mask, unsigned int iBit);
 
   // Vector helpers
   template<typename T> void deltaR(T const& e1, T const& p1, T const& e2, T const& p2, T& res);
@@ -552,7 +552,7 @@ template<typename T> void HelperFunctions::set_bit(T& mask, unsigned int iBit, b
     mask = mask ^ tmp_mask;
   }
 }
-template<typename T> bool HelperFunctions::test_bit(T mask, unsigned int iBit){ return (mask >> iBit) & 1; }
+template<typename T> bool HelperFunctions::test_bit(T const& mask, unsigned int iBit){ return (mask >> iBit) & 1; }
 
 // Vector functions
 template<typename T> void HelperFunctions::deltaR(T const& e1, T const& p1, T const& e2, T const& p2, T& res){

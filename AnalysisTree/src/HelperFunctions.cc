@@ -89,16 +89,15 @@ void HelperFunctions::splitOptionRecursive(const TString& rawoption, std::vector
   for (std::string const& s:s_splitoptions) splitoptions.push_back(s.c_str());
 }
 
-ExtendedBinning HelperFunctions::getExtendedBinning(TAxis const* theAxis){
-  ExtendedBinning res;
+void HelperFunctions::getExtendedBinning(TAxis const* theAxis, ExtendedBinning& res){
   if (theAxis){
+    res.resetBinning();
     int nbins = theAxis->GetNbins();
     for (int ix=1; ix<=nbins+1; ix++) res.addBinBoundary(theAxis->GetBinLowEdge(ix));
     res.setLabel(theAxis->GetTitle());
   }
-  return res;
 }
-ExtendedBinning HelperFunctions::getExtendedBinning(TH1 const* histo, unsigned int iaxis){
+void HelperFunctions::getExtendedBinning(TH1 const* histo, unsigned int iaxis, ExtendedBinning& res){
   TAxis const* theAxis = nullptr;
   switch (iaxis){
   case 0:
@@ -115,7 +114,7 @@ ExtendedBinning HelperFunctions::getExtendedBinning(TH1 const* histo, unsigned i
     assert(0);
     break;
   }
-  return getExtendedBinning(theAxis);
+  getExtendedBinning(theAxis, res);
 }
 
 /* SPECIFIC COMMENT: Get a1 and a2 as well as a TF1 object for the formula a0+a1*exp(x) */

@@ -49,6 +49,7 @@ public:
   void addBinBoundary(double boundary);
   void setBinBoundary(const int bin, double boundary);
   void removeBinLowEdge(const int bin);
+  void resetBinning(){ vbinlow.clear(); }
 
   // Static functions
   static ExtendedBinning extractBinning(TH1 const* histo, unsigned int const direction);

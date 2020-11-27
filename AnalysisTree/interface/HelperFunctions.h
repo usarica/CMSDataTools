@@ -213,8 +213,8 @@ namespace HelperFunctions{
   void splitOptionRecursive(const std::string& rawoption, std::vector<std::string>& splitoptions, char delimiter, bool uniqueResults=true);
   void splitOptionRecursive(const TString& rawoption, std::vector<TString>& splitoptions, char delimiter, bool uniqueResults=true);
 
-  ExtendedBinning getExtendedBinning(TAxis const* theAxis);
-  ExtendedBinning getExtendedBinning(TH1 const* histo, unsigned int iaxis);
+  void getExtendedBinning(TAxis const* theAxis, ExtendedBinning& res);
+  void getExtendedBinning(TH1 const* histo, unsigned int iaxis, ExtendedBinning& res);
 
   TSpline3* convertGraphToSpline3(TGraph const* tg, bool faithfulFirst=false, bool faithfulSecond=false, double* dfirst=nullptr, double* dlast=nullptr);
 

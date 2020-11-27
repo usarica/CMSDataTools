@@ -1,7 +1,7 @@
 #include <cassert>
 #include <cstring>
-#include "QuantFuncMathCore.h"
 #include "HelperFunctions.h"
+#include "StatisticsHelpers.h"
 #include "MELANCSplineFactory_1D.h"
 #include "MELANCSplineFactory_2D.h"
 #include "MELANCSplineFactory_3D.h"
@@ -439,9 +439,9 @@ void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAs
     double binerrorlow, binerrorhigh, binerror;
     binerrorlow = binerrorhigh = binerror = histo->GetBinError(bin);
     if ((useAsymError || binerror==0.) && (errorsOnZero || bincontent!=0.)){
-      constexpr double quant = (1. - 0.6827) / 2.;
-      binerrorhigh = (ROOT::Math::chisquared_quantile_c(quant, 2 * (bincontent + 1)) / 2. - bincontent);
-      binerrorlow = (bincontent - ROOT::Math::chisquared_quantile_c(1 - quant, 2 * bincontent) / 2.);
+      StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(bincontent, StatisticsHelpers::VAL_CL_1SIGMA, binerrorlow, binerrorhigh);
+      binerrorhigh = binerrorhigh - bincontent;
+      binerrorlow = bincontent - binerrorlow;
     }
 
     TAxis const* xaxis = histo->GetXaxis();

@@ -3,6 +3,7 @@
 #include "MELAStreamHelpers.hh"
 
 
+using namespace std;
 using namespace HelperFunctions;
 using namespace MELAStreamHelpers;
 
@@ -42,8 +43,8 @@ ExtendedHistogram_2D& ExtendedHistogram_2D::operator=(const ExtendedHistogram_2D
 void ExtendedHistogram_2D::setNameTitle(const TString name_, const TString title_){
   ExtendedHistogram::setNameTitle(name_, title_);
   if (histo){ histo->SetName(name); histo->SetTitle(title); }
-  if (prof_x){ prof_x->SetName(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data())); prof_x->SetTitle(title); }
-  if (prof_y){ prof_y->SetName(Form("%s_prof_%s", name.Data(), ybinning.getLabel().Data())); prof_y->SetTitle(title); }
+  if (prof_x){ prof_x->SetName(Form("%s_prof_%s", name.Data(), xbinning.getName().Data())); prof_x->SetTitle(title); }
+  if (prof_y){ prof_y->SetName(Form("%s_prof_%s", name.Data(), ybinning.getName().Data())); prof_y->SetTitle(title); }
 }
 void ExtendedHistogram_2D::setBinning(const ExtendedBinning& binning, const int xyz, const TString label){
   if (xyz==0){
@@ -67,8 +68,8 @@ void ExtendedHistogram_2D::build(){
     const int nbinsx = xbinning.getNbins();
     const int nbinsy = ybinning.getNbins();
     histo = new TH2F(name, title, nbinsx, xbins, nbinsy, ybins); histo->GetXaxis()->SetTitle(xbinning.getLabel()); histo->GetYaxis()->SetTitle(ybinning.getLabel()); histo->Sumw2();
-    prof_x = new TProfile(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data()), title, nbinsx, xbins); prof_x->GetXaxis()->SetTitle(xbinning.getLabel()); prof_x->Sumw2();
-    prof_y = new TProfile(Form("%s_prof_%s", name.Data(), ybinning.getLabel().Data()), title, nbinsy, ybins); prof_y->GetXaxis()->SetTitle(ybinning.getLabel()); prof_y->Sumw2();
+    prof_x = new TProfile(Form("%s_prof_%s", name.Data(), xbinning.getName().Data()), title, nbinsx, xbins); prof_x->GetXaxis()->SetTitle(xbinning.getLabel()); prof_x->Sumw2();
+    prof_y = new TProfile(Form("%s_prof_%s", name.Data(), ybinning.getName().Data()), title, nbinsy, ybins); prof_y->GetXaxis()->SetTitle(ybinning.getLabel()); prof_y->Sumw2();
   }
 }
 void ExtendedHistogram_2D::reset(){

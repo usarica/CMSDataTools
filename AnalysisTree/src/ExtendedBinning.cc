@@ -2,26 +2,55 @@
 #include "HelperFunctions.h"
 
 
-ExtendedBinning::ExtendedBinning(const TString label_) : label(label_){}
-ExtendedBinning::ExtendedBinning(const unsigned int nbins, const double min, const double max, const TString label_) : label(label_){
+ExtendedBinning::ExtendedBinning(const TString name_, const TString label_) :
+  name(name_),
+  label(label_)
+{
+  adjustNameLabel();
+}
+ExtendedBinning::ExtendedBinning(const unsigned int nbins, const double min, const double max, const TString name_, const TString label_) :
+  name(name_),
+  label(label_)
+{
+  adjustNameLabel();
+
   if (max>min && nbins>0){
     const double inc = (max-min)/((const double) nbins);
     vbinlow.reserve(nbins+1);
     for (unsigned int i=0; i<=nbins; i++) vbinlow.push_back(min+inc*(double(i)));
   }
 }
-ExtendedBinning::ExtendedBinning(const double* abinlow, const TString label_) : label(label_){
+ExtendedBinning::ExtendedBinning(const double* abinlow, const TString name_, const TString label_) :
+  name(name_),
+  label(label_)
+{
+  adjustNameLabel();
+
   if (abinlow!=nullptr){
     const int np = sizeof(abinlow)/sizeof(abinlow[0]);
     vbinlow = std::vector<double>(abinlow, abinlow+np);
   }
 }
-ExtendedBinning::ExtendedBinning(const std::vector<double>& vbinlow_, const TString label_) : vbinlow(vbinlow_), label(label_){}
-ExtendedBinning::ExtendedBinning(ExtendedBinning const& other) : vbinlow(other.vbinlow), label(other.label){}
-
-bool ExtendedBinning::isValid() const{
-  return (vbinlow.size()>1);
+ExtendedBinning::ExtendedBinning(const std::vector<double>& vbinlow_, const TString name_, const TString label_) :
+  vbinlow(vbinlow_),
+  name(name_),
+  label(label_)
+{
+  adjustNameLabel();
 }
+ExtendedBinning::ExtendedBinning(ExtendedBinning const& other) :
+  vbinlow(other.vbinlow),
+  name(other.name),
+  label(other.label)
+{}
+
+
+void ExtendedBinning::adjustNameLabel(){ if (this->label=="") this->label = this->name; }
+
+bool ExtendedBinning::isValid() const{ return (vbinlow.size()>1); }
+
+void ExtendedBinning::setName(const TString name_){ name=name_; }
+TString ExtendedBinning::getName() const{ return name; }
 
 void ExtendedBinning::setLabel(const TString label_){ label=label_; }
 TString ExtendedBinning::getLabel() const{ return label; }

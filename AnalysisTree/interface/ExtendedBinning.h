@@ -10,16 +10,22 @@
 class ExtendedBinning{
 protected:
   std::vector<double> vbinlow; // Size=Nbins+1
+  TString name;
   TString label;
 
+  void adjustNameLabel();
+
 public:
-  ExtendedBinning(const TString label_="");
-  ExtendedBinning(const unsigned int nbins, const double min, const double max, const TString label_=""); // Uniform constructor
-  ExtendedBinning(const double* abinlow, const TString label_="");
-  ExtendedBinning(const std::vector<double>& vbinlow_, const TString label_="");
+  ExtendedBinning(const TString name_="", const TString label_="");
+  ExtendedBinning(const unsigned int nbins, const double min, const double max, const TString name="", const TString label_=""); // Uniform constructor
+  ExtendedBinning(const double* abinlow, const TString name="", const TString label_="");
+  ExtendedBinning(const std::vector<double>& vbinlow_, const TString name="", const TString label_="");
   ExtendedBinning(ExtendedBinning const& other);
 
   bool isValid() const;
+
+  void setName(const TString name_);
+  TString getName() const;
 
   void setLabel(const TString label_);
   TString getLabel() const;

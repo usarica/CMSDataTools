@@ -3,6 +3,7 @@
 #include "MELAStreamHelpers.hh"
 
 
+using namespace std;
 using namespace HelperFunctions;
 using namespace MELAStreamHelpers;
 
@@ -46,9 +47,9 @@ ExtendedHistogram_3D& ExtendedHistogram_3D::operator=(const ExtendedHistogram_3D
 void ExtendedHistogram_3D::setNameTitle(const TString name_, const TString title_){
   ExtendedHistogram::setNameTitle(name_, title_);
   if (histo){ histo->SetName(name); histo->SetTitle(title); }
-  if (prof_x){ prof_x->SetName(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data())); prof_x->SetTitle(title); }
-  if (prof_y){ prof_y->SetName(Form("%s_prof_%s", name.Data(), ybinning.getLabel().Data())); prof_y->SetTitle(title); }
-  if (prof_z){ prof_z->SetName(Form("%s_prof_%s", name.Data(), zbinning.getLabel().Data())); prof_z->SetTitle(title); }
+  if (prof_x){ prof_x->SetName(Form("%s_prof_%s", name.Data(), xbinning.getName().Data())); prof_x->SetTitle(title); }
+  if (prof_y){ prof_y->SetName(Form("%s_prof_%s", name.Data(), ybinning.getName().Data())); prof_y->SetTitle(title); }
+  if (prof_z){ prof_z->SetName(Form("%s_prof_%s", name.Data(), zbinning.getName().Data())); prof_z->SetTitle(title); }
 }
 void ExtendedHistogram_3D::setBinning(const ExtendedBinning& binning, const int xyz, const TString label){
   if (xyz==0){
@@ -79,9 +80,9 @@ void ExtendedHistogram_3D::build(){
     const int nbinsy = ybinning.getNbins();
     const int nbinsz = zbinning.getNbins();
     histo = new TH3F(name, title, nbinsx, xbins, nbinsy, ybins, nbinsz, zbins); histo->GetXaxis()->SetTitle(xbinning.getLabel()); histo->GetYaxis()->SetTitle(ybinning.getLabel()); histo->GetZaxis()->SetTitle(zbinning.getLabel()); histo->Sumw2();
-    prof_x = new TProfile(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data()), title, nbinsx, xbins); prof_x->GetXaxis()->SetTitle(xbinning.getLabel()); prof_x->Sumw2();
-    prof_y = new TProfile(Form("%s_prof_%s", name.Data(), ybinning.getLabel().Data()), title, nbinsy, ybins); prof_y->GetXaxis()->SetTitle(ybinning.getLabel()); prof_y->Sumw2();
-    prof_z = new TProfile(Form("%s_prof_%s", name.Data(), zbinning.getLabel().Data()), title, nbinsz, zbins); prof_z->GetXaxis()->SetTitle(zbinning.getLabel()); prof_z->Sumw2();
+    prof_x = new TProfile(Form("%s_prof_%s", name.Data(), xbinning.getName().Data()), title, nbinsx, xbins); prof_x->GetXaxis()->SetTitle(xbinning.getLabel()); prof_x->Sumw2();
+    prof_y = new TProfile(Form("%s_prof_%s", name.Data(), ybinning.getName().Data()), title, nbinsy, ybins); prof_y->GetXaxis()->SetTitle(ybinning.getLabel()); prof_y->Sumw2();
+    prof_z = new TProfile(Form("%s_prof_%s", name.Data(), zbinning.getName().Data()), title, nbinsz, zbins); prof_z->GetXaxis()->SetTitle(zbinning.getLabel()); prof_z->Sumw2();
   }
 }
 void ExtendedHistogram_3D::reset(){

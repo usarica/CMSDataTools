@@ -3,6 +3,7 @@
 #include "MELAStreamHelpers.hh"
 
 
+using namespace std;
 using namespace HelperFunctions;
 using namespace MELAStreamHelpers;
 
@@ -38,7 +39,7 @@ ExtendedHistogram_1D& ExtendedHistogram_1D::operator=(const ExtendedHistogram_1D
 void ExtendedHistogram_1D::setNameTitle(const TString name_, const TString title_){
   ExtendedHistogram::setNameTitle(name_, title_);
   if (histo){ histo->SetName(name); histo->SetTitle(title); }
-  if (prof_x){ prof_x->SetName(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data())); prof_x->SetTitle(title); }
+  if (prof_x){ prof_x->SetName(Form("%s_prof_%s", name.Data(), xbinning.getName().Data())); prof_x->SetTitle(title); }
 }
 void ExtendedHistogram_1D::setBinning(const ExtendedBinning& binning, const int /*xyz*/, const TString label){
   xbinning = binning;
@@ -53,7 +54,7 @@ void ExtendedHistogram_1D::build(){
     const double* xbins = xbinning.getBinning();
     const int nbins = xbinning.getNbins();
     histo = new TH1F(name, title, nbins, xbins); histo->GetXaxis()->SetTitle(xbinning.getLabel()); histo->Sumw2();
-    prof_x = new TProfile(Form("%s_prof_%s", name.Data(), xbinning.getLabel().Data()), title, nbins, xbins); prof_x->GetXaxis()->SetTitle(xbinning.getLabel()); prof_x->Sumw2();
+    prof_x = new TProfile(Form("%s_prof_%s", name.Data(), xbinning.getName().Data()), title, nbins, xbins); prof_x->GetXaxis()->SetTitle(xbinning.getLabel()); prof_x->Sumw2();
   }
 }
 void ExtendedHistogram_1D::reset(){

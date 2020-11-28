@@ -3602,7 +3602,7 @@ void HelperFunctions::CopyDirectory(TDirectory* source, TTree*(*fcnTree)(TTree*)
   savdir->cd();
 }
 
-void HelperFunctions::distributeObjects(TDirectory* inputdir, std::vector<TDirectory*> outputdirs, TVar::VerbosityLevel verbosity){
+void HelperFunctions::distributeObjects(TDirectory* inputdir, std::vector<TDirectory*> const& outputdirs, TVar::VerbosityLevel verbosity){
   unsigned int const nchunks = outputdirs.size();
 
   TDirectory* curdir = gDirectory;

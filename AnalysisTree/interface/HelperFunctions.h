@@ -313,6 +313,9 @@ namespace HelperFunctions{
   void CopyFile(TString fname, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*));
   void CopyDirectory(TDirectory* source, TTree*(*fcnTree)(TTree*), TDirectory*(*fcnDirectory)(TDirectory*));
 
+  // Function to distribute a directory/file into multiple chunks. Splits trees.
+  void distributeObjects(TDirectory* inputdir, std::vector<TDirectory*> outputdirs, TVar::VerbosityLevel verbosity = TVar::ERROR);
+
   // Function to extract all trees in a file
   void extractTreesFromDirectory(TDirectory* source, std::vector<TTree*>& res, bool doClone=false);
 

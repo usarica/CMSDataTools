@@ -12,3 +12,6 @@
 
 <bin file="CheckFileIntegrity.cc" name="CheckFileIntegrity">
 </bin>
+
+<bin file="SplitROOTFiles.cc" name="SplitROOTFiles">
+</bin>

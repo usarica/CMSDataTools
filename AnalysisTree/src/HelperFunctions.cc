@@ -3602,6 +3602,87 @@ void HelperFunctions::CopyDirectory(TDirectory* source, TTree*(*fcnTree)(TTree*)
   savdir->cd();
 }
 
+void HelperFunctions::distributeObjects(TDirectory* inputdir, std::vector<TDirectory*> outputdirs, TVar::VerbosityLevel verbosity){
+  unsigned int const nchunks = outputdirs.size();
+
+  TDirectory* curdir = gDirectory;
+
+  inputdir->cd();
+  if (verbosity>=TVar::INFO) cout << "HelperFunctions:distributeObjects: Now inside " << inputdir->GetName() << ":" << endl;
+
+  TKey* key;
+  TIter nextkey(inputdir->GetListOfKeys());
+  std::vector<TString> copiedKeys;
+  while ((key = (TKey*) nextkey())){
+    const char* classname = key->GetClassName();
+    TClass* cl = gROOT->GetClass(classname);
+    if (!cl) continue;
+    if (cl->InheritsFrom(TDirectory::Class())){
+      inputdir->cd(key->GetName());
+      TDirectory* subdir = gDirectory;
+      inputdir->cd();
+
+      if (verbosity>=TVar::INFO) cout << "\t- Found subdirectory " << key->GetName() << endl;
+
+      std::vector<TDirectory*> outputsubdirs; outputsubdirs.reserve(outputdirs.size());
+      for (auto& outputdir:outputdirs){
+        TDirectory* outputsubdir = outputdir->mkdir(key->GetName());
+        outputsubdirs.push_back(outputsubdir);
+        inputdir->cd();
+      }
+      distributeObjects(subdir, outputsubdirs);
+      inputdir->cd();
+    }
+    else if (cl->InheritsFrom(TTree::Class())){
+      TTree* obj = (TTree*) inputdir->Get(key->GetName());
+      if (!obj) continue;
+      TString objname = obj->GetName();
+      TString keyname = key->GetName();
+      if (!HelperFunctions::checkListVariable(copiedKeys, keyname)){
+        copiedKeys.push_back(keyname);
+        int nEntries = obj->GetEntries();
+        int nEntries_step = static_cast<int>(nEntries / nchunks) + 1;
+        int nEntries_first = 0;
+        if (verbosity>=TVar::INFO) cout << "\t- Found tree " << key->GetName() << " with " << nEntries << " entries:" << endl;
+        for (unsigned int ichunk=0; ichunk<nchunks; ichunk++){
+          TDirectory* outputdir = outputdirs.at(ichunk);
+          outputdir->cd();
+
+          TTree* newtree = obj->CloneTree(0);
+          int nEntries_last = std::min(nEntries_first+nEntries_step, nEntries);
+          if (ichunk==nchunks-1) nEntries_last = nEntries;
+          if (verbosity>=TVar::INFO) cout << "\t\t- Tree[ " << nEntries_first << ", " << nEntries_last << ")" << endl;
+          for (int ev=nEntries_first; ev<nEntries_last; ev++){
+            obj->GetEntry(ev);
+            newtree->Fill();
+          }
+          outputdir->WriteTObject(newtree);
+          delete newtree;
+          nEntries_first = nEntries_last;
+
+          inputdir->cd();
+        }
+      }
+    }
+    else if (cl->InheritsFrom(TObject::Class())){
+      TObject* obj = (TObject*) inputdir->Get(key->GetName());
+      if (!obj) continue;
+      TString objname = obj->GetName();
+      TString keyname = key->GetName();
+      if ((objname=="Graph" && keyname!="Graph") || objname=="") objname = keyname; // Holy jumping monkeys for fake rates
+      if (dynamic_cast<TNamed*>(obj)) dynamic_cast<TNamed*>(obj)->SetName(objname);
+      if (!HelperFunctions::checkListVariable(copiedKeys, keyname)){
+        copiedKeys.push_back(keyname);
+        if (verbosity>=TVar::INFO) cout << "\t- Found key " << keyname << endl;
+        for (auto& outputdir:outputdirs) outputdir->WriteTObject(obj);
+        inputdir->cd();
+      }
+    }
+  }
+
+  curdir->cd();
+}
+
 void HelperFunctions::extractTreesFromDirectory(TDirectory* source, std::vector<TTree*>& res, bool doClone){
   TDirectory* target = gDirectory;
 

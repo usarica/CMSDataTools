@@ -239,3 +239,55 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
 
   return res;
 }
+std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByFixedFractionalThreshold(
+  BaseTree* tree,
+  std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,
+  ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
+  double frac, double tolerance,
+  TVar::VerbosityLevel verbosity
+){
+  if (frac<=0.) frac = 0.9999;
+  if (tolerance<=0.) tolerance = 5.;
+  unsigned int const nbins = (!binning.isValid() ? static_cast<unsigned int>(1) : binning.getNbins());
+
+  std::vector<float> res(nbins, -1);
+
+  int nEntries = tree->getNEvents();
+  if (verbosity>=TVar::ERROR) MELAout << "ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff: Determining the weight thresholds (number of events = " << nEntries << ")..." << endl;
+  if (nEntries==0) return res;
+
+  // A bit brute-force, but best to do this way...
+  {
+    std::vector< std::vector<float> > weights_all(nbins, std::vector<float>());
+    for (int ev=0; ev<nEntries; ev++){
+      tree->getEvent(ev);
+      HelperFunctions::progressbar(ev, nEntries);
+
+      float wgt_combined = std::abs(wgt_rule(tree, wgt_vals));
+      if (wgt_combined==0.f) continue;
+      int ibin = varbin_rule(tree, binning, var_vals);
+      if (ibin<0) ibin=0;
+      else if (ibin>=(int) nbins) ibin = nbins-1;
+
+      HelperFunctions::addByLowest(weights_all.at(ibin), wgt_combined, false);
+    }
+    for (unsigned int ibin=0; ibin<nbins; ibin++){
+      if (verbosity>=TVar::ERROR) MELAout << "\t- Bin " << ibin << ":" << endl;
+      auto const& weights_bin = weights_all.at(ibin);
+      unsigned int const nevts_bin = weights_bin.size();
+
+      if (verbosity>=TVar::ERROR) MELAout << "\t\t- Nevts = " << nevts_bin << "<3, skipping..." << endl;
+      if (nevts_bin<3) continue;
+
+      unsigned int index_entry = std::max((unsigned int) std::ceil(float(nevts_bin)*frac), (unsigned int) 1);
+      unsigned int index_entry_prev=index_entry-1;
+      float threshold = (weights_bin.at(index_entry_prev) + weights_bin.at(index_entry))*0.5;
+      if (verbosity>=TVar::ERROR) MELAout << "\t\t- Raw threshold before checking tolerance: " << threshold << endl;
+      if (weights_bin.back()<threshold*tolerance) threshold = -1; // Prevent false-positives
+      res.at(ibin) = threshold;
+      MELAout << "\t\t- Final threshold: " << res.at(ibin) << endl;
+    }
+  }
+
+  return res;
+}

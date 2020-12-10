@@ -437,10 +437,31 @@ void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAs
     double bincontent = histo->GetBinContent(bin);
     double binerrorlow, binerrorhigh, binerror;
     binerrorlow = binerrorhigh = binerror = histo->GetBinError(bin);
-    if ((useAsymError || binerror==0.) && (errorsOnZero || bincontent!=0.)){
-      StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(bincontent, StatisticsHelpers::VAL_CL_1SIGMA, binerrorlow, binerrorhigh);
-      binerrorhigh = binerrorhigh - bincontent;
-      binerrorlow = bincontent - binerrorlow;
+    if (useAsymError && (errorsOnZero || bincontent!=0.)){
+      double Neff, sferr;
+      if (binerror==0. && bincontent==0.){
+        Neff = 0;
+        sferr = (errorsOnZero ? 1. : 0.);
+      }
+      else if (binerror==0. && bincontent!=0.){
+        Neff = bincontent;
+        sferr = 1.;
+      }
+      else if (binerror!=0. && bincontent==0.){
+        Neff = std::pow(bincontent/binerror, 2);
+        sferr = -1;
+      }
+      else{
+        Neff = std::pow(bincontent/binerror, 2);
+        sferr = binerror / std::sqrt(Neff);
+      }
+      if (sferr>=0.){
+        StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(Neff, StatisticsHelpers::VAL_CL_1SIGMA, binerrorlow, binerrorhigh);
+        binerrorhigh = binerrorhigh - Neff;
+        binerrorlow = Neff - binerrorlow;
+        binerrorhigh *= sferr;
+        binerrorlow *= sferr;
+      }
     }
 
     TAxis const* xaxis = histo->GetXaxis();
@@ -453,6 +474,16 @@ void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAs
   tg = new TGraphAsymmErrors(nbins, xx.data(), yy.data(), exl.data(), exh.data(), eyl.data(), eyh.data());
   tg->SetName(Form("tg_%s", histo->GetName()));
   tg->SetTitle(histo->GetTitle());
+  histo->GetXaxis()->Copy(*(tg->GetXaxis()));
+  histo->GetYaxis()->Copy(*(tg->GetYaxis()));
+  tg->SetLineStyle(histo->GetLineStyle());
+  tg->SetLineColor(histo->GetLineColor());
+  tg->SetLineWidth(histo->GetLineWidth());
+  tg->SetFillStyle(histo->GetFillStyle());
+  tg->SetFillColor(histo->GetFillColor());
+  tg->SetMarkerStyle(histo->GetMarkerStyle());
+  tg->SetMarkerSize(histo->GetMarkerSize());
+  tg->SetMarkerColor(histo->GetMarkerColor());
 }
 
 

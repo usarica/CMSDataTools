@@ -98,7 +98,7 @@ VECTOR_DATA_OUTPUT_DIRECTIVE(TString, std::vector<TString>) \
 /*VECTOR_DATA_OUTPUT_DIRECTIVE(CMSLorentzVector, std::vector<CMSLorentzVector>)*/
 
 #define DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVES \
-/*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(bool, std::vector<std::vector<bool>>)*/ \
+DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(bool, std::vector<std::vector<bool>>) \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(uchar, std::vector<std::vector<unsigned char>>)*/ \
 /*DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(char, std::vector<std::vector<char>>)*/ \
 DOUBLEVECTOR_DATA_OUTPUT_DIRECTIVE(ushort, std::vector<std::vector<unsigned short>>) \

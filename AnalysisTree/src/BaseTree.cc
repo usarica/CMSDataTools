@@ -369,6 +369,39 @@ bool BaseTree::getEvent(int ev){
   }
   return false;
 }
+bool BaseTree::updateBranch(int ev, TString const& bname, bool check_linked){
+  if (check_linked){
+    if (searchBranchType(bname)==BranchType_unknown_t) MELAerr << "BaseTree::updateBranch: Branch " << bname << " is not linked." << endl;
+    return false;
+  }
+  int n_acc=0;
+  for (auto& tt:treelist){
+    int nEntries = tt->GetEntries();
+    if (ev<n_acc+nEntries){
+      int ev_tree = ev-n_acc;
+      TBranch* tbr = nullptr;
+      if (isTChain){
+        // If the tree is a TChain, the entry index and the total number of entries
+        // need to correspond to the loaded tree of the TChain.
+        TChain* tc = dynamic_cast<TChain*>(tt);
+        ev_tree = tc->LoadTree(ev_tree);
+        TTree* tc_tree = tc->GetTree();
+        nEntries = (tc_tree ? tc_tree->GetEntries() : -1);
+        // It is important to get the branch AFTER loading the tree
+        // because one might get the branch of another tree accidentally.
+        tbr = (tc_tree ? tc_tree->GetBranch(bname) : nullptr);
+      }
+      else tbr = tt->GetBranch(bname);
+      if (tbr && tbr->GetEntries()!=nEntries){
+        MELAerr << "BaseTree::updateBranch: Branch " << bname << " has " << tbr->GetEntries() << " entries != " << nEntries << "." << endl;
+        assert(0);
+      }
+      return (tbr && tbr->GetEntries()==nEntries && ev_tree>=0 && tbr->GetEntry(ev_tree)>0);
+    }
+    n_acc += nEntries;
+  }
+  return false;
+}
 void BaseTree::refreshCurrentEvent(){
   TTree* tmpTree = currentTree;
   int tmpEv = currentEvent;

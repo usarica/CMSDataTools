@@ -106,6 +106,10 @@ public:
   bool getEvent(int ev);
   void refreshCurrentEvent();
 
+  // Update single branch for an event
+  // Should work similar to getEvent, but for a single branch.
+  bool updateBranch(int ev, TString const& bname, bool check_linked = true);
+
   // For caching purposes
   bool getCurrentEventInfo(TTree*& currentTree_, int& currentEvent_) const;
   bool isSameEvent(TTree* const& currentTree_, int const& currentEvent_) const;

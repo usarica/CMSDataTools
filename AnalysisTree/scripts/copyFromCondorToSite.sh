@@ -57,6 +57,19 @@ if [[ ! -z ${FILENAME} ]];then
     fi
     (( itry += 1 ))
   done
+  if [[ $COPY_STATUS -ne 0 ]] && [[ "${OUTPUTSITE}" == *"t2.ucsd.edu"* ]]; then
+    COPY_DEST="davs://redirector.t2.ucsd.edu:1094${OUTPUTDIR}/${RENAMEFILE}"
+    COPY_DEST=${COPY_DEST/'/hadoop/cms'/''}
+    echo "Running xrootd endpoint: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 14400 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
+    while [[ $itry -lt 10 ]]; do
+      env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 14400 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
+      COPY_STATUS=$?
+      if [[ $COPY_STATUS -eq 0 ]]; then
+        break
+      fi
+      (( itry += 1 ))
+    done
+  fi
   if [[ $COPY_STATUS -ne 0 ]]; then
     echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
     env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm -t 14400 --verbose ${COPY_DEST}

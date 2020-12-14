@@ -144,10 +144,10 @@ namespace HelperFunctions{
   template<> double computeChiSq<TH2F>(TH2F const* h1, TH2F const* h2);
   template<> double computeChiSq<TH3F>(TH3F const* h1, TH3F const* h2);
 
-  template <typename T> void divideHistograms(T const* hnum, T const* hden, T*& hAssign, bool useEffErr);
-  template<> void divideHistograms<TH1F>(TH1F const* hnum, TH1F const* hden, TH1F*& hAssign, bool useEffErr);
-  template<> void divideHistograms<TH2F>(TH2F const* hnum, TH2F const* hden, TH2F*& hAssign, bool useEffErr);
-  template<> void divideHistograms<TH3F>(TH3F const* hnum, TH3F const* hden, TH3F*& hAssign, bool useEffErr);
+  template <typename T> void divideHistograms(T const* hnum, T const* hden, T*& hAssign, bool useEffErr, T** hAssign_dn=nullptr, T** hAssign_up=nullptr);
+  template<> void divideHistograms<TH1F>(TH1F const* hnum, TH1F const* hden, TH1F*& hAssign, bool useEffErr, TH1F** hAssign_dn, TH1F** hAssign_up);
+  template<> void divideHistograms<TH2F>(TH2F const* hnum, TH2F const* hden, TH2F*& hAssign, bool useEffErr, TH2F** hAssign_dn, TH2F** hAssign_up);
+  template<> void divideHistograms<TH3F>(TH3F const* hnum, TH3F const* hden, TH3F*& hAssign, bool useEffErr, TH3F** hAssign_dn, TH3F** hAssign_up);
 
   template <typename T> void multiplyHistograms(T const* h1, T const* h2, T*& hAssign, bool useEffErr);
   template<> void multiplyHistograms<TH1F>(TH1F const* h1, TH1F const* h2, TH1F*& hAssign, bool useEffErr);

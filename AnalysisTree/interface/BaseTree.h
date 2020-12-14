@@ -70,7 +70,6 @@ protected:
   template<typename T> bool getBranchCIterator(TString branchname, typename std::unordered_map<TString, T>::const_iterator& it) const;
 
   template<BranchType T> void resetBranch();
-  virtual void resetBranches();
 
   template<BranchType T> void removeBranch(TString branchname);
 
@@ -91,6 +90,8 @@ public:
 
   template<typename T> bool putBranch(TString branchname, T valdef);
   template<BranchType T> bool putBranch(TString branchname);
+
+  virtual void resetBranches();
 
   TFile* getInputFile();
   TTree* getSelectedTree();

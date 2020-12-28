@@ -1,4 +1,5 @@
 #include <regex>
+#include <signal.h>
 #include "HostHelpersCore.h"
 #include "TFile.h"
 #include "TSystem.h"
@@ -26,13 +27,16 @@ HostHelpers::Hosts HostHelpers::GetHostLocation(){
 TString HostHelpers::GetHostLocalRedirector(Hosts const& host, bool isForFileOps){
   switch (host){
   case kUCSDT2:
-    return "redirector.t2.ucsd.edu";
+    return "davs://redirector.t2.ucsd.edu:1094/"; // or root://redirector.t2.ucsd.edu/
   case kEOSCMS:
-    return "eoscms.cern.ch";
+    return "root://eoscms.cern.ch/";
   default:
     MELAStreamHelpers::MELAerr << "HostHelpers::GetHostRemoteConnectionSpecifier: Host " << host << " might not support remote connection to read files. Returning the widest and slowest possible option." << std::endl;
-    return (isForFileOps ? "" : "cms-xrd-global.cern.ch");
+    return (isForFileOps ? "" : "root://cms-xrd-global.cern.ch/");
   }
+}
+bool HostHelpers::CheckContainsURL(const char* name){
+  return name && (strstr(name, "root://") || strstr(name, "davs://") || strstr(name, "srm://"));
 }
 TString HostHelpers::GetHostPathToStore(Hosts const& host){
   switch (host){
@@ -55,27 +59,35 @@ int HostHelpers::GetCurrentDirectory(TString& dirname){
 
 bool HostHelpers::DirectoryExists(const char* dirname){
   if (!dirname) return false;
+  if (CheckContainsURL(dirname)){
+    TString strCmd = Form("[[ ! -z $(env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-stat %s | grep -i -e \"directory\") ]]", dirname);
+    ExpandEnvironmentVariables(strCmd);
+    return ExecuteCommand(strCmd.Data())==0;
+  }
   struct stat sb;
   return (stat(dirname, &sb) == 0 && S_ISDIR(sb.st_mode));
 }
 bool HostHelpers::FileExists(const char* fname){
   if (!fname) return false;
+  if (CheckContainsURL(fname)){
+    TString strCmd = Form("[[ ! -z $(env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-stat %s | grep -i -e \"regular file\") ]]", fname);
+    ExpandEnvironmentVariables(strCmd);
+    return ExecuteCommand(strCmd.Data())==0;
+  }
   struct stat sb;
   return (stat(fname, &sb) == 0 && S_ISREG(sb.st_mode));
 }
 bool HostHelpers::FileReadable(const char* fname){
   if (!fname) return false;
-  if (FileExists(fname)) return (access(fname, R_OK)==0);
-  else if (strstr(fname, "root://")){
-    MELAStreamHelpers::MELAout
-      << "HostHelpers::FileReadable: "
-      << fname << " is remote, so will check if it is readable by explicitly opening it first..."
-      << std::endl;
-
+  if (CheckContainsURL(fname)){
     bool res = false;
     const char strext_root[]=".root";
     const char* strext_isroot = strstr(fname, strext_root);
     if (strext_isroot && strcmp(strext_isroot, strext_root)==0){
+      MELAStreamHelpers::MELAout
+        << "HostHelpers::FileReadable: "
+        << fname << " is remote, so will check if it is readable by explicitly opening it first..."
+        << std::endl;
       TFile* ftmp = TFile::Open(fname, "read");
       if (ftmp){
         if (ftmp->IsOpen()){
@@ -85,14 +97,23 @@ bool HostHelpers::FileReadable(const char* fname){
         else delete ftmp;
       }
     }
+    else{
+      TString strCmd = Form("[[ ! -z $(env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-stat %s | grep -i -e \"access\" | grep -i -e \"/-r\") ]]", fname);
+      ExpandEnvironmentVariables(strCmd);
+      res = (ExecuteCommand(strCmd.Data())==0);
+    }
     return res;
   }
+  else if (FileExists(fname)) return (access(fname, R_OK)==0);
   else return false;
 }
 int HostHelpers::ExecuteCommand(const char* strCmd){
-  if (system(nullptr)) return system(strCmd);
+  int sys_ret = system(nullptr);
+  struct sigaction childact;
+  sigaction(SIGCHLD, NULL, &childact);
+  if (sys_ret==1 || childact.sa_handler==SIG_IGN) return system(strCmd);
   else{
-    MELAStreamHelpers::MELAerr << "HostHelpers::ExecuteCommand failed because the processor is not available!" << std::endl;
+    MELAStreamHelpers::MELAerr << "HostHelpers::ExecuteCommand failed because the processor is not available (exit code " << sys_ret << ")!" << std::endl;
     return -1;
   }
 }

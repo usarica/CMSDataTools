@@ -27,6 +27,7 @@ namespace HostHelpers{
 
   int GetCurrentDirectory(TString& dirname);
 
+  bool CheckContainsURL(const char* name);
   bool DirectoryExists(const char* dirname);
   bool FileExists(const char* fname);
   bool FileReadable(const char* fname);

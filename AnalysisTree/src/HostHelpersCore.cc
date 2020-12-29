@@ -2,6 +2,7 @@
 #include <regex>
 #include <signal.h>
 #include "HostHelpersCore.h"
+#include "HelperFunctionsCore.h"
 #include "TFile.h"
 #include "TSystem.h"
 #if defined(R__UNIX)
@@ -18,37 +19,62 @@ HostHelpers::Hosts HostHelpers::GetHostLocation(){
   char hostname[HOST_NAME_MAX];
   gethostname(hostname, HOST_NAME_MAX);
   TString strhost = hostname;
-  if (strhost.Contains("lxplus") || strhost.Contains("cern")) return kLXPLUS;
-  else if (strhost.Contains("login-node") || strhost.Contains("bc-login") || strhost.Contains("gateway") || strhost.Contains("compute") || strhost.Contains("bigmem")) return kMARCC;
+  return GetHostLocation(strhost);
+}
+HostHelpers::Hosts HostHelpers::GetHostLocation(TString const& strhost){
+  if (strhost.Contains("marcc")) return kMARCC;
   else if (strhost.Contains("t2.ucsd.edu")) return kUCSDT2;
+  else if (strhost.Contains("iihe.ac.be")) return kIIHET2;
   else if (strhost.Contains("eos.cms")) return kEOSCMS; // Wouldn't really happen, but anyway...
+  else if (strhost.Contains("cern")) return kLXPLUS; // Let this come after eos.
   else return kUNKNOWN;
 }
 
 TString HostHelpers::GetHostLocalRedirector(Hosts const& host, bool isForFileOps){
   switch (host){
   case kUCSDT2:
-    return "davs://redirector.t2.ucsd.edu:1094/"; // or root://redirector.t2.ucsd.edu/
+    return "davs://redirector.t2.ucsd.edu:1094/"; // "root://redirector.t2.ucsd.edu/" also works but is slower.
+  case kIIHET2:
+    return "srm://maite.iihe.ac.be:8443"; // No extra '/' at the end in srm protocols!
   case kEOSCMS:
     return "root://eoscms.cern.ch/";
   default:
-    MELAStreamHelpers::MELAerr << "HostHelpers::GetHostRemoteConnectionSpecifier: Host " << host << " might not support remote connection to read files. Returning the widest and slowest possible option." << std::endl;
+    MELAStreamHelpers::MELAerr << "HostHelpers::GetHostRemoteConnectionSpecifier: Host " << host << " might not support remote connection to read files. Returning the widest but slowest possible option." << std::endl;
     return (isForFileOps ? "" : "root://cms-xrd-global.cern.ch/");
   }
 }
 bool HostHelpers::CheckContainsURL(const char* name){
-  return name && (strstr(name, "root://") || strstr(name, "davs://") || strstr(name, "srm://"));
+  return name && strstr(name, "://");
 }
 TString HostHelpers::GetHostPathToStore(Hosts const& host){
   switch (host){
   case kUCSDT2:
     return "/hadoop/cms";
+  case kIIHET2:
+    return "/pnfs/iihe/cms"; // But we don't take this out in srm protocols.
   case kEOSCMS:
     return "/eos/cms";
   default:
     MELAStreamHelpers::MELAerr << "HostHelpers::GetHostPathToStore: Host " << host << " is not supported. Returning empty string..." << std::endl;
     return "";
   }
+}
+TString HostHelpers::GetStandardHostPathToStore(const char* name, Hosts const& host){
+  if (!name) return "";
+  TString res = name;
+  // Only convert paths that refer to /store and if they don't already have a redirector.
+  if (res.Contains("/store") && !CheckContainsURL(name)){
+    TString strstorepath = GetHostPathToStore(host);
+    if (host != GetHostLocation()){
+      TString strlocalredir = GetHostLocalRedirector(host, true);
+      // The path should not include the portion up to '/store' unless the protocol is srm.
+      if (!strlocalredir.Contains("srm")) HelperFunctions::replaceString<TString, TString const>(res, strstorepath, "");
+      else if (!res.Contains(strstorepath)) res = strstorepath + "/" + res;
+      res = strlocalredir + res;
+    }
+    else if (!res.Contains(strstorepath) && res.BeginsWith("/store")) res = strstorepath + res;
+  }
+  return res;
 }
 
 TString HostHelpers::GetX509Proxy(){
@@ -78,7 +104,6 @@ int HostHelpers::GetCurrentDirectory(TString& dirname){
 bool HostHelpers::DirectoryExists(const char* dirname){
   if (!dirname) return false;
   if (CheckContainsURL(dirname)){
-
     TString strCmd = Form("[[ ! -z $(env -i X509_USER_PROXY=%s gfal-stat %s | grep -i -e \"directory\") ]]", GetX509Proxy().Data(), dirname);
     return ExecuteCommand(strCmd.Data())==0;
   }
@@ -88,7 +113,6 @@ bool HostHelpers::DirectoryExists(const char* dirname){
 bool HostHelpers::FileExists(const char* fname){
   if (!fname) return false;
   if (CheckContainsURL(fname)){
-
     TString strCmd = Form("[[ ! -z $(env -i X509_USER_PROXY=%s gfal-stat %s | grep -i -e \"regular file\") ]]", GetX509Proxy().Data(), fname);
     ExpandEnvironmentVariables(strCmd);
     return ExecuteCommand(strCmd.Data())==0;

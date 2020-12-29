@@ -60,6 +60,8 @@ std::vector<TString> SampleHelpers::lsdir(TString const& indir){
         std::string str_in;
         while (!fin.eof()){
           getline(fin, str_in);
+          HelperFunctions::lstrip(str_in);
+          HelperFunctions::rstrip(str_in);
           if (str_in!=""){
             HelperFunctions::replaceString<std::string, const char*>(str_in, strRemoveUrlRoot.Data(), "");
             HelperFunctions::replaceString<std::string, const char*>(str_in, strRemoveMaindir.Data(), "");

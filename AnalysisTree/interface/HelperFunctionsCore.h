@@ -43,6 +43,7 @@ namespace HelperFunctions{
 
   template<typename T> void lstrip(T& str, const char* chars=nullptr);
   template<typename T> void rstrip(T& str, const char* chars=nullptr);
+  template<typename T> void lrstrip(T& str, const char* chars=nullptr){ lstrip(str, chars); rstrip(str, chars); }
   template<> void lstrip<std::string>(std::string& str, const char* chars);
   template<> void lstrip<TString>(TString& str, const char* chars);
   template<> void rstrip<std::string>(std::string& str, const char* chars);

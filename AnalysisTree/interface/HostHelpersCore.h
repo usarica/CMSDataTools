@@ -17,13 +17,16 @@ namespace HostHelpers{
     kLXPLUS,
     kMARCC,
     kUCSDT2,
+    kIIHET2,
     kEOSCMS,
     kUNKNOWN
   };
 
   Hosts GetHostLocation();
+  Hosts GetHostLocation(TString const& strhost);
   TString GetHostLocalRedirector(Hosts const& host, bool isForFileOps);
   TString GetHostPathToStore(Hosts const& host);
+  TString GetStandardHostPathToStore(const char* name, Hosts const& host);
 
   TString GetX509Proxy();
 

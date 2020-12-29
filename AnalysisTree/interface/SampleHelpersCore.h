@@ -35,7 +35,7 @@ namespace SampleHelpers{
 
   void setSignalInterrupt(int snum);
 
-  std::vector<TString> lsdir(TString indir, HostHelpers::Hosts const* target_host=nullptr);
+  std::vector<TString> lsdir(TString const& indir);
 
   float findPoleMass(const TString samplename);
   TTree* findTree(std::vector<TTree*> const& treeList, int evid);

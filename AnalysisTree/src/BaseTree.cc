@@ -656,10 +656,6 @@ bool BaseTree::getValidFilesForTreeList(TString cinput, std::vector<TString> con
 
   res.assign(treenames.size(), std::vector<TString>()); for (auto& vv:res) vv.reserve(fnames.size());
   for (auto& fname:fnames){
-    if (!HostHelpers::FileReadable(fname.Data())){
-      MELAerr << "BaseTree::getValidFilesForTreeList: File " << fname << " is not readable! Aborting operation..." << endl;
-      return false;
-    }
     TFile* ftmp = TFile::Open(fname, "read");
     if (ftmp){
       if (ftmp->IsOpen() && !ftmp->IsZombie()){
@@ -690,11 +686,13 @@ bool BaseTree::getValidFilesForTreeList(TString cinput, std::vector<TString> con
         if (ftmp->IsOpen()) ftmp->Close();
         else delete ftmp;
 
+        MELAerr << "BaseTree::getValidFilesForTreeList: File " << fname << " is not readable and was set to a zombie state! Aborting operation..." << endl;
         curdir->cd();
         return false;
       }
     }
     else{
+      MELAerr << "BaseTree::getValidFilesForTreeList: File " << fname << " is not readable and could not be opened! Aborting operation..." << endl;
       curdir->cd();
       return false;
     }

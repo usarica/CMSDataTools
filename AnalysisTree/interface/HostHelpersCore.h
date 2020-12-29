@@ -25,6 +25,8 @@ namespace HostHelpers{
   TString GetHostLocalRedirector(Hosts const& host, bool isForFileOps);
   TString GetHostPathToStore(Hosts const& host);
 
+  TString GetX509Proxy();
+
   int GetCurrentDirectory(TString& dirname);
 
   bool CheckContainsURL(const char* name);

@@ -1,3 +1,4 @@
+#include <cassert>
 #include <regex>
 #include <signal.h>
 #include "HostHelpersCore.h"
@@ -50,6 +51,23 @@ TString HostHelpers::GetHostPathToStore(Hosts const& host){
   }
 }
 
+TString HostHelpers::GetX509Proxy(){
+  TString res;
+  struct stat sb;
+  const char* proxy_by_env = getenv("X509_USER_PROXY");
+  if (proxy_by_env) res = proxy_by_env;
+  if (stat(res.Data(), &sb) == 0) return res;
+  unsigned int uid = geteuid(); // Actually the effective user id, this is what 'id -u' does.
+  const char* homedir = getenv("HOME");
+  if (homedir && uid) res = Form("%s/x509up_u%i", homedir, uid);
+  if (stat(res.Data(), &sb) == 0) return res;
+  if (uid) res = Form("/tmp/x509up_u%u", uid);
+  if (stat(res.Data(), &sb) == 0) return res;
+  MELAStreamHelpers::MELAerr << "HostHelpers::GetX509Proxy: No grid proxy found Please put one in ~, /tmp, or define through the environment variable X509_USER_PROXY." << std::endl;
+  assert(0);
+  return "";
+}
+
 int HostHelpers::GetCurrentDirectory(TString& dirname){
   char cpath[FILENAME_MAX];
   if (!getcwd(cpath, FILENAME_MAX)) return errno;
@@ -60,8 +78,8 @@ int HostHelpers::GetCurrentDirectory(TString& dirname){
 bool HostHelpers::DirectoryExists(const char* dirname){
   if (!dirname) return false;
   if (CheckContainsURL(dirname)){
-    TString strCmd = Form("[[ ! -z $(env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-stat %s | grep -i -e \"directory\") ]]", dirname);
-    ExpandEnvironmentVariables(strCmd);
+
+    TString strCmd = Form("[[ ! -z $(env -i X509_USER_PROXY=%s gfal-stat %s | grep -i -e \"directory\") ]]", GetX509Proxy().Data(), dirname);
     return ExecuteCommand(strCmd.Data())==0;
   }
   struct stat sb;
@@ -70,7 +88,8 @@ bool HostHelpers::DirectoryExists(const char* dirname){
 bool HostHelpers::FileExists(const char* fname){
   if (!fname) return false;
   if (CheckContainsURL(fname)){
-    TString strCmd = Form("[[ ! -z $(env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-stat %s | grep -i -e \"regular file\") ]]", fname);
+
+    TString strCmd = Form("[[ ! -z $(env -i X509_USER_PROXY=%s gfal-stat %s | grep -i -e \"regular file\") ]]", GetX509Proxy().Data(), fname);
     ExpandEnvironmentVariables(strCmd);
     return ExecuteCommand(strCmd.Data())==0;
   }
@@ -98,7 +117,7 @@ bool HostHelpers::FileReadable(const char* fname){
       }
     }
     else{
-      TString strCmd = Form("[[ ! -z $(env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-stat %s | grep -i -e \"access\" | grep -i -e \"/-r\") ]]", fname);
+      TString strCmd = Form("[[ ! -z $(env -i X509_USER_PROXY=%s gfal-stat %s | grep -i -e \"access\" | grep -i -e \"/-r\") ]]", GetX509Proxy().Data(), fname);
       ExpandEnvironmentVariables(strCmd);
       res = (ExecuteCommand(strCmd.Data())==0);
     }

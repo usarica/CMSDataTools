@@ -21,10 +21,10 @@ void SampleHelpers::setSignalInterrupt(int snum){
   if (snum==SIGINT) doSignalInterrupt = 1;
 }
 
-std::vector<TString> SampleHelpers::lsdir(TString indir, HostHelpers::Hosts const* target_host){
+std::vector<TString> SampleHelpers::lsdir(TString const& indir){
   std::vector<TString> res;
 
-  if (!target_host || *target_host == HostHelpers::GetHostLocation()){
+  if (!HostHelpers::CheckContainsURL(indir.Data())){
     struct dirent* ep;
     DIR* dp = opendir(indir.Data());
     if (dp != NULL){
@@ -38,49 +38,42 @@ std::vector<TString> SampleHelpers::lsdir(TString indir, HostHelpers::Hosts cons
     else MELAerr << "SampleHelpers::lsdir: Could not open the directory " << indir << "." << endl;
   }
   else{
-    TString localredirector = HostHelpers::GetHostLocalRedirector(*target_host, true);
-    TString pathToStore = HostHelpers::GetHostPathToStore(*target_host);
-    if (localredirector=="") MELAerr << "SampleHelpers::lsdir: Could not locate the site local director to run ls." << endl;
-    else{
-      TString tmpfname = Form("tmpfile_SampleHelpers_lsdir_%s_%i.tmp", indir.Data(), *target_host);
-      while (tmpfname.Contains("/")) HelperFunctions::replaceString(tmpfname, "/", "_");
+    TString tmpfname = Form("tmpfile_SampleHelpers_lsdir_%s.tmp", indir.Data());
+    while (tmpfname.Contains("/")) HelperFunctions::replaceString(tmpfname, "/", "_");
+    while (tmpfname.Contains(":")) HelperFunctions::replaceString(tmpfname, ":", "_");
 
-      TString indir_eff = indir;
-      if (pathToStore!="" && indir_eff.Contains(pathToStore)) HelperFunctions::replaceString<TString, const TString>(indir_eff, pathToStore, "");
-      while (indir_eff.Contains("//")) HelperFunctions::replaceString(indir_eff, "//", "/");
+    TString x509_proxy = HostHelpers::GetX509Proxy();
 
-      TString x509_proxy = "/tmp/x509up_u$(id -u)";
-      if (getenv("X509_USER_PROXY")!=nullptr) x509_proxy = getenv("X509_USER_PROXY");
+    TString strcmd = Form("env -i X509_USER_PROXY=%s gfal-ls %s > %s", x509_proxy.Data(), indir.Data(), tmpfname.Data());
+    int status_cmd = HostHelpers::ExecuteCommand(strcmd);
+    if (status_cmd==0){
+      TUrl tmpUrl(indir);
 
-      TString strcmd;
-      if (*target_host == HostHelpers::kUCSDT2) strcmd = Form("env -i X509_USER_PROXY=%s gfal-ls root://%s/%s", x509_proxy.Data(), localredirector.Data(), indir_eff.Data());
-      else strcmd = Form("env -i X509_USER_PROXY=%s xrdfs %s ls %s", x509_proxy.Data(), localredirector.Data(), indir_eff.Data());
-      strcmd = strcmd + " > " + tmpfname;
-      int status_cmd = HostHelpers::ExecuteCommand(strcmd);
-      if (status_cmd==0){
-        TString strRemove = indir_eff;
-        if (!strRemove.EndsWith("/")) strRemove = strRemove + '/';
+      TString strRemoveMaindir = tmpUrl.GetFile();
+      TString strRemoveUrlRoot = indir;
+      HelperFunctions::replaceString<TString, TString const>(strRemoveUrlRoot, strRemoveMaindir, "");
+      if (!strRemoveMaindir.EndsWith("/")) strRemoveMaindir = strRemoveMaindir + '/';
 
-        ifstream fin;
-        fin.open(tmpfname.Data(), std::ios_base::in);
-        if (fin.good()){
-          std::string str_in;
-          while (!fin.eof()){
-            getline(fin, str_in);
-            if (str_in!=""){
-              HelperFunctions::replaceString<std::string, const char*>(str_in, strRemove.Data(), "");
-              while (str_in.find("/")==0) str_in = str_in.substr(1);
-              res.push_back(str_in.data());
-            }
+      ifstream fin;
+      fin.open(tmpfname.Data(), std::ios_base::in);
+      if (fin.good()){
+        std::string str_in;
+        while (!fin.eof()){
+          getline(fin, str_in);
+          if (str_in!=""){
+            HelperFunctions::replaceString<std::string, const char*>(str_in, strRemoveUrlRoot.Data(), "");
+            HelperFunctions::replaceString<std::string, const char*>(str_in, strRemoveMaindir.Data(), "");
+            while (str_in.find("/")==0) str_in = str_in.substr(1);
+            res.push_back(str_in.data());
           }
         }
-        fin.close();
-        std::remove(tmpfname.Data());
       }
-      else{
-        MELAerr << "SampleHelpers::lsdir: Command '" << strcmd << "' returned exit status " << status_cmd << "." << endl;
-        assert(0);
-      }
+      fin.close();
+      std::remove(tmpfname.Data());
+    }
+    else{
+      MELAerr << "SampleHelpers::lsdir: Command '" << strcmd << "' returned exit status " << status_cmd << "." << endl;
+      assert(0);
     }
   }
 

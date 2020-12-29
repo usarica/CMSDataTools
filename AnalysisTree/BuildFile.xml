@@ -3,8 +3,8 @@
 <flags CPPFLAGS="-Wall -Wextra -Wpedantic -I$(CMSSW_BASE)/src/CMSDataTools/AnalysisTree/interface/ -I$(CMSSW_BASE)/src/JHUGenMELA/MELA/interface/" />
 
 <use name="root"/>
+<use name="rootmathcore"/>
 <use name="rootmath"/>
-<use name="rootmathmore"/>
 <use name="roofit"/>
 <use name="roofitcore"/>
 <use name="DataFormats/Math"/>

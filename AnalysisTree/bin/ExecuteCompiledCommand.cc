@@ -53,6 +53,17 @@ int main(int argc, char** argv){
         exit_status = 0;
       }
     }
+    else if (strCmdLower == "directoryexists" || strCmdLower == "fileexists" || strCmdLower == "filereadable"){
+      if (strArgs.size()!=1) print_help = true;
+      else{
+        bool res = false;
+        if (strCmdLower == "directoryexists") res = HostHelpers::DirectoryExists(strArgs.front());
+        else if (strCmdLower == "fileexists") res = HostHelpers::FileExists(strArgs.front());
+        else res = HostHelpers::FileReadable(strArgs.front());
+        cout << (res ? "true" : "false") << endl;
+        exit_status = 0;
+      }
+    }
     else if (strCmdLower == "gethostlocalredirector" || strCmdLower == "gethostpathtostore"){
       if (strArgs.size()!=1) print_help = true;
       else{
@@ -84,6 +95,9 @@ int main(int argc, char** argv){
     cout << "  rstrip [line] [characters (optional)]: Strip line off a set of characters from the end. If character string is empty, strip off whitespace." << endl;
     cout << "  lrstrip [line] [characters (optional)]: lstrip and rstrip combined." << endl;
     cout << "  lsdir [directory]: The directory should already contain local redirectors if needed by an ordinary gfal-ls. Local redirectors should not be put for local files." << endl;
+    cout << "  DirectoryExists [path]: Check if directory exists. Path convention is the same as the 'lsdir' command." << endl;
+    cout << "  FileExists [path]: Check if file exists. Path convention is the same as the 'lsdir' command." << endl;
+    cout << "  FileReadable [path]: Check if file is readable. Path convention is the same as the 'lsdir' command." << endl;
     cout << "  GetHostLocalRedirector [host identifier]: The host identifier should be a common string such as 't2.ucsd.edu', 'iihe.ac.be', or 'eos.cms.cern.ch'." << endl;
     cout << "  GetHostPathToStore [host identifier]: Same as above." << endl;
     cout << "  GetStandardHostPathToStore [path] [host identifier]: The path can start with '/store', or it can be an absolute path. Same as above for the host identifier." << endl;

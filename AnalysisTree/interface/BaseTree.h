@@ -131,6 +131,13 @@ public:
   void silenceUnused();
   void unmuteAllBranches();
   void releaseBranch(TString branchname);
+  // This function below is for expert-use only!
+  // The difference of the function below from the one above is that
+  // the one above resets branch addresses
+  // whereas the one below can be used to suppress branches temporarily.
+  void muteAllBranchesExcept(std::vector<TString> const& bnames_excepted);
+  // This function is to recover branches temporarily muted using muteAllBranchesExcept.
+  void recoverMutedBranches(){ this->silenceUnused(); }
 
   void setAcquireTreePossession(bool);
 

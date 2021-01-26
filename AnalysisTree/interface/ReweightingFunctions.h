@@ -44,11 +44,10 @@ namespace ReweightingFunctions{
     double tolerance=-1,
     TVar::VerbosityLevel verbosity=TVar::ERROR
   );
-  std::vector<float> getAbsWeightThresholdsPerBinByFixedFractionalThreshold(
+  std::vector<std::vector<float>> getAbsWeightThresholdsPerBinByFixedFractionalThreshold(
     BaseTree* tree,
-    std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,
+    std::vector<std::vector<float*>> const& wgt_vals_list, std::vector<ReweightingFunction_t> const& wgt_rule_list, std::vector< std::pair<double, double> > const& frac_tolerance_pair_list,
     ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
-    double frac=0.9999, double tolerance=5,
     TVar::VerbosityLevel verbosity=TVar::ERROR
   );
 

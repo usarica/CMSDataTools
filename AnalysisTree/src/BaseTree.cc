@@ -593,6 +593,19 @@ void BaseTree::releaseBranch(TString branchname){
 #undef VECTOR_DATA_INPUT_DIRECTIVE
 #undef DOUBLEVECTOR_DATA_INPUT_DIRECTIVE
 }
+void BaseTree::muteAllBranchesExcept(std::vector<TString> const& bnames_excepted){
+  for (auto& tt:treelist){
+    tt->SetBranchStatus("*", 0);
+
+    std::vector<TString> currentBranchList;
+    this->getValidBranchNamesWithoutAlias(tt, currentBranchList, true);
+
+    for (TString const& bname:bnames_excepted){
+      if (HelperFunctions::checkListVariable(currentBranchList, bname)) tt->SetBranchStatus(bname, 1);
+      else MELAerr << "BaseTree::muteAllBranchesExcept: Branch " << bname << " was not booked. Please book this branch and re-run this function." << endl;
+    }
+  }
+}
 
 void BaseTree::setAcquireTreePossession(bool flag){ acquireTreePossession = flag; }
 

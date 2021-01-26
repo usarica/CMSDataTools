@@ -239,53 +239,130 @@ std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff(
 
   return res;
 }
-std::vector<float> ReweightingFunctions::getAbsWeightThresholdsPerBinByFixedFractionalThreshold(
+std::vector<std::vector<float>> ReweightingFunctions::getAbsWeightThresholdsPerBinByFixedFractionalThreshold(
   BaseTree* tree,
-  std::vector<float*> const& wgt_vals, ReweightingFunction_t wgt_rule,
+  std::vector<std::vector<float*>> const& wgt_vals_list, std::vector<ReweightingFunction_t> const& wgt_rule_list, std::vector< std::pair<double, double> > const& frac_tolerance_pair_list,
   ExtendedBinning const& binning, std::vector<float*> const& var_vals, ReweightingVariableBinFunction_t varbin_rule,
-  double frac, double tolerance,
   TVar::VerbosityLevel verbosity
 ){
-  if (frac<=0.) frac = 0.9999;
-  if (tolerance<=0.) tolerance = 5.;
-  unsigned int const nbins = (!binning.isValid() ? static_cast<unsigned int>(1) : binning.getNbins());
+  constexpr unsigned int nevts_bin_skipThr = 3;
 
-  std::vector<float> res(nbins, -1);
+  unsigned int const nbins = (!binning.isValid() ? static_cast<unsigned int>(1) : binning.getNbins());
+  unsigned int const nhypos = wgt_vals_list.size();
+  assert(wgt_rule_list.size() == nhypos);
+  assert(frac_tolerance_pair_list.size() == nhypos);
+
+  std::vector<std::vector<float>> res(nhypos, std::vector<float>(nbins, -1));
+  if (nhypos==0){
+    if (verbosity>=TVar::ERROR) MELAerr << "ReweightingFunctions::getAbsWeightThresholdsPerBinByFixedFractionalThreshold: No hypotheses are passed." << endl;
+    return res;
+  }
 
   int nEntries = tree->getNEvents();
-  if (verbosity>=TVar::ERROR) MELAout << "ReweightingFunctions::getAbsWeightThresholdsPerBinByNeff: Determining the weight thresholds (number of events = " << nEntries << ")..." << endl;
+  if (verbosity>=TVar::ERROR) MELAout << "ReweightingFunctions::getAbsWeightThresholdsPerBinByFixedFractionalThreshold: Determining the weight thresholds (number of events = " << nEntries << ")..." << endl;
   if (nEntries==0) return res;
 
-  // A bit brute-force, but best to do this way...
+  std::vector<double> frac_list; frac_list.reserve(nhypos);
+  std::vector<double> frac_rem_list; frac_rem_list.reserve(nhypos);
+  std::vector<double> tolerance_list; tolerance_list.reserve(nhypos);
+  std::vector<unsigned int> maxPrunedSize_list; maxPrunedSize_list.reserve(nhypos);
+  std::vector<bool> skip_list(nhypos, false);
+  // Vectors to accumulate the highest 'maxPrunedSize' number of weights
+  std::vector< std::vector<unsigned int> > counts_all(nhypos, std::vector<unsigned int>(nbins, 0));
+  std::vector< std::vector<double> > sumWgts_all(nhypos, std::vector<double>(nbins, 0));
+  std::vector< std::vector< std::vector<float> > > weights_all(nhypos, std::vector< std::vector<float> >(nbins, std::vector<float>()));
   {
-    std::vector< std::vector<float> > weights_all(nbins, std::vector<float>());
-    for (int ev=0; ev<nEntries; ev++){
-      tree->getEvent(ev);
-      HelperFunctions::progressbar(ev, nEntries);
+    unsigned int ihypo=0;
+    for (auto const& pp:frac_tolerance_pair_list){
+      double frac = pp.first;
+      double tolerance = pp.second;
+      assert(frac<=1. && (tolerance>=1. || tolerance<=0.));
+      if (frac<0.) frac = 0.9999;
+      if (tolerance<=0.) tolerance = 5.;
+      // A bit brute-force, but best to do this way...
+      double const frac_rem = 1. - frac;
+      // Let the requested fraction threshold per bin to be f, number of total events to be N, and the number of events in bin i to be N_i such that sum_i(N_i)=N.
+      // We don't know N_i before looping over the events, so we don't know f*N_i.
+      // However, N_i<=N, so f*N_i<f*N, so we can use f*N in place of f*N_i to limit the number of floats we hold.
+      unsigned int const maxPrunedSize = std::max((unsigned int) std::ceil(double(nEntries)*frac_rem), nevts_bin_skipThr+1);
+      if (verbosity>=TVar::ERROR) MELAout << "\t- Maximum size of weight collection per bin for hypothesis " << ihypo << " is determined to be " << maxPrunedSize << "." << endl;
+      auto& weights_hypo = weights_all.at(ihypo);
+      for (auto& weights_hypo_bin:weights_hypo) weights_hypo_bin.reserve(maxPrunedSize);
 
-      float wgt_combined = std::abs(wgt_rule(tree, wgt_vals));
-      if (wgt_combined==0.f) continue;
-      int ibin = varbin_rule(tree, binning, var_vals);
-      if (ibin<0) ibin=0;
-      else if (ibin>=(int) nbins) ibin = nbins-1;
+      frac_list.push_back(frac);
+      frac_rem_list.push_back(frac_rem);
+      tolerance_list.push_back(tolerance);
+      maxPrunedSize_list.push_back(maxPrunedSize);
+      skip_list.at(ihypo) = (frac_rem==0.);
 
-      HelperFunctions::addByLowest(weights_all.at(ibin), wgt_combined, false);
+      ihypo++;
     }
+  }
+
+  for (int ev=0; ev<nEntries; ev++){
+    tree->getEvent(ev);
+    HelperFunctions::progressbar(ev, nEntries);
+
+    int ibin = varbin_rule(tree, binning, var_vals);
+    if (ibin<0) ibin=0;
+    else if (ibin>=(int) nbins) ibin = nbins-1;
+
+    for (unsigned int ihypo=0; ihypo<nhypos; ihypo++){
+      if (skip_list.at(ihypo)) continue;
+
+      float wgt_combined = std::abs(wgt_rule_list.at(ihypo)(tree, wgt_vals_list.at(ihypo)));
+      if (wgt_combined==0.f) continue;
+
+      counts_all.at(ihypo).at(ibin)++;
+      sumWgts_all.at(ihypo).at(ibin) += wgt_combined;
+
+      auto& weights = weights_all.at(ihypo).at(ibin);
+      if (weights.size()<maxPrunedSize_list.at(ihypo)) HelperFunctions::addByHighest(weights, wgt_combined, false);
+      else if (wgt_combined>weights.back()){
+        weights.pop_back();
+        HelperFunctions::addByHighest(weights, wgt_combined, false);
+      }
+    }
+  }
+  for (unsigned int ihypo=0; ihypo<nhypos; ihypo++){
+    if (verbosity>=TVar::ERROR) MELAout << "Hypothesis " << ihypo << ":" << endl;
+    double const& frac_rem = frac_rem_list.at(ihypo);
+    double const& tolerance = tolerance_list.at(ihypo);
+    if (skip_list.at(ihypo)) continue;
     for (unsigned int ibin=0; ibin<nbins; ibin++){
       if (verbosity>=TVar::ERROR) MELAout << "\t- Bin " << ibin << ":" << endl;
-      auto const& weights_bin = weights_all.at(ibin);
-      unsigned int const nevts_bin = weights_bin.size();
+      unsigned int const& nevts_bin = counts_all.at(ihypo).at(ibin);
+      auto const& sumWgts_hypo_bin = sumWgts_all.at(ihypo).at(ibin);
+      auto const& weights_hypo_bin = weights_all.at(ihypo).at(ibin);
 
-      if (verbosity>=TVar::ERROR) MELAout << "\t\t- Nevts = " << nevts_bin << "<3, skipping..." << endl;
-      if (nevts_bin<3) continue;
+      if (nevts_bin<nevts_bin_skipThr){
+        if (verbosity>=TVar::ERROR) MELAout << "\t\t- Nevts = " << nevts_bin << "<3, skipping..." << endl;
+        continue;
+      }
 
-      unsigned int index_entry = std::max((unsigned int) std::ceil(float(nevts_bin)*frac), (unsigned int) 1);
-      unsigned int index_entry_prev=index_entry-1;
-      float threshold = (weights_bin.at(index_entry_prev) + weights_bin.at(index_entry))*0.5;
+      unsigned int const nWeights_stored = weights_hypo_bin.size();
+      unsigned int const nevts_bin_fracThr = std::min(nWeights_stored, std::max((unsigned int) std::ceil(double(nevts_bin)*frac_rem), nevts_bin_skipThr));
+
+      unsigned int const index_entry = nevts_bin_fracThr-2;
+      unsigned int const index_entry_prev = index_entry+1;
+      float threshold = (weights_hypo_bin.at(index_entry_prev) + weights_hypo_bin.at(index_entry))*0.5;
+
       if (verbosity>=TVar::ERROR) MELAout << "\t\t- Raw threshold before checking tolerance: " << threshold << endl;
-      if (weights_bin.back()<threshold*tolerance) threshold = -1; // Prevent false-positives
-      res.at(ibin) = threshold;
-      MELAout << "\t\t- Final threshold: " << res.at(ibin) << endl;
+      if (weights_hypo_bin.front()<threshold*tolerance) threshold = -1; // Prevent false-positives
+      res.at(ihypo).at(ibin) = threshold;
+      MELAout << "\t\t- Final threshold: " << threshold << endl;
+      MELAout << "\t\t- Number of events rejected: " << (threshold>0.f ? index_entry : (unsigned int) 0) << " / " << nevts_bin << endl;
+      double sumWgts_hypo_bin_afterThr = sumWgts_hypo_bin;
+      if (threshold>0.f){
+        for (auto const& wgt:weights_hypo_bin){
+          if (wgt<threshold) break;
+          sumWgts_hypo_bin_afterThr -= double(wgt);
+        }
+      }
+      MELAout
+        << "\t\t- Sum of weights after / before thresholds: " << sumWgts_hypo_bin_afterThr << " / " << sumWgts_hypo_bin
+        << " (fraction = " << sumWgts_hypo_bin_afterThr / sumWgts_hypo_bin << ")"
+        << endl;
     }
   }
 

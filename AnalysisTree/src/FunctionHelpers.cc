@@ -41,17 +41,17 @@ double FunctionHelpers::SimpleGaussian::norm(){
     else return 0;
   }
   else{
-    double sigmasq=pow(sigma, 2);
-    double norm=sqrt(2.*TMath::Pi())*sigma;
+    double sigmasq = std::pow(sigma, 2);
+    double norm = std::sqrt(2.*TMath::Pi())*sigma;
     if (rangeset==kHasInfRange) return norm;
     else if (rangeset==kHasLowHighRange){
-      return norm*0.5*(TMath::Erfc(-(max-mean)/sqrt(2.*sigmasq))-TMath::Erfc(-(min-mean)/sqrt(2.*sigmasq)));
+      return norm*0.5*(TMath::Erfc(-(max-mean)/std::sqrt(2.*sigmasq))-TMath::Erfc(-(min-mean)/std::sqrt(2.*sigmasq)));
     }
     else if (rangeset==kHasLowRange){
-      return norm*(1.-0.5*TMath::Erfc(-(min-mean)/sqrt(2.*sigmasq)));
+      return norm*(1.-0.5*TMath::Erfc(-(min-mean)/std::sqrt(2.*sigmasq)));
     }
     else if (rangeset==kHasHighRange){
-      return norm*(0.5*TMath::Erfc(-(max-mean)/sqrt(2.*sigmasq)));
+      return norm*(0.5*TMath::Erfc(-(max-mean)/std::sqrt(2.*sigmasq)));
     }
     else return 1;
   }
@@ -74,7 +74,7 @@ double FunctionHelpers::SimpleGaussian::integral(double xmin, double xmax){
   else{
     double sigmasq = std::pow(sigma, 2);
     double norm = std::sqrt(2.*TMath::Pi())*sigma;
-    return 0.5*norm*(TMath::Erfc(-(xmax-mean)/sqrt(2.*sigmasq))-TMath::Erfc(-(xmin-mean)/sqrt(2.*sigmasq)));
+    return 0.5*norm*(TMath::Erfc(-(xmax-mean)/std::sqrt(2.*sigmasq))-TMath::Erfc(-(xmin-mean)/std::sqrt(2.*sigmasq)));
   }
 }
 double FunctionHelpers::SimpleGaussian::evalNorm(double x){
@@ -160,8 +160,8 @@ double FunctionHelpers::PiecewisePolynomial::eval(double x){
         nxtom[inode][ipow]=1;
       }
       else{
-        xton[inode][ipow]=pow(node[inode], ipow);
-        nxtom[inode][ipow]=((double) ipow)*pow(node[inode], ipow-1);
+        xton[inode][ipow]=std::pow(node[inode], ipow);
+        nxtom[inode][ipow]=((double) ipow)*std::pow(node[inode], ipow-1);
       }
     }
   }
@@ -229,7 +229,7 @@ double FunctionHelpers::PiecewisePolynomial::eval(double x){
     if (x>=node[nnodes-1]) index_chosen = nfcn-1;
 
     double res = 0;
-    for (int ip=0; ip<polyndof; ip++) res += pars_full[index_chosen][ip]*pow(x, ip);
+    for (int ip=0; ip<polyndof; ip++) res += pars_full[index_chosen][ip]*std::pow(x, ip);
     return res;
   }
   else{

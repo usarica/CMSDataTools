@@ -4,25 +4,26 @@
 #include "ExtendedHistogram.h"
 #include "TTree.h"
 #include "TH1F.h"
+#include "TH1D.h"
 #include "TProfile.h"
 #include "TGraphErrors.h"
 
 
-class ExtendedHistogram_1D : public ExtendedHistogram{
+template<typename Hist_t=TH1F> class ExtendedHistogram_1D : public ExtendedHistogram{
 protected:
   ExtendedBinning xbinning;
-  TH1F* histo;
+  Hist_t* histo;
   TProfile* prof_x;
   
 public:
   ExtendedHistogram_1D();
   ExtendedHistogram_1D(const TString name_, const TString title_);
   ExtendedHistogram_1D(const TString name_, const TString title_, const ExtendedBinning& xbinning_);
-  ExtendedHistogram_1D(ExtendedHistogram_1D const& other);
+  ExtendedHistogram_1D(ExtendedHistogram_1D<Hist_t> const& other);
   virtual ~ExtendedHistogram_1D();
 
-  void swap(ExtendedHistogram_1D& other);
-  ExtendedHistogram_1D& operator=(const ExtendedHistogram_1D& other);
+  void swap(ExtendedHistogram_1D<Hist_t>& other);
+  ExtendedHistogram_1D<Hist_t>& operator=(const ExtendedHistogram_1D<Hist_t>& other);
 
   void setNameTitle(const TString name_, const TString title_="");
   virtual void setBinning(const ExtendedBinning& binning, const int xyz=0, const TString label="");
@@ -31,9 +32,9 @@ public:
   virtual void reset();
   virtual void resetProfiles();
 
-  TH1F*& getHistogram(){ return histo; }
-  const TH1F* getHistogram() const{ return histo; }
-  TH1F* getCumulantHistogram(TString newname="") const;
+  Hist_t*& getHistogram(){ return histo; }
+  const Hist_t* getHistogram() const{ return histo; }
+  Hist_t* getCumulantHistogram(TString newname="") const;
 
   TProfile*& getProfileX(){ return prof_x; }
   const TProfile* getProfileX() const{ return prof_x; }
@@ -46,12 +47,18 @@ public:
 
   void constructFromTree(TTree* tree, float& xvar, float& weight, bool* flag=nullptr, ExtendedBinning const* binningX=nullptr);
 
-  static ExtendedHistogram_1D divideHistograms(ExtendedHistogram_1D const& h1, ExtendedHistogram_1D const& h2, bool useEffErr, TString newname="");
+  static ExtendedHistogram_1D<Hist_t> divideHistograms(ExtendedHistogram_1D<Hist_t> const& h1, ExtendedHistogram_1D<Hist_t> const& h2, bool useEffErr, TString newname="");
 
-  static void averageHistograms(ExtendedHistogram_1D& hTarget, ExtendedHistogram_1D const& h2, bool useNeff=false);
-  static void averageHistograms(ExtendedHistogram_1D& hTarget, std::vector<ExtendedHistogram_1D const*> const& hList, bool useNeff=false);
+  static void averageHistograms(ExtendedHistogram_1D<Hist_t>& hTarget, ExtendedHistogram_1D<Hist_t> const& h2, bool useNeff=false);
+  static void averageHistograms(ExtendedHistogram_1D<Hist_t>& hTarget, std::vector<ExtendedHistogram_1D<Hist_t> const*> const& hList, bool useNeff=false);
 
 };
+
+typedef ExtendedHistogram_1D<TH1F> ExtendedHistogram_1D_f;
+typedef ExtendedHistogram_1D<TH1D> ExtendedHistogram_1D_d;
+
+
+#include "ExtendedHistogram_1D.hh"
 
 
 #endif

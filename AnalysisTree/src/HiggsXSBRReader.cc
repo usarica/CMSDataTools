@@ -4,6 +4,7 @@
 #include <cmath>
 #include "StdExtensions.h"
 #include "HelperFunctions.h"
+#include "HostHelpersCore.h"
 #include "HiggsXSBRReader.h"
 #include "MELAStreamHelpers.hh"
 
@@ -13,6 +14,8 @@ using namespace MELAStreamHelpers;
 
 
 HiggsXSBRReader::HiggsXSBRReader(TString fname, TString partial_width_type){
+  HostHelpers::ExpandEnvironmentVariables(fname);
+
   std::unordered_map<TString, std::vector<double>> type_vallist_map;
   std::vector<TString> column_list;
 

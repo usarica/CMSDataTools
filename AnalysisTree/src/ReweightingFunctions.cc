@@ -347,7 +347,7 @@ std::vector<std::vector<float>> ReweightingFunctions::getAbsWeightThresholdsPerB
       unsigned int const index_entry_prev = index_entry+1;
       float threshold = (weights_hypo_bin.at(index_entry_prev) + weights_hypo_bin.at(index_entry))*0.5;
 
-      if (verbosity>=TVar::ERROR) MELAout << "\t\t- Raw threshold before checking tolerance: " << threshold << endl;
+      if (verbosity>=TVar::ERROR) MELAout << "\t\t- Raw threshold before checking tolerance: " << threshold << " / largest weight: " << weights_hypo_bin.front() << endl;
       if (weights_hypo_bin.front()<threshold*tolerance) threshold = -1; // Prevent false-positives
       res.at(ihypo).at(ibin) = threshold;
       MELAout << "\t\t- Final threshold: " << threshold << endl;

@@ -638,6 +638,10 @@ void BaseTree::writeToFile(TFile* file){
   if (robustSaveWrite) file->WriteTObject(tree, nullptr, "WriteDelete");
   else file->WriteTObject(tree);
 }
+void BaseTree::writeToDirectory(TDirectory* dir){
+  if (receiver || !tree || !dir) return;
+  dir->WriteTObject(tree);
+}
 
 bool BaseTree::getValidFilesForTreeList(TString cinput, std::vector<TString> const& treenames, std::vector< std::vector<TString> >& res) const{
   TDirectory* curdir = gDirectory; // Save current directory to return back to it later

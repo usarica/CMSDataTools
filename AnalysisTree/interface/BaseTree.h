@@ -155,6 +155,7 @@ public:
 
   void fill();
   void writeToFile(TFile* file);
+  void writeToDirectory(TDirectory* dir);
 
   virtual void print() const;
 

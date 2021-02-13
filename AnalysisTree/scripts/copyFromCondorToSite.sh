@@ -44,32 +44,45 @@ if [[ ! -z ${FILENAME} ]];then
   echo "Time before copy: $(date +%s)"
 
   COPY_SRC="file://${INPUTDIR}/${FILENAME}"
-  COPY_DEST="gsiftp://gftp.${OUTPUTSITE}${OUTPUTDIR}/${RENAMEFILE}"
-  echo "Running: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 14400 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
+  COPY_DEST=""
+  echo "OUTPUTFILE: ${OUTPUTDIR}/${RENAMEFILE}"
+  if [[ "${OUTPUTSITE}" == *"t2.ucsd.edu"* ]]; then
+    if [[ ! -s ${INPUTDIR}/${FILENAME} ]]; then
+      echo "Running the gsiftp endpoint..."
+      COPY_DEST="gsiftp://gftp.${OUTPUTSITE}${OUTPUTDIR}/${RENAMEFILE}"
+    else
+      echo "Running the xrootd endpoint..."
+      COPY_DEST="davs://redirector.t2.ucsd.edu:1094${OUTPUTDIR}/${RENAMEFILE}"
+      COPY_DEST=${COPY_DEST/'/hadoop/cms'/''}
+    fi
+  elif [[ "${OUTPUTSITE}" == *"eoscms.cern.ch"* ]]; then
+    COPY_DEST="root://eoscms.cern.ch${OUTPUTDIR}/${RENAMEFILE}"
+    COPY_DEST=${COPY_DEST/'/eos/cms'/''}
+  elif [[ "${OUTPUTSITE}" == *"iihe.ac.be"* ]]; then
+    COPY_DEST="srm://maite.iihe.ac.be:8443${OUTPUTDIR}/${RENAMEFILE}"
+    #COPY_DEST=${COPY_DEST/'/pnfs/iihe/cms'/''}
+  elif [[ "${OUTPUTSITE}" == *"ihep.ac.cn"* ]]; then
+    COPY_DEST="srm://srm.ihep.ac.cn:8443${OUTPUTDIR}/${RENAMEFILE}"
+    #COPY_DEST=${COPY_DEST/'/data/cms'/''}
+  elif [[ "${OUTPUTSITE}" == *"m45.ihep.su"* ]]; then
+    COPY_DEST="srm://dp0015.m45.ihep.su:8443${OUTPUTDIR}/${RENAMEFILE}"
+    #COPY_DEST=${COPY_DEST/'/pnfs/m45.ihep.su/data/cms'/''}
+  fi
+
+  runCmd="env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 14400 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
+  echo "Running: ${runCmd}"
   declare -i itry=0
   declare -i COPY_STATUS=-1
   declare -i REMOVE_STATUS=-1
   while [[ $itry -lt 5 ]]; do
-    env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 14400 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
+    echo " - Trial ${itry}:"
+    ${runCmd}
     COPY_STATUS=$?
     if [[ $COPY_STATUS -eq 0 ]]; then
       break
     fi
     (( itry += 1 ))
   done
-  if [[ $COPY_STATUS -ne 0 ]] && [[ "${OUTPUTSITE}" == *"t2.ucsd.edu"* ]]; then
-    COPY_DEST="davs://redirector.t2.ucsd.edu:1094${OUTPUTDIR}/${RENAMEFILE}"
-    COPY_DEST=${COPY_DEST/'/hadoop/cms'/''}
-    echo "Running xrootd endpoint: env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 14400 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}"
-    while [[ $itry -lt 10 ]]; do
-      env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-copy -p -f -t 14400 --verbose --checksum ADLER32 ${COPY_SRC} ${COPY_DEST}
-      COPY_STATUS=$?
-      if [[ $COPY_STATUS -eq 0 ]]; then
-        break
-      fi
-      (( itry += 1 ))
-    done
-  fi
   if [[ $COPY_STATUS -ne 0 ]]; then
     echo "Removing output file because gfal-copy crashed with code $COPY_STATUS"
     env -i X509_USER_PROXY=${X509_USER_PROXY} gfal-rm -t 14400 --verbose ${COPY_DEST}

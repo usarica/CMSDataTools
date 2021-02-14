@@ -4,13 +4,17 @@
 
 ExtendedBinning::ExtendedBinning(const TString name_, const TString label_) :
   name(name_),
-  label(label_)
+  label(label_),
+  hasAbsoluteLowerBound(false),
+  hasAbsoluteUpperBound(false)
 {
   adjustNameLabel();
 }
 ExtendedBinning::ExtendedBinning(const unsigned int nbins, const double min, const double max, const TString name_, const TString label_) :
   name(name_),
-  label(label_)
+  label(label_),
+  hasAbsoluteLowerBound(false),
+  hasAbsoluteUpperBound(false)
 {
   adjustNameLabel();
 
@@ -22,7 +26,9 @@ ExtendedBinning::ExtendedBinning(const unsigned int nbins, const double min, con
 }
 ExtendedBinning::ExtendedBinning(const double* abinlow, const TString name_, const TString label_) :
   name(name_),
-  label(label_)
+  label(label_),
+  hasAbsoluteLowerBound(false),
+  hasAbsoluteUpperBound(false)
 {
   adjustNameLabel();
 
@@ -34,14 +40,18 @@ ExtendedBinning::ExtendedBinning(const double* abinlow, const TString name_, con
 ExtendedBinning::ExtendedBinning(const std::vector<double>& vbinlow_, const TString name_, const TString label_) :
   vbinlow(vbinlow_),
   name(name_),
-  label(label_)
+  label(label_),
+  hasAbsoluteLowerBound(false),
+  hasAbsoluteUpperBound(false)
 {
   adjustNameLabel();
 }
 ExtendedBinning::ExtendedBinning(ExtendedBinning const& other) :
   vbinlow(other.vbinlow),
   name(other.name),
-  label(other.label)
+  label(other.label),
+  hasAbsoluteLowerBound(other.hasAbsoluteLowerBound),
+  hasAbsoluteUpperBound(other.hasAbsoluteUpperBound)
 {}
 
 
@@ -102,6 +112,8 @@ void ExtendedBinning::setBinBoundary(const int bin, double boundary){
 void ExtendedBinning::removeBinLowEdge(const int bin){
   if (bin>=0 && bin<(int) vbinlow.size()) vbinlow.erase(vbinlow.begin()+bin);
 }
+
+void ExtendedBinning::setAbsoluteBoundFlags(bool flag_lower, bool flag_upper){ hasAbsoluteLowerBound=flag_lower; hasAbsoluteUpperBound=flag_upper; }
 
 ExtendedBinning ExtendedBinning::extractBinning(TH1 const* histo, unsigned int const direction){
   ExtendedBinning res;

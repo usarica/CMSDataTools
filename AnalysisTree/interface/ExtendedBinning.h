@@ -13,6 +13,11 @@ protected:
   TString name;
   TString label;
 
+  // These two flags are introduced in order to tell a histogram smoothener that
+  // the lower or upper bounds should not be treated as flexible.
+  bool hasAbsoluteLowerBound;
+  bool hasAbsoluteUpperBound;
+
   void adjustNameLabel();
 
 public:
@@ -50,6 +55,10 @@ public:
   void setBinBoundary(const int bin, double boundary);
   void removeBinLowEdge(const int bin);
   void resetBinning(){ vbinlow.clear(); }
+
+  void setAbsoluteBoundFlags(bool flag_lower, bool flag_upper);
+  bool const& checkAbsoluteLowerBound() const{ return hasAbsoluteLowerBound; }
+  bool const& checkAbsoluteUpperBound() const{ return hasAbsoluteUpperBound; }
 
   // Static functions
   static ExtendedBinning extractBinning(TH1 const* histo, unsigned int const direction);

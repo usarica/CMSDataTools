@@ -477,7 +477,7 @@ TH1F* HistogramKernelDensitySmoothener::getSmoothHistogram(
   TTree* tree, float& xvar, float& weight, bool& selflag,
   double sigmaXmult,
   TH1F** hRawPtr,
-  TH1F** hShapeSystDnPtr, TH1F** hShapeSystUpPtr
+  TH1F** hShapeStatDnPtr, TH1F** hShapeStatUpPtr
 ){
   assert(tree && finalXBinning.isValid());
 
@@ -506,21 +506,21 @@ TH1F* HistogramKernelDensitySmoothener::getSmoothHistogram(
     (*hRawPtr)->Sumw2();
     (*hRawPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
   }
-  if (hShapeSystDnPtr){
-    *hShapeSystDnPtr = new TH1F(
-      hname+"_ShapeDn", htitle,
+  if (hShapeStatDnPtr){
+    *hShapeStatDnPtr = new TH1F(
+      hname+"_ShapeStatDn", htitle,
       finalXBinning.getNbins(), finalXBinning.getBinning()
     );
-    (*hShapeSystDnPtr)->Sumw2();
-    (*hShapeSystDnPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
+    (*hShapeStatDnPtr)->Sumw2();
+    (*hShapeStatDnPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
   }
-  if (hShapeSystUpPtr){
-    *hShapeSystUpPtr = new TH1F(
-      hname+"_ShapeUp", htitle,
+  if (hShapeStatUpPtr){
+    *hShapeStatUpPtr = new TH1F(
+      hname+"_ShapeStatUp", htitle,
       finalXBinning.getNbins(), finalXBinning.getBinning()
     );
-    (*hShapeSystUpPtr)->Sumw2();
-    (*hShapeSystUpPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
+    (*hShapeStatUpPtr)->Sumw2();
+    (*hShapeStatUpPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
   }
 
   SimpleGaussian gausX(0, 1, SimpleGaussian::kHasLowHighRange, xmin, xmax);
@@ -542,14 +542,14 @@ TH1F* HistogramKernelDensitySmoothener::getSmoothHistogram(
     double Neff = std::pow(sum_wgts[0], 2)/sum_wgts[1];
     double Neff_statDn = Neff;
     double Neff_statUp = Neff;
-    if (hShapeSystDnPtr || hShapeSystUpPtr) getPoissonCountingConfidenceInterval_Frequentist(Neff, VAL_CL_1SIGMA, Neff_statDn, Neff_statUp);
+    if (hShapeStatDnPtr || hShapeStatUpPtr) getPoissonCountingConfidenceInterval_Frequentist(Neff, VAL_CL_1SIGMA, Neff_statDn, Neff_statUp);
 
     for (short isyst=-1; isyst<2; isyst++){
-      if (isyst==-1 && !hShapeSystDnPtr) continue;
-      if (isyst==+1 && !hShapeSystUpPtr) continue;
+      if (isyst==-1 && !hShapeStatDnPtr) continue;
+      if (isyst==+1 && !hShapeStatUpPtr) continue;
 
       double const& Neff_active = (isyst==0 ? Neff : (isyst==-1 ? Neff_statDn : Neff_statUp));
-      TH1F* const& hFill = (isyst==0 ? res : (isyst==-1 ? *hShapeSystDnPtr : *hShapeSystUpPtr));
+      TH1F* const& hFill = (isyst==0 ? res : (isyst==-1 ? *hShapeStatDnPtr : *hShapeStatUpPtr));
       double widthGlobalScale = (Neff_active==0. ? 1. : 1./std::sqrt(Neff_active));
 
       double sX = bX.getBinWidth(ix)*widthGlobalScale*sigmaXmult;
@@ -587,7 +587,7 @@ TH2F* HistogramKernelDensitySmoothener::getSmoothHistogram(
   TTree* tree, float& xvar, float& yvar, float& weight, bool& selflag,
   double sigmaXmult, double sigmaYmult,
   TH2F** hRawPtr,
-  TH2F** hShapeSystDnPtr, TH2F** hShapeSystUpPtr
+  TH2F** hShapeStatDnPtr, TH2F** hShapeStatUpPtr
 ){
   assert(tree && finalXBinning.isValid() && finalYBinning.isValid());
 
@@ -623,25 +623,25 @@ TH2F* HistogramKernelDensitySmoothener::getSmoothHistogram(
     (*hRawPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
     (*hRawPtr)->GetYaxis()->SetTitle(finalYBinning.getLabel());
   }
-  if (hShapeSystDnPtr){
-    *hShapeSystDnPtr = new TH2F(
-      hname+"_ShapeDn", htitle,
+  if (hShapeStatDnPtr){
+    *hShapeStatDnPtr = new TH2F(
+      hname+"_ShapeStatDn", htitle,
       finalXBinning.getNbins(), finalXBinning.getBinning(),
       finalYBinning.getNbins(), finalYBinning.getBinning()
     );
-    (*hShapeSystDnPtr)->Sumw2();
-    (*hShapeSystDnPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
-    (*hShapeSystDnPtr)->GetYaxis()->SetTitle(finalYBinning.getLabel());
+    (*hShapeStatDnPtr)->Sumw2();
+    (*hShapeStatDnPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
+    (*hShapeStatDnPtr)->GetYaxis()->SetTitle(finalYBinning.getLabel());
   }
-  if (hShapeSystUpPtr){
-    *hShapeSystUpPtr = new TH2F(
-      hname+"_ShapeUp", htitle,
+  if (hShapeStatUpPtr){
+    *hShapeStatUpPtr = new TH2F(
+      hname+"_ShapeStatUp", htitle,
       finalXBinning.getNbins(), finalXBinning.getBinning(),
       finalYBinning.getNbins(), finalYBinning.getBinning()
     );
-    (*hShapeSystUpPtr)->Sumw2();
-    (*hShapeSystUpPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
-    (*hShapeSystUpPtr)->GetYaxis()->SetTitle(finalYBinning.getLabel());
+    (*hShapeStatUpPtr)->Sumw2();
+    (*hShapeStatUpPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
+    (*hShapeStatUpPtr)->GetYaxis()->SetTitle(finalYBinning.getLabel());
   }
 
   SimpleGaussian gausX(0, 1, SimpleGaussian::kHasLowHighRange, xmin, xmax);
@@ -666,14 +666,14 @@ TH2F* HistogramKernelDensitySmoothener::getSmoothHistogram(
     double Neff = std::pow(sum_wgts[0], 2)/sum_wgts[1];
     double Neff_statDn = Neff;
     double Neff_statUp = Neff;
-    if (hShapeSystDnPtr || hShapeSystUpPtr) getPoissonCountingConfidenceInterval_Frequentist(Neff, VAL_CL_1SIGMA, Neff_statDn, Neff_statUp);
+    if (hShapeStatDnPtr || hShapeStatUpPtr) getPoissonCountingConfidenceInterval_Frequentist(Neff, VAL_CL_1SIGMA, Neff_statDn, Neff_statUp);
 
     for (short isyst=-1; isyst<2; isyst++){
-      if (isyst==-1 && !hShapeSystDnPtr) continue;
-      if (isyst==+1 && !hShapeSystUpPtr) continue;
+      if (isyst==-1 && !hShapeStatDnPtr) continue;
+      if (isyst==+1 && !hShapeStatUpPtr) continue;
 
       double const& Neff_active = (isyst==0 ? Neff : (isyst==-1 ? Neff_statDn : Neff_statUp));
-      TH2F* const& hFill = (isyst==0 ? res : (isyst==-1 ? *hShapeSystDnPtr : *hShapeSystUpPtr));
+      TH2F* const& hFill = (isyst==0 ? res : (isyst==-1 ? *hShapeStatDnPtr : *hShapeStatUpPtr));
       double widthGlobalScale = (Neff_active==0. ? 1. : 1./std::sqrt(Neff_active));
 
       double sX = bX.getBinWidth(ix)*widthGlobalScale*sigmaXmult;
@@ -730,7 +730,7 @@ TH3F* HistogramKernelDensitySmoothener::getSmoothHistogram(
   TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, bool& selflag,
   double sigmaXmult, double sigmaYmult, double sigmaZmult,
   TH3F** hRawPtr,
-  TH3F** hShapeSystDnPtr, TH3F** hShapeSystUpPtr
+  TH3F** hShapeStatDnPtr, TH3F** hShapeStatUpPtr
 ){
   assert(tree && finalXBinning.isValid() && finalYBinning.isValid() && finalZBinning.isValid());
 
@@ -790,11 +790,11 @@ TH3F* HistogramKernelDensitySmoothener::getSmoothHistogram(
     double Neff = std::pow(sum_wgts[0], 2)/sum_wgts[1];
     double Neff_statDn = Neff;
     double Neff_statUp = Neff;
-    if (hShapeSystDnPtr || hShapeSystUpPtr) getPoissonCountingConfidenceInterval_Frequentist(Neff, VAL_CL_1SIGMA, Neff_statDn, Neff_statUp);
+    if (hShapeStatDnPtr || hShapeStatUpPtr) getPoissonCountingConfidenceInterval_Frequentist(Neff, VAL_CL_1SIGMA, Neff_statDn, Neff_statUp);
 
     for (short isyst=-1; isyst<2; isyst++){
-      if (isyst==-1 && !hShapeSystDnPtr) continue;
-      if (isyst==+1 && !hShapeSystUpPtr) continue;
+      if (isyst==-1 && !hShapeStatDnPtr) continue;
+      if (isyst==+1 && !hShapeStatUpPtr) continue;
 
       double const& Neff_active = (isyst==0 ? Neff : (isyst==-1 ? Neff_statDn : Neff_statUp));
       std::vector<std::vector<std::vector<double>>>& extres_sumW_active = (isyst==0 ? extres_sumW : (isyst==-1 ? extres_statDn_sumW : extres_statUp_sumW));
@@ -896,29 +896,29 @@ TH3F* HistogramKernelDensitySmoothener::getSmoothHistogram(
     (*hRawPtr)->GetYaxis()->SetTitle(finalYBinning.getLabel());
     (*hRawPtr)->GetZaxis()->SetTitle(finalZBinning.getLabel());
   }
-  if (hShapeSystDnPtr){
-    *hShapeSystDnPtr = new TH3F(
-      hname+"_ShapeDn", htitle,
+  if (hShapeStatDnPtr){
+    *hShapeStatDnPtr = new TH3F(
+      hname+"_ShapeStatDn", htitle,
       finalXBinning.getNbins(), finalXBinning.getBinning(),
       finalYBinning.getNbins(), finalYBinning.getBinning(),
       finalZBinning.getNbins(), finalZBinning.getBinning()
     );
-    (*hShapeSystDnPtr)->Sumw2();
-    (*hShapeSystDnPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
-    (*hShapeSystDnPtr)->GetYaxis()->SetTitle(finalYBinning.getLabel());
-    (*hShapeSystDnPtr)->GetZaxis()->SetTitle(finalZBinning.getLabel());
+    (*hShapeStatDnPtr)->Sumw2();
+    (*hShapeStatDnPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
+    (*hShapeStatDnPtr)->GetYaxis()->SetTitle(finalYBinning.getLabel());
+    (*hShapeStatDnPtr)->GetZaxis()->SetTitle(finalZBinning.getLabel());
   }
-  if (hShapeSystUpPtr){
-    *hShapeSystUpPtr = new TH3F(
-      hname+"_ShapeUp", htitle,
+  if (hShapeStatUpPtr){
+    *hShapeStatUpPtr = new TH3F(
+      hname+"_ShapeStatUp", htitle,
       finalXBinning.getNbins(), finalXBinning.getBinning(),
       finalYBinning.getNbins(), finalYBinning.getBinning(),
       finalZBinning.getNbins(), finalZBinning.getBinning()
     );
-    (*hShapeSystUpPtr)->Sumw2();
-    (*hShapeSystUpPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
-    (*hShapeSystUpPtr)->GetYaxis()->SetTitle(finalYBinning.getLabel());
-    (*hShapeSystUpPtr)->GetZaxis()->SetTitle(finalZBinning.getLabel());
+    (*hShapeStatUpPtr)->Sumw2();
+    (*hShapeStatUpPtr)->GetXaxis()->SetTitle(finalXBinning.getLabel());
+    (*hShapeStatUpPtr)->GetYaxis()->SetTitle(finalYBinning.getLabel());
+    (*hShapeStatUpPtr)->GetZaxis()->SetTitle(finalZBinning.getLabel());
   }
   for (unsigned int i=0; i<bX.getNbins(); i++){
     unsigned int ii=i;
@@ -935,13 +935,13 @@ TH3F* HistogramKernelDensitySmoothener::getSmoothHistogram(
           (*hRawPtr)->SetBinContent(ii, jj, kk, extresraw.getBinSumW(i, j, k));
           (*hRawPtr)->SetBinError(ii, jj, kk, std::sqrt(extresraw.getBinSumWsq(i, j, k)));
         }
-        if (hShapeSystDnPtr){
-          (*hShapeSystDnPtr)->SetBinContent(ii, jj, kk, extres_statDn.getBinSumW(i, j, k));
-          (*hShapeSystDnPtr)->SetBinError(ii, jj, kk, std::sqrt(extres_statDn.getBinSumWsq(i, j, k)));
+        if (hShapeStatDnPtr){
+          (*hShapeStatDnPtr)->SetBinContent(ii, jj, kk, extres_statDn.getBinSumW(i, j, k));
+          (*hShapeStatDnPtr)->SetBinError(ii, jj, kk, std::sqrt(extres_statDn.getBinSumWsq(i, j, k)));
         }
-        if (hShapeSystUpPtr){
-          (*hShapeSystUpPtr)->SetBinContent(ii, jj, kk, extres_statUp.getBinSumW(i, j));
-          (*hShapeSystUpPtr)->SetBinError(ii, jj, kk, std::sqrt(extres_statUp.getBinSumWsq(i, j, k)));
+        if (hShapeStatUpPtr){
+          (*hShapeStatUpPtr)->SetBinContent(ii, jj, kk, extres_statUp.getBinSumW(i, j));
+          (*hShapeStatUpPtr)->SetBinError(ii, jj, kk, std::sqrt(extres_statUp.getBinSumWsq(i, j, k)));
         }
       }
     }
@@ -956,7 +956,7 @@ std::vector<TH1F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
   std::vector<TreeHistogramAssociation_1D>& treeList,
   double sigmaXmult,
   std::vector<TH1F*>* hRawPtr,
-  std::vector<TH1F*>* hShapeSystDnPtr, std::vector<TH1F*>* hShapeSystUpPtr
+  std::vector<TH1F*>* hShapeStatDnPtr, std::vector<TH1F*>* hShapeStatUpPtr
 ){
   assert(!treeList.empty() && finalXBinning.isValid());
 
@@ -1020,11 +1020,11 @@ std::vector<TH1F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
       double Neff = std::pow(sum_wgts[0], 2)/sum_wgts[1];
       double Neff_statDn = Neff;
       double Neff_statUp = Neff;
-      if (hShapeSystDnPtr || hShapeSystUpPtr) getPoissonCountingConfidenceInterval_Frequentist(Neff, VAL_CL_1SIGMA, Neff_statDn, Neff_statUp);
+      if (hShapeStatDnPtr || hShapeStatUpPtr) getPoissonCountingConfidenceInterval_Frequentist(Neff, VAL_CL_1SIGMA, Neff_statDn, Neff_statUp);
 
       for (short isyst=-1; isyst<2; isyst++){
-        if (isyst==-1 && !hShapeSystDnPtr) continue;
-        if (isyst==+1 && !hShapeSystUpPtr) continue;
+        if (isyst==-1 && !hShapeStatDnPtr) continue;
+        if (isyst==+1 && !hShapeStatUpPtr) continue;
 
         double const& Neff_active = (isyst==0 ? Neff : (isyst==-1 ? Neff_statDn : Neff_statUp));
         std::vector<std::vector<std::vector<double>>>& extres_sumW_active = (isyst==0 ? extres_sumW : (isyst==-1 ? extres_statDn_sumW : extres_statUp_sumW));
@@ -1102,23 +1102,23 @@ std::vector<TH1F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
       hRaw->Sumw2();
       hRaw->GetXaxis()->SetTitle(finalXBinning.getLabel());
     }
-    TH1F* hShapeSystDn=nullptr;
-    if (hShapeSystDnPtr){
-      hShapeSystDn = new TH1F(
-        hname+"_ShapeDn", htitle,
+    TH1F* hShapeStatDn=nullptr;
+    if (hShapeStatDnPtr){
+      hShapeStatDn = new TH1F(
+        hname+"_ShapeStatDn", htitle,
         finalXBinning.getNbins(), finalXBinning.getBinning()
       );
-      hShapeSystDn->Sumw2();
-      hShapeSystDn->GetXaxis()->SetTitle(finalXBinning.getLabel());
+      hShapeStatDn->Sumw2();
+      hShapeStatDn->GetXaxis()->SetTitle(finalXBinning.getLabel());
     }
-    TH1F* hShapeSystUp=nullptr;
-    if (hShapeSystUpPtr){
-      hShapeSystUp = new TH1F(
-        hname+"_ShapeUp", htitle,
+    TH1F* hShapeStatUp=nullptr;
+    if (hShapeStatUpPtr){
+      hShapeStatUp = new TH1F(
+        hname+"_ShapeStatUp", htitle,
         finalXBinning.getNbins(), finalXBinning.getBinning()
       );
-      hShapeSystUp->Sumw2();
-      hShapeSystUp->GetXaxis()->SetTitle(finalXBinning.getLabel());
+      hShapeStatUp->Sumw2();
+      hShapeStatUp->GetXaxis()->SetTitle(finalXBinning.getLabel());
     }
     for (unsigned int i=0; i<bX.getNbins(); i++){
       unsigned int ii=i;
@@ -1129,19 +1129,19 @@ std::vector<TH1F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
         hRaw->SetBinContent(ii, extresraw.getBinSumW(i));
         hRaw->SetBinError(ii, std::sqrt(extresraw.getBinSumWsq(i)));
       }
-      if (hShapeSystDn){
-        hShapeSystDn->SetBinContent(ii, extres_statDn.getBinSumW(i));
-        hShapeSystDn->SetBinError(ii, std::sqrt(extres_statDn.getBinSumWsq(i)));
+      if (hShapeStatDn){
+        hShapeStatDn->SetBinContent(ii, extres_statDn.getBinSumW(i));
+        hShapeStatDn->SetBinError(ii, std::sqrt(extres_statDn.getBinSumWsq(i)));
       }
-      if (hShapeSystUp){
-        hShapeSystUp->SetBinContent(ii, extres_statUp.getBinSumW(i));
-        hShapeSystUp->SetBinError(ii, std::sqrt(extres_statUp.getBinSumWsq(i)));
+      if (hShapeStatUp){
+        hShapeStatUp->SetBinContent(ii, extres_statUp.getBinSumW(i));
+        hShapeStatUp->SetBinError(ii, std::sqrt(extres_statUp.getBinSumWsq(i)));
       }
     }
     resList.push_back(res);
     if (hRawPtr) hRawPtr->push_back(hRaw);
-    if (hShapeSystDnPtr) hShapeSystDnPtr->push_back(hShapeSystDn);
-    if (hShapeSystUpPtr) hShapeSystUpPtr->push_back(hShapeSystUp);
+    if (hShapeStatDnPtr) hShapeStatDnPtr->push_back(hShapeStatDn);
+    if (hShapeStatUpPtr) hShapeStatUpPtr->push_back(hShapeStatUp);
   }
 
   return resList;
@@ -1151,7 +1151,7 @@ std::vector<TH2F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
   std::vector<TreeHistogramAssociation_2D>& treeList,
   double sigmaXmult, double sigmaYmult,
   std::vector<TH2F*>* hRawPtr,
-  std::vector<TH2F*>* hShapeSystDnPtr, std::vector<TH2F*>* hShapeSystUpPtr
+  std::vector<TH2F*>* hShapeStatDnPtr, std::vector<TH2F*>* hShapeStatUpPtr
 ){
   assert(!treeList.empty() && finalXBinning.isValid() && finalYBinning.isValid());
 
@@ -1222,11 +1222,11 @@ std::vector<TH2F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
       double Neff = std::pow(sum_wgts[0], 2)/sum_wgts[1];
       double Neff_statDn = Neff;
       double Neff_statUp = Neff;
-      if (hShapeSystDnPtr || hShapeSystUpPtr) getPoissonCountingConfidenceInterval_Frequentist(Neff, VAL_CL_1SIGMA, Neff_statDn, Neff_statUp);
+      if (hShapeStatDnPtr || hShapeStatUpPtr) getPoissonCountingConfidenceInterval_Frequentist(Neff, VAL_CL_1SIGMA, Neff_statDn, Neff_statUp);
 
       for (short isyst=-1; isyst<2; isyst++){
-        if (isyst==-1 && !hShapeSystDnPtr) continue;
-        if (isyst==+1 && !hShapeSystUpPtr) continue;
+        if (isyst==-1 && !hShapeStatDnPtr) continue;
+        if (isyst==+1 && !hShapeStatUpPtr) continue;
 
         double const& Neff_active = (isyst==0 ? Neff : (isyst==-1 ? Neff_statDn : Neff_statUp));
         std::vector<std::vector<std::vector<double>>>& extres_sumW_active = (isyst==0 ? extres_sumW : (isyst==-1 ? extres_statDn_sumW : extres_statUp_sumW));
@@ -1317,27 +1317,27 @@ std::vector<TH2F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
       hRaw->GetXaxis()->SetTitle(finalXBinning.getLabel());
       hRaw->GetYaxis()->SetTitle(finalYBinning.getLabel());
     }
-    TH2F* hShapeSystDn=nullptr;
-    if (hShapeSystDnPtr){
-      hShapeSystDn = new TH2F(
-        hname+"_ShapeDn", htitle,
+    TH2F* hShapeStatDn=nullptr;
+    if (hShapeStatDnPtr){
+      hShapeStatDn = new TH2F(
+        hname+"_ShapeStatDn", htitle,
         finalXBinning.getNbins(), finalXBinning.getBinning(),
         finalYBinning.getNbins(), finalYBinning.getBinning()
       );
-      hShapeSystDn->Sumw2();
-      hShapeSystDn->GetXaxis()->SetTitle(finalXBinning.getLabel());
-      hShapeSystDn->GetYaxis()->SetTitle(finalYBinning.getLabel());
+      hShapeStatDn->Sumw2();
+      hShapeStatDn->GetXaxis()->SetTitle(finalXBinning.getLabel());
+      hShapeStatDn->GetYaxis()->SetTitle(finalYBinning.getLabel());
     }
-    TH2F* hShapeSystUp=nullptr;
-    if (hShapeSystUpPtr){
-      hShapeSystUp = new TH2F(
-        hname+"_ShapeUp", htitle,
+    TH2F* hShapeStatUp=nullptr;
+    if (hShapeStatUpPtr){
+      hShapeStatUp = new TH2F(
+        hname+"_ShapeStatUp", htitle,
         finalXBinning.getNbins(), finalXBinning.getBinning(),
         finalYBinning.getNbins(), finalYBinning.getBinning()
       );
-      hShapeSystUp->Sumw2();
-      hShapeSystUp->GetXaxis()->SetTitle(finalXBinning.getLabel());
-      hShapeSystUp->GetYaxis()->SetTitle(finalYBinning.getLabel());
+      hShapeStatUp->Sumw2();
+      hShapeStatUp->GetXaxis()->SetTitle(finalXBinning.getLabel());
+      hShapeStatUp->GetYaxis()->SetTitle(finalYBinning.getLabel());
     }
     for (unsigned int i=0; i<bX.getNbins(); i++){
       unsigned int ii=i;
@@ -1351,20 +1351,20 @@ std::vector<TH2F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
           hRaw->SetBinContent(ii, jj, extresraw.getBinSumW(i, j));
           hRaw->SetBinError(ii, jj, std::sqrt(extresraw.getBinSumWsq(i, j)));
         }
-        if (hShapeSystDn){
-          hShapeSystDn->SetBinContent(ii, jj, extres_statDn.getBinSumW(i, j));
-          hShapeSystDn->SetBinError(ii, jj, std::sqrt(extres_statDn.getBinSumWsq(i, j)));
+        if (hShapeStatDn){
+          hShapeStatDn->SetBinContent(ii, jj, extres_statDn.getBinSumW(i, j));
+          hShapeStatDn->SetBinError(ii, jj, std::sqrt(extres_statDn.getBinSumWsq(i, j)));
         }
-        if (hShapeSystUp){
-          hShapeSystUp->SetBinContent(ii, jj, extres_statUp.getBinSumW(i, j));
-          hShapeSystUp->SetBinError(ii, jj, std::sqrt(extres_statUp.getBinSumWsq(i, j)));
+        if (hShapeStatUp){
+          hShapeStatUp->SetBinContent(ii, jj, extres_statUp.getBinSumW(i, j));
+          hShapeStatUp->SetBinError(ii, jj, std::sqrt(extres_statUp.getBinSumWsq(i, j)));
         }
       }
     }
     resList.push_back(res);
     if (hRawPtr) hRawPtr->push_back(hRaw);
-    if (hShapeSystDnPtr) hShapeSystDnPtr->push_back(hShapeSystDn);
-    if (hShapeSystUpPtr) hShapeSystUpPtr->push_back(hShapeSystUp);
+    if (hShapeStatDnPtr) hShapeStatDnPtr->push_back(hShapeStatDn);
+    if (hShapeStatUpPtr) hShapeStatUpPtr->push_back(hShapeStatUp);
   }
 
   return resList;
@@ -1374,7 +1374,7 @@ std::vector<TH3F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
   std::vector<TreeHistogramAssociation_3D>& treeList,
   double sigmaXmult, double sigmaYmult, double sigmaZmult,
   std::vector<TH3F*>* hRawPtr,
-  std::vector<TH3F*>* hShapeSystDnPtr, std::vector<TH3F*>* hShapeSystUpPtr
+  std::vector<TH3F*>* hShapeStatDnPtr, std::vector<TH3F*>* hShapeStatUpPtr
 ){
   assert(!treeList.empty() && finalXBinning.isValid() && finalYBinning.isValid() && finalZBinning.isValid());
 
@@ -1452,11 +1452,11 @@ std::vector<TH3F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
       double Neff = std::pow(sum_wgts[0], 2)/sum_wgts[1];
       double Neff_statDn = Neff;
       double Neff_statUp = Neff;
-      if (hShapeSystDnPtr || hShapeSystUpPtr) getPoissonCountingConfidenceInterval_Frequentist(Neff, VAL_CL_1SIGMA, Neff_statDn, Neff_statUp);
+      if (hShapeStatDnPtr || hShapeStatUpPtr) getPoissonCountingConfidenceInterval_Frequentist(Neff, VAL_CL_1SIGMA, Neff_statDn, Neff_statUp);
 
       for (short isyst=-1; isyst<2; isyst++){
-        if (isyst==-1 && !hShapeSystDnPtr) continue;
-        if (isyst==+1 && !hShapeSystUpPtr) continue;
+        if (isyst==-1 && !hShapeStatDnPtr) continue;
+        if (isyst==+1 && !hShapeStatUpPtr) continue;
 
         double const& Neff_active = (isyst==0 ? Neff : (isyst==-1 ? Neff_statDn : Neff_statUp));
         std::vector<std::vector<std::vector<double>>>& extres_sumW_active = (isyst==0 ? extres_sumW : (isyst==-1 ? extres_statDn_sumW : extres_statUp_sumW));
@@ -1559,31 +1559,31 @@ std::vector<TH3F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
       hRaw->GetYaxis()->SetTitle(finalYBinning.getLabel());
       hRaw->GetZaxis()->SetTitle(finalZBinning.getLabel());
     }
-    TH3F* hShapeSystDn=nullptr;
-    if (hShapeSystDnPtr){
-      hShapeSystDn = new TH3F(
-        hname+"_ShapeDn", htitle,
+    TH3F* hShapeStatDn=nullptr;
+    if (hShapeStatDnPtr){
+      hShapeStatDn = new TH3F(
+        hname+"_ShapeStatDn", htitle,
         finalXBinning.getNbins(), finalXBinning.getBinning(),
         finalYBinning.getNbins(), finalYBinning.getBinning(),
         finalZBinning.getNbins(), finalZBinning.getBinning()
       );
-      hShapeSystDn->Sumw2();
-      hShapeSystDn->GetXaxis()->SetTitle(finalXBinning.getLabel());
-      hShapeSystDn->GetYaxis()->SetTitle(finalYBinning.getLabel());
-      hShapeSystDn->GetZaxis()->SetTitle(finalZBinning.getLabel());
+      hShapeStatDn->Sumw2();
+      hShapeStatDn->GetXaxis()->SetTitle(finalXBinning.getLabel());
+      hShapeStatDn->GetYaxis()->SetTitle(finalYBinning.getLabel());
+      hShapeStatDn->GetZaxis()->SetTitle(finalZBinning.getLabel());
     }
-    TH3F* hShapeSystUp=nullptr;
-    if (hShapeSystUpPtr){
-      hShapeSystUp = new TH3F(
-        hname+"_ShapeUp", htitle,
+    TH3F* hShapeStatUp=nullptr;
+    if (hShapeStatUpPtr){
+      hShapeStatUp = new TH3F(
+        hname+"_ShapeStatUp", htitle,
         finalXBinning.getNbins(), finalXBinning.getBinning(),
         finalYBinning.getNbins(), finalYBinning.getBinning(),
         finalZBinning.getNbins(), finalZBinning.getBinning()
       );
-      hShapeSystUp->Sumw2();
-      hShapeSystUp->GetXaxis()->SetTitle(finalXBinning.getLabel());
-      hShapeSystUp->GetYaxis()->SetTitle(finalYBinning.getLabel());
-      hShapeSystUp->GetZaxis()->SetTitle(finalZBinning.getLabel());
+      hShapeStatUp->Sumw2();
+      hShapeStatUp->GetXaxis()->SetTitle(finalXBinning.getLabel());
+      hShapeStatUp->GetYaxis()->SetTitle(finalYBinning.getLabel());
+      hShapeStatUp->GetZaxis()->SetTitle(finalZBinning.getLabel());
     }
     for (unsigned int i=0; i<bX.getNbins(); i++){
       unsigned int ii=i;
@@ -1600,21 +1600,21 @@ std::vector<TH3F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
             hRaw->SetBinContent(ii, jj, kk, extresraw.getBinSumW(i, j, k));
             hRaw->SetBinError(ii, jj, kk, sqrt(extresraw.getBinSumWsq(i, j, k)));
           }
-          if (hShapeSystDn){
-            hShapeSystDn->SetBinContent(ii, jj, kk, extres_statDn.getBinSumW(i, j, k));
-            hShapeSystDn->SetBinError(ii, jj, kk, std::sqrt(extres_statDn.getBinSumWsq(i, j, k)));
+          if (hShapeStatDn){
+            hShapeStatDn->SetBinContent(ii, jj, kk, extres_statDn.getBinSumW(i, j, k));
+            hShapeStatDn->SetBinError(ii, jj, kk, std::sqrt(extres_statDn.getBinSumWsq(i, j, k)));
           }
-          if (hShapeSystUp){
-            hShapeSystUp->SetBinContent(ii, jj, kk, extres_statUp.getBinSumW(i, j));
-            hShapeSystUp->SetBinError(ii, jj, kk, std::sqrt(extres_statUp.getBinSumWsq(i, j, k)));
+          if (hShapeStatUp){
+            hShapeStatUp->SetBinContent(ii, jj, kk, extres_statUp.getBinSumW(i, j));
+            hShapeStatUp->SetBinError(ii, jj, kk, std::sqrt(extres_statUp.getBinSumWsq(i, j, k)));
           }
         }
       }
     }
     resList.push_back(res);
     if (hRawPtr) hRawPtr->push_back(hRaw);
-    if (hShapeSystDnPtr) hShapeSystDnPtr->push_back(hShapeSystDn);
-    if (hShapeSystUpPtr) hShapeSystUpPtr->push_back(hShapeSystUp);
+    if (hShapeStatDnPtr) hShapeStatDnPtr->push_back(hShapeStatDn);
+    if (hShapeStatUpPtr) hShapeStatUpPtr->push_back(hShapeStatUp);
   }
 
   return resList;

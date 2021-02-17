@@ -116,6 +116,9 @@ namespace HelperFunctions{
   template<> void conditionalizeHistogram<TH2F>(TH2F* histo, unsigned int iaxis, std::vector<std::pair<TH2F*, float>> const* conditionalsReference, bool useWidth, bool useEffErr);
   template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int iaxis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth, bool useEffErr);
 
+  template <typename T> void conditionalizeHistogram(T* histo, unsigned int iaxis, unsigned int jaxis, std::vector<std::pair<T*, float>> const* conditionalsReference=nullptr, bool useWidth=true, bool useEffErr=false);
+  template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int iaxis, unsigned int jaxis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth, bool useEffErr);
+
   template <typename T> void wipeOverUnderFlows(T* hwipe, bool rescale=false, bool addToLastBin=false);
   template<> void wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool rescale, bool addToLastBin);
   template<> void wipeOverUnderFlows<TH2F>(TH2F* hwipe, bool rescale, bool addToLastBin);

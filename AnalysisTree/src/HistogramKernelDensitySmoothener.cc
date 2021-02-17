@@ -484,6 +484,9 @@ TH1F* HistogramKernelDensitySmoothener::getSmoothHistogram(
   ExtendedBinning bX=getIntermediateBinning(finalXBinning);
   bool const sameXlow=finalXBinning.checkAbsoluteLowerBound();
   double const xmin=bX.getMin(); double const xmax=bX.getMax();
+  MELAout << "HistogramKernelDensitySmoothener::getSmoothHistogram: Initializing:" << endl;
+  MELAout << "\t- x: [" << xmin << ", " << xmax << "]" << endl;
+  MELAout << "\t- sameXlow ? " << sameXlow << endl;
 
   // Construct fine histogram to determine intermediate binning
   ExtendedProfileHistogram reference(bX, false);
@@ -579,6 +582,7 @@ TH1F* HistogramKernelDensitySmoothener::getSmoothHistogram(
     } // End loop over shape systematic
 
   } // End loop over tree
+  cout << "HistogramKernelDensitySmoothener::getSmoothHistogram: " << res->GetName() << " integral: " << res->Integral() << endl;
   return res;
 }
 
@@ -597,6 +601,11 @@ TH2F* HistogramKernelDensitySmoothener::getSmoothHistogram(
   bool const sameYlow=finalYBinning.checkAbsoluteLowerBound();
   double const xmin=bX.getMin(); double const xmax=bX.getMax();
   double const ymin=bY.getMin(); double const ymax=bY.getMax();
+  MELAout << "HistogramKernelDensitySmoothener::getSmoothHistogram: Initializing:" << endl;
+  MELAout << "\t- x: [" << xmin << ", " << xmax << "]" << endl;
+  MELAout << "\t- sameXlow ? " << sameXlow << endl;
+  MELAout << "\t- y: [" << ymin << ", " << ymax << "]" << endl;
+  MELAout << "\t- sameYlow ? " << sameYlow << endl;
 
   // Construct fine histogram to determine intermediate binning
   ExtendedProfileHistogram reference(bX, bY, false);
@@ -661,7 +670,7 @@ TH2F* HistogramKernelDensitySmoothener::getSmoothHistogram(
     int ix = bX.getBin(xvar);
     int iy = bY.getBin(yvar);
 
-    double sum_wgts[2]={ reference.getBinSumW(ix), reference.getBinSumWsq(ix) };
+    double sum_wgts[2]={ reference.getBinSumW(ix, iy), reference.getBinSumWsq(ix, iy) };
     if (sum_wgts[1]==0.) continue;
     double Neff = std::pow(sum_wgts[0], 2)/sum_wgts[1];
     double Neff_statDn = Neff;
@@ -743,6 +752,14 @@ TH3F* HistogramKernelDensitySmoothener::getSmoothHistogram(
   double const xmin=bX.getMin(); double const xmax=bX.getMax();
   double const ymin=bY.getMin(); double const ymax=bY.getMax();
   double const zmin=bZ.getMin(); double const zmax=bZ.getMax();
+
+  MELAout << "HistogramKernelDensitySmoothener::getSmoothHistogram: Initializing:" << endl;
+  MELAout << "\t- x: [" << xmin << ", " << xmax << "]" << endl;
+  MELAout << "\t- sameXlow ? " << sameXlow << endl;
+  MELAout << "\t- y: [" << ymin << ", " << ymax << "]" << endl;
+  MELAout << "\t- sameYlow ? " << sameYlow << endl;
+  MELAout << "\t- z: [" << zmin << ", " << zmax << "]" << endl;
+  MELAout << "\t- sameZlow ? " << sameZlow << endl;
 
   // Construct fine histogram to determine intermediate binning
   ExtendedProfileHistogram reference(bX, bY, bZ, false);
@@ -964,6 +981,10 @@ std::vector<TH1F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
   bool const sameXlow=finalXBinning.checkAbsoluteLowerBound();
   double const xmin=bX.getMin(); double const xmax=bX.getMax();
 
+  MELAout << "HistogramKernelDensitySmoothener::getSmoothHistogram: Initializing:" << endl;
+  MELAout << "\t- x: [" << xmin << ", " << xmax << "]" << endl;
+  MELAout << "\t- sameXlow ? " << sameXlow << endl;
+
   // Construct fine histogram to determine intermediate binning
   ExtendedProfileHistogram reference(bX, false);
   {
@@ -1161,6 +1182,12 @@ std::vector<TH2F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
   bool const sameYlow=finalYBinning.checkAbsoluteLowerBound();
   double const xmin=bX.getMin(); double const xmax=bX.getMax();
   double const ymin=bY.getMin(); double const ymax=bY.getMax();
+
+  MELAout << "HistogramKernelDensitySmoothener::getSmoothHistogram: Initializing:" << endl;
+  MELAout << "\t- x: [" << xmin << ", " << xmax << "]" << endl;
+  MELAout << "\t- sameXlow ? " << sameXlow << endl;
+  MELAout << "\t- y: [" << ymin << ", " << ymax << "]" << endl;
+  MELAout << "\t- sameYlow ? " << sameYlow << endl;
 
   // Construct fine histogram to determine intermediate binning
   ExtendedProfileHistogram reference(bX, bY, false);
@@ -1387,6 +1414,14 @@ std::vector<TH3F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
   double const xmin=bX.getMin(); double const xmax=bX.getMax();
   double const ymin=bY.getMin(); double const ymax=bY.getMax();
   double const zmin=bZ.getMin(); double const zmax=bZ.getMax();
+
+  MELAout << "HistogramKernelDensitySmoothener::getSmoothHistogram: Initializing:" << endl;
+  MELAout << "\t- x: [" << xmin << ", " << xmax << "]" << endl;
+  MELAout << "\t- sameXlow ? " << sameXlow << endl;
+  MELAout << "\t- y: [" << ymin << ", " << ymax << "]" << endl;
+  MELAout << "\t- sameYlow ? " << sameYlow << endl;
+  MELAout << "\t- z: [" << zmin << ", " << zmax << "]" << endl;
+  MELAout << "\t- sameZlow ? " << sameZlow << endl;
 
   // Construct fine histogram to determine intermediate binning
   ExtendedProfileHistogram reference(bX, bY, bZ, false);

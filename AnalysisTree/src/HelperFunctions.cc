@@ -1629,6 +1629,118 @@ template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsi
   }
 }
 
+template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int iaxis, unsigned int jaxis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth, bool useEffErr){
+  const bool forceUseSimpleErr = (conditionalsReference || !useEffErr);
+  TAxis* axis[3]={ nullptr };
+  assert(iaxis<3 && jaxis<3);
+  if ((jaxis==0 && iaxis==1) || (jaxis==1 && iaxis==2) || (jaxis==2 && iaxis==0)) std::swap(iaxis, jaxis);
+  unsigned int kaxis = 3-iaxis-jaxis;
+  switch (kaxis){
+  case 0:
+    axis[0]=histo->GetYaxis();
+    axis[1]=histo->GetZaxis();
+    axis[2]=histo->GetXaxis();
+    break;
+  case 1:
+    axis[0]=histo->GetZaxis();
+    axis[1]=histo->GetXaxis();
+    axis[2]=histo->GetYaxis();
+    break;
+  case 2:
+    axis[0]=histo->GetXaxis();
+    axis[1]=histo->GetYaxis();
+    axis[2]=histo->GetZaxis();
+    break;
+  default:
+    return;
+  }
+  int nbins[3]; for (unsigned int i=0; i<3; i++) nbins[i]=axis[i]->GetNbins();
+
+  for (int i=0; i<=nbins[0]+1; i++){
+    for (int j=0; j<=nbins[1]+1; j++){
+      double integral=1;
+      double integralerror=0;
+
+      int int_xb[2]={ 0 }, int_yb[2]={ 0 }, int_zb[2]={ 0 };
+      switch (kaxis){
+      case 0:
+        int_yb[0]=i;
+        int_yb[1]=i;
+        int_zb[0]=j;
+        int_zb[1]=j;
+        int_xb[0]=0;
+        int_xb[1]=nbins[2]+1;
+        break;
+      case 1:
+        int_zb[0]=i;
+        int_zb[1]=i;
+        int_xb[0]=j;
+        int_xb[1]=j;
+        int_yb[0]=0;
+        int_yb[1]=nbins[2]+1;
+        break;
+      case 2:
+        int_xb[0]=i;
+        int_xb[1]=i;
+        int_yb[0]=j;
+        int_yb[1]=j;
+        int_zb[0]=0;
+        int_zb[1]=nbins[2]+1;
+        break;
+      }
+
+      if (!conditionalsReference) integral = getHistogramIntegralAndError<TH3F>(histo, int_xb[0], int_xb[1], int_yb[0], int_yb[1], int_zb[0], int_zb[1], useWidth, &integralerror);
+      else{
+        for (std::pair<TH3F*, float> const& hh:(*conditionalsReference)){
+          double extraintegralerror=0;
+          double extraintegral = getHistogramIntegralAndError<TH3F>(hh.first, int_xb[0], int_xb[1], int_yb[0], int_yb[1], int_zb[0], int_zb[1], useWidth, &extraintegralerror);
+          integralerror = calculateSimpleProductError(extraintegral, extraintegralerror, hh.second, integral, integralerror, 1);
+          integral *= pow(extraintegral, hh.second);
+        }
+      }
+      for (int k=0; k<=nbins[2]+1; k++){
+        int ix=0, iy=0, iz=0;
+        switch (kaxis){
+        case 0:
+          ix=j;
+          iy=k;
+          iz=i;
+          break;
+        case 1:
+          ix=k;
+          iy=i;
+          iz=j;
+          break;
+        case 2:
+          ix=i;
+          iy=j;
+          iz=k;
+          break;
+        }
+
+        double width = 1;
+        double binerror;
+        double bincontent = getHistogramIntegralAndError<TH3F>(histo, ix, ix, iy, iy, iz, iz, useWidth, &binerror);
+
+        if (useWidth && j>=1 && j<=nbins[1]) width *= axis[1]->GetBinWidth(j);
+        if (useWidth && k>=1 && k<=nbins[2]) width *= axis[2]->GetBinWidth(k);
+
+        double hval=0;
+        double herr=0;
+        if (integral!=0.){
+          hval = bincontent/integral;
+          if (!forceUseSimpleErr) herr = calculateEfficiencyError(bincontent, integral, pow(binerror, 2), pow(integralerror, 2));
+          else herr = calculateSimpleProductError(bincontent, binerror, 1, integral, integralerror, -1);
+          hval /= width; herr /= width;
+        }
+
+        histo->SetBinContent(ix, iy, iz, hval);
+        histo->SetBinError(ix, iy, iz, herr);
+      }
+    }
+  }
+}
+
 template<> void HelperFunctions::wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool rescale, bool addToLastBin){
   double integral = hwipe->Integral(0, hwipe->GetNbinsX()+1);
   for (int binx=0; binx<=hwipe->GetNbinsX()+1; binx++){

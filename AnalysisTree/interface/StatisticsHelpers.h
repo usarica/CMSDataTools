@@ -11,6 +11,7 @@ namespace StatisticsHelpers{
   double chisq_quantile(double CL, double ndof);
 
   // Actual range of counts. Subtract count to find difference from the central value.
+  void getPoissonCountingConfidenceInterval_Frequentist(double sw_total, double swsq_total, double CL, double& vlow, double& vhigh);
   void getPoissonCountingConfidenceInterval_Frequentist(double count, double CL, double& vlow, double& vhigh);
 
   void getPoissonEfficiencyConfidenceInterval_Frequentist(double sw_total, double sw_passed, double swsq_total, double CL, double& vlow, double& vhigh);

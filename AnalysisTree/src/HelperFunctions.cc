@@ -438,29 +438,14 @@ void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAs
     double binerrorlow, binerrorhigh, binerror;
     binerrorlow = binerrorhigh = binerror = histo->GetBinError(bin);
     if (useAsymError && (errorsOnZero || bincontent!=0.)){
-      double Neff, sferr;
-      if (binerror==0. && bincontent==0.){
-        Neff = 0;
-        sferr = (errorsOnZero ? 1. : 0.);
-      }
-      else if (binerror==0. && bincontent!=0.){
-        Neff = bincontent;
-        sferr = 1.;
-      }
-      else if (binerror!=0. && bincontent==0.){
-        Neff = std::pow(bincontent/binerror, 2);
-        sferr = -1;
+      if (!errorsOnZero && bincontent==0.){
+        binerrorhigh=0;
+        binerrorlow=0;
       }
       else{
-        Neff = std::pow(bincontent/binerror, 2);
-        sferr = binerror / std::sqrt(Neff);
-      }
-      if (sferr>=0.){
-        StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(Neff, StatisticsHelpers::VAL_CL_1SIGMA, binerrorlow, binerrorhigh);
-        binerrorhigh = binerrorhigh - Neff;
-        binerrorlow = Neff - binerrorlow;
-        binerrorhigh *= sferr;
-        binerrorlow *= sferr;
+        StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(bincontent, std::pow(binerror, 2), StatisticsHelpers::VAL_CL_1SIGMA, binerrorlow, binerrorhigh);
+        binerrorhigh = binerrorhigh - bincontent;
+        binerrorlow = bincontent - binerrorlow;
       }
     }
 
@@ -2054,65 +2039,10 @@ template<> void HelperFunctions::divideHistograms<TH1F>(TH1F const* hnum, TH1F c
       binerror = calculateSimpleProductError(sumW, sqrt(sumWsq), 1, sumWAll, sqrt(sumWsqAll), -1);
       if (hAssign_dn || hAssign_up){
         double bc_denom_dn, bc_denom_up;
-        double Neff_denom, sferr_denom;
-        if (sumWsqAll==0. && sumWAll==0.){
-          Neff_denom = 0;
-          sferr_denom = 1;
-        }
-        else if (sumWsqAll==0. && sumWAll!=0.){
-          Neff_denom = sumWAll;
-          sferr_denom = 1.;
-        }
-        else if (sumWsqAll!=0. && sumWAll==0.){
-          Neff_denom = std::pow(sumWAll, 2)/sumWsqAll;
-          sferr_denom = -1;
-        }
-        else{
-          Neff_denom = std::pow(sumWAll, 2)/sumWsqAll;
-          sferr_denom = std::sqrt(sumWsqAll/Neff_denom);
-        }
-        if (sferr_denom>=0.){
-          StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(Neff_denom, StatisticsHelpers::VAL_CL_1SIGMA, bc_denom_dn, bc_denom_up);
-          bc_denom_dn = Neff_denom - bc_denom_dn;
-          bc_denom_up = bc_denom_up - Neff_denom;
-          bc_denom_dn *= sferr_denom;
-          bc_denom_up *= sferr_denom;
-          bc_denom_dn += sumWAll;
-          bc_denom_up += sumWAll;
-        }
-        else{ bc_denom_dn = bc_denom_up = sqrt(sumWsqAll); }
+        StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(sumWAll, sumWsqAll, StatisticsHelpers::VAL_CL_1SIGMA, bc_denom_dn, bc_denom_up);
 
         double bc_num_dn, bc_num_up;
-        double Neff_num, sferr_num;
-        if (sumWsq==0. && sumW==0.){
-          Neff_num = 0;
-          sferr_num = 1;
-        }
-        else if (sumWsq==0. && sumW!=0.){
-          Neff_num = sumW;
-          sferr_num = 1.;
-        }
-        else if (sumWsq!=0. && sumW==0.){
-          Neff_num = std::pow(sumW, 2)/sumWsq;
-          sferr_num = -1;
-        }
-        else{
-          Neff_num = std::pow(sumW, 2)/sumWsq;
-          sferr_num = std::sqrt(sumWsq/Neff_num);
-        }
-        if (sferr_num>=0.){
-          StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(Neff_num, StatisticsHelpers::VAL_CL_1SIGMA, bc_num_dn, bc_num_up);
-          bc_num_dn = Neff_num - bc_num_dn;
-          bc_num_up = bc_num_up - Neff_num;
-          bc_num_dn *= sferr_num;
-          bc_num_up *= sferr_num;
-          bc_num_dn += sumW;
-          bc_num_up += sumW;
-        }
-        else{
-          bc_num_dn = sumW - sqrt(sumWsq);
-          bc_num_up = sumW + sqrt(sumWsq);
-        }
+        StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(sumW, sumWsq, StatisticsHelpers::VAL_CL_1SIGMA, bc_num_dn, bc_num_up);
 
         binerror_dn = sqrt((sumWAll!=0. ? pow(bc_num_dn/sumWAll - bincontent, 2) : 0.) + (bc_denom_up!=0. ? pow(sumW/bc_denom_up - bincontent, 2) : 0.));
         binerror_up = sqrt((sumWAll!=0. ? pow(bc_num_up/sumWAll - bincontent, 2) : 0.) + (bc_denom_dn!=0. ? pow(sumW/bc_denom_dn - bincontent, 2) : 0.));
@@ -2155,65 +2085,10 @@ template<> void HelperFunctions::divideHistograms<TH2F>(TH2F const* hnum, TH2F c
         binerror = calculateSimpleProductError(sumW, sqrt(sumWsq), 1, sumWAll, sqrt(sumWsqAll), -1);
         if (hAssign_dn || hAssign_up){
           double bc_denom_dn, bc_denom_up;
-          double Neff_denom, sferr_denom;
-          if (sumWsqAll==0. && sumWAll==0.){
-            Neff_denom = 0;
-            sferr_denom = 1;
-          }
-          else if (sumWsqAll==0. && sumWAll!=0.){
-            Neff_denom = sumWAll;
-            sferr_denom = 1.;
-          }
-          else if (sumWsqAll!=0. && sumWAll==0.){
-            Neff_denom = std::pow(sumWAll, 2)/sumWsqAll;
-            sferr_denom = -1;
-          }
-          else{
-            Neff_denom = std::pow(sumWAll, 2)/sumWsqAll;
-            sferr_denom = std::sqrt(sumWsqAll/Neff_denom);
-          }
-          if (sferr_denom>=0.){
-            StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(Neff_denom, StatisticsHelpers::VAL_CL_1SIGMA, bc_denom_dn, bc_denom_up);
-            bc_denom_dn = Neff_denom - bc_denom_dn;
-            bc_denom_up = bc_denom_up - Neff_denom;
-            bc_denom_dn *= sferr_denom;
-            bc_denom_up *= sferr_denom;
-            bc_denom_dn += sumWAll;
-            bc_denom_up += sumWAll;
-          }
-          else{ bc_denom_dn = bc_denom_up = sqrt(sumWsqAll); }
+          StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(sumWAll, sumWsqAll, StatisticsHelpers::VAL_CL_1SIGMA, bc_denom_dn, bc_denom_up);
 
           double bc_num_dn, bc_num_up;
-          double Neff_num, sferr_num;
-          if (sumWsq==0. && sumW==0.){
-            Neff_num = 0;
-            sferr_num = 1;
-          }
-          else if (sumWsq==0. && sumW!=0.){
-            Neff_num = sumW;
-            sferr_num = 1.;
-          }
-          else if (sumWsq!=0. && sumW==0.){
-            Neff_num = std::pow(sumW, 2)/sumWsq;
-            sferr_num = -1;
-          }
-          else{
-            Neff_num = std::pow(sumW, 2)/sumWsq;
-            sferr_num = std::sqrt(sumWsq/Neff_num);
-          }
-          if (sferr_num>=0.){
-            StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(Neff_num, StatisticsHelpers::VAL_CL_1SIGMA, bc_num_dn, bc_num_up);
-            bc_num_dn = Neff_num - bc_num_dn;
-            bc_num_up = bc_num_up - Neff_num;
-            bc_num_dn *= sferr_num;
-            bc_num_up *= sferr_num;
-            bc_num_dn += sumW;
-            bc_num_up += sumW;
-          }
-          else{
-            bc_num_dn = sumW - sqrt(sumWsq);
-            bc_num_up = sumW + sqrt(sumWsq);
-          }
+          StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(sumW, sumWsq, StatisticsHelpers::VAL_CL_1SIGMA, bc_num_dn, bc_num_up);
 
           binerror_dn = sqrt((sumWAll!=0. ? pow(bc_num_dn/sumWAll - bincontent, 2) : 0.) + (bc_denom_up!=0. ? pow(sumW/bc_denom_up - bincontent, 2) : 0.));
           binerror_up = sqrt((sumWAll!=0. ? pow(bc_num_up/sumWAll - bincontent, 2) : 0.) + (bc_denom_dn!=0. ? pow(sumW/bc_denom_dn - bincontent, 2) : 0.));
@@ -2260,65 +2135,10 @@ template<> void HelperFunctions::divideHistograms<TH3F>(TH3F const* hnum, TH3F c
           binerror = calculateSimpleProductError(sumW, sqrt(sumWsq), 1, sumWAll, sqrt(sumWsqAll), -1);
           if (hAssign_dn || hAssign_up){
             double bc_denom_dn, bc_denom_up;
-            double Neff_denom, sferr_denom;
-            if (sumWsqAll==0. && sumWAll==0.){
-              Neff_denom = 0;
-              sferr_denom = 1;
-            }
-            else if (sumWsqAll==0. && sumWAll!=0.){
-              Neff_denom = sumWAll;
-              sferr_denom = 1.;
-            }
-            else if (sumWsqAll!=0. && sumWAll==0.){
-              Neff_denom = std::pow(sumWAll, 2)/sumWsqAll;
-              sferr_denom = -1;
-            }
-            else{
-              Neff_denom = std::pow(sumWAll, 2)/sumWsqAll;
-              sferr_denom = std::sqrt(sumWsqAll/Neff_denom);
-            }
-            if (sferr_denom>=0.){
-              StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(Neff_denom, StatisticsHelpers::VAL_CL_1SIGMA, bc_denom_dn, bc_denom_up);
-              bc_denom_dn = Neff_denom - bc_denom_dn;
-              bc_denom_up = bc_denom_up - Neff_denom;
-              bc_denom_dn *= sferr_denom;
-              bc_denom_up *= sferr_denom;
-              bc_denom_dn += sumWAll;
-              bc_denom_up += sumWAll;
-            }
-            else{ bc_denom_dn = bc_denom_up = sqrt(sumWsqAll); }
+            StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(sumWAll, sumWsqAll, StatisticsHelpers::VAL_CL_1SIGMA, bc_denom_dn, bc_denom_up);
 
             double bc_num_dn, bc_num_up;
-            double Neff_num, sferr_num;
-            if (sumWsq==0. && sumW==0.){
-              Neff_num = 0;
-              sferr_num = 1;
-            }
-            else if (sumWsq==0. && sumW!=0.){
-              Neff_num = sumW;
-              sferr_num = 1.;
-            }
-            else if (sumWsq!=0. && sumW==0.){
-              Neff_num = std::pow(sumW, 2)/sumWsq;
-              sferr_num = -1;
-            }
-            else{
-              Neff_num = std::pow(sumW, 2)/sumWsq;
-              sferr_num = std::sqrt(sumWsq/Neff_num);
-            }
-            if (sferr_num>=0.){
-              StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(Neff_num, StatisticsHelpers::VAL_CL_1SIGMA, bc_num_dn, bc_num_up);
-              bc_num_dn = Neff_num - bc_num_dn;
-              bc_num_up = bc_num_up - Neff_num;
-              bc_num_dn *= sferr_num;
-              bc_num_up *= sferr_num;
-              bc_num_dn += sumW;
-              bc_num_up += sumW;
-            }
-            else{
-              bc_num_dn = sumW - sqrt(sumWsq);
-              bc_num_up = sumW + sqrt(sumWsq);
-            }
+            StatisticsHelpers::getPoissonCountingConfidenceInterval_Frequentist(sumW, sumWsq, StatisticsHelpers::VAL_CL_1SIGMA, bc_num_dn, bc_num_up);
 
             binerror_dn = sqrt((sumWAll!=0. ? pow(bc_num_dn/sumWAll - bincontent, 2) : 0.) + (bc_denom_up!=0. ? pow(sumW/bc_denom_up - bincontent, 2) : 0.));
             binerror_up = sqrt((sumWAll!=0. ? pow(bc_num_up/sumWAll - bincontent, 2) : 0.) + (bc_denom_dn!=0. ? pow(sumW/bc_denom_dn - bincontent, 2) : 0.));

@@ -329,6 +329,17 @@ std::vector<std::vector<float>> ReweightingFunctions::getAbsWeightThresholdsPerB
     double const& frac_rem = frac_rem_list.at(ihypo);
     double const& tolerance = tolerance_list.at(ihypo);
     if (skip_list.at(ihypo)) continue;
+
+    bool isValidHypothesis = true;
+    {
+      double sumWgts_hypo = 0;
+      for (unsigned int ibin=0; ibin<nbins; ibin++) sumWgts_hypo += sumWgts_all.at(ihypo).at(ibin);
+      if (sumWgts_hypo==0.){
+        if (verbosity>=TVar::ERROR) MELAout << "\t- Hypothesis " << ihypo << " probably does not apply to this sample because sums of weights after reweighting are all 0." << endl;
+        isValidHypothesis = false;
+      }
+    }
+
     for (unsigned int ibin=0; ibin<nbins; ibin++){
       if (verbosity>=TVar::ERROR) MELAout << "\t- Bin " << ibin << ":" << endl;
       unsigned int const& nevts_bin = counts_all.at(ihypo).at(ibin);
@@ -337,6 +348,7 @@ std::vector<std::vector<float>> ReweightingFunctions::getAbsWeightThresholdsPerB
 
       if (nevts_bin<nevts_bin_skipThr){
         if (verbosity>=TVar::ERROR) MELAout << "\t\t- Nevts = " << nevts_bin << "<3, skipping..." << endl;
+        if (!isValidHypothesis) res.at(ihypo).at(ibin) = -99;
         continue;
       }
 

@@ -78,7 +78,11 @@ namespace PlottingHelpers{
     void addText(TLatex* const& text);
 
     void update();
+
+    void save(TString outdir, TString strformat, TString newname="");
   };
+
+  void get1DPlotYRange(std::vector<TH1F*> const& hlist, double const& factorYHigh, bool adjustYLow, double& ymin, double& ymax);
 
   TCanvas* makeSquareCanvas(TString const& canvasname, bool is2D);
   TLegend* makeLegend(float xlow, float ylow, float xhigh, float yhigh);

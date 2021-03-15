@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cmath>
 #include "HelperFunctions.h"
 #include "PlottingHelpers.h"
 #include "MELAStreamHelpers.hh"
@@ -177,8 +178,11 @@ namespace PlottingHelpers{
         hposl = lMargin;
         hposr = 1.-rMargin;
         vposd = 0;
-        double stdoffset = getStdPixelSize_XYTitle()/canvas_size_y;
-        if (stdoffset>=bMargin) vposu = bMargin*0.75;
+        double stdoffset = getStdPixelSize_XYTitle()/canvas_size_y*1.5;
+        if (stdoffset>=bMargin){
+          MELAerr << "PlotCanvas::partitionCanvas: Requested bottom offset " << stdoffset << ">= " << bMargin << ". Scaling to " << bMargin*0.75 << "." << endl;
+          vposu = bMargin*0.75;
+        }
         else vposu = stdoffset;
         break;
       }
@@ -186,8 +190,11 @@ namespace PlottingHelpers{
       {
         // Left pad
         hposl = 0.;
-        double stdoffset = getStdPixelSize_XYTitle()/canvas_size_x;
-        if (stdoffset>=lMargin) hposr = lMargin*0.75;
+        double stdoffset = getStdPixelSize_XYTitle()/canvas_size_x*1.5;
+        if (stdoffset>=lMargin){
+          MELAerr << "PlotCanvas::partitionCanvas: Requested left offset " << stdoffset << ">= " << lMargin << ". Scaling to " << lMargin*0.75 << "." << endl;
+          hposr = lMargin*0.75;
+        }
         else hposr = stdoffset;
         vposd = bMargin;
         vposu = 1.-tMargin;
@@ -198,7 +205,7 @@ namespace PlottingHelpers{
         // Top pad
         hposl = lMargin;
         hposr = 1.-rMargin;
-        vposd = 1.-tMargin;
+        vposd = 1.-tMargin*0.98;
         vposu = 1.;
         break;
       }
@@ -335,6 +342,33 @@ namespace PlottingHelpers{
     }
     canvas->Modified();
     canvas->Update();
+  }
+
+  void PlotCanvas::save(TString outdir, TString strformat, TString newname){
+    TString stroutput;
+    stroutput = outdir + "/" + (newname=="" ? canvasname : newname) + "." + strformat;
+    canvas->SaveAs(stroutput);
+  }
+
+  void get1DPlotYRange(std::vector<TH1F*> const& hlist, double const& factorYHigh, bool adjustYLow, double& ymin, double& ymax){
+    ymax = -9e14;
+    if (adjustYLow) ymin=9e14;
+    else ymin = 0;
+
+    for (auto const& hist:hlist){
+      for (int ix=1; ix<=hist->GetNbinsX(); ix++){
+        double bc = hist->GetBinContent(ix);
+        double be = hist->GetBinError(ix);
+        if (be>0.2*std::abs(bc)) be = 0.2*std::abs(bc);
+        ymax = std::max(ymax, bc+be);
+        double bclow = bc; if (be<=bclow) bclow -= be;
+        if (adjustYLow && !(bc==0. && be==0.)) ymin = std::min(ymin, bclow);
+      }
+    }
+
+    if (ymax>=0.) ymax *= (factorYHigh>0. ? factorYHigh : 1.5);
+    else ymax /= (factorYHigh>0. ? factorYHigh : 1.5);
+    ymin *= (ymin>=0. ? 0.95 : 1.05);
   }
 
   TCanvas* makeSquareCanvas(TString const& canvasname, bool is2D){

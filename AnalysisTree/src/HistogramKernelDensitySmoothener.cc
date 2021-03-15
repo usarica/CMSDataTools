@@ -957,7 +957,7 @@ TH3F* HistogramKernelDensitySmoothener::getSmoothHistogram(
           (*hShapeStatDnPtr)->SetBinError(ii, jj, kk, std::sqrt(extres_statDn.getBinSumWsq(i, j, k)));
         }
         if (hShapeStatUpPtr){
-          (*hShapeStatUpPtr)->SetBinContent(ii, jj, kk, extres_statUp.getBinSumW(i, j));
+          (*hShapeStatUpPtr)->SetBinContent(ii, jj, kk, extres_statUp.getBinSumW(i, j, k));
           (*hShapeStatUpPtr)->SetBinError(ii, jj, kk, std::sqrt(extres_statUp.getBinSumWsq(i, j, k)));
         }
       }
@@ -1640,7 +1640,7 @@ std::vector<TH3F*> HistogramKernelDensitySmoothener::getSimultaneousSmoothHistog
             hShapeStatDn->SetBinError(ii, jj, kk, std::sqrt(extres_statDn.getBinSumWsq(i, j, k)));
           }
           if (hShapeStatUp){
-            hShapeStatUp->SetBinContent(ii, jj, kk, extres_statUp.getBinSumW(i, j));
+            hShapeStatUp->SetBinContent(ii, jj, kk, extres_statUp.getBinSumW(i, j, k));
             hShapeStatUp->SetBinError(ii, jj, kk, std::sqrt(extres_statUp.getBinSumWsq(i, j, k)));
           }
         }

@@ -112,6 +112,7 @@ void BulkReweightingBuilder::setup(
     std::vector<double> sum_normwgts_nonzerorewgt_tree(nbins, 0);
     std::vector<double> NeffsPerBin_tree(nbins, 0);
     std::vector<double> sampleZeroMECompensation_tree(nbins, 1);
+    //std::vector<unsigned int> Nrejected_tree(nbins, 0);
     std::vector<std::vector<std::pair<double, double>>> sum_wgts_withrewgt_tree(nhypos, std::vector<std::pair<double, double>>(nbins, std::pair<double, double>(0, 0)));
     MELAout << "\t- Obtaining weight sums..." << endl;
     for (int ev=0; ev<nEntries; ev++){
@@ -133,7 +134,7 @@ void BulkReweightingBuilder::setup(
         float const& wgt_thr = absWeightThresholdsPerBinList[tree].at(ihypo).at(ibin);
         float wgt_rewgt = rule_reweightingweights_list.at(ihypo)(tree, componentRefsList_reweightingweights[tree].at(ihypo));
         if (wgt_thr>0.f && std::abs(wgt_rewgt)>wgt_thr) wgt_rewgt = 0.f;
-        if (wgt_rewgt==0.f){
+        if (wgt_rewgt==0.f && wgt_thr!=-99.f){
           allHyposFine = false;
           break; // We can break because the following statement only proceeds if allHyposFine==true
         }
@@ -149,7 +150,11 @@ void BulkReweightingBuilder::setup(
           sum_wgts_pair.second += std::pow(wgt_product, 2);
         }
       }
+      //else Nrejected_tree.at(ibin)++;
     }
+
+    //// Print the number of rejected events
+    //MELAout << "\t\t- Numbers of rejected events in each bin: " << Nrejected_tree << endl;
 
     // Compute Neff to be able to combine the trees ultimately
     for (unsigned int ibin=0; ibin<nbins; ibin++){
@@ -189,6 +194,19 @@ void BulkReweightingBuilder::setup(
   }
 
   // Once all trees are complete, compute final normalization factors based on the chosen values of Neff.
+
+  /*
+  // Print raw values for debugging purposes
+  for (auto const& tree:registeredTrees){
+    MELAout << "Raw quantities for " << tree->sampleIdentifier << ":" << endl;
+    MELAout << "Raw absWeightThresholdsPerBinList = " << absWeightThresholdsPerBinList[tree] << endl;
+    MELAout << "Raw NeffsPerBin = " << NeffsPerBin[tree] << endl;
+    MELAout << "Raw sum_normwgts_all = " << sum_normwgts_all[tree] << endl;
+    MELAout << "Raw sum_normwgts_nonzerorewgt = " << sum_normwgts_nonzerorewgt[tree] << endl;
+    MELAout << "Raw sum_wgts_withrewgt = " << sum_wgts_withrewgt[tree] << endl;
+    MELAout << "Raw sampleZeroMECompensation = " << sampleZeroMECompensation[tree] << endl;
+  }
+  */
 
   // First pass on relative normalizations
   if (thr_frac_Neff>0.){

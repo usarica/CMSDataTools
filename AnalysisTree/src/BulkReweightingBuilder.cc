@@ -135,6 +135,7 @@ void BulkReweightingBuilder::setup(
         float wgt_rewgt = rule_reweightingweights_list.at(ihypo)(tree, componentRefsList_reweightingweights[tree].at(ihypo));
         if (wgt_thr>0.f && std::abs(wgt_rewgt)>wgt_thr) wgt_rewgt = 0.f;
         if (wgt_rewgt==0.f && wgt_thr!=-99.f){
+          //MELAout << "Hypothesis " << ihypo << " has wgt_rewgt=" << wgt_rewgt << " and wgt_thr=" << wgt_thr << endl;
           allHyposFine = false;
           break; // We can break because the following statement only proceeds if allHyposFine==true
         }

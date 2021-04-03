@@ -13,6 +13,8 @@ using namespace HelperFunctions;
 
 
 bool BaseTree::robustSaveWrite = false;
+bool BaseTree::doRobustInputCheck = true;
+
 BaseTree::BaseTree() :
   sampleIdentifier(""),
   finput(nullptr),
@@ -673,6 +675,10 @@ bool BaseTree::getValidFilesForTreeList(TString cinput, std::vector<TString> con
 
   res.assign(treenames.size(), std::vector<TString>()); for (auto& vv:res) vv.reserve(fnames.size());
   for (auto& fname:fnames){
+    if (!doRobustInputCheck){
+      for (auto& vv:res) vv.push_back(fname);
+      continue;
+    }
     TFile* ftmp = TFile::Open(fname, "read");
     if (ftmp){
       if (ftmp->IsOpen() && !ftmp->IsZombie()){
@@ -735,6 +741,7 @@ bool BaseTree::getValidFilesForTreeList(TString cinput, std::vector<TString> con
 }
 
 void BaseTree::setRobustSaveWrite(bool flag){ BaseTree::robustSaveWrite = flag; }
+void BaseTree::setRobustInputCheck(bool flag){ BaseTree::doRobustInputCheck = flag; }
 void BaseTree::writeSimpleEntries(std::vector<SimpleEntry>::const_iterator const& vecBegin, std::vector<SimpleEntry>::const_iterator const& vecEnd, BaseTree* const& tree_, bool createBranches){
   if (!tree_) return;
   for (std::vector<SimpleEntry>::const_iterator it=vecBegin; it!=vecEnd; it++){

@@ -120,9 +120,15 @@ namespace HelperFunctions{
   template<> void conditionalizeHistogram<TH3F>(TH3F* histo, unsigned int iaxis, unsigned int jaxis, std::vector<std::pair<TH3F*, float>> const* conditionalsReference, bool useWidth, bool useEffErr);
 
   template <typename T> void wipeOverUnderFlows(T* hwipe, bool rescale=false, bool addToLastBin=false);
+  template<> void wipeOverUnderFlows<TH1>(TH1* hwipe, bool rescale, bool addToLastBin);
+  template<> void wipeOverUnderFlows<TH2>(TH2* hwipe, bool rescale, bool addToLastBin);
+  template<> void wipeOverUnderFlows<TH3>(TH3* hwipe, bool rescale, bool addToLastBin);
   template<> void wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool rescale, bool addToLastBin);
   template<> void wipeOverUnderFlows<TH2F>(TH2F* hwipe, bool rescale, bool addToLastBin);
   template<> void wipeOverUnderFlows<TH3F>(TH3F* hwipe, bool rescale, bool addToLastBin);
+  template<> void wipeOverUnderFlows<TH1D>(TH1D* hwipe, bool rescale, bool addToLastBin);
+  template<> void wipeOverUnderFlows<TH2D>(TH2D* hwipe, bool rescale, bool addToLastBin);
+  template<> void wipeOverUnderFlows<TH3D>(TH3D* hwipe, bool rescale, bool addToLastBin);
 
   template <typename T> void divideBinWidth(T* histo);
   template<> void divideBinWidth<TH1F>(TH1F* histo);

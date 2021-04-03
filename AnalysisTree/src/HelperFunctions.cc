@@ -1726,7 +1726,7 @@ template<> void HelperFunctions::conditionalizeHistogram<TH3F>(TH3F* histo, unsi
   }
 }
 
-template<> void HelperFunctions::wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool rescale, bool addToLastBin){
+template<> void HelperFunctions::wipeOverUnderFlows<TH1>(TH1* hwipe, bool rescale, bool addToLastBin){
   double integral = hwipe->Integral(0, hwipe->GetNbinsX()+1);
   for (int binx=0; binx<=hwipe->GetNbinsX()+1; binx++){
     if (binx>=1 && binx<=hwipe->GetNbinsX()) continue;
@@ -1750,7 +1750,7 @@ template<> void HelperFunctions::wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool resc
   wipeScale = integral / wipeScale;
   if (rescale) hwipe->Scale(wipeScale);
 }
-template<> void HelperFunctions::wipeOverUnderFlows<TH2F>(TH2F* hwipe, bool rescale, bool addToLastBin){
+template<> void HelperFunctions::wipeOverUnderFlows<TH2>(TH2* hwipe, bool rescale, bool addToLastBin){
   double integral = hwipe->Integral(0, hwipe->GetNbinsX()+1, 0, hwipe->GetNbinsY()+1);
   for (int binx=0; binx<=hwipe->GetNbinsX()+1; binx++){
     for (int biny=0; biny<=hwipe->GetNbinsY()+1; biny++){
@@ -1781,7 +1781,7 @@ template<> void HelperFunctions::wipeOverUnderFlows<TH2F>(TH2F* hwipe, bool resc
   wipeScale = integral / wipeScale;
   if (rescale) hwipe->Scale(wipeScale);
 }
-template<> void HelperFunctions::wipeOverUnderFlows<TH3F>(TH3F* hwipe, bool rescale, bool addToLastBin){
+template<> void HelperFunctions::wipeOverUnderFlows<TH3>(TH3* hwipe, bool rescale, bool addToLastBin){
   double integral = hwipe->Integral(0, hwipe->GetNbinsX()+1, 0, hwipe->GetNbinsY()+1, 0, hwipe->GetNbinsZ()+1);
   for (int binx=0; binx<=hwipe->GetNbinsX()+1; binx++){
     for (int biny=0; biny<=hwipe->GetNbinsY()+1; biny++){
@@ -1817,6 +1817,13 @@ template<> void HelperFunctions::wipeOverUnderFlows<TH3F>(TH3F* hwipe, bool resc
   wipeScale = integral / wipeScale;
   if (rescale) hwipe->Scale(wipeScale);
 }
+template<> void HelperFunctions::wipeOverUnderFlows<TH1F>(TH1F* hwipe, bool rescale, bool addToLastBin){ HelperFunctions::wipeOverUnderFlows<TH1>(hwipe, rescale, addToLastBin); }
+template<> void HelperFunctions::wipeOverUnderFlows<TH2F>(TH2F* hwipe, bool rescale, bool addToLastBin){ HelperFunctions::wipeOverUnderFlows<TH2>(hwipe, rescale, addToLastBin); }
+template<> void HelperFunctions::wipeOverUnderFlows<TH3F>(TH3F* hwipe, bool rescale, bool addToLastBin){ HelperFunctions::wipeOverUnderFlows<TH3>(hwipe, rescale, addToLastBin); }
+template<> void HelperFunctions::wipeOverUnderFlows<TH1D>(TH1D* hwipe, bool rescale, bool addToLastBin){ HelperFunctions::wipeOverUnderFlows<TH1>(hwipe, rescale, addToLastBin); }
+template<> void HelperFunctions::wipeOverUnderFlows<TH2D>(TH2D* hwipe, bool rescale, bool addToLastBin){ HelperFunctions::wipeOverUnderFlows<TH2>(hwipe, rescale, addToLastBin); }
+template<> void HelperFunctions::wipeOverUnderFlows<TH3D>(TH3D* hwipe, bool rescale, bool addToLastBin){ HelperFunctions::wipeOverUnderFlows<TH3>(hwipe, rescale, addToLastBin); }
+
 
 template<> void HelperFunctions::divideBinWidth<TH1F>(TH1F* histo){
   TAxis const* xaxis = histo->GetXaxis();

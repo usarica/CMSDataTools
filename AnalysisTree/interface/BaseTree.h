@@ -18,6 +18,7 @@
 class BaseTree{
 protected:
   static bool robustSaveWrite;
+  static bool doRobustInputCheck;
 
 public:
 
@@ -160,6 +161,7 @@ public:
   virtual void print() const;
 
   static void setRobustSaveWrite(bool flag);
+  static void setRobustInputCheck(bool flag);
   static void writeSimpleEntries(std::vector<SimpleEntry>::const_iterator const& vecBegin, std::vector<SimpleEntry>::const_iterator const& vecEnd, BaseTree* const& tree_, bool createBranches=true);
 
 };

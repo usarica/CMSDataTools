@@ -262,7 +262,64 @@ namespace PlottingHelpers{
   double PlotCanvas::getStdOffset_XLabel() const{ return (0.007/0.8)*vStep/(Ny==1 ? 1. : bMargin + vStep + vHalfOffset); }
   double PlotCanvas::getStdOffset_YLabel() const{ return (0.007/0.78)*hStep/(Nx==1 ? 1. : lMargin + hStep + hHalfOffset); }
 
-  void PlotCanvas::addCMSLogo(CMSLogoStep type, double sqrts, double lumi){
+  double PlotCanvas::translateNDCX_InsidePanels(unsigned int icol, double ndc_pos){
+    double hposl=0, hposr=0, hmarl=0, hmarr=0, hfactor=0;
+    for (int i=0; i<Nx; i++){
+      if (i==0){
+        hposl = 0.;
+        hposr = (i==Nx-1 ? 1. : lMargin + hStep + hHalfOffset);
+        hfactor = hposr - hposl;
+        hmarl = lMargin / hfactor;
+        hmarr = (i==Nx-1 ? rMargin : hHalfOffset) / hfactor;
+      }
+      else if (i==Nx-1){
+        hposl = hposr;
+        hposr = 1.;
+        hfactor = hposr - hposl;
+        hmarl = hHalfOffset / hfactor;
+        hmarr = rMargin / hfactor;
+      }
+      else{
+        hposl = hposr;
+        hposr = hposl + hStep + space_x;
+        hfactor = hposr - hposl;
+        hmarl = hHalfOffset/hfactor;
+        hmarr = hHalfOffset/hfactor;
+      }
+      if ((int) icol == i) return (1. - (hmarl + hmarr))*ndc_pos + hmarl;
+    }
+    return -1;
+  }
+  double PlotCanvas::translateNDCY_InsidePanels(unsigned int irow, double ndc_pos){
+    double vposd=0, vposu=0, vmard=0, vmaru=0, vfactor=0;
+    for (int j=0; j<Ny; j++){
+      if (j==0){
+        vposd = 0.;
+        vposu = (j==Ny-1 ? 1. : bMargin + vStep*vfrac_bottom + vHalfOffset);
+        vfactor = vposu - vposd;
+        vmard = bMargin / vfactor;
+        vmaru = (j==Ny-1 ? tMargin : vHalfOffset) / vfactor;
+      }
+      else if (j==Ny-1){
+        vposd = vposu;
+        vposu = 1.;
+        vfactor = vposu - vposd;
+        vmard = vHalfOffset / vfactor;
+        vmaru = tMargin / vfactor;
+      }
+      else{
+        vposd = vposu;
+        vposu = vposd + vStep + space_y;
+        vfactor = vposu - vposd;
+        vmard = vHalfOffset / vfactor;
+        vmaru = vHalfOffset / vfactor;
+      }
+      if ((int) irow == j) return (1. - (vmard + vmaru))*ndc_pos + vmard;
+    }
+    return -1;
+  }
+
+  void PlotCanvas::addCMSLogo(CMSLogoStep type, double sqrts, double lumi, unsigned char ndecimals_lumi){
     TDirectory* curdir = gDirectory;
 
     borderpanels.at(2)->cd();
@@ -274,7 +331,7 @@ namespace PlottingHelpers{
     cmstxt->SetTextAlign(22);
     cmstxt->SetTextFont(63);
     cmstxt->SetTextSize(cms_pixel_ysize);
-    cmstxt->DrawLatexNDC(0. + cms_pixel_xsize*0.5/((1.-rMargin-lMargin)*canvas_size_x), 0.55, "CMS");
+    addText(cmstxt->DrawLatexNDC(0. + cms_pixel_xsize*0.5/((1.-rMargin-lMargin)*canvas_size_x), 0.55, "CMS"));
     //MELAout << "CMS label relative position: " << 0. + cms_pixel_xsize*0.5/((1.-rMargin-lMargin)*canvas_size_x) << ", " << 0.55 << endl;
     //MELAout << "CMS label size: " << cms_pixel_xsize << ", " << cms_pixel_ysize << endl;
 
@@ -305,19 +362,19 @@ namespace PlottingHelpers{
       cmstxtmore->SetTextAlign(22);
       cmstxtmore->SetTextFont(53);
       cmstxtmore->SetTextSize(cmsprelim_pixel_ysize);
-      cmstxtmore->DrawLatexNDC(cmsprelim_relloffset_x, cmsprelim_relloffset_y, strprelim);
+      addText(cmstxtmore->DrawLatexNDC(cmsprelim_relloffset_x, cmsprelim_relloffset_y, strprelim));
     }
 
     // Draw the sqrts indicator
     if (lumi>0. && sqrts>0.){
-      TString strSqrts = Form("%s fb^{-1} %s TeV", HelperFunctions::castValueToString(lumi, 1).data(), HelperFunctions::castValueToString(sqrts, 1).data());
+      TString strSqrts = Form("%s fb^{-1} %s TeV", HelperFunctions::castValueToString(lumi, ndecimals_lumi).data(), HelperFunctions::castValueToString(sqrts, 1).data());
       double cmssqrts_pixel_ysize = cmsprelim_pixel_ysize;
       double cmssqrts_pixel_xsize = cmssqrts_pixel_ysize*0.38*strSqrts.Length();
       TLatex* cmssqrts = new TLatex(); addText(cmssqrts);
       cmssqrts->SetTextAlign(22);
       cmssqrts->SetTextFont(PlotCanvas::getStdFont_XYTitle());
       cmssqrts->SetTextSize(cmsprelim_pixel_ysize);
-      cmssqrts->DrawLatexNDC((1.-rMargin-lMargin-cmssqrts_pixel_xsize*0.5/canvas_size_x)/(1.-rMargin-lMargin), 0.55, strSqrts);
+      addText(cmssqrts->DrawLatexNDC((1.-rMargin-lMargin-cmssqrts_pixel_xsize*0.5/canvas_size_x)/(1.-rMargin-lMargin), 0.55, strSqrts));
     }
 
     curdir->cd();

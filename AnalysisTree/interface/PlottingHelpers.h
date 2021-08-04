@@ -72,7 +72,10 @@ namespace PlottingHelpers{
     double getStdOffset_XLabel() const;
     double getStdOffset_YLabel() const;
 
-    void addCMSLogo(CMSLogoStep type, double sqrts, double lumi); // sqrts or lumi = -1 disables their addition
+    double translateNDCX_InsidePanels(unsigned int icol, double ndc_pos);
+    double translateNDCY_InsidePanels(unsigned int irow, double ndc_pos);
+
+    void addCMSLogo(CMSLogoStep type, double sqrts, double lumi, unsigned char ndecimals_lumi=1); // sqrts or lumi = -1 disables their addition
 
     void addLegend(TLegend* const& legend);
     void addText(TLatex* const& text);

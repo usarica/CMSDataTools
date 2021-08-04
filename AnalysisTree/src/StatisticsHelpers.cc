@@ -6,7 +6,11 @@
 namespace StatisticsHelpers{
   const double VAL_CL_1SIGMA = ROOT::Math::chisquared_cdf(1., 1., 0.);
   const double VAL_CL_2SIGMA = ROOT::Math::chisquared_cdf(4., 1., 0.);
+  const double VAL_CL_3SIGMA = ROOT::Math::chisquared_cdf(9., 1., 0.);
+  const double VAL_CL_4SIGMA = ROOT::Math::chisquared_cdf(16., 1., 0.);
+  const double VAL_CL_5SIGMA = ROOT::Math::chisquared_cdf(25., 1., 0.);
 
+  double getConfidenceLevelValue(double stddev, double ndof){ return ROOT::Math::chisquared_cdf(std::pow(stddev, 2), ndof, 0.); }
   double chisq_quantile(double CL, double ndof){ return ROOT::Math::chisquared_quantile(CL, ndof); }
 
   void getPoissonCountingConfidenceInterval_Frequentist(double sw_total, double swsq_total, double CL, double& vlow, double& vhigh){

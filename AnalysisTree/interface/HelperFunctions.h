@@ -232,7 +232,7 @@ namespace HelperFunctions{
 
   void convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors const* tg, TH1F*& histo);
 
-  void convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAsymmErrors*& tg, bool errorsOnZero=false, bool useAsymError=false);
+  void convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAsymmErrors*& tg, bool errorsOnZero=false, bool useAsymError=false, bool addXErrors=false);
 
   TGraph* createROCFromDistributions(TH1 const* hA, TH1 const* hB, TString name);
 
@@ -247,6 +247,8 @@ namespace HelperFunctions{
   TGraph* multiplyTGraphs(TGraph* tgfirst, TGraph* tgsecond);
 
   TGraph* divideTGraphs(TGraph* tgnum, TGraph* tgdenom, double powernum=1, double powerdenom=1);
+
+  void removePoint(TGraph*& tg, unsigned int idx);
 
   TGraphErrors* addPoint(TGraphErrors* tgSlice, double x);
 

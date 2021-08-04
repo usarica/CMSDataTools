@@ -419,7 +419,7 @@ void HelperFunctions::convertTGraphAsymmErrorsToTH1F(TGraphAsymmErrors const* tg
     //histo->SetBinError(ix, ey[ix-1]);
   }
 }
-void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAsymmErrors*& tg, bool errorsOnZero, bool useAsymError){
+void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAsymmErrors*& tg, bool errorsOnZero, bool useAsymError, bool addXErrors){
   if (!histo){
     MELAerr << "convertTH1FToTGraphAsymmErrors: Histogram is null!" << endl;
     tg=nullptr;
@@ -428,8 +428,8 @@ void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAs
 
   const int nbins = histo->GetNbinsX();
   std::vector<double> xx; xx.reserve(nbins);
-  std::vector<double> exl; exl.assign(nbins, 0.);
-  std::vector<double> exh; exh.assign(nbins, 0.);
+  std::vector<double> exl; exl.reserve(nbins);
+  std::vector<double> exh; exh.reserve(nbins);
   std::vector<double> yy; yy.reserve(nbins);
   std::vector<double> eyl; eyl.reserve(nbins);
   std::vector<double> eyh; eyh.reserve(nbins);
@@ -449,14 +449,24 @@ void HelperFunctions::convertTH1FToTGraphAsymmErrors(TH1F const* histo, TGraphAs
       }
     }
 
-    TAxis const* xaxis = histo->GetXaxis();
-    xx.push_back(xaxis->GetBinCenter(bin));
-    yy.push_back(bincontent);
-    eyl.push_back(binerrorlow);
-    eyh.push_back(binerrorhigh);
+    if (!(bincontent==0. && binerrorlow==0. && binerrorhigh==0.)){
+      TAxis const* xaxis = histo->GetXaxis();
+      xx.push_back(xaxis->GetBinCenter(bin));
+      yy.push_back(bincontent);
+      eyl.push_back(binerrorlow);
+      eyh.push_back(binerrorhigh);
+      if (!addXErrors){
+        exl.push_back(0);
+        exh.push_back(0);
+      }
+      else{
+        exl.push_back(xx.back() - xaxis->GetBinLowEdge(bin));
+        exh.push_back(xaxis->GetBinUpEdge(bin) - xx.back());
+      }
+    }
   }
 
-  tg = new TGraphAsymmErrors(nbins, xx.data(), yy.data(), exl.data(), exh.data(), eyl.data(), eyh.data());
+  tg = new TGraphAsymmErrors(xx.size(), xx.data(), yy.data(), exl.data(), exh.data(), eyl.data(), eyh.data());
   tg->SetName(Form("tg_%s", histo->GetName()));
   tg->SetTitle(histo->GetTitle());
   histo->GetXaxis()->Copy(*(tg->GetXaxis()));
@@ -610,6 +620,59 @@ TGraph* HelperFunctions::divideTGraphs(TGraph* tgnum, TGraph* tgdenom, double po
   return makeGraphFromPair(xynew, Form("%s_over_%s", tgnum->GetName(), tgdenom->GetName()));
 }
 
+void HelperFunctions::removePoint(TGraph*& tg, unsigned int idx){
+  unsigned int npoints_before = tg->GetN();
+  if (npoints_before==0 || idx>=npoints_before) return;
+  std::vector<double> xxlist; xxlist.reserve(npoints_before-1);
+  std::vector<double> exllist; exllist.reserve(npoints_before-1);
+  std::vector<double> exhlist; exhlist.reserve(npoints_before-1);
+  std::vector<double> yylist; yylist.reserve(npoints_before-1);
+  std::vector<double> eyllist; eyllist.reserve(npoints_before-1);
+  std::vector<double> eyhlist; eyhlist.reserve(npoints_before-1);
+  TGraphAsymmErrors* tgasymerrs = dynamic_cast<TGraphAsymmErrors*>(tg);
+  TGraphErrors* tgerrs = dynamic_cast<TGraphErrors*>(tg);
+  for (unsigned int ix=0; ix<npoints_before; ix++){
+    if (ix==idx) continue;
+    if (tgasymerrs){
+      exllist.push_back(tgasymerrs->GetEXlow()[ix]);
+      exhlist.push_back(tgasymerrs->GetEXhigh()[ix]);
+      eyllist.push_back(tgasymerrs->GetEYlow()[ix]);
+      eyhlist.push_back(tgasymerrs->GetEYhigh()[ix]);
+    }
+    else if (tgerrs){
+      exhlist.push_back(tgasymerrs->GetEX()[ix]);
+      eyhlist.push_back(tgasymerrs->GetEY()[ix]);
+    }
+    xxlist.push_back(tgasymerrs->GetX()[ix]);
+    yylist.push_back(tgasymerrs->GetY()[ix]);
+  }
+
+  TString strname = tg->GetName();
+  TString strtitle = tg->GetTitle();
+  TString strxtitle = tg->GetXaxis()->GetTitle();
+  TString strytitle = tg->GetYaxis()->GetTitle();
+  TAttMarker atts_marker; tg->TAttMarker::Copy(atts_marker);
+  TAttLine atts_line; tg->TAttLine::Copy(atts_line);
+  TAttFill atts_fill; tg->TAttFill::Copy(atts_fill);
+
+  delete tg;
+
+  if (tgasymerrs) tg = new TGraphAsymmErrors(npoints_before-1, xxlist.data(), yylist.data(), exllist.data(), exhlist.data(), eyllist.data(), eyhlist.data());
+  else tg = new TGraphErrors(npoints_before-1, xxlist.data(), yylist.data(), exhlist.data(), eyhlist.data());
+  tg->SetName(strname);
+  tg->SetTitle(strtitle);
+  tg->GetXaxis()->SetTitle(strxtitle);
+  tg->GetYaxis()->SetTitle(strytitle);
+  tg->SetMarkerColor(atts_marker.GetMarkerColor());
+  tg->SetMarkerStyle(atts_marker.GetMarkerStyle());
+  tg->SetMarkerSize(atts_marker.GetMarkerSize());
+  tg->SetLineColor(atts_line.GetLineColor());
+  tg->SetLineStyle(atts_line.GetLineStyle());
+  tg->SetLineWidth(atts_line.GetLineWidth());
+  tg->SetFillColor(atts_fill.GetFillColor());
+  tg->SetFillStyle(atts_fill.GetFillStyle());
+}
+
 TGraphErrors* HelperFunctions::addPoint(TGraphErrors* tgSlice, double x){
   const unsigned int nbins_slice = tgSlice->GetN();
   double* xexyey_slice[4]={
@@ -645,6 +708,16 @@ TGraphErrors* HelperFunctions::addPoint(TGraphErrors* tgSlice, double x){
   TGraphErrors* tgSlice_new = new TGraphErrors(ctr, xexyey[0], xexyey[2], xexyey[1], xexyey[3]);
   tgSlice_new->SetName(tgSlice->GetName());
   tgSlice_new->SetTitle(tgSlice->GetTitle());
+  tgSlice_new->GetXaxis()->SetTitle(tgSlice->GetXaxis()->GetTitle());
+  tgSlice_new->GetYaxis()->SetTitle(tgSlice->GetYaxis()->GetTitle());
+  tgSlice_new->SetMarkerColor(tgSlice->GetMarkerColor());
+  tgSlice_new->SetMarkerStyle(tgSlice->GetMarkerStyle());
+  tgSlice_new->SetMarkerSize(tgSlice->GetMarkerSize());
+  tgSlice_new->SetLineColor(tgSlice->GetLineColor());
+  tgSlice_new->SetLineStyle(tgSlice->GetLineStyle());
+  tgSlice_new->SetLineWidth(tgSlice->GetLineWidth());
+  tgSlice_new->SetFillColor(tgSlice->GetFillColor());
+  tgSlice_new->SetFillStyle(tgSlice->GetFillStyle());
   return tgSlice_new;
 }
 void HelperFunctions::addPoint(TGraph*& tg, double x, double y){
@@ -652,6 +725,9 @@ void HelperFunctions::addPoint(TGraph*& tg, double x, double y){
   TString strtitle = tg->GetTitle();
   TString strxtitle = tg->GetXaxis()->GetTitle();
   TString strytitle = tg->GetYaxis()->GetTitle();
+  TAttMarker atts_marker; tg->TAttMarker::Copy(atts_marker);
+  TAttLine atts_line; tg->TAttLine::Copy(atts_line);
+  TAttFill atts_fill; tg->TAttFill::Copy(atts_fill);
 
   vector<double> xarray;
   vector<double> yarray;
@@ -681,6 +757,15 @@ void HelperFunctions::addPoint(TGraph*& tg, double x, double y){
   tg->SetTitle(strtitle);
   tg->GetXaxis()->SetTitle(strxtitle);
   tg->GetYaxis()->SetTitle(strytitle);
+  tg->SetMarkerColor(atts_marker.GetMarkerColor());
+  tg->SetMarkerStyle(atts_marker.GetMarkerStyle());
+  tg->SetMarkerSize(atts_marker.GetMarkerSize());
+  tg->SetLineColor(atts_line.GetLineColor());
+  tg->SetLineStyle(atts_line.GetLineStyle());
+  tg->SetLineWidth(atts_line.GetLineWidth());
+  tg->SetFillColor(atts_fill.GetFillColor());
+  tg->SetFillStyle(atts_fill.GetFillStyle());
+
   for (unsigned int i=0; i<2; i++) delete[] xynew[i];
 }
 void HelperFunctions::addPoint(TGraphErrors*& tg, double x, double y, double ex, double ey){
@@ -688,6 +773,9 @@ void HelperFunctions::addPoint(TGraphErrors*& tg, double x, double y, double ex,
   TString strtitle = tg->GetTitle();
   TString strxtitle = tg->GetXaxis()->GetTitle();
   TString strytitle = tg->GetYaxis()->GetTitle();
+  TAttMarker atts_marker; tg->TAttMarker::Copy(atts_marker);
+  TAttLine atts_line; tg->TAttLine::Copy(atts_line);
+  TAttFill atts_fill; tg->TAttFill::Copy(atts_fill);
 
   vector<double> xarray;
   vector<double> yarray;
@@ -725,6 +813,15 @@ void HelperFunctions::addPoint(TGraphErrors*& tg, double x, double y, double ex,
   tg->SetTitle(strtitle);
   tg->GetXaxis()->SetTitle(strxtitle);
   tg->GetYaxis()->SetTitle(strytitle);
+  tg->SetMarkerColor(atts_marker.GetMarkerColor());
+  tg->SetMarkerStyle(atts_marker.GetMarkerStyle());
+  tg->SetMarkerSize(atts_marker.GetMarkerSize());
+  tg->SetLineColor(atts_line.GetLineColor());
+  tg->SetLineStyle(atts_line.GetLineStyle());
+  tg->SetLineWidth(atts_line.GetLineWidth());
+  tg->SetFillColor(atts_fill.GetFillColor());
+  tg->SetFillStyle(atts_fill.GetFillStyle());
+
   for (unsigned int i=0; i<4; i++) delete[] xynew[i];
 }
 

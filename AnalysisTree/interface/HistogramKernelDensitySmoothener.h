@@ -19,8 +19,11 @@ namespace HistogramKernelDensitySmoothener{
     float& xvar;
     float& weight;
     bool& flag;
+    bool ignoreNeffRef;
 
     TreeHistogramAssociation_1D(TString const& hname_, TString const& htitle_, TTree* tree_, float& xvar_, float& weight_, bool& flag_);
+
+    void setIgnoreNeffRef(bool flag){ ignoreNeffRef=flag; }
   };
   class TreeHistogramAssociation_2D : public TreeHistogramAssociation_1D{
   public:
@@ -68,12 +71,15 @@ namespace HistogramKernelDensitySmoothener{
     double sigmaXmult=1, double sigmaYmult=1, double sigmaZmult=1
   );
 
+  void getCLParameters(double const& stddev_stat, double& val_cl_sigma, double& factor_cl_mult);
+
   TH1F* getSmoothHistogram(
     TString const& hname, TString const& htitle, ExtendedBinning const& finalXBinning,
     TTree* tree, float& xvar, float& weight, bool& selflag,
     double sigmaXmult=1,
     TH1F** hRawPtr=nullptr,
-    TH1F** hShapeStatDnPtr=nullptr, TH1F** hShapeStatUpPtr=nullptr
+    TH1F** hShapeStatDnPtr=nullptr, TH1F** hShapeStatUpPtr=nullptr,
+    double stddev_stat=1., bool useSymmetric=false
   );
 
   TH2F* getSmoothHistogram(
@@ -81,7 +87,8 @@ namespace HistogramKernelDensitySmoothener{
     TTree* tree, float& xvar, float& yvar, float& weight, bool& selflag,
     double sigmaXmult=1, double sigmaYmult=1,
     TH2F** hRawPtr=nullptr,
-    TH2F** hShapeStatDnPtr=nullptr, TH2F** hShapeStatUpPtr=nullptr
+    TH2F** hShapeStatDnPtr=nullptr, TH2F** hShapeStatUpPtr=nullptr,
+    double stddev_stat=1., bool useSymmetric=false
   );
 
   TH3F* getSmoothHistogram(
@@ -89,7 +96,8 @@ namespace HistogramKernelDensitySmoothener{
     TTree* tree, float& xvar, float& yvar, float& zvar, float& weight, bool& selflag,
     double sigmaXmult=1, double sigmaYmult=1, double sigmaZmult=1,
     TH3F** hRawPtr=nullptr,
-    TH3F** hShapeStatDnPtr=nullptr, TH3F** hShapeStatUpPtr=nullptr
+    TH3F** hShapeStatDnPtr=nullptr, TH3F** hShapeStatUpPtr=nullptr,
+    double stddev_stat=1., bool useSymmetric=false
   );
 
   std::vector<TH1F*> getSimultaneousSmoothHistograms(
@@ -97,21 +105,24 @@ namespace HistogramKernelDensitySmoothener{
     std::vector<TreeHistogramAssociation_1D>& treeList,
     double sigmaXmult=1,
     std::vector<TH1F*>* hRawPtr=nullptr,
-    std::vector<TH1F*>* hShapeStatDnPtr=nullptr, std::vector<TH1F*>* hShapeStatUpPtr=nullptr
+    std::vector<TH1F*>* hShapeStatDnPtr=nullptr, std::vector<TH1F*>* hShapeStatUpPtr=nullptr,
+    double stddev_stat=1., bool useSymmetric=false
   );
   std::vector<TH2F*> getSimultaneousSmoothHistograms(
     ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning,
     std::vector<TreeHistogramAssociation_2D>& treeList,
     double sigmaXmult=1, double sigmaYmult=1,
     std::vector<TH2F*>* hRawPtr=nullptr,
-    std::vector<TH2F*>* hShapeStatDnPtr=nullptr, std::vector<TH2F*>* hShapeStatUpPtr=nullptr
+    std::vector<TH2F*>* hShapeStatDnPtr=nullptr, std::vector<TH2F*>* hShapeStatUpPtr=nullptr,
+    double stddev_stat=1., bool useSymmetric=false
   );
   std::vector<TH3F*> getSimultaneousSmoothHistograms(
     ExtendedBinning const& finalXBinning, ExtendedBinning const& finalYBinning, ExtendedBinning const& finalZBinning,
     std::vector<TreeHistogramAssociation_3D>& treeList,
     double sigmaXmult=1, double sigmaYmult=1, double sigmaZmult=1,
     std::vector<TH3F*>* hRawPtr=nullptr,
-    std::vector<TH3F*>* hShapeStatDnPtr=nullptr, std::vector<TH3F*>* hShapeStatUpPtr=nullptr
+    std::vector<TH3F*>* hShapeStatDnPtr=nullptr, std::vector<TH3F*>* hShapeStatUpPtr=nullptr,
+    double stddev_stat=1., bool useSymmetric=false
   );
 
 

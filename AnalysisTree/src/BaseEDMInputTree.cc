@@ -1,3 +1,5 @@
+#ifndef _COMPILE_STANDALONE_
+
 #include "TSystem.h"
 #include "TDirectory.h"
 #include "BaseEDMInputTree.h"
@@ -80,3 +82,6 @@ void BaseEDMInputTree::resetBranches(){
 #undef VECTOR_DATA_INPUT_DIRECTIVE
 #undef DOUBLEVECTOR_DATA_INPUT_DIRECTIVE
 }
+
+
+#endif

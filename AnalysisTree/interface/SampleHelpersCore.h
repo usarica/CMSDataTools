@@ -22,8 +22,6 @@
 #include "HostHelpersCore.h"
 #include "HelperFunctions.h"
 #include "MELAStreamHelpers.hh"
-#include "CMSEDMWrapper.h"
-#include "CMSLorentzVector.h"
 
 
 namespace SampleHelpers{

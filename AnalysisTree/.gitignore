@@ -1,4 +1,2 @@
-**/CheckFileIntegrity
-**/ExecuteCompiledCommand
-**/MergeLHEFiles
-**/SplitROOTFiles
+lib
+executables

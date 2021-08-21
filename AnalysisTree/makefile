@@ -4,7 +4,9 @@ BASEINCLUDE          = $(COMPILEPATH)/../../
 INCLUDEDIR           = $(COMPILEPATH)interface/
 SRCDIR               = $(COMPILEPATH)src/
 BINDIR               = $(COMPILEPATH)bin/
+SCRIPTSDIR           = $(COMPILEPATH)scripts/
 LIBDIR               = $(COMPILEPATH)lib/
+EXEDIR               = $(COMPILEPATH)executables/
 TESTDIR              = $(COMPILEPATH)test/
 PYTHONDIR            = $(COMPILEPATH)python/
 RUNDIR               = $(COMPILEPATH)
@@ -60,7 +62,7 @@ OBJECTS = $(SOURCES:.cc=.o)
 
 .PHONY: all help compile clean
 
-all: $(LIB) python/__init__.py MergeLHEFiles CheckFileIntegrity SplitROOTFiles ExecuteCompiledCommand
+all: alldirs $(LIB) python scripts MergeLHEFiles CheckFileIntegrity SplitROOTFiles ExecuteCompiledCommand
 
 
 # General rule for making object files
@@ -74,29 +76,37 @@ all: $(LIB) python/__init__.py MergeLHEFiles CheckFileIntegrity SplitROOTFiles E
 	$(CXX) $(CXXFLAGS) $< -c -o $@ $(LIBS)
 
 
-$(LIB):	$(OBJECTS)
+alldirs:
+	mkdir -p $(LIBDIR); \
+	mkdir -p $(EXEDIR)
+
+scripts: alldirs
+	cp $(SCRIPTSDIR)/* $(EXEDIR)/
+
+$(LIB):	alldirs $(OBJECTS)
 	$(QUIET) echo "Linking $(LIB)"; \
 	$(CXX) $(LINKERFLAGS) -shared $(OBJECTS) -o $@; \
         mkdir -p $(LIBDIR); \
 	mv $(LIB) $(LIBDIR)/$(LIB)
 
-python/__init__.py:
+python:
 	touch $(PYTHONDIR)__init__.py
 
-MergeLHEFiles: $(LIB) $(BINDIR)MergeLHEFiles.cc
-	$(CXX) $(CXXFLAGS) -o $(RUNDIR)MergeLHEFiles $(BINDIR)MergeLHEFiles.cc $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
+MergeLHEFiles: alldirs $(LIB) $(BINDIR)MergeLHEFiles.cc
+	$(CXX) $(CXXFLAGS) -o $(EXEDIR)MergeLHEFiles $(BINDIR)MergeLHEFiles.cc $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
 
-CheckFileIntegrity: $(LIB) $(BINDIR)CheckFileIntegrity.cc
-	$(CXX) $(CXXFLAGS) -o $(RUNDIR)CheckFileIntegrity $(OBJECTS) $(BINDIR)CheckFileIntegrity.cc $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
+CheckFileIntegrity: alldirs $(LIB) $(BINDIR)CheckFileIntegrity.cc
+	$(CXX) $(CXXFLAGS) -o $(EXEDIR)CheckFileIntegrity $(OBJECTS) $(BINDIR)CheckFileIntegrity.cc $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
 
-SplitROOTFiles: $(LIB) $(BINDIR)SplitROOTFiles.cc
-	$(CXX) $(CXXFLAGS) -o $(RUNDIR)SplitROOTFiles $(OBJECTS) $(BINDIR)SplitROOTFiles.cc $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
+SplitROOTFiles: alldirs $(LIB) $(BINDIR)SplitROOTFiles.cc
+	$(CXX) $(CXXFLAGS) -o $(EXEDIR)SplitROOTFiles $(OBJECTS) $(BINDIR)SplitROOTFiles.cc $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
 
-ExecuteCompiledCommand: $(LIB) $(BINDIR)ExecuteCompiledCommand.cc
-	$(CXX) $(CXXFLAGS) -o $(RUNDIR)ExecuteCompiledCommand $(OBJECTS) $(BINDIR)ExecuteCompiledCommand.cc $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
+ExecuteCompiledCommand: alldirs $(LIB) $(BINDIR)ExecuteCompiledCommand.cc
+	$(CXX) $(CXXFLAGS) -o $(EXEDIR)ExecuteCompiledCommand $(OBJECTS) $(BINDIR)ExecuteCompiledCommand.cc $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
 
 clean:
 	rm -rf $(LIBDIR)
+	rm -rf $(EXEDIR)
 	rm -f $(SRCDIR)*.o
 	rm -f $(SRCDIR)*.so
 	rm -f $(SRCDIR)*.d

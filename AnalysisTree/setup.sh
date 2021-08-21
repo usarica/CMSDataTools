@@ -49,6 +49,15 @@ printenv () {
   if [[ "${end}" != *"$pythonappend"* ]]; then
     echo "export PYTHONPATH=${pythonappend}${end}"
   fi
+
+  pathappend="${PKGDIR}/executables"
+  end=""
+  if [[ ! -z "${PATH+x}" ]]; then
+    end=":${PATH}"
+  fi
+  if [[ "${end}" != *"$pathappend"* ]]; then
+    echo "export PATH=${pathappend}${end}"
+  fi
 }
 doenv () {
   if [[ ${usingCMSSW} -eq 1 ]]; then
@@ -63,6 +72,16 @@ doenv () {
   if [[ "${end}" != *"$pythonappend"* ]]; then
     export PYTHONPATH="${pythonappend}${end}"
     echo "Temporarily using PYTHONPATH as ${PYTHONPATH}"
+  fi
+
+  pathappend="${PKGDIR}/executables"
+  end=""
+  if [[ ! -z "${PATH+x}" ]]; then
+    end=":${PATH}"
+  fi
+  if [[ "${end}" != *"$pathappend"* ]]; then
+    export PATH="${pathappend}${end}"
+    echo "Temporarily using PATH as ${PATH}"
   fi
 }
 printenvinstr () {

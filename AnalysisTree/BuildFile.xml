@@ -10,7 +10,6 @@
 <use name="DataFormats/Math"/>
 <use name="DataFormats/Common"/>
 <use name="JHUGenMELA/MELA"/>
-#<use name="HiggsAnalysis/CombinedLimit"/>
 
 <export>
    <lib name="1"/>

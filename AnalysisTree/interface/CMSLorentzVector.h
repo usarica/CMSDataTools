@@ -3,6 +3,12 @@
 
 #ifdef _COMPILE_STANDALONE_
 
+#include "Math/PtEtaPhiE4D.h"
+#include "Math/PtEtaPhiM4D.h"
+#include "Math/PxPyPzE4D.h"
+#include "Math/PxPyPzM4D.h"
+#include "Math/LorentzVector.h"
+
 typedef ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<float> > CMSLorentzVector_f;
 typedef ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > CMSLorentzVector_d;
 

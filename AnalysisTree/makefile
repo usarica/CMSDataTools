@@ -6,6 +6,7 @@ SRCDIR               = $(COMPILEPATH)src/
 BINDIR               = $(COMPILEPATH)bin/
 LIBDIR               = $(COMPILEPATH)lib/
 TESTDIR              = $(COMPILEPATH)test/
+PYTHONDIR            = $(COMPILEPATH)python/
 RUNDIR               = $(COMPILEPATH)
 LIB                  = libCMSDataToolsAnalysisTree.so
 
@@ -59,7 +60,7 @@ OBJECTS = $(SOURCES:.cc=.o)
 
 .PHONY: all help compile clean
 
-all: $(LIB) MergeLHEFiles CheckFileIntegrity SplitROOTFiles ExecuteCompiledCommand
+all: $(LIB) python/__init__.py MergeLHEFiles CheckFileIntegrity SplitROOTFiles ExecuteCompiledCommand
 
 
 # General rule for making object files
@@ -78,6 +79,9 @@ $(LIB):	$(OBJECTS)
 	$(CXX) $(LINKERFLAGS) -shared $(OBJECTS) -o $@; \
         mkdir -p $(LIBDIR); \
 	mv $(LIB) $(LIBDIR)/$(LIB)
+
+python/__init__.py:
+	touch $(PYTHONDIR)__init__.py
 
 MergeLHEFiles: $(LIB) $(BINDIR)MergeLHEFiles.cc
 	$(CXX) $(CXXFLAGS) -o $(RUNDIR)MergeLHEFiles $(BINDIR)MergeLHEFiles.cc $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
@@ -99,6 +103,8 @@ clean:
 	rm -f $(BINDIR)*.o
 	rm -f $(BINDIR)*.so
 	rm -f $(BINDIR)*.d
+	rm -f $(PYTHONDIR)__init__.py
+	rm -f $(PYTHONDIR)*.pyc
 	rm -rf $(RUNDIR)Pdfdata
 	rm -f $(RUNDIR)input.DAT
 	rm -f $(RUNDIR)process.DAT

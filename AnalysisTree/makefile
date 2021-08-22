@@ -1,38 +1,35 @@
+ifndef ROOTSYS
+all:
+	@echo "ROOTSYS is not set. Please set ROOT environment properly"; echo
+else
+ifndef ROOFITSYS
+all:
+	@echo "ROOFITSYS is not set. Please set ROOT environment properly"; echo
+else
+
+
 COMPILEPATH          = $(PWD)/
-BASEINCLUDE          = $(COMPILEPATH)/../../
+BASEINCLUDE          = $(COMPILEPATH)../../
 
 INCLUDEDIR           = $(COMPILEPATH)interface/
 SRCDIR               = $(COMPILEPATH)src/
 BINDIR               = $(COMPILEPATH)bin/
 SCRIPTSDIR           = $(COMPILEPATH)scripts/
+OBJDIR               = $(COMPILEPATH)obj/
 LIBDIR               = $(COMPILEPATH)lib/
 EXEDIR               = $(COMPILEPATH)executables/
 TESTDIR              = $(COMPILEPATH)test/
 PYTHONDIR            = $(COMPILEPATH)python/
 RUNDIR               = $(COMPILEPATH)
 LIB                  = libCMSDataToolsAnalysisTree.so
+LIBRULE              = $(LIBDIR)$(LIB)
 
-MELADIR              = $(BASEINCLUDE)JHUGenMELA/MELA
-MELALIBDIR           = $(MELADIR)/data/${SCRAM_ARCH}
-
-GMECOMPDIR           = $(BASEINCLUDE)MelaAnalytics/GenericMEComputer
-GMECOMPLIBDIR        = $(GMECOMPDIR)/lib
-GMECOMPLIBNAME       = libMelaAnalyticsGenericMEComputer.so
-
-MELAEVTCONTDIR       = $(BASEINCLUDE)MelaAnalytics/EventContainer
-MELAEVTCONTLIBDIR    = $(MELAEVTCONT)/lib
-MELAEVTCONTLIBNAME   = libMelaAnalyticsEventContainer.so
-
-MELARECASTERDIR      = $(BASEINCLUDE)MelaAnalytics/CandidateLOCaster
-MELARECASTERLIBDIR   = $(MELARECASTERDIR)/lib
-MELARECASTERLIBNAME  = libMelaAnalyticsCandidateLOCaster.so
+MELADIR              = $(BASEINCLUDE)JHUGenMELA/MELA/
+MELALIBDIR           = $(MELADIR)data/${SCRAM_ARCH}
 
 
-MELACXXFLAGS =  -I$(MELADIR)/interface/ -L$(MELALIBDIR)
+MELACXXFLAGS =  -I$(MELADIR)interface/ -L$(MELALIBDIR)
 MELALIBS =  -lJHUGenMELAMELA
-
-MELAANALYTICSLIBS = -lMelaAnalyticsGenericMEComputer -lMelaAnalyticsEventContainer -lMelaAnalyticsCandidateLOCaster
-MELAANALYTICSCXXFLAGS = -I$(GMECOMPDIR)/interface/ -L$(GMECOMPLIBDIR) -I$(MELAEVTCONTDIR)/interface/ -L$(MELAEVTCONTLIBDIR) -I$(MELARECASTERDIR)/interface/ -L$(MELARECASTERLIBDIR)
 
 
 EXTCXXFLAGS   = $(MELACXXFLAGS)
@@ -57,54 +54,55 @@ NLIBS        += $(EXTLIBS)
 LIBS          = $(filter-out -lNew, $(NLIBS))
 
 
-SOURCES = $(wildcard $(SRCDIR)*.cc)
-OBJECTS = $(SOURCES:.cc=.o)
+SOURCESCC = $(wildcard $(SRCDIR)*.cc)
+SOURCESCXX = $(wildcard $(SRCDIR)*.cxx)
+OBJECTSPRIM = $(SOURCESCC:.cc=.o) $(SOURCESCXX:.cxx=.o)
+OBJECTS = $(subst $(SRCDIR),$(OBJDIR),$(OBJECTSPRIM))
+
+BINSCC = $(wildcard $(BINDIR)*.cc)
+BINSCXX = $(wildcard $(BINDIR)*.cxx)
+EXESPRIM = $(BINSCC:.cc=) $(BINSCXX:.cxx=)
+EXES = $(subst $(BINDIR),$(EXEDIR),$(EXESPRIM))
+
 
 .PHONY: all help compile clean
+.SILENT: alldirs scripts clean $(OBJECTS) $(LIBRULE) $(EXES)
 
-all: alldirs $(LIB) python scripts MergeLHEFiles CheckFileIntegrity SplitROOTFiles ExecuteCompiledCommand
-
-
-# General rule for making object files
-%.d:	$(SRCDIR)%.cc $(BINDIR)%.cc $(SRCDIR)%.cxx $(BINDIR)%.cxx
-	$(QUIET) echo "Checking dependencies for $<"; \
-	$(CXX) -MM -MT $@ -MT ${@:.d=.o} $(CXXFLAGS) $< > $@; \
-                     [ -s $@ ] || rm -f $@
-
-%.o: 	$(SRCDIR)%.cc $(SRCDIR)%.cxx $(BINDIR)%.cc $(BINDIR)%.cxx
-	$(QUIET) echo "Compiling $<"; \
-	$(CXX) $(CXXFLAGS) $< -c -o $@ $(LIBS)
+all: $(OBJECTS) $(LIBRULE) python $(EXES) scripts
 
 
 alldirs:
+	mkdir -p $(OBJDIR); \
 	mkdir -p $(LIBDIR); \
 	mkdir -p $(EXEDIR)
 
-scripts: alldirs
-	cp $(SCRIPTSDIR)/* $(EXEDIR)/
-
-$(LIB):	alldirs $(OBJECTS)
-	$(QUIET) echo "Linking $(LIB)"; \
-	$(CXX) $(LINKERFLAGS) -shared $(OBJECTS) -o $@; \
-        mkdir -p $(LIBDIR); \
-	mv $(LIB) $(LIBDIR)/$(LIB)
+scripts: | alldirs
+	cp $(SCRIPTSDIR)* $(EXEDIR)
 
 python:
 	touch $(PYTHONDIR)__init__.py
 
-MergeLHEFiles: alldirs $(LIB) $(BINDIR)MergeLHEFiles.cc
-	$(CXX) $(CXXFLAGS) -o $(EXEDIR)MergeLHEFiles $(BINDIR)MergeLHEFiles.cc $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
+$(LIBRULE):	$(OBJECTS) | alldirs
+	echo "Linking $(LIB)"; \
+	$(CXX) $(LINKERFLAGS) -shared $(OBJECTS) -o $@
 
-CheckFileIntegrity: alldirs $(LIB) $(BINDIR)CheckFileIntegrity.cc
-	$(CXX) $(CXXFLAGS) -o $(EXEDIR)CheckFileIntegrity $(OBJECTS) $(BINDIR)CheckFileIntegrity.cc $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
+$(OBJDIR)%.d:	$(SRCDIR)%.c* | alldirs
+	echo "Checking dependencies for $<"; \
+	$(CXX) -MM -MT $@ -MT ${@:.d=.o} $(CXXFLAGS) $< > $@; \
+                     [ -s $@ ] || rm -f $@
 
-SplitROOTFiles: alldirs $(LIB) $(BINDIR)SplitROOTFiles.cc
-	$(CXX) $(CXXFLAGS) -o $(EXEDIR)SplitROOTFiles $(OBJECTS) $(BINDIR)SplitROOTFiles.cc $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
+$(OBJDIR)%.o: 	$(SRCDIR)%.c* | alldirs
+	echo "Compiling $<"; \
+	$(CXX) $(CXXFLAGS) $< -c -o $@ $(LIBS)
 
-ExecuteCompiledCommand: alldirs $(LIB) $(BINDIR)ExecuteCompiledCommand.cc
-	$(CXX) $(CXXFLAGS) -o $(EXEDIR)ExecuteCompiledCommand $(OBJECTS) $(BINDIR)ExecuteCompiledCommand.cc $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
+
+$(EXEDIR)%::	$(BINDIR)%.cc $(LIBRULE) | alldirs
+	echo "Compiling $<"; \
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) -L$(LIBDIR) -lCMSDataToolsAnalysisTree
+
 
 clean:
+	rm -rf $(OBJDIR)
 	rm -rf $(LIBDIR)
 	rm -rf $(EXEDIR)
 	rm -f $(SRCDIR)*.o
@@ -141,3 +139,7 @@ clean:
 	rm -f $(TESTDIR)*.pcm
 	rm -f $(TESTDIR)*.pyc
 
+
+
+endif
+endif

@@ -50,6 +50,15 @@ printenv () {
     echo "export PYTHONPATH=${pythonappend}${end}"
   fi
 
+  libappend="${PKGDIR}/lib"
+  end=""
+  if [[ ! -z "${LD_LIBRARY_PATH+x}" ]]; then
+    end=":${LD_LIBRARY_PATH}"
+  fi
+  if [[ "${end}" != *"$libappend"* ]]; then
+    echo "export LD_LIBRARY_PATH=${libappend}${end}"
+  fi
+
   pathappend="${PKGDIR}/executables"
   end=""
   if [[ ! -z "${PATH+x}" ]]; then

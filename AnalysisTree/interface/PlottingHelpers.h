@@ -14,6 +14,7 @@ namespace PlottingHelpers{
     kPaper,
     kSimulation,
     kPreliminary,
+    kSupplementary,
     kWIP
   };
 

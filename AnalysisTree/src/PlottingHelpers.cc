@@ -351,6 +351,12 @@ namespace PlottingHelpers{
       cmsprelim_relloffset_x = (cms_pixel_xsize+cmsprelim_pixel_xsize/2.)/((1.-rMargin-lMargin)*canvas_size_x);
       strprelim = "Preliminary";
     }
+    else if (type == kSupplementary){
+      double cmsprelim_pixel_xsize = cmsprelim_pixel_ysize*6.5;
+      cmsprelim_relloffset_y = 0.5;
+      cmsprelim_relloffset_x = (cms_pixel_xsize+cmsprelim_pixel_xsize/2.)/((1.-rMargin-lMargin)*canvas_size_x);
+      strprelim = "Supplementary";
+    }
     else if (type == kWIP){
       double cmsprelim_pixel_xsize = cmsprelim_pixel_ysize*7.5;
       cmsprelim_relloffset_y = 0.5;
@@ -367,7 +373,7 @@ namespace PlottingHelpers{
 
     // Draw the sqrts indicator
     if (lumi>0. && sqrts>0.){
-      TString strSqrts = Form("%s fb^{-1} %s TeV", HelperFunctions::castValueToString(lumi, ndecimals_lumi).data(), HelperFunctions::castValueToString(sqrts, 1).data());
+      TString strSqrts = Form("%s fb^{-1} (%s TeV)", HelperFunctions::castValueToString(lumi, ndecimals_lumi).data(), HelperFunctions::castValueToString(sqrts, 1).data());
       double cmssqrts_pixel_ysize = cmsprelim_pixel_ysize;
       double cmssqrts_pixel_xsize = cmssqrts_pixel_ysize*0.38*strSqrts.Length();
       TLatex* cmssqrts = new TLatex(); addText(cmssqrts);
